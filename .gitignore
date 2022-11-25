@@ -1,0 +1,8 @@
+*.jed
+
+# Zig
+**/zig-cache/
+**/zig-out/
+
+# VS
+**/.vscode/
