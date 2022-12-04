@@ -18,22 +18,16 @@ pub const AssemblyError = struct {
     mc_pt: ?u8 = null,
 };
 
-pub fn AssembledResults(comptime Device: type) type {
-    return struct {
-        jedec: jedec.JedecFile,
-        gi_routing: [Device.num_glbs][Device.num_gis_per_glb]?Device.GRP,
-        cluster_routing: routing.RoutingData,
-        errors: std.ArrayList(AssemblyError),
-    };
-}
+pub const AssembledResults = struct {
+    jedec: jedec.JedecFile,
+    errors: std.ArrayList(AssemblyError),
+};
 
-pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocator: std.mem.Allocator) !AssembledResults(Device) {
-    var results = AssembledResults(Device) {
+pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocator: std.mem.Allocator) !AssembledResults {
+    var results = AssembledResults {
         .jedec = jedec.JedecFile {
             .data = try jedec.JedecData.initFull(allocator, Device.jedec_dimensions),
         },
-        .gi_routing = .{ .{ null } ** Device.num_gis_per_glb } ** Device.num_glbs,
-        .cluster_routing = .{},
         .errors = std.ArrayList(AssemblyError).init(allocator),
     };
 
@@ -42,37 +36,37 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
 
     for (config.glb) |glb_config, glb| {
         // Compile list of GRP signals needed in this GLB:
-        var gi_routing = &results.gi_routing[glb];
+        var gi_routing = [_]?Device.GRP { null } ** Device.num_gis_per_glb;
         switch (glb_config.shared_pt_init) {
-            .active_high, .active_low => |pt| try routing.addSignalsFromPT(Device, gi_routing, pt),
+            .active_high, .active_low => |pt| try routing.addSignalsFromPT(Device, &gi_routing, pt),
         }
         switch (glb_config.shared_pt_clock) {
-            .positive, .negative => |pt| try routing.addSignalsFromPT(Device, gi_routing, pt),
+            .positive, .negative => |pt| try routing.addSignalsFromPT(Device, &gi_routing, pt),
         }
-        try routing.addSignalsFromPT(Device, gi_routing, glb_config.shared_pt_enable);
+        try routing.addSignalsFromPT(Device, &gi_routing, glb_config.shared_pt_enable);
 
         for (glb_config.mc) |mc_config| {
             for (mc_config.sum) |pt| {
-                try routing.addSignalsFromPT(Device, gi_routing, pt);
+                try routing.addSignalsFromPT(Device, &gi_routing, pt);
             }
             var special_pt: usize = 0;
             while (special_pt < 5) : (special_pt += 1) {
                 if (internal.getSpecialPT(Device, mc_config, special_pt)) |pt| {
-                    try routing.addSignalsFromPT(Device, gi_routing, pt);
+                    try routing.addSignalsFromPT(Device, &gi_routing, pt);
                 }
             }
             if (Device.family != .zero_power_enhanced) {
                 switch (mc_config.output.routing) {
                     .same_as_oe, .self => {},
                     .five_pt_fast_bypass, .five_pt_fast_bypass_inverted => |pts| for (pts) |pt| {
-                        try routing.addSignalsFromPT(Device, gi_routing, pt);
+                        try routing.addSignalsFromPT(Device, &gi_routing, pt);
                     },
                 }
             }
         }
 
         // Route GRP signals to specific GI fuses:
-        try routing.routeGIs(Device, gi_routing, rnd);
+        try routing.routeGIs(Device, &gi_routing, rnd);
         for (gi_routing) |maybe_signal, gi| if (maybe_signal) |signal| {
             const option_index = std.mem.indexOfScalar(Device.GRP, &Device.gi_options[gi], signal) orelse unreachable;
             const range = Device.getGiRange(glb, gi);
@@ -84,7 +78,7 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
         // Assign sum PTs to clusters to MCs and program routing fuses
         var router = routing.ClusterRouter.init(allocator, Device, glb_config);
         defer router.deinit();
-        try router.route(Device, &results);
+        var cluster_routing = try router.route(&results);
 
         // Program PT fuses
         for (glb_config.mc) |mc_config, mc| {
@@ -114,14 +108,14 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
             {
                 // sum PTs
                 var next_sum_pt: usize = 0;
-                var pt_iter = results.cluster_routing.iterator(Device, &glb_config, mc);
+                var pt_iter = cluster_routing.iterator(Device, &glb_config, mc);
                 while (pt_iter.next()) |glb_pt_offset| {
                     if (next_sum_pt < mc_config.sum.len) {
                         const pt = mc_config.sum[next_sum_pt];
-                        try writePTFuses(Device, &results, glb, glb_pt_offset, gi_routing, pt);
+                        try writePTFuses(Device, &results, glb, glb_pt_offset, &gi_routing, pt);
                         next_sum_pt += 1;
                     } else if (!internal.isSumAlways(mc_config.sum)) {
-                        try writePTFuses(Device, &results, glb, glb_pt_offset, gi_routing, PTs(Device).never());
+                        try writePTFuses(Device, &results, glb, glb_pt_offset, &gi_routing, PTs(Device).never());
                     }
                 }
                 if (next_sum_pt < mc_config.sum.len and !internal.isSumAlways(mc_config.sum)) {
@@ -132,18 +126,18 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
             var special_pt: usize = 0;
             while (special_pt < 5) : (special_pt += 1) {
                 if (internal.getSpecialPT(Device, mc_config, special_pt)) |pt| {
-                    try writePTFuses(Device, &results, glb, mc * 5 + special_pt, gi_routing, pt);
+                    try writePTFuses(Device, &results, glb, mc * 5 + special_pt, &gi_routing, pt);
                 }
             }
         }
 
         switch (glb_config.shared_pt_init) {
-            .active_high, .active_low => |pt| try writePTFuses(Device, &results, glb, 80, gi_routing, pt),
+            .active_high, .active_low => |pt| try writePTFuses(Device, &results, glb, 80, &gi_routing, pt),
         }
         switch (glb_config.shared_pt_clock) {
-            .positive, .negative => |pt| try writePTFuses(Device, &results, glb, 81, gi_routing, pt),
+            .positive, .negative => |pt| try writePTFuses(Device, &results, glb, 81, &gi_routing, pt),
         }
-        try writePTFuses(Device, &results, glb, 82, gi_routing, glb_config.shared_pt_enable);
+        try writePTFuses(Device, &results, glb, 82, &gi_routing, glb_config.shared_pt_enable);
 
         // Program MC-slice configuration fuses (Replace default/unset parameters with the defaults)
         for (glb_config.mc) |mc_config, mc| {
@@ -151,8 +145,8 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
                 .glb = @intCast(common.GlbIndex, glb),
                 .mc = @intCast(common.MacrocellIndex, mc),
             };
-            writeField(&results.jedec.data, common.ClusterRouting, results.cluster_routing.cluster[mc], getClusterRoutingRange(Device, mcref));
-            writeField(&results.jedec.data, common.WideRouting, results.cluster_routing.wide[mc], getWideRoutingRange(Device, mcref));
+            writeField(&results.jedec.data, common.ClusterRouting, cluster_routing.cluster[mc], getClusterRoutingRange(Device, mcref));
+            writeField(&results.jedec.data, common.WideRouting, cluster_routing.wide[mc], getWideRoutingRange(Device, mcref));
 
             const pt0xor: u1 = switch (mc_config.xor) {
                 .pt0, .pt0_inverted => 0,
@@ -377,7 +371,7 @@ fn writeDedicatedInputFuses(comptime Device: type, data: *jedec.JedecData, pin_i
     }
 }
 
-fn writePTFuses(comptime Device: type, results: *AssembledResults(Device), glb: usize, glb_pt_offset: usize, gi_signals: *[Device.num_gis_per_glb]?Device.GRP, pt: PT(Device.GRP)) !void {
+fn writePTFuses(comptime Device: type, results: *AssembledResults, glb: usize, glb_pt_offset: usize, gi_signals: *[Device.num_gis_per_glb]?Device.GRP, pt: PT(Device.GRP)) !void {
     if (internal.isAlways(pt)) {
         return;
     }

@@ -54,9 +54,19 @@ pub fn getGlbIndex(comptime Device: type, comptime which: anytype) common.GlbInd
     }
 }}
 
+pub fn getGrp(comptime GRP: type, comptime which: anytype) GRP { comptime {
+    return switch (@TypeOf(which)) {
+        common.MacrocellRef => @field(GRP, std.fmt.comptimePrint("mc_{s}{}", .{
+            common.getGlbName(which.glb),
+            which.mc,
+        })),
+        common.PinInfo => @intToEnum(GRP, which.grp_ordinal.?),
+        else => std.enums.nameCast(GRP, which),
+    };
+}}
+
 pub fn getGrpInput(comptime GRP: type, comptime which: anytype) GRP { comptime {
-    const T = @TypeOf(which);
-    switch (T) {
+    switch (@TypeOf(which)) {
         common.MacrocellRef => return @field(GRP, std.fmt.comptimePrint("io_{s}{}", .{
             common.getGlbName(which.glb),
             which.mc,
@@ -70,20 +80,17 @@ pub fn getGrpInput(comptime GRP: type, comptime which: anytype) GRP { comptime {
         })),
         else => {
             const grp = std.enums.nameCast(GRP, which);
-            if (std.mem.startsWith(u8, @tagName(grp), "io_")) {
-                return which;
-            } else if (std.mem.startsWith(u8, @tagName(grp), "mc_")) {
+            if (std.mem.startsWith(u8, @tagName(grp), "mc_")) {
                 return @field(GRP, "io_" ++ @tagName(grp)[3..]);
             } else {
-                unreachable;
+                return grp;
             }
         },
     }
 }}
 
 pub fn getGrpFeedback(comptime GRP: type, comptime which: anytype) GRP { comptime {
-    const T = @TypeOf(which);
-    switch (T) {
+    switch (@TypeOf(which)) {
         common.MacrocellRef => return @field(GRP, std.fmt.comptimePrint("mc_{s}{}", .{
             common.getGlbName(which.glb),
             which.mc,

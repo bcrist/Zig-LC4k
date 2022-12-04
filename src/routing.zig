@@ -121,7 +121,9 @@ pub const ClusterRouter = struct {
         return std.math.order(a_score, b_score); // min heap
     }
 
-    pub fn route(self: *ClusterRouter, comptime Device: type, results: *assembly.AssembledResults(Device)) !void {
+    pub fn route(self: *ClusterRouter, results: *assembly.AssembledResults) !RoutingData {
+        _ = results; // TODO use to record errors
+
         for (self.sum_size) |sum_size, mc| if (sum_size > 0) {
             try self.markForcedWideRouting(mc, .self);
         };
@@ -212,8 +214,7 @@ pub const ClusterRouter = struct {
         while (self.open_heap.removeOrNull()) |routing| {
             const score = routing.computeScore(self.cluster_size, self.sum_size);
             if (score.success == 0) {
-                results.cluster_routing = RoutingData.init(routing);
-                return;
+                return RoutingData.init(routing);
             }
 
             for (self.forced_cluster_routing) |forced_routing, cluster| if (forced_routing == null) {

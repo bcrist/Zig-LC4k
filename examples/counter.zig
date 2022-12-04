@@ -2,7 +2,7 @@ const std = @import("std");
 const lc4k = @import("lc4k");
 
 pub fn main() !void {
-    @setEvalBranchQuota(2000);
+    @setEvalBranchQuota(5000);
 
     const Chip = lc4k.LC4032ZE_TQFP48;
     const PTs = Chip.PTs;
@@ -28,6 +28,7 @@ pub fn main() !void {
 
     inline for (output_pins) |out, bit| {
         var mc = chip.mc(out);
+        mc.func = .d_ff;
         mc.clock = .{ .bclock = 2 };
         mc.output.oe = .goe0;
 
@@ -44,6 +45,7 @@ pub fn main() !void {
                 }),
             };
         }
+        all_ones = comptime PTs.all(.{ all_ones, PTs.not(out) });
         mc.sum = sum ++ &[_]Chip.PT { all_ones };
     }
 
@@ -51,5 +53,5 @@ pub fn main() !void {
     defer arena.deinit();
 
     const results = try chip.assemble(arena.allocator());
-    try lc4k.jed_file.write(results.jedec, arena.allocator(), std.io.getStdOut().writer(), .{ .one_char = '.' });
+    try lc4k.jed_file.write(results.jedec, arena.allocator(), std.io.getStdOut().writer(), .{ .one_char = '1' });
 }

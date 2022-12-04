@@ -432,6 +432,10 @@ pub fn getGlbIndex(comptime which: anytype) common.GlbIndex {
     return internal.getGlbIndex(@This(), which);
 }
 
+pub fn getGrp(comptime which: anytype) GRP {
+    return internal.getGrp(GRP, which);
+}
+
 pub fn getGrpInput(comptime which: anytype) GRP {
     return internal.getGrpInput(GRP, which);
 }

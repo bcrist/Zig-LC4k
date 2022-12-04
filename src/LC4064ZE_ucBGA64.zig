@@ -1,4 +1,4 @@
-//[[!! include('devices', 'LC4064ZE_ucBGA64') !! 579 ]]
+//[[!! include('devices', 'LC4064ZE_ucBGA64') !! 583 ]]
 //[[ ################# !! GENERATED CODE -- DO NOT MODIFY !! ################# ]]
 const std = @import("std");
 const common = @import("common.zig");
@@ -117,6 +117,10 @@ pub fn getMacrocellRef(comptime which: anytype) common.MacrocellRef {
 
 pub fn getGlbIndex(comptime which: anytype) common.GlbIndex {
     return internal.getGlbIndex(@This(), which);
+}
+
+pub fn getGrp(comptime which: anytype) GRP {
+    return internal.getGrp(GRP, which);
 }
 
 pub fn getGrpInput(comptime which: anytype) GRP {

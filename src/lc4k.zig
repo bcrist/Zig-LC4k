@@ -109,7 +109,7 @@ pub fn LC4k(comptime device: common.DeviceType) type {
             const mcref = D.getMacrocellRef(which);
             return &self.glb[mcref.glb].mc[mcref.mc];
         }
-        pub fn assemble(self: Self, allocator: std.mem.Allocator) !assembly.AssembledResults(D) {
+        pub fn assemble(self: Self, allocator: std.mem.Allocator) !assembly.AssembledResults {
             return assembly.assemble(D, self, allocator);
         }
         pub fn disassemble(allocator: std.mem.Allocator, file: jedec.JedecFile) !Self {
@@ -232,7 +232,7 @@ pub fn MacrocellConfig(comptime family: common.DeviceFamily, comptime GRP: type)
         pub fn initUnused() Self {
             return .{
                 .sum = &[_]PT(GRP) { &.{} },
-                .func = .d_ff,
+                .func = .combinational,
                 .output = .{ .oe = .input_only },
             };
         }
@@ -258,37 +258,42 @@ pub fn PTBuilder(comptime Device: type) type {
     const GRP = Device.GRP;
     return struct {
 
-        pub fn always() PT(GRP) {
+        pub fn always() PT(GRP) { comptime {
             return &.{};
-        }
+        }}
 
-        pub fn never() PT(GRP) {
+        pub fn never() PT(GRP) { comptime {
             return &.{ .{ .never = {} } };
-        }
+        }}
 
-        pub fn of(comptime what: anytype) PT(GRP) {
+        pub fn of(comptime what: anytype) PT(GRP) { comptime {
             return switch (@TypeOf(what)) {
                 PT(GRP) => what,
                 Factor(GRP) => &.{ what },
                 GRP => &.{ .{ .when_high = what } },
                 common.PinInfo => &.{ .{ .when_high = @intToEnum(GRP, what.grp_ordinal.?) } },
-                else => &.{ .{ .when_high = Device.getGrpInput(what) } },
+                else => &.{ .{ .when_high = Device.getGrp(what) } },
             };
-        }
+        }}
 
-        pub fn not(comptime what: anytype) Factor(GRP) {
+        pub fn not(comptime what: anytype) PT(GRP) { comptime {
             return switch (@TypeOf(what)) {
-                Factor(GRP) => switch(what) {
-                    .always => .{ .never = {} },
-                    .never => .{ .always = {} },
-                    .when_high => |grp| .{ .when_low = grp },
-                    .when_low => |grp| .{ .when_high = grp },
+                PT(GRP) => switch (what.len) {
+                    0 => never(),
+                    1 => not(what[0]),
+                    else => unreachable,
                 },
-                GRP => .{ .when_low = what },
-                common.PinInfo => .{ .when_low = @intToEnum(GRP, what.grp_ordinal.?) },
-                else => .{ .when_low = Device.getGrpInput(what) },
+                Factor(GRP) => switch(what) {
+                    .always => never(),
+                    .never => always(),
+                    .when_high => |grp| &.{ .when_low = grp },
+                    .when_low => |grp| &.{ .when_high = grp },
+                },
+                GRP => &.{ .when_low = what },
+                common.PinInfo => &.{ .when_low = @intToEnum(GRP, what.grp_ordinal.?) },
+                else => &.{ .when_low = Device.getGrp(what) },
             };
-        }
+        }}
 
         pub fn all(comptime which: anytype) PT(GRP) { comptime {
             var pt: PT(GRP) = &.{};

@@ -5,10 +5,10 @@ pub fn build(b: *std.build.Builder) void {
     const target = b.standardTargetOptions(.{});
     const mode = b.standardReleaseOptions();
 
-    // const sx = Pkg {
-    //     .name = "sx",
-    //     .source = .{ .path = "../re4k/pkg/sx/sx.zig" },
-    // };
+    const sx = Pkg {
+        .name = "sx",
+        .source = .{ .path = "../sx/sx.zig" },
+    };
 
     const lc4k = Pkg {
         .name = "lc4k",
@@ -17,7 +17,7 @@ pub fn build(b: *std.build.Builder) void {
 
     const tests = b.addTest("test/tests.zig");
     tests.addPackage(lc4k);
-    //tests.addPackage(sx);
+    tests.addPackage(sx);
     tests.setTarget(target);
     tests.setBuildMode(mode);
 
@@ -26,6 +26,7 @@ pub fn build(b: *std.build.Builder) void {
 
     const Example = enum {
         counter,
+        basic_test,
     };
     if (b.option(Example, "example", "Build example program")) |example| switch (example) {
         inline else => |eg| {
