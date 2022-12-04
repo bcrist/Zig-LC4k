@@ -144,55 +144,69 @@ pub const PinInfo = struct {
     }
 };
 
-pub const BusMaintenance = enum {
-    float,
-    pulldown,
-    pullup,
-    keeper,
+pub const BusMaintenance = enum(u2) {
+    pulldown = 0,
+    float = 1,
+    keeper = 2,
+    pullup = 3,
 };
 
-pub const InputThreshold = enum {
-    low,  // for 1.5V or 1.8V signals
-    high, // for 2.5V or 3.3V signals
+pub const InputThreshold = enum(u1) {
+    low = 1,  // for 1.5V or 1.8V signals
+    high = 0, // for 2.5V or 3.3V signals
 };
 
-pub const DriveType = enum {
-    push_pull,
-    open_drain,
+pub const DriveType = enum(u1) {
+    push_pull = 1,
+    open_drain = 0,
 };
 
-pub const SlewRate = enum {
-    slow,
-    fast,
+pub const SlewRate = enum(u1) {
+    slow = 1,
+    fast = 0,
 };
 
-pub const OutputEnableMode = enum {
-    goe0,
-    goe1,
-    goe2,
-    goe3,
-    from_orm_active_low,
-    from_orm_active_high,
-    output_only,
-    input_only,
+pub const OutputEnableMode = enum(u3) {
+    goe0 = 0,
+    goe1 = 1,
+    goe2 = 2,
+    goe3 = 3,
+    from_orm_active_high = 4,
+    from_orm_active_low = 5,
+    output_only = 6,
+    input_only = 7,
 };
 
-pub const PowerGuard = enum {
-    from_bie,
-    disabled,
+pub const PowerGuard = enum(u1) {
+    from_bie = 0,
+    disabled = 1,
 };
 
-pub const TimerDivisor = enum(u32) {
-    div128 = 128,
-    div1024 = 1024,
-    div1048576 = 1048576,
+pub const TimerDivisor = enum(u2) {
+    div128 = 0,
+    div1024 = 2,
+    div1048576 = 1,
 };
 
-pub const MacrocellFunction = enum {
-    combinational,
-    latch,
-    t_ff,
-    d_ff,
+pub const MacrocellFunction = enum(u2) {
+    combinational = 0,
+    latch = 1,
+    t_ff = 2,
+    d_ff = 3,
 };
 
+pub const ClusterRouting = enum(u2) {
+    self_minus_two = 0,
+    self = 1,
+    self_plus_one = 2,
+    self_minus_one = 3,
+};
 
+pub const WideRouting = enum(u1) {
+    self_plus_four = 0,
+    self = 1,
+};
+
+pub fn getGlbName(glb: usize) []const u8 {
+    return "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[glb..glb+1];
+}

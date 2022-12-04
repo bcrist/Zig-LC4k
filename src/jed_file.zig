@@ -4,13 +4,7 @@ const jedec = @import("jedec.zig");
 const Fuse = jedec.Fuse;
 const FuseRange = jedec.FuseRange;
 const JedecData = jedec.JedecData;
-
-pub const JedecFile = struct {
-    data: JedecData,
-    usercode: ?u32 = null,
-    security: ?u1 = null,
-    pin_count: ?usize = null,
-};
+const JedecFile = jedec.JedecFile;
 
 const JedecCommand = enum {
     qty_pins,
@@ -244,7 +238,7 @@ pub fn write(f: JedecFile, allocator: std.mem.Allocator, writer: anytype, option
     var w = @import("checksum_writer.zig").checksumWriter(u16, allocator, writer);
 
     try w.writeByte(0x2); // STX
-    try w.writeByte('*');
+    try w.writeAll("https://github.com/bcrist/Zig-LC4k*");
     try w.writeAll(options.line_ending);
 
     if (f.pin_count) |qp| {

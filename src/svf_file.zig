@@ -3,6 +3,8 @@ const common = @import("common.zig");
 const jedec = @import("jedec.zig");
 
 const Fuse = jedec.Fuse;
+const JedecData = jedec.JedecData;
+const JedecFile = jedec.JedecFile;
 
 pub const JtagCommand = enum (u8) {
     ISC_ENABLE = 0x15,
@@ -59,9 +61,12 @@ pub const WriteOptions = struct {
     line_ending: []const u8 = "\n",
 };
 
-pub fn write(data: jedec.JedecData, writer: anytype, options: WriteOptions) !void {
+pub fn write(data: JedecFile, writer: anytype, options: WriteOptions) !void {
     const nl = options.line_ending;
 
+    try writer.writeAll("! Generated using https://github.com/bcrist/Zig-LC4k");
+    try writer.writeAll(nl);
+    try writer.writeAll(nl);
     try writeState("RESET", writer, nl);
     try writer.writeAll(nl);
     try writer.print("! Row_Width\t:{}{s}", .{ data.width, nl });

@@ -19,8 +19,10 @@ local function device (name)
 
     local jedec_height = 100
     local gi_mux_size = 0
+    local oe_bus_size = 4
     if num_glbs == 2 then
         gi_mux_size = 6
+        oe_bus_size = 2
     elseif num_glbs == 4 then
         if family == 'low_power' and (package == 'TQFP44' or package == 'TQFP48') then
             gi_mux_size = 10
@@ -41,6 +43,7 @@ local function device (name)
         package = package,
         num_glbs = num_glbs,
         gi_mux_size = gi_mux_size,
+        oe_bus_size = oe_bus_size,
         jedec_width = jedec_width,
         jedec_height = jedec_height,
     }
@@ -107,9 +110,12 @@ local info = devices[which]
 local grp_device = grp_map[which]
 include 'pins'
 include 'threshold'
+include 'goes'
 
 info.pins, info.pins_by_type = load_pins(which)
 local pin_to_threshold_fuse = load_input_threshold_fuses(which)
+local goes = load_goe_fuses(which)
+
 compute_grp_names(info.pins_by_type, pin_to_threshold_fuse)
 
 if grp_device then
@@ -122,6 +128,14 @@ if grp_device then
         local grp_pin_id = grp_threshold_fuse_to_pin[threshold_fuse[1]..'_'..threshold_fuse[2]]
         pin.grp_name = grp_pins[grp_pin_id].grp_name
     end
+end
+
+local dedicated_inputs = {}
+for _, pin in pairs(info.pins_by_type.clock) do
+    dedicated_inputs[pin.grp_name] = pin
+end
+for _, pin in pairs(info.pins_by_type.input) do
+    dedicated_inputs[pin.grp_name] = pin
 end
 
 template([[
@@ -140,6 +154,7 @@ pub const num_mcs = `num_glbs * 16`;
 pub const num_mcs_per_glb = 16;
 pub const num_gis_per_glb = 36;
 pub const gi_mux_size = `gi_mux_size`;
+pub const oe_bus_size = `oe_bus_size`;
 
 pub const jedec_dimensions = jedec.FuseRange.init(`jedec_width`, `jedec_height`);
 
@@ -157,24 +172,26 @@ pub const osctimer = struct {
 ]])(info)
 end
 
-
-
 if grp_device then write([[
 const grp_device = @import("]], grp_device, [[.zig");
 
 pub const GRP = grp_device.GRP;
 pub const gi_options = grp_device.gi_options;
 pub const gi_options_by_grp = grp_device.gi_options_by_grp;
+pub const getGlbRange = grp_device.getGlbRange;
+pub const getGiRange = grp_device.getGiRange;
+pub const getBClockRange = grp_device.getBClockRange;
 
 ]]) else
     local grp_names = {}
     for _, pin in pairs(info.pins) do
         if pin.grp_name and pin.grp_name ~= '' then
             grp_names[pin.grp_name] = true
-            if pin.grp_name:find('^io_') then
-                local feedback = 'mc_' .. pin.grp_name:sub(4)
-                grp_names[feedback] = true
-            end
+        end
+    end
+    for glb = 1, info.num_glbs do
+        for mc = 0, 15 do
+            grp_names['mc_'..string.char(64 + glb)..mc] = true
         end
     end
     write([[
@@ -200,20 +217,238 @@ pub const gi_options = [num_gis_per_glb][gi_mux_size]GRP {]])
     end
     unindent()
 
-    write([[
+    write [[
 
 };
 
 pub const gi_options_by_grp = internal.invertGIMapping(GRP, gi_mux_size, &gi_options);
 
-]])
+pub fn getGlbRange(glb: usize) jedec.FuseRange {
+    ]]
+    if info.gi_mux_size == 19 then
+        writeln('var index = num_glbs - glb - 1;', indent)
+        writeln('index ^= @truncate(u1, index >> 1);')
+        writeln('return jedec_dimensions.subColumns(83 * index + gi_mux_size * (index / 2 + 1), 83);', unindent)
+    else
+        local gi_cols = math.tointeger(info.gi_mux_size / 2)
+        writeln('const index = num_glbs - glb - 1;', indent)
+        writeln('return jedec_dimensions.subColumns(', 83 + gi_cols, ' * index + ', gi_cols, ', 83);', unindent)
+    end
+    write [[
+}
+
+pub fn getGiRange(glb: usize, gi: usize) jedec.FuseRange {
+    ]]
+    if info.gi_mux_size == 19 then
+        writeln('var left_glb = glb | 1;', indent);
+        writeln('left_glb ^= @truncate(u1, left_glb >> 1) ^ 1;')
+        writeln('const row = gi * 2 + @truncate(u1, glb ^ (glb >> 1));')
+        writeln('return getGlbRange(left_glb).expandColumns(-19).subColumns(0, 19).subRows(row, 1);', unindent)
+    else
+        local gi_cols = math.tointeger(info.gi_mux_size / 2)
+        writeln('return getGlbRange(glb).expandColumns(-',gi_cols,').subColumns(0, ',gi_cols,').subRows(gi * 2, 2);')
+    end
+    write [[
+}
+
+pub fn getBClockRange(glb: usize) jedec.FuseRange {
+    ]]
+    if info.gi_mux_size == 19 then
+        writeln('var index = num_glbs - glb - 1;', indent)
+        writeln('index = @truncate(u1, (index >> 1) ^ index);')
+        writeln('return getGlbRange(glb).subRows(79, 4).subColumns(82 * index, 1);', unindent)
+    else
+        writeln('return getGlbRange(glb).subRows(79, 4).subColumns(0, 1);')
+    end
+    write [[
+}
+]]
 end
 nl()
-write 'pub const pins = struct {'
+
+write [[
+pub fn getGOEPolarityFuse(goe: usize) jedec.Fuse {
+    return switch (goe) {]]
+
+    indent(2)
+    for goe = 0,3 do
+        local polarity = goes['goe'..goe..'_polarity']
+        if polarity then
+            write(nl, goe, ' => jedec.Fuse.init(', polarity[1], ', ', polarity[2], '),')
+        end
+    end
+    unindent(2)
+
+    write [[
+
+        else => unreachable,
+    };
+}
+
+pub fn getGOESourceFuse(goe: usize) jedec.Fuse {
+    return switch (goe) {]]
+
+    indent(2)
+    for goe = 0,3 do
+        local polarity = goes['goe'..goe..'_source']
+        if polarity then
+            write(nl, goe, ' => jedec.Fuse.init(', polarity[1], ', ', polarity[2], '),')
+        end
+    end
+    unindent(2)
+
+    write[[
+
+        else => unreachable,
+    };
+}
+]]
+if info.family == 'zero_power_enhanced' then
+    include 'zerohold'
+    include 'osctimer'
+    local zerohold = load_zerohold_fuse(which)
+    local osctimer = load_osctimer_fuses(which)
+
+    local min, max
+    for _, f in ipairs(osctimer.enables) do
+        if min == nil then
+            min = f
+            max = f
+        else
+            min[1] = math.min(min[1], f[1])
+            min[2] = math.min(min[2], f[2])
+            max[1] = math.max(max[1], f[1])
+            max[2] = math.max(max[2], f[2])
+        end
+    end
+
+    write([[
+
+pub fn getZeroHoldTimeFuse() jedec.Fuse {
+    return jedec.Fuse.init(]],zerohold[1],', ',zerohold[2],[[);
+}
+
+pub fn getOscTimerEnableRange() jedec.FuseRange {
+    return jedec.FuseRange.between(
+        jedec.Fuse.init(]],min[1],', ',min[2],[[),
+        jedec.Fuse.init(]],max[1],', ',max[2],[[),
+    );
+}
+
+pub fn getOscOutFuse() jedec.Fuse {
+    return jedec.Fuse.init(]],osctimer.osc_out[1],', ',osctimer.osc_out[2],[[);
+}
+
+pub fn getTimerOutFuse() jedec.Fuse {
+    return jedec.Fuse.init(]],osctimer.timer_out[1],', ',osctimer.timer_out[2],[[);
+}
+
+pub fn getTimerDivRange() jedec.FuseRange {
+    return jedec.FuseRange.fromFuse(
+        jedec.Fuse.init(]], osctimer.timer_div[1][1], ', ', osctimer.timer_div[1][2], [[)
+    ).expandToContain(
+        jedec.Fuse.init(]], osctimer.timer_div[2][1], ', ', osctimer.timer_div[2][2], [[)
+    );
+}
+
+pub fn getInputPowerGuardFuse(input: GRP) jedec.Fuse {
+    return switch (input) {]])
+    include 'power_guard'
+    local power_guard_fuses = load_power_guard_fuses(which)
+    indent(2)
+    for _, pin in spairs(dedicated_inputs, natural_cmp) do
+        local fuse = power_guard_fuses[pin.id]
+        write(nl, '.', pin.grp_name, ' => jedec.Fuse.init(', fuse[1], ', ', fuse[2], '),')
+    end
+    unindent(2)
+    write [[
+
+        else => unreachable,
+    };
+}
+
+pub fn getInputBusMaintenanceRange(input: GRP) jedec.FuseRange {
+    return switch (input) {]]
+    include 'bus_maintenance'
+    local fuse1, fuse2 = load_bus_maintenance_fuses(which)
+    indent(2)
+    for _, pin in spairs(dedicated_inputs, natural_cmp) do
+        write(nl, '.', pin.grp_name, ' => jedec.FuseRange.between(jedec.Fuse.init(', fuse1[pin.id][1], ', ', fuse1[pin.id][2],
+                                                              '), jedec.Fuse.init(', fuse2[pin.id][1], ', ', fuse2[pin.id][2], ')),')
+    end
+    unindent(2)
+    write [[
+
+        else => unreachable,
+    };
+}
+]]
+else
+    include 'global_bus_maintenance'
+    local f0, f1, extra = load_global_bus_maintenance_fuses(which)
+    write([[
+
+pub fn getGlobalBusMaintenanceRange() jedec.FuseRange {
+    return jedec.FuseRange.fromFuse(
+        jedec.Fuse.init(]], f0[1], ', ', f0[2], [[)
+    ).expandToContain(
+        jedec.Fuse.init(]], f1[1], ', ', f1[2], [[)
+    );
+}
+pub fn getExtraFloatInputFuses() []jedec.Fuse {
+    return &.{]])
+    indent(2)
+    for _, f in ipairs(extra) do
+        write(nl, 'jedec.Fuse.init(', f[1], ', ', f[2], '),')
+    end
+    unindent(2)
+    write [[
+
+    };
+}
+]]
+end
+write [[
+
+pub fn getInputThresholdFuse(input: GRP) jedec.Fuse {
+    return switch (input) {]]
+    indent(2)
+    for _, pin in spairs(dedicated_inputs, natural_cmp) do
+        local fuse = pin_to_threshold_fuse[pin.id]
+        write(nl, '.', pin.grp_name, ' => jedec.Fuse.init(', fuse[1], ', ', fuse[2], '),')
+    end
+    unindent(2)
+    write [[
+
+        else => unreachable,
+    };
+}
+
+pub fn getMacrocellRef(comptime which: anytype) common.MacrocellRef {
+    return internal.getMacrocellRef(GRP, which);
+}
+
+pub fn getGlbIndex(comptime which: anytype) common.GlbIndex {
+    return internal.getGlbIndex(@This(), which);
+}
+
+pub fn getGrpInput(comptime which: anytype) GRP {
+    return internal.getGrpInput(GRP, which);
+}
+
+pub fn getGrpFeedback(comptime which: anytype) GRP {
+    return internal.getGrpFeedback(GRP, which);
+}
+
+pub fn getPin(comptime which: anytype) common.PinInfo {
+    return internal.getPin(@This(), which);
+}
+
+pub const pins = struct {]]
 
 local write_pin = template [[
 
-const `safe_id` = common.PinInfo {
+pub const `safe_id` = common.PinInfo {
     .id = "`id`",
 `...`};]]
 

@@ -1,6 +1,14 @@
 const std = @import("std");
 const common = @import("common.zig");
+const jedec = @import("jedec.zig");
+const assembly = @import("assembly.zig");
+const disassembly = @import("disassembly.zig");
+const routing = @import("routing.zig");
+pub const jed_file = @import("jed_file.zig");
+pub const svf_file = @import("svf_file.zig");
 pub usingnamespace common;
+pub usingnamespace jedec;
+const lc4k = @This();
 
 pub const LC4032V_TQFP44 = LC4k(.LC4032x_TQFP44);
 pub const LC4032B_TQFP44 = LC4k(.LC4032x_TQFP44);
@@ -49,69 +57,79 @@ pub const LC4128ZE_ucBGA132 = LC4k(.LC4128ZE_ucBGA132);
 pub fn LC4k(comptime device: common.DeviceType) type {
     const D = device.get();
 
+    const Input_Config = switch (D.family) {
+        .zero_power_enhanced => InputConfigZE,
+        else => InputConfig,
+    };
+
     const GOE01_Config = switch (D.num_glbs) {
         2 => GOEConfig,
         else => GOEConfigWithSource,
     };
 
-    return switch (D.family) {
+    const Ext = switch (D.family) {
         .zero_power_enhanced => struct {
-            glb: [D.num_glbs] GlbConfig(D) = GlbConfig(D).initAllUnused(D.num_glbs),
-            clock: [D.clock_pins.len] InputConfigZE = [_]InputConfigZE { .{} } ** D.clock_pins.len,
-            input: [D.input_pins.len] InputConfigZE = [_]InputConfigZE { .{} } ** D.input_pins.len,
-
-            goe0: GOE01_Config = .{},
-            goe1: GOE01_Config = .{},
-            goe2: GOEConfig = .{},
-            goe3: GOEConfig = .{},
-
+            default_power_guard: common.PowerGuard = .disabled,
             zero_hold_time: bool = false,
-            osctimer: struct {
-                pub const signals = D.osctimer;
-                enable_osc_out_and_disable: bool = false,
-                enable_timer_out_and_reset: bool = false,
-            } = .{},
-
-            default_bus_maintenance: common.BusMaintenance = .keeper,
-            default_input_threshold: common.InputThreshold = .high,
-            default_slew_rate: common.SlewRate = .slow,
-            default_drive_type: common.DriveType = .push_pull,
-
-            pub usingnamespace D;
+            osctimer: ?OscTimerConfig(D) = null,
         },
-        else => struct {
-            glb: [D.num_glbs] GlbConfig(D) = GlbConfig(D).initAllUnused(D.num_glbs),
-            clock: [D.clock_pins.len] InputConfigZE = [_]InputConfigZE { .{} } ** D.clock_pins.len,
-            input: [D.input_pins.len] InputConfigZE = [_]InputConfigZE { .{} } ** D.input_pins.len,
+        else => struct {},
+    };
 
-            goe0: GOE01_Config = .{},
-            goe1: GOE01_Config = .{},
-            goe2: GOEConfig = .{},
-            goe3: GOEConfig = .{},
+    return struct {
+        glb: [D.num_glbs] GlbConfig(D) = GlbConfig(D).initAllUnused(D.num_glbs),
+        clock: [D.clock_pins.len] Input_Config = [_]Input_Config { .{} } ** D.clock_pins.len,
+        input: [D.input_pins.len] Input_Config = [_]Input_Config { .{} } ** D.input_pins.len,
 
-            bus_maintenance: common.BusMaintenance = .keeper,
+        goe0: GOE01_Config = .{},
+        goe1: GOE01_Config = .{},
+        goe2: GOEConfig = .{},
+        goe3: GOEConfig = .{},
 
-            default_input_threshold: common.InputThreshold = .high,
-            default_slew_rate: common.SlewRate = .slow,
-            default_drive_type: common.DriveType = .push_pull,
+        usercode: ?u32 = null,
+        security: bool = false,
 
-            pub usingnamespace D;
-        },
+        default_bus_maintenance: common.BusMaintenance = .keeper,
+        default_input_threshold: common.InputThreshold = .high,
+        default_slew_rate: common.SlewRate = .slow,
+        default_drive_type: common.DriveType = .push_pull,
+
+        ext: Ext = .{},
+
+        pub usingnamespace D;
+        pub const PT = lc4k.PT(D.GRP);
+        pub const PTs = PTBuilder(D);
+
+        const Self = @This();
+
+        pub fn glb(self: *Self, comptime which: anytype) *GlbConfig(D) {
+            return &self.glb[D.getGlbIndex(which)];
+        }
+        pub fn mc(self: *Self, comptime which: anytype) *MacrocellConfig(D.family, D.GRP) {
+            const mcref = D.getMacrocellRef(which);
+            return &self.glb[mcref.glb].mc[mcref.mc];
+        }
+        pub fn assemble(self: Self, allocator: std.mem.Allocator) !assembly.AssembledResults(D) {
+            return assembly.assemble(D, self, allocator);
+        }
+        pub fn disassemble(allocator: std.mem.Allocator, file: jedec.JedecFile) !Self {
+            return assembly.disassemble(D, allocator, file);
+        }
     };
 }
 
-fn GlbConfig(comptime D: type) type {
+pub fn GlbConfig(comptime D: type) type {
     return struct {
         mc: [D.num_mcs_per_glb] MacrocellConfig(D.family, D.GRP),
         shared_pt_init: union(enum) {
-            active_high: []const Factor(D.GRP),
-            active_low: []const Factor(D.GRP),
+            active_high: PT(D.GRP),
+            active_low: PT(D.GRP),
         },
         shared_pt_clock: union(enum) {
-            active_high: []const Factor(D.GRP),
-            active_low: []const Factor(D.GRP),
+            positive: PT(D.GRP), // active high when used as a latch or clock enable
+            negative: PT(D.GRP), // active low when used as a latch or clock enable
         },
-        shared_pt_enable: []const Factor(D.GRP),
+        shared_pt_enable: PT(D.GRP),
         shared_pt_enable_to_oe_bus: [D.oe_bus_size] bool,
         bclock0: enum { clk0_pos, clk1_neg },
         bclock1: enum { clk1_pos, clk0_neg },
@@ -131,12 +149,28 @@ fn GlbConfig(comptime D: type) type {
 
         pub fn initUnused(glb: usize) Self {
             var self = Self {
-
+                .mc = undefined,
+                .shared_pt_init = .{ .active_high = PTBuilder(D).never() },
+                .shared_pt_clock = .{ .positive = PTBuilder(D).never() },
+                .shared_pt_enable = PTBuilder(D).always(),
+                .shared_pt_enable_to_oe_bus = [_]bool { false } ** D.oe_bus_size,
+                .bclock0 = .clk0_pos,
+                .bclock1 = .clk1_pos,
+                .bclock2 = .clk2_pos,
+                .bclock3 = .clk3_pos,
             };
 
+            if (D.clock_pins.len < 4) {
+                self.bclock1 = .clk0_neg;
+                self.bclock3 = .clk2_neg;
+            }
+
             if (glb < D.oe_bus_size) {
-                self.shared_pt_enable = &.{ .{ .always } };
                 self.shared_pt_enable_to_oe_bus[glb] = true;
+            }
+
+            for (self.mc) |*mc| {
+                mc.* = MacrocellConfig(D.family, D.GRP).initUnused();
             }
 
             return self;
@@ -151,51 +185,153 @@ pub fn MacrocellConfig(comptime family: common.DeviceFamily, comptime GRP: type)
     };
     const Output_Config = switch (family) {
         .zero_power_enhanced => OutputConfigZE,
-        else => OutputConfig,
+        else => OutputConfig(GRP),
     };
 
     return struct {
-        sum: []const[]const GRP = &[_][]const GRP {},
+        sum: []const PT(GRP),
+        sum_divert: ?common.ClusterRouting = null,
+        wide_sum_divert: ?common.WideRouting = null,
         xor: union(enum) {
+            none,
+            invert,
             input,
-            pt0: InvertPolarity,
-            constant: InvertPolarity,
-        } = .{ .constant = .non_inverted },
+            pt0: PT(GRP),
+            pt0_inverted: PT(GRP),
+        } = .{ .none = {} },
         func: common.MacrocellFunction,
         clock: union(enum) {
             none,
             shared_pt_clock,
-            pt1_pos: []const GRP,
-            pt1_neg: []const GRP,
+            pt1_positive: PT(GRP),
+            pt1_negative: PT(GRP),
             bclock: u2,
-        } = .{ .none },
+        } = .{ .none = {} },
         ce: union(enum) {
-            pt2_active_high: []const GRP,
-            pt2_active_low: []const GRP,
+            pt2_active_high: PT(GRP),
+            pt2_active_low: PT(GRP),
             shared_pt_clock,
             always_active,
-        } = .{ .always_active },
+        } = .{ .always_active = {} },
         init_state: u1 = 0,
-        init_source: enum {
-            pt3,
+        init_source: union(enum) {
+            pt3_active_high: PT(GRP),
             shared_pt_init,
-        } = .shared_pt_init,
+        } = .{ .shared_pt_init = {} },
         async_source: union(enum) {
             none,
-            pt2_active_high: []const GRP,
-        } = .{ .none },
+            pt2_active_high: PT(GRP),
+        } = .{ .none = {} },
+        pt4_oe: ?PT(GRP) = null,
 
-        input: Input_Config,
+        input: Input_Config = .{},
         output: Output_Config,
+
+        const Self = @This();
+
+        pub fn initUnused() Self {
+            return .{
+                .sum = &[_]PT(GRP) { &.{} },
+                .func = .d_ff,
+                .output = .{ .oe = .input_only },
+            };
+        }
     };
+}
+
+pub fn PT(comptime GRP: type) type {
+    return []const Factor(GRP);
 }
 
 pub fn Factor(comptime GRP: type) type {
     return union(enum) {
+        // "always" can normally just be represented by an empty PT,
+        // but sometimes necessary to represent it in a Factor instead.
         always,
         never,
         when_high: GRP,
         when_low: GRP,
+    };
+}
+
+pub fn PTBuilder(comptime Device: type) type {
+    const GRP = Device.GRP;
+    return struct {
+
+        pub fn always() PT(GRP) {
+            return &.{};
+        }
+
+        pub fn never() PT(GRP) {
+            return &.{ .{ .never = {} } };
+        }
+
+        pub fn of(comptime what: anytype) PT(GRP) {
+            return switch (@TypeOf(what)) {
+                PT(GRP) => what,
+                Factor(GRP) => &.{ what },
+                GRP => &.{ .{ .when_high = what } },
+                common.PinInfo => &.{ .{ .when_high = @intToEnum(GRP, what.grp_ordinal.?) } },
+                else => &.{ .{ .when_high = Device.getGrpInput(what) } },
+            };
+        }
+
+        pub fn not(comptime what: anytype) Factor(GRP) {
+            return switch (@TypeOf(what)) {
+                Factor(GRP) => switch(what) {
+                    .always => .{ .never = {} },
+                    .never => .{ .always = {} },
+                    .when_high => |grp| .{ .when_low = grp },
+                    .when_low => |grp| .{ .when_high = grp },
+                },
+                GRP => .{ .when_low = what },
+                common.PinInfo => .{ .when_low = @intToEnum(GRP, what.grp_ordinal.?) },
+                else => .{ .when_low = Device.getGrpInput(what) },
+            };
+        }
+
+        pub fn all(comptime which: anytype) PT(GRP) { comptime {
+            var pt: PT(GRP) = &.{};
+            const info = @typeInfo(@TypeOf(which)).Struct;
+            std.debug.assert(info.is_tuple);
+            for (info.fields) |field| {
+                pt = andPT(pt, of(@field(which, field.name)));
+            }
+            return pt;
+        }}
+
+        fn andPT(comptime base: PT(GRP), comptime extra: PT(GRP)) PT(GRP) { comptime {
+            var pt = base;
+            for (extra) |factor| {
+                pt = andFactor(pt, factor);
+            }
+            return pt;
+        }}
+
+        fn andFactor(comptime base: PT(GRP), comptime factor: Factor(GRP)) PT(GRP) { comptime {
+            switch (factor) {
+                .always => return base,
+                .never => return &.{ factor },
+                .when_high => |new_signal| {
+                    for (base) |existing_factor| switch (existing_factor) {
+                        .always => return &.{ factor },
+                        .never => return base,
+                        .when_high => |old_signal| if (new_signal == old_signal) return base,
+                        .when_low => |old_signal| if (new_signal == old_signal) return &.{ .{ .never = {} } },
+                    };
+                },
+                .when_low => |new_signal| {
+                    for (base) |existing_factor| switch (existing_factor) {
+                        .always => return &.{ factor },
+                        .never => return base,
+                        .when_high => |old_signal| if (new_signal == old_signal) return &.{ .{ .never = {} } },
+                        .when_low => |old_signal| if (new_signal == old_signal) return base,
+                    };
+                },
+            }
+            return base ++ [_]Factor(GRP) {  factor };
+        }}
+
     };
 }
 
@@ -205,40 +341,38 @@ pub const InputConfig = struct {
 pub const InputConfigZE = struct {
     threshold: ?common.InputThreshold = null,
     bus_maintenance: ?common.BusMaintenance = null,
-    power_guard: common.PowerGuard = .disabled,
+    power_guard: ?common.PowerGuard = null,
 };
 
-pub const OutputConfig = struct {
-    slew_rate: ?common.SlewRate = null,
-    drive_type: ?common.DriveType = null,
-    oe: common.OutputEnableSource,
-    oe_routing: OutputRouting = .{ .relative = 0 },
-    routing: union(enum) {
-        same_as_oe,
-        self,
-        five_pt_fast_bypass: InvertPolarity,
-    } = .{ .same_as_oe },
-};
+pub fn OutputConfig(comptime GRP: type) type {
+    return struct {
+        slew_rate: ?common.SlewRate = null,
+        drive_type: ?common.DriveType = null,
+        oe: common.OutputEnableMode,
+        oe_routing: OutputRouting = .{ .relative = 0 },
+        routing: union(enum) {
+            same_as_oe,
+            self,
+            five_pt_fast_bypass: []const PT(GRP),
+            five_pt_fast_bypass_inverted: []const PT(GRP),
+        } = .{ .same_as_oe = {} },
+    };
+}
 pub const OutputConfigZE = struct {
     slew_rate: ?common.SlewRate = null,
     drive_type: ?common.DriveType = null,
-    oe: common.OutputEnableSource,
+    oe: common.OutputEnableMode,
     routing: OutputRouting = .{ .relative = 0 },
 };
 
 pub const OutputRouting = union(enum) {
     relative: u3,
-    absolute: common.MacrocellRef,
+    absolute: common.MacrocellIndex,
 };
 
 pub const GOEPolarity = enum {
     active_high,
     active_low,
-};
-
-pub const InvertPolarity = enum {
-    non_inverted,
-    inverted,
 };
 
 pub const GOEConfig = struct {
@@ -252,3 +386,12 @@ pub const GOEConfigWithSource = struct {
         input,
     } = .bus,
 };
+
+pub fn OscTimerConfig(comptime Device: type) type {
+    return struct {
+        pub const signals = Device.osctimer;
+        enable_osc_out_and_disable: bool = false,
+        enable_timer_out_and_reset: bool = false,
+        timer_divisor: common.TimerDivisor = .div1048576,
+    };
+}

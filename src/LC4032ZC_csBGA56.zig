@@ -1,4 +1,4 @@
-//[[!! include('devices', 'LC4032ZC_csBGA56') !! 401 ]]
+//[[!! include('devices', 'LC4032ZC_csBGA56') !! 463 ]]
 //[[ ################# !! GENERATED CODE -- DO NOT MODIFY !! ################# ]]
 const std = @import("std");
 const common = @import("common.zig");
@@ -15,6 +15,7 @@ pub const num_mcs = 32;
 pub const num_mcs_per_glb = 16;
 pub const num_gis_per_glb = 36;
 pub const gi_mux_size = 6;
+pub const oe_bus_size = 2;
 
 pub const jedec_dimensions = jedec.FuseRange.init(172, 100);
 
@@ -23,300 +24,361 @@ const grp_device = @import("LC4032x_TQFP48.zig");
 pub const GRP = grp_device.GRP;
 pub const gi_options = grp_device.gi_options;
 pub const gi_options_by_grp = grp_device.gi_options_by_grp;
+pub const getGlbRange = grp_device.getGlbRange;
+pub const getGiRange = grp_device.getGiRange;
+pub const getBClockRange = grp_device.getBClockRange;
 
+
+pub fn getGOEPolarityFuse(goe: usize) jedec.Fuse {
+    return switch (goe) {
+        0 => jedec.Fuse.init(88, 171),
+        1 => jedec.Fuse.init(89, 171),
+        2 => jedec.Fuse.init(90, 171),
+        3 => jedec.Fuse.init(91, 171),
+        else => unreachable,
+    };
+}
+
+pub fn getGOESourceFuse(goe: usize) jedec.Fuse {
+    return switch (goe) {
+        else => unreachable,
+    };
+}
+
+pub fn getGlobalBusMaintenanceRange() jedec.FuseRange {
+    return jedec.FuseRange.fromFuse(
+        jedec.Fuse.init(85, 171)
+    ).expandToContain(
+        jedec.Fuse.init(86, 171)
+    );
+}
+pub fn getExtraFloatInputFuses() []jedec.Fuse {
+    return &.{
+    };
+}
+
+pub fn getInputThresholdFuse(input: GRP) jedec.Fuse {
+    return switch (input) {
+        .clk0 => jedec.Fuse.init(95, 168),
+        .clk1 => jedec.Fuse.init(95, 169),
+        .clk2 => jedec.Fuse.init(95, 170),
+        .clk3 => jedec.Fuse.init(95, 171),
+        else => unreachable,
+    };
+}
+
+pub fn getMacrocellRef(comptime which: anytype) common.MacrocellRef {
+    return internal.getMacrocellRef(GRP, which);
+}
+
+pub fn getGlbIndex(comptime which: anytype) common.GlbIndex {
+    return internal.getGlbIndex(@This(), which);
+}
+
+pub fn getGrpInput(comptime which: anytype) GRP {
+    return internal.getGrpInput(GRP, which);
+}
+
+pub fn getGrpFeedback(comptime which: anytype) GRP {
+    return internal.getGrpFeedback(GRP, which);
+}
+
+pub fn getPin(comptime which: anytype) common.PinInfo {
+    return internal.getPin(@This(), which);
+}
 
 pub const pins = struct {
-    const A1 = common.PinInfo {
+    pub const A1 = common.PinInfo {
         .id = "A1",
         .func = .{ .io = 4 },
         .glb = 0,
         .grp_ordinal = @enumToInt(GRP.io_A4),
     };
-    const A2 = common.PinInfo {
+    pub const A2 = common.PinInfo {
         .id = "A2",
         .func = .{ .io = 3 },
         .glb = 0,
         .grp_ordinal = @enumToInt(GRP.io_A3),
     };
-    const A3 = common.PinInfo {
+    pub const A3 = common.PinInfo {
         .id = "A3",
         .func = .{ .io = 2 },
         .glb = 0,
         .grp_ordinal = @enumToInt(GRP.io_A2),
     };
-    const A4 = common.PinInfo {
+    pub const A4 = common.PinInfo {
         .id = "A4",
         .func = .{ .io = 1 },
         .glb = 0,
         .grp_ordinal = @enumToInt(GRP.io_A1),
     };
-    const A5 = common.PinInfo {
+    pub const A5 = common.PinInfo {
         .id = "A5",
         .func = .{ .clock = 0 },
         .glb = 0,
         .grp_ordinal = @enumToInt(GRP.clk0),
     };
-    const A6 = common.PinInfo {
+    pub const A6 = common.PinInfo {
         .id = "A6",
         .func = .{ .io_oe1 = 15 },
         .glb = 1,
         .grp_ordinal = @enumToInt(GRP.io_B15),
     };
-    const A7 = common.PinInfo {
+    pub const A7 = common.PinInfo {
         .id = "A7",
         .func = .{ .io = 12 },
         .glb = 1,
         .grp_ordinal = @enumToInt(GRP.io_B12),
     };
-    const A8 = common.PinInfo {
+    pub const A8 = common.PinInfo {
         .id = "A8",
         .func = .{ .no_connect = {} },
     };
-    const A9 = common.PinInfo {
+    pub const A9 = common.PinInfo {
         .id = "A9",
         .func = .{ .vcc_core = {} },
     };
-    const A10 = common.PinInfo {
+    pub const A10 = common.PinInfo {
         .id = "A10",
         .func = .{ .tdo = {} },
     };
-    const B1 = common.PinInfo {
+    pub const B1 = common.PinInfo {
         .id = "B1",
         .func = .{ .tdi = {} },
     };
-    const B10 = common.PinInfo {
+    pub const B10 = common.PinInfo {
         .id = "B10",
         .func = .{ .no_connect = {} },
     };
-    const C1 = common.PinInfo {
+    pub const C1 = common.PinInfo {
         .id = "C1",
         .func = .{ .io = 6 },
         .glb = 0,
         .grp_ordinal = @enumToInt(GRP.io_A6),
     };
-    const C3 = common.PinInfo {
+    pub const C3 = common.PinInfo {
         .id = "C3",
         .func = .{ .io = 5 },
         .glb = 0,
         .grp_ordinal = @enumToInt(GRP.io_A5),
     };
-    const C4 = common.PinInfo {
+    pub const C4 = common.PinInfo {
         .id = "C4",
         .func = .{ .io_oe0 = 0 },
         .glb = 0,
         .grp_ordinal = @enumToInt(GRP.io_A0),
     };
-    const C5 = common.PinInfo {
+    pub const C5 = common.PinInfo {
         .id = "C5",
         .func = .{ .clock = 3 },
         .glb = 1,
         .grp_ordinal = @enumToInt(GRP.clk3),
     };
-    const C6 = common.PinInfo {
+    pub const C6 = common.PinInfo {
         .id = "C6",
         .func = .{ .io = 14 },
         .glb = 1,
         .grp_ordinal = @enumToInt(GRP.io_B14),
     };
-    const C7 = common.PinInfo {
+    pub const C7 = common.PinInfo {
         .id = "C7",
         .func = .{ .io = 13 },
         .glb = 1,
         .grp_ordinal = @enumToInt(GRP.io_B13),
     };
-    const C8 = common.PinInfo {
+    pub const C8 = common.PinInfo {
         .id = "C8",
         .func = .{ .gnd = {} },
     };
-    const C10 = common.PinInfo {
+    pub const C10 = common.PinInfo {
         .id = "C10",
         .func = .{ .io = 11 },
         .glb = 1,
         .grp_ordinal = @enumToInt(GRP.io_B11),
     };
-    const D1 = common.PinInfo {
+    pub const D1 = common.PinInfo {
         .id = "D1",
         .func = .{ .io = 7 },
         .glb = 0,
         .grp_ordinal = @enumToInt(GRP.io_A7),
     };
-    const D3 = common.PinInfo {
+    pub const D3 = common.PinInfo {
         .id = "D3",
         .func = .{ .gnd = {} },
     };
-    const D8 = common.PinInfo {
+    pub const D8 = common.PinInfo {
         .id = "D8",
         .func = .{ .io = 9 },
         .glb = 1,
         .grp_ordinal = @enumToInt(GRP.io_B9),
     };
-    const D10 = common.PinInfo {
+    pub const D10 = common.PinInfo {
         .id = "D10",
         .func = .{ .io = 10 },
         .glb = 1,
         .grp_ordinal = @enumToInt(GRP.io_B10),
     };
-    const E1 = common.PinInfo {
+    pub const E1 = common.PinInfo {
         .id = "E1",
         .func = .{ .no_connect = {} },
     };
-    const E3 = common.PinInfo {
+    pub const E3 = common.PinInfo {
         .id = "E3",
         .func = .{ .no_connect = {} },
     };
-    const E8 = common.PinInfo {
+    pub const E8 = common.PinInfo {
         .id = "E8",
         .func = .{ .vcco = {} },
     };
-    const E10 = common.PinInfo {
+    pub const E10 = common.PinInfo {
         .id = "E10",
         .func = .{ .io = 8 },
         .glb = 1,
         .grp_ordinal = @enumToInt(GRP.io_B8),
     };
-    const F1 = common.PinInfo {
+    pub const F1 = common.PinInfo {
         .id = "F1",
         .func = .{ .io = 8 },
         .glb = 0,
         .grp_ordinal = @enumToInt(GRP.io_A8),
     };
-    const F3 = common.PinInfo {
+    pub const F3 = common.PinInfo {
         .id = "F3",
         .func = .{ .vcco = {} },
     };
-    const F8 = common.PinInfo {
+    pub const F8 = common.PinInfo {
         .id = "F8",
         .func = .{ .no_connect = {} },
     };
-    const F10 = common.PinInfo {
+    pub const F10 = common.PinInfo {
         .id = "F10",
         .func = .{ .no_connect = {} },
     };
-    const G1 = common.PinInfo {
+    pub const G1 = common.PinInfo {
         .id = "G1",
         .func = .{ .io = 10 },
         .glb = 0,
         .grp_ordinal = @enumToInt(GRP.io_A10),
     };
-    const G3 = common.PinInfo {
+    pub const G3 = common.PinInfo {
         .id = "G3",
         .func = .{ .io = 9 },
         .glb = 0,
         .grp_ordinal = @enumToInt(GRP.io_A9),
     };
-    const G8 = common.PinInfo {
+    pub const G8 = common.PinInfo {
         .id = "G8",
         .func = .{ .gnd = {} },
     };
-    const G10 = common.PinInfo {
+    pub const G10 = common.PinInfo {
         .id = "G10",
         .func = .{ .io = 7 },
         .glb = 1,
         .grp_ordinal = @enumToInt(GRP.io_B7),
     };
-    const H1 = common.PinInfo {
+    pub const H1 = common.PinInfo {
         .id = "H1",
         .func = .{ .io = 11 },
         .glb = 0,
         .grp_ordinal = @enumToInt(GRP.io_A11),
     };
-    const H3 = common.PinInfo {
+    pub const H3 = common.PinInfo {
         .id = "H3",
         .func = .{ .gnd = {} },
     };
-    const H4 = common.PinInfo {
+    pub const H4 = common.PinInfo {
         .id = "H4",
         .func = .{ .io = 13 },
         .glb = 0,
         .grp_ordinal = @enumToInt(GRP.io_A13),
     };
-    const H5 = common.PinInfo {
+    pub const H5 = common.PinInfo {
         .id = "H5",
         .func = .{ .io = 14 },
         .glb = 0,
         .grp_ordinal = @enumToInt(GRP.io_A14),
     };
-    const H6 = common.PinInfo {
+    pub const H6 = common.PinInfo {
         .id = "H6",
         .func = .{ .clock = 1 },
         .glb = 0,
         .grp_ordinal = @enumToInt(GRP.clk1),
     };
-    const H7 = common.PinInfo {
+    pub const H7 = common.PinInfo {
         .id = "H7",
         .func = .{ .io = 0 },
         .glb = 1,
         .grp_ordinal = @enumToInt(GRP.io_B0),
     };
-    const H8 = common.PinInfo {
+    pub const H8 = common.PinInfo {
         .id = "H8",
         .func = .{ .io = 5 },
         .glb = 1,
         .grp_ordinal = @enumToInt(GRP.io_B5),
     };
-    const H10 = common.PinInfo {
+    pub const H10 = common.PinInfo {
         .id = "H10",
         .func = .{ .io = 6 },
         .glb = 1,
         .grp_ordinal = @enumToInt(GRP.io_B6),
     };
-    const J1 = common.PinInfo {
+    pub const J1 = common.PinInfo {
         .id = "J1",
         .func = .{ .no_connect = {} },
     };
-    const J10 = common.PinInfo {
+    pub const J10 = common.PinInfo {
         .id = "J10",
         .func = .{ .tms = {} },
     };
-    const K1 = common.PinInfo {
+    pub const K1 = common.PinInfo {
         .id = "K1",
         .func = .{ .tck = {} },
     };
-    const K2 = common.PinInfo {
+    pub const K2 = common.PinInfo {
         .id = "K2",
         .func = .{ .vcc_core = {} },
     };
-    const K3 = common.PinInfo {
+    pub const K3 = common.PinInfo {
         .id = "K3",
         .func = .{ .no_connect = {} },
     };
-    const K4 = common.PinInfo {
+    pub const K4 = common.PinInfo {
         .id = "K4",
         .func = .{ .io = 12 },
         .glb = 0,
         .grp_ordinal = @enumToInt(GRP.io_A12),
     };
-    const K5 = common.PinInfo {
+    pub const K5 = common.PinInfo {
         .id = "K5",
         .func = .{ .io = 15 },
         .glb = 0,
         .grp_ordinal = @enumToInt(GRP.io_A15),
     };
-    const K6 = common.PinInfo {
+    pub const K6 = common.PinInfo {
         .id = "K6",
         .func = .{ .clock = 2 },
         .glb = 1,
         .grp_ordinal = @enumToInt(GRP.clk2),
     };
-    const K7 = common.PinInfo {
+    pub const K7 = common.PinInfo {
         .id = "K7",
         .func = .{ .io = 1 },
         .glb = 1,
         .grp_ordinal = @enumToInt(GRP.io_B1),
     };
-    const K8 = common.PinInfo {
+    pub const K8 = common.PinInfo {
         .id = "K8",
         .func = .{ .io = 2 },
         .glb = 1,
         .grp_ordinal = @enumToInt(GRP.io_B2),
     };
-    const K9 = common.PinInfo {
+    pub const K9 = common.PinInfo {
         .id = "K9",
         .func = .{ .io = 3 },
         .glb = 1,
         .grp_ordinal = @enumToInt(GRP.io_B3),
     };
-    const K10 = common.PinInfo {
+    pub const K10 = common.PinInfo {
         .id = "K10",
         .func = .{ .io = 4 },
         .glb = 1,

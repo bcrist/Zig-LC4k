@@ -95,23 +95,25 @@ pub const FuseRange = struct {
         };
     }
 
-    pub fn expand(self: *FuseRange, fuse: Fuse) void {
+    pub fn expandToContain(self: FuseRange, fuse: Fuse) FuseRange {
+        var result = self;
         if (self.isEmpty()) {
-            self.min = fuse;
-            self.max = fuse;
+            result.min = fuse;
+            result.max = fuse;
         } else {
             if (fuse.row < self.min.row) {
-                self.min.row = fuse.row;
+                result.min.row = fuse.row;
             } else if (fuse.row > self.max.row) {
-                self.max.row = fuse.row;
+                result.max.row = fuse.row;
             }
 
             if (fuse.col < self.min.col) {
-                self.min.col = fuse.col;
+                result.min.col = fuse.col;
             } else if (fuse.col > self.max.col) {
-                self.max.col = fuse.col;
+                result.max.col = fuse.col;
             }
         }
+        return result;
     }
 
     pub fn contains(self: FuseRange, fuse: Fuse) bool {
@@ -147,6 +149,60 @@ pub const FuseRange = struct {
         return self.max.row < self.min.row or self.max.col < self.min.col;
     }
 
+    pub fn expandColumns(self: FuseRange, num_columns: isize) FuseRange {
+        if (num_columns < 0) {
+            return FuseRange.between(
+                Fuse.init(self.min.row, self.min.col - @intCast(usize, -num_columns)),
+                self.max,
+            );
+        } else {
+            return FuseRange.between(
+                self.min,
+                Fuse.init(self.max.row, self.max.col + @intCast(usize, num_columns)),
+            );
+        }
+    }
+
+    pub fn expandRows(self: FuseRange, num_rows: isize) FuseRange {
+        if (num_rows < 0) {
+            return FuseRange.between(
+                Fuse.init(self.min.row - @intCast(usize, -num_rows), self.min.col),
+                self.max,
+            );
+        } else {
+            return FuseRange.between(
+                self.min,
+                Fuse.init(self.max.row + @intCast(usize, num_rows), self.max.col),
+            );
+        }
+    }
+
+    pub fn subColumns(self: FuseRange, col_offset: usize, num_cols: usize) FuseRange {
+        const col = self.min.col + col_offset;
+        std.debug.assert(col + num_cols - 1 <= self.max.col);
+        return FuseRange.between(
+            Fuse.init(self.min.row, col),
+            Fuse.init(self.max.row, col + num_cols - 1),
+        );
+    }
+
+    pub fn subRows(self: FuseRange, row_offset: usize, num_rows: usize) FuseRange {
+        const row = self.min.row + row_offset;
+        std.debug.assert(row + num_rows - 1 <= self.max.row);
+        return FuseRange.between(
+            Fuse.init(row, self.min.col),
+            Fuse.init(row + num_rows - 1, self.max.col),
+        );
+    }
+
+    pub fn at(self: FuseRange, row_offset: usize, col_offset: usize) Fuse {
+        const row = self.min.row + row_offset;
+        const col = self.min.col + col_offset;
+        std.debug.assert(row <= self.max.row);
+        std.debug.assert(col <= self.max.col);
+        return Fuse.init(row, col);
+    }
+
     pub fn iterator(self: FuseRange) Iterator {
         return .{ .range = self, .next_fuse = self.min };
     }
@@ -170,6 +226,22 @@ pub const FuseRange = struct {
             }
 
             return fuse;
+        }
+
+        pub fn skip(self: *Iterator, num_fuses: usize) void {
+            const first_col = self.range.min.col;
+            const w = self.range.width();
+            var fuse = self.next_fuse;
+            var num_remaining_in_row = self.range.max.col - fuse.col + 1;
+            var remaining = num_fuses;
+            while (remaining >= num_remaining_in_row) {
+                remaining -= num_remaining_in_row;
+                fuse.row += 1;
+                fuse.col = first_col;
+                num_remaining_in_row = w;
+            }
+            fuse.col += remaining;
+            self.next_fuse = fuse;
         }
     };
 
@@ -354,4 +426,11 @@ pub const JedecData = struct {
         };
     }
 
+};
+
+pub const JedecFile = struct {
+    data: JedecData,
+    usercode: ?u32 = null,
+    security: ?u1 = null,
+    pin_count: ?usize = null,
 };

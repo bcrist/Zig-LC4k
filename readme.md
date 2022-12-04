@@ -1,10 +1,12 @@
 # Lattice ispMach4000 CPLD configuration in Zig
 
-A library for creating configuration bitstreams for LC4k CPLDs, using Zig code.  It allows for lower-level control and fewer annoying
-abstractions than Verilog/VHDL/ABEL based design toolchains, so you can tell the hardware to do exactly what you want, and get the most
-out of these constrained devices.
+A library for creating configuration bitstreams for LC4k CPLDs, using Zig code.  It allows for lower-level control and fewer
+abstractions than a Verilog/VHDL/CUPL/ABEL based design toolchain would, so you can tell the hardware to do exactly what you
+want, and get the most out of these constrained devices.
 
-Uses reverse-engineered fuse maps from the [RE4k](https://github.com/bcrist/re4k) project.
+This project uses reverse-engineered fuse maps from the [RE4k](https://github.com/bcrist/re4k) project.  When running tests
+or regenerating the device data files, it's assumed that this repo's checkout will be as a submodule of RE4k's checkout, but
+only this repo needs to be checked out to build CPLD configurations.
 
 ## Device List
 
@@ -21,10 +23,16 @@ Uses reverse-engineered fuse maps from the [RE4k](https://github.com/bcrist/re4k
 |LC4128ZC    |      |      | ✔️     |       |       |       |       | ✔️      |        |       |        |
 |LC4128ZE    |      |      | ✔️     |       | ✔️     |       |       |        | ✔️      |       | ✔️      |
 
-LC4256 and larger devices are not supported at this time.  Automotive (LA4xxx) variants likely use
-the same fusemaps as their LC counterparts, but that's just conjecture.  Please don't use this
-project for any automotive or other safety-critical application.
+LC4256 and larger devices are not supported at this time.  Automotive (LA4xxx) variants may or may not
+use the same fusemaps as their LC counterparts, but please don't use this project for any automotive or
+other safety-critical application.
 
 # TODO
-* Bitstream configuration
-* Bitstream decompilation
+* JedecData disassembly
+* Report generation from JedecData (Functional & Timing)
+* SVF generation for all devices
+* Tests
+* ease of use: PTs.eql, PTs.any?
+* ease of use: helpers to set up common MC configurations?
+* How-To in readme
+* More examples - larson scanner, 16:1 mux, address decoder, adder?
