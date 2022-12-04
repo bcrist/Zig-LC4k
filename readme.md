@@ -28,10 +28,10 @@ use the same fusemaps as their LC counterparts, but please don't use this projec
 other safety-critical application.
 
 # TODO
+* Assembly error reporting
+* Tests
 * JedecData disassembly
 * Report generation from JedecData (Functional & Timing)
-* SVF generation for all devices
-* Tests
 * ease of use: PTs.eql, PTs.any?
 * ease of use: helpers to set up common MC configurations?
 * How-To in readme

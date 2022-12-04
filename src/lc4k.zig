@@ -4,8 +4,9 @@ const jedec = @import("jedec.zig");
 const assembly = @import("assembly.zig");
 const disassembly = @import("disassembly.zig");
 const routing = @import("routing.zig");
-pub const jed_file = @import("jed_file.zig");
-pub const svf_file = @import("svf_file.zig");
+const jed_file = @import("jed_file.zig");
+const svf_file = @import("svf_file.zig");
+const report = @import("report.zig");
 pub usingnamespace common;
 pub usingnamespace jedec;
 const lc4k = @This();
@@ -113,7 +114,19 @@ pub fn LC4k(comptime device: common.DeviceType) type {
             return assembly.assemble(D, self, allocator);
         }
         pub fn disassemble(allocator: std.mem.Allocator, file: jedec.JedecFile) !Self {
-            return assembly.disassemble(D, allocator, file);
+            return disassembly.disassemble(D, allocator, file);
+        }
+        pub fn parseJED(allocator: std.mem.Allocator, text: []const u8) !jedec.JedecFile {
+            return jed_file.parse(allocator, D.jedec_dimensions.width(), D.jedec_dimensions.height(), text);
+        }
+        pub fn writeJED(allocator: std.mem.Allocator, file: jedec.JedecFile, writer: anytype, options: jed_file.WriteOptions) !void {
+            return jed_file.write(D, allocator, file, writer, options);
+        }
+        pub fn writeSVF(file: jedec.JedecFile, writer: anytype, options: svf_file.WriteOptions) !void {
+            return svf_file.write(D, file, writer, options);
+        }
+        pub fn writeReport(file: jedec.JedecFile, writer: anytype, options: report.WriteOptions) !void {
+            return report.write(D, file, writer, options);
         }
     };
 }
@@ -286,12 +299,12 @@ pub fn PTBuilder(comptime Device: type) type {
                 Factor(GRP) => switch(what) {
                     .always => never(),
                     .never => always(),
-                    .when_high => |grp| &.{ .when_low = grp },
-                    .when_low => |grp| &.{ .when_high = grp },
+                    .when_high => |grp| &.{ Factor(GRP) { .when_low = grp } },
+                    .when_low => |grp| &.{ Factor(GRP) { .when_high = grp } },
                 },
-                GRP => &.{ .when_low = what },
-                common.PinInfo => &.{ .when_low = @intToEnum(GRP, what.grp_ordinal.?) },
-                else => &.{ .when_low = Device.getGrp(what) },
+                GRP => &.{ Factor(GRP) { .when_low = what } },
+                common.PinInfo => &.{ Factor(GRP) { .when_low = @intToEnum(GRP, what.grp_ordinal.?) } },
+                else => &.{ Factor(GRP) { .when_low = Device.getGrp(what) } },
             };
         }}
 

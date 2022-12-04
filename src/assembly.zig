@@ -4,6 +4,7 @@ const jedec = @import("jedec.zig");
 const common = @import("common.zig");
 const routing = @import("routing.zig");
 const internal = @import("internal.zig");
+const fuses = @import("fuses.zig");
 
 const LC4k = lc4k.LC4k;
 const Factor = lc4k.Factor;
@@ -145,41 +146,42 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
                 .glb = @intCast(common.GlbIndex, glb),
                 .mc = @intCast(common.MacrocellIndex, mc),
             };
-            writeField(&results.jedec.data, common.ClusterRouting, cluster_routing.cluster[mc], getClusterRoutingRange(Device, mcref));
-            writeField(&results.jedec.data, common.WideRouting, cluster_routing.wide[mc], getWideRoutingRange(Device, mcref));
+
+            writeField(&results.jedec.data, common.ClusterRouting, cluster_routing.cluster[mc], fuses.getClusterRoutingRange(Device, mcref));
+            writeField(&results.jedec.data, common.WideRouting, cluster_routing.wide[mc], fuses.getWideRoutingRange(Device, mcref));
 
             const pt0xor: u1 = switch (mc_config.xor) {
                 .pt0, .pt0_inverted => 0,
                 .none, .input, .invert => 1,
             };
-            writeField(&results.jedec.data, u1, pt0xor, getPT0XorRange(Device, mcref));
+            writeField(&results.jedec.data, u1, pt0xor, fuses.getPT0XorRange(Device, mcref));
 
             const invert: u1 = switch (mc_config.xor) {
                 .invert, .pt0_inverted => 1,
                 .none, .input, .pt0 => 0,
             };
-            writeField(&results.jedec.data, u1, invert, getInvertRange(Device, mcref));
+            writeField(&results.jedec.data, u1, invert, fuses.getInvertRange(Device, mcref));
 
             const xor: u1 = switch (mc_config.xor) {
                 .input => 0,
                 .invert, .none, .pt0, .pt0_inverted => 1,
             };
-            writeField(&results.jedec.data, u1, xor, getXorRange(Device, mcref));
+            writeField(&results.jedec.data, u1, xor, fuses.getXorRange(Device, mcref));
 
             switch (mc_config.clock) {
                 .none => {},
                 .pt1_positive => {
-                    writeField(&results.jedec.data, u2, 0, getClockSourceLowRange(Device, mcref));
+                    writeField(&results.jedec.data, u2, 0, fuses.getClockSourceLowRange(Device, mcref));
                 },
                 .pt1_negative => {
-                    writeField(&results.jedec.data, u2, 1, getClockSourceLowRange(Device, mcref));
+                    writeField(&results.jedec.data, u2, 1, fuses.getClockSourceLowRange(Device, mcref));
                 },
                 .shared_pt_clock => {
-                    writeField(&results.jedec.data, u2, 2, getClockSourceLowRange(Device, mcref));
+                    writeField(&results.jedec.data, u2, 2, fuses.getClockSourceLowRange(Device, mcref));
                 },
                 .bclock => |bclk| {
-                    writeField(&results.jedec.data, u2, bclk, getClockSourceLowRange(Device, mcref));
-                    writeField(&results.jedec.data, u1, 0, getClockSourceHighRange(Device, mcref));
+                    writeField(&results.jedec.data, u2, bclk, fuses.getClockSourceLowRange(Device, mcref));
+                    writeField(&results.jedec.data, u1, 0, fuses.getClockSourceHighRange(Device, mcref));
                 },
             }
 
@@ -189,30 +191,30 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
                 .shared_pt_clock => 2,
                 .always_active => 3,
             };
-            writeField(&results.jedec.data, u2, ce, getCERange(Device, mcref));
+            writeField(&results.jedec.data, u2, ce, fuses.getCERange(Device, mcref));
 
-            writeField(&results.jedec.data, u1, mc_config.init_state, getInitStateRange(Device, mcref));
+            writeField(&results.jedec.data, u1, mc_config.init_state, fuses.getInitStateRange(Device, mcref));
             const init_src: u1 = switch (mc_config.init_source) {
                 .pt3_active_high => 0,
                 .shared_pt_init => 1,
             };
-            writeField(&results.jedec.data, u1, init_src, getInitSourceRange(Device, mcref));
+            writeField(&results.jedec.data, u1, init_src, fuses.getInitSourceRange(Device, mcref));
             const async_src: u1 = switch (mc_config.async_source) {
                 .pt2_active_high => 0,
                 .none => 1,
             };
-            writeField(&results.jedec.data, u1, async_src, getAsyncSourceRange(Device, mcref));
+            writeField(&results.jedec.data, u1, async_src, fuses.getAsyncSourceRange(Device, mcref));
 
-            writeField(&results.jedec.data, common.MacrocellFunction, mc_config.func, getMcFuncRange(Device, mcref));
+            writeField(&results.jedec.data, common.MacrocellFunction, mc_config.func, fuses.getMcFuncRange(Device, mcref));
 
             const oe: u1 = if (mc_config.pt4_oe == null) 1 else 0;
-            writeField(&results.jedec.data, u1, oe, getPT4OERange(Device, mcref));
+            writeField(&results.jedec.data, u1, oe, fuses.getPT4OERange(Device, mcref));
 
-            if (getOESourceRange(Device, mcref)) |range| {
+            if (fuses.getOESourceRange(Device, mcref)) |range| {
                 writeField(&results.jedec.data, common.OutputEnableMode, mc_config.output.oe, range);
             }
 
-            if (getOutputRoutingRange(Device, mcref)) |range| {
+            if (fuses.getOutputRoutingRange(Device, mcref)) |range| {
                 const oe_routing = if (@TypeOf(mc_config.output) == lc4k.OutputConfigZE) mc_config.output.routing else mc_config.output.oe_routing;
                 const relative = switch (oe_routing) {
                     .relative => |delta| delta,
@@ -228,7 +230,7 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
             }
 
             if (@TypeOf(mc_config.output) != lc4k.OutputConfigZE) {
-                if (getOutputRoutingModeRange(Device, mcref)) |range| {
+                if (fuses.getOutputRoutingModeRange(Device, mcref)) |range| {
                     const mode: u2 = switch (mc_config.output.routing) {
                         .same_as_oe => 2,
                         .self => 3,
@@ -239,27 +241,27 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
                 }
             }
 
-            if (getSlewRateRange(Device, mcref)) |range| {
+            if (fuses.getSlewRateRange(Device, mcref)) |range| {
                 const value = mc_config.output.slew_rate orelse config.default_slew_rate;
                 writeField(&results.jedec.data, common.SlewRate, value, range);
             }
 
-            if (getDriveTypeRange(Device, mcref)) |range| {
+            if (fuses.getDriveTypeRange(Device, mcref)) |range| {
                 const value = mc_config.output.drive_type orelse config.default_drive_type;
                 writeField(&results.jedec.data, common.DriveType, value, range);
             }
 
-            if (getInputThresholdRange(Device, mcref)) |range| {
+            if (fuses.getInputThresholdRange(Device, mcref)) |range| {
                 const value = mc_config.input.threshold orelse config.default_input_threshold;
                 writeField(&results.jedec.data, common.InputThreshold, value, range);
             }
 
             if (@TypeOf(mc_config.input) == lc4k.InputConfigZE) {
                 const value = mc_config.input.bus_maintenance orelse config.default_bus_maintenance;
-                writeField(&results.jedec.data, common.BusMaintenance, value, getBusMaintenanceRange(Device, mcref));
+                writeField(&results.jedec.data, common.BusMaintenance, value, fuses.getBusMaintenanceRange(Device, mcref));
 
                 const pgdf = mc_config.input.power_guard orelse config.ext.default_power_guard;
-                writeField(&results.jedec.data, common.PowerGuard, pgdf, getPowerGuardRange(Device, mcref));
+                writeField(&results.jedec.data, common.PowerGuard, pgdf, fuses.getPowerGuardRange(Device, mcref));
             }
 
         }
@@ -268,16 +270,16 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
             .active_low => 0,
             .active_high => 1,
         };
-        writeField(&results.jedec.data, u1, spt_init_pol, getSharedInitPolarityRange(Device, glb));
+        writeField(&results.jedec.data, u1, spt_init_pol, fuses.getSharedInitPolarityRange(Device, glb));
 
         const spt_clk_pol: u1 = switch (glb_config.shared_pt_clock) {
             .negative => 0,
             .positive => 1,
         };
-        writeField(&results.jedec.data, u1, spt_clk_pol, getSharedClockPolarityRange(Device, glb));
+        writeField(&results.jedec.data, u1, spt_clk_pol, fuses.getSharedClockPolarityRange(Device, glb));
 
         for (glb_config.shared_pt_enable_to_oe_bus) |enable, oe| {
-            writeField(&results.jedec.data, u1, @boolToInt(!enable), getSharedEnableToOEBusRange(Device, glb).subRows(oe, 1));
+            writeField(&results.jedec.data, u1, @boolToInt(!enable), fuses.getSharedEnableToOEBusRange(Device, glb).subRows(oe, 1));
         }
 
         const bclk0: u1 = switch (glb_config.bclock0) {
@@ -376,7 +378,7 @@ fn writePTFuses(comptime Device: type, results: *AssembledResults, glb: usize, g
         return;
     }
 
-    const fuses = Device.getGlbRange(glb).subColumns(glb_pt_offset, 1);
+    const range = Device.getGlbRange(glb).subColumns(glb_pt_offset, 1);
 
     var is_never = false;
     for (pt) |factor| switch (factor) {
@@ -386,7 +388,7 @@ fn writePTFuses(comptime Device: type, results: *AssembledResults, glb: usize, g
             const fuse = for (gi_signals) |maybe_grp, gi| {
                 if (maybe_grp) |gi_grp| {
                     if (gi_grp == grp) {
-                        const gi_fuses = fuses.subRows(gi * 2, 2); // should be exactly 2 fuses stacked vertically
+                        const gi_fuses = range.subRows(gi * 2, 2); // should be exactly 2 fuses stacked vertically
                         if (factor == .when_low) {
                             break gi_fuses.max;
                         } else {
@@ -404,7 +406,7 @@ fn writePTFuses(comptime Device: type, results: *AssembledResults, glb: usize, g
     // TODO check for PT factors that should have been turned into .never?
 
     if (is_never) {
-        results.jedec.data.putRange(fuses.subRows(0, Device.num_gis_per_glb * 2), 0);
+        results.jedec.data.putRange(range.subRows(0, Device.num_gis_per_glb * 2), 0);
     }
 }
 
@@ -418,141 +420,4 @@ fn writeField(data: *jedec.JedecData, comptime T: type, value: T, range: jedec.F
         data.put(fuse, @truncate(u1, int_value));
         int_value = int_value >> 1;
     }
-}
-
-fn getSharedClockPolarityRange(comptime Device: type, glb: usize) jedec.FuseRange {
-    const starting_row = Device.num_gis_per_glb * 2;
-    return Device.getGlbRange(glb).subRows(starting_row, 1).subColumns(82, 1);
-}
-
-fn getSharedEnableToOEBusRange(comptime Device: type, glb: usize) jedec.FuseRange {
-    const starting_row = Device.num_gis_per_glb * 2 + 1;
-    return Device.getGlbRange(glb).subRows(starting_row, Device.oe_bus_size).subColumns(82, 1);
-}
-
-fn getSharedInitPolarityRange(comptime Device: type, glb: usize) jedec.FuseRange {
-    const starting_row = Device.num_gis_per_glb * 2 + 1 + Device.oe_bus_size;
-    return Device.getGlbRange(glb).subRows(starting_row, 1).subColumns(82, 1);
-}
-
-fn getMacrocellRange(comptime Device: type, mcref: common.MacrocellRef) jedec.FuseRange {
-    const starting_row = Device.num_gis_per_glb * 2;
-    const range = Device.getGlbRange(mcref.glb).subRows(starting_row, Device.jedec_dimensions.height() - starting_row);
-    return switch (@truncate(u1, mcref.mc)) {
-        0 => range.subColumns(mcref.mc * 5 + 4, 1),
-        1 => range.subColumns(mcref.mc * 5, 1)
-    };
-}
-
-fn getPT0XorRange(comptime Device: type, mcref: common.MacrocellRef) jedec.FuseRange {
-    return getMacrocellRange(Device, mcref).subRows(0, 1);
-}
-fn getInvertRange(comptime Device: type, mcref: common.MacrocellRef) jedec.FuseRange {
-    return getMacrocellRange(Device, mcref).subRows(1, 1);
-}
-fn getClusterRoutingRange(comptime Device: type, mcref: common.MacrocellRef) jedec.FuseRange {
-    return getMacrocellRange(Device, mcref).subRows(2, 2);
-}
-fn getClockSourceLowRange(comptime Device: type, mcref: common.MacrocellRef) jedec.FuseRange {
-    return getMacrocellRange(Device, mcref).subRows(4, 2);
-}
-fn getInitStateRange(comptime Device: type, mcref: common.MacrocellRef) jedec.FuseRange {
-    return getMacrocellRange(Device, mcref).subRows(6, 1);
-}
-fn getMcFuncRange(comptime Device: type, mcref: common.MacrocellRef) jedec.FuseRange {
-    return getMacrocellRange(Device, mcref).subRows(7, 2);
-}
-fn getClockSourceHighRange(comptime Device: type, mcref: common.MacrocellRef) jedec.FuseRange {
-    return getMacrocellRange(Device, mcref).subRows(9, 1);
-}
-fn getAsyncSourceRange(comptime Device: type, mcref: common.MacrocellRef) jedec.FuseRange {
-    return getMacrocellRange(Device, mcref).subRows(10, 1);
-}
-fn getInitSourceRange(comptime Device: type, mcref: common.MacrocellRef) jedec.FuseRange {
-    return getMacrocellRange(Device, mcref).subRows(11, 1);
-}
-fn getPT4OERange(comptime Device: type, mcref: common.MacrocellRef) jedec.FuseRange {
-    return getMacrocellRange(Device, mcref).subRows(12, 1);
-}
-fn getXorRange(comptime Device: type, mcref: common.MacrocellRef) jedec.FuseRange {
-    return getMacrocellRange(Device, mcref).subRows(13, 1);
-}
-fn getCERange(comptime Device: type, mcref: common.MacrocellRef) jedec.FuseRange {
-    return getMacrocellRange(Device, mcref).subRows(14, 2);
-}
-fn getWideRoutingRange(comptime Device: type, mcref: common.MacrocellRef) jedec.FuseRange {
-    return getMacrocellRange(Device, mcref).subRows(16, 1);
-}
-fn getOutputRoutingRange(comptime Device: type, mcref: common.MacrocellRef) ?jedec.FuseRange {
-    if (Device.jedec_dimensions.height() == 95 and @truncate(u1, mcref.mc) == 1) {
-        return null;
-    } else {
-        return getMacrocellRange(Device, mcref).subRows(17, 3);
-    }
-}
-fn getOutputRoutingModeRange(comptime Device: type, mcref: common.MacrocellRef) ?jedec.FuseRange {
-    if (Device.family == .zero_power_enhanced) {
-        return null;
-    } else if (Device.jedec_dimensions.height() == 95) {
-        if (@truncate(u1, mcref.mc) == 1) {
-            return null;
-        } else {
-            return getMacrocellRange(Device, mcref).expandColumns(1).subRows(20, 1);
-        }
-    } else {
-        return getMacrocellRange(Device, mcref).subRows(23, 2);
-    }
-}
-fn getOESourceRange(comptime Device: type, mcref: common.MacrocellRef) ?jedec.FuseRange {
-    if (Device.jedec_dimensions.height() == 95) {
-        if (@truncate(u1, mcref.mc) == 1) {
-            return null;
-        } else {
-            return getMacrocellRange(Device, mcref).expandColumns(1).subColumns(1, 1).subRows(17, 3);
-        }
-    } else {
-        return getMacrocellRange(Device, mcref).subRows(20, 3);
-    }
-}
-fn getBusMaintenanceRange(comptime Device: type, mcref: common.MacrocellRef) jedec.FuseRange {
-    std.debug.assert(Device.family == .zero_power_enhanced);
-    return getMacrocellRange(Device, mcref).subRows(23, 2);
-}
-fn getSlewRateRange(comptime Device: type, mcref: common.MacrocellRef) ?jedec.FuseRange {
-    if (Device.jedec_dimensions.height() == 95) {
-        if (@truncate(u1, mcref.mc) == 1) {
-            return null;
-        } else {
-            return getMacrocellRange(Device, mcref).expandColumns(1).subColumns(1, 1).subRows(21, 1);
-        }
-    } else {
-        return getMacrocellRange(Device, mcref).subRows(25, 1);
-    }
-}
-fn getDriveTypeRange(comptime Device: type, mcref: common.MacrocellRef) ?jedec.FuseRange {
-    if (Device.jedec_dimensions.height() == 95) {
-        if (@truncate(u1, mcref.mc) == 1) {
-            return null;
-        } else {
-            return getMacrocellRange(Device, mcref).subRows(21, 1);
-        }
-    } else {
-        return getMacrocellRange(Device, mcref).subRows(26, 1);
-    }
-}
-fn getInputThresholdRange(comptime Device: type, mcref: common.MacrocellRef) ?jedec.FuseRange {
-    if (Device.jedec_dimensions.height() == 95) {
-        if (@truncate(u1, mcref.mc) == 1) {
-            return null;
-        } else {
-            return getMacrocellRange(Device, mcref).subRows(22, 1);
-        }
-    } else {
-        return getMacrocellRange(Device, mcref).subRows(27, 1);
-    }
-}
-fn getPowerGuardRange(comptime Device: type, mcref: common.MacrocellRef) jedec.FuseRange {
-    std.debug.assert(Device.family == .zero_power_enhanced);
-    const range = Device.getGlbRange(mcref.glb).subRows(Device.jedec_dimensions.max.row, 1);
-    return range.subColumns(mcref.mc * 5 + 3, 1);
 }

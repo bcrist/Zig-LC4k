@@ -8,6 +8,9 @@ pub fn main() !void {
 
     var chip = Chip {};
 
+    chip.usercode = 0x123456;
+    chip.security = true;
+
     var mc1 = chip.mc(Chip.pins._23);
     mc1.output.oe = .output_only;
     mc1.sum = &.{ PTs.always() };
@@ -21,5 +24,16 @@ pub fn main() !void {
     defer arena.deinit();
 
     const results = try chip.assemble(arena.allocator());
-    try lc4k.jed_file.write(results.jedec, arena.allocator(), std.io.getStdOut().writer(), .{ .one_char = '1' });
+
+    var jed_file = try std.fs.cwd().createFile("examples/basic_test.jed", .{});
+    defer jed_file.close();
+    try Chip.writeJED(arena.allocator(), results.jedec, jed_file.writer(), .{});
+
+    var svf_file = try std.fs.cwd().createFile("examples/basic_test.svf", .{});
+    defer svf_file.close();
+    try Chip.writeSVF(results.jedec, svf_file.writer(), .{});
+
+    var report_file = try std.fs.cwd().createFile("examples/basic_test.html", .{});
+    defer report_file.close();
+    try Chip.writeReport(results.jedec, report_file.writer(), .{});
 }
