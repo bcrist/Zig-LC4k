@@ -14,18 +14,19 @@ const PTs = lc4k.PTBuilder;
 pub const AssemblyError = struct {
     err: anyerror,
     details: []const u8,
+    gi: ?common.GiIndex = null,
     glb: ?common.GlbIndex = null,
     mc: ?common.MacrocellIndex = null,
-    mc_pt: ?u8 = null,
+    // mc_pt: ?u8 = null,
 };
 
-pub const AssembledResults = struct {
+pub const AssemblyResults = struct {
     jedec: jedec.JedecFile,
     errors: std.ArrayList(AssemblyError),
 };
 
-pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocator: std.mem.Allocator) !AssembledResults {
-    var results = AssembledResults {
+pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocator: std.mem.Allocator) !AssemblyResults {
+    var results = AssemblyResults {
         .jedec = jedec.JedecFile {
             .data = try jedec.JedecData.initFull(allocator, Device.jedec_dimensions),
         },
@@ -69,11 +70,11 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
         // Route GRP signals to specific GI fuses:
         try routing.routeGIs(Device, &gi_routing, rnd);
         for (gi_routing) |maybe_signal, gi| if (maybe_signal) |signal| {
-            const option_index = std.mem.indexOfScalar(Device.GRP, &Device.gi_options[gi], signal) orelse unreachable;
+            const option_index = std.mem.indexOfScalar(Device.GRP, &Device.gi_options[gi], signal).?;
             const range = Device.getGiRange(glb, gi);
             var iter = range.iterator();
             iter.skip(option_index);
-            results.jedec.data.put(iter.next() orelse unreachable, 0);
+            results.jedec.data.put(iter.next().?, 0);
         };
 
         // Assign sum PTs to clusters to MCs and program routing fuses
@@ -142,10 +143,7 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
 
         // Program MC-slice configuration fuses (Replace default/unset parameters with the defaults)
         for (glb_config.mc) |mc_config, mc| {
-            const mcref = common.MacrocellRef {
-                .glb = @intCast(common.GlbIndex, glb),
-                .mc = @intCast(common.MacrocellIndex, mc),
-            };
+            const mcref = common.MacrocellRef.init(glb, mc);
 
             writeField(&results.jedec.data, common.ClusterRouting, cluster_routing.cluster[mc], fuses.getClusterRoutingRange(Device, mcref));
             writeField(&results.jedec.data, common.WideRouting, cluster_routing.wide[mc], fuses.getWideRoutingRange(Device, mcref));
@@ -166,7 +164,7 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
                 .input => 0,
                 .invert, .none, .pt0, .pt0_inverted => 1,
             };
-            writeField(&results.jedec.data, u1, xor, fuses.getXorRange(Device, mcref));
+            writeField(&results.jedec.data, u1, xor, fuses.getInputXorRange(Device, mcref));
 
             switch (mc_config.clock) {
                 .none => {},
@@ -322,8 +320,9 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
         results.jedec.data.put(Device.getGOESourceFuse(3), @boolToInt(config.goe3.source == .bus));
     }
 
+    results.jedec.data.put(Device.getZeroHoldTimeFuse(), @boolToInt(!config.zero_hold_time));
+
     if (Device.family == .zero_power_enhanced) {
-        results.jedec.data.put(Device.getZeroHoldTimeFuse(), @boolToInt(!config.ext.zero_hold_time));
 
         if (config.ext.osctimer) |osctimer| {
             results.jedec.data.putRange(Device.getOscTimerEnableRange(), 0);
@@ -373,12 +372,13 @@ fn writeDedicatedInputFuses(comptime Device: type, data: *jedec.JedecData, pin_i
     }
 }
 
-fn writePTFuses(comptime Device: type, results: *AssembledResults, glb: usize, glb_pt_offset: usize, gi_signals: *[Device.num_gis_per_glb]?Device.GRP, pt: PT(Device.GRP)) !void {
+fn writePTFuses(comptime Device: type, results: *AssemblyResults, glb: usize, glb_pt_offset: usize, gi_signals: *[Device.num_gis_per_glb]?Device.GRP, pt: PT(Device.GRP)) !void {
     if (internal.isAlways(pt)) {
         return;
     }
 
-    const range = Device.getGlbRange(glb).subColumns(glb_pt_offset, 1);
+    const range = fuses.getPTRange(Device, glb, glb_pt_offset);
+
 
     var is_never = false;
     for (pt) |factor| switch (factor) {

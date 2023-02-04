@@ -1,0 +1,125 @@
+body {
+    background: #111;
+    color: #ccc;
+}
+
+footer {
+    border-top: solid 2px #555;
+    margin-top: 1em;
+    padding: 1em;
+    text-align: center;
+}
+
+a {
+    color: #aaf;
+}
+
+h1,h2,h3,h4,h5,h6 {
+    font-family: sans-serif;
+    margin: 0.5em 0 0.5em 0;
+}
+h1, h2 {
+    background: #222;
+    margin: 0.5em 0;
+    padding: 0.5em;
+}
+h1 {
+    font-size: 140%;
+    margin-top: 1em;
+}
+h2 {
+    font-size: 120%;
+}
+
+section {
+    margin: 0 1em 1em 1em;
+}
+
+.inline {
+    display: inline-block;
+}
+
+table {
+    border-spacing: 0;
+    border-collapse: collapse;
+    font-family: Iosevka, Consolas, monospace;
+}
+
+tr.highlight {
+    background: #181818;
+}
+
+td, th {
+    padding: 0.2em 0.5em;
+}
+
+td {
+    border: solid 1px #333;
+    text-align: center;
+}
+th {
+    border-left: solid 1px #333;
+    border-right: solid 1px #333;
+    text-align: center;
+}
+th:has(+td) {
+    border-top: solid 1px #333;
+    border-bottom: solid 1px #333;
+    border-left: none;
+    border-right: none;
+}
+
+td.left {
+    text-align: left;
+}
+
+td.fuse {
+    width: 1em;
+    text-align: center;
+    padding: 0.2em;
+}
+
+abbr u {
+    text-decoration: overline;
+}
+
+kbd {
+    display: inline-block;
+    background: #333;
+    padding: 0.2em 0.6em;
+    border-radius: 0.3em;
+    font-size: 96%;
+}
+
+kbd.pt-usage.bie { background: #337; }
+kbd.pt-usage.xor { background: #346; }
+kbd.pt-usage.init, kbd.pt-usage.async, kbd.float { background: #633; }
+kbd.pt-usage.clock { background: #553; }
+kbd.pt-usage.ce { background: #643; }
+kbd.pt-usage.oe { background: #353; }
+
+
+kbd.pos, kbd.push-pull, kbd.high, kbd.pullup {
+    background: #344;
+}
+
+kbd.fast {
+    background: #353;
+}
+
+kbd.neg, kbd.slow, kbd.open-drain, kbd.low, kbd.pulldown {
+    background: #443;
+}
+
+kbd.power-guard.disabled {
+    display: none;
+}
+
+
+
+.hover-highlight.hover-highlight {
+    background: #333;
+}
+.ca-depth-1.hover-highlight { background: #433; }
+.ca-depth-2.hover-highlight { background: #533; }
+.ca-depth-3.hover-highlight { background: #633; }

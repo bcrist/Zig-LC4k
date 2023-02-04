@@ -13,8 +13,6 @@ pub fn main() !void {
     chip.glb[0].shared_pt_enable_to_oe_bus[0] = true;
     chip.goe0.polarity = .active_high;
 
-    chip.glb[1].shared_pt_init = .{ .active_low = PTs.of(Chip.pins._22) };
-
     const output_pins = [_]lc4k.PinInfo {
         Chip.pins._23,
         Chip.pins._24,
@@ -64,5 +62,7 @@ pub fn main() !void {
 
     var report_file = try std.fs.cwd().createFile("examples/counter.html", .{});
     defer report_file.close();
-    try Chip.writeReport(results.jedec, report_file.writer(), .{});
+    try Chip.writeReport(results.jedec, report_file.writer(), .{
+        .assembly_errors = results.errors.items,
+    });
 }

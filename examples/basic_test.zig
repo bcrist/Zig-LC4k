@@ -19,7 +19,6 @@ pub fn main() !void {
     mc2.output.oe = .output_only;
     mc2.sum = &.{ PTs.never() };
 
-
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
 
@@ -35,5 +34,7 @@ pub fn main() !void {
 
     var report_file = try std.fs.cwd().createFile("examples/basic_test.html", .{});
     defer report_file.close();
-    try Chip.writeReport(results.jedec, report_file.writer(), .{});
+    try Chip.writeReport(results.jedec, report_file.writer(), .{
+        .assembly_errors = results.errors.items,
+    });
 }

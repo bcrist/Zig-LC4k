@@ -1,4 +1,4 @@
-//[[!! include('devices', 'LC4128ZC_TQFP100') !! 803 ]]
+//[[!! include('devices', 'LC4128ZC_TQFP100') !! 810 ]]
 //[[ ################# !! GENERATED CODE -- DO NOT MODIFY !! ################# ]]
 const std = @import("std");
 const common = @import("common.zig");
@@ -22,6 +22,8 @@ pub const jedec_dimensions = jedec.FuseRange.init(740, 100);
 const grp_device = @import("LC4128V_TQFP144.zig");
 
 pub const GRP = grp_device.GRP;
+pub const mc_signals = grp_device.mc_signals;
+pub const mc_output_signals = grp_device.mc_output_signals;
 pub const gi_options = grp_device.gi_options;
 pub const gi_options_by_grp = grp_device.gi_options_by_grp;
 pub const getGlbRange = grp_device.getGlbRange;
@@ -46,6 +48,11 @@ pub fn getGOESourceFuse(goe: usize) jedec.Fuse {
         else => unreachable,
     };
 }
+
+pub fn getZeroHoldTimeFuse() jedec.Fuse {
+    return jedec.Fuse.init(87, 101);
+}
+
 
 pub fn getGlobalBusMaintenanceRange() jedec.FuseRange {
     return jedec.FuseRange.fromFuse(

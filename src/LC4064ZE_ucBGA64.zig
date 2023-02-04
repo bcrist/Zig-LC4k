@@ -1,4 +1,4 @@
-//[[!! include('devices', 'LC4064ZE_ucBGA64') !! 583 ]]
+//[[!! include('devices', 'LC4064ZE_ucBGA64') !! 585 ]]
 //[[ ################# !! GENERATED CODE -- DO NOT MODIFY !! ################# ]]
 const std = @import("std");
 const common = @import("common.zig");
@@ -29,6 +29,8 @@ pub const osctimer = struct {
 const grp_device = @import("LC4064x_TQFP100.zig");
 
 pub const GRP = grp_device.GRP;
+pub const mc_signals = grp_device.mc_signals;
+pub const mc_output_signals = grp_device.mc_output_signals;
 pub const gi_options = grp_device.gi_options;
 pub const gi_options_by_grp = grp_device.gi_options_by_grp;
 pub const getGlbRange = grp_device.getGlbRange;
@@ -60,7 +62,7 @@ pub fn getZeroHoldTimeFuse() jedec.Fuse {
 
 pub fn getOscTimerEnableRange() jedec.FuseRange {
     return jedec.FuseRange.between(
-        jedec.Fuse.init(92, 352),
+        jedec.Fuse.init(92, 351),
         jedec.Fuse.init(92, 352),
     );
 }

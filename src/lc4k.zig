@@ -71,7 +71,6 @@ pub fn LC4k(comptime device: common.DeviceType) type {
     const Ext = switch (D.family) {
         .zero_power_enhanced => struct {
             default_power_guard: common.PowerGuard = .disabled,
-            zero_hold_time: bool = false,
             osctimer: ?OscTimerConfig(D) = null,
         },
         else => struct {},
@@ -86,6 +85,8 @@ pub fn LC4k(comptime device: common.DeviceType) type {
         goe1: GOE01_Config = .{},
         goe2: GOEConfig = .{},
         goe3: GOEConfig = .{},
+
+        zero_hold_time: bool = false,
 
         usercode: ?u32 = null,
         security: bool = false,
@@ -110,22 +111,22 @@ pub fn LC4k(comptime device: common.DeviceType) type {
             const mcref = D.getMacrocellRef(which);
             return &self.glb[mcref.glb].mc[mcref.mc];
         }
-        pub fn assemble(self: Self, allocator: std.mem.Allocator) !assembly.AssembledResults {
+        pub fn assemble(self: Self, allocator: std.mem.Allocator) !assembly.AssemblyResults {
             return assembly.assemble(D, self, allocator);
         }
-        pub fn disassemble(allocator: std.mem.Allocator, file: jedec.JedecFile) !Self {
+        pub fn disassemble(allocator: std.mem.Allocator, file: jedec.JedecFile) !disassembly.DisassemblyResults(D) {
             return disassembly.disassemble(D, allocator, file);
         }
         pub fn parseJED(allocator: std.mem.Allocator, text: []const u8) !jedec.JedecFile {
             return jed_file.parse(allocator, D.jedec_dimensions.width(), D.jedec_dimensions.height(), text);
         }
         pub fn writeJED(allocator: std.mem.Allocator, file: jedec.JedecFile, writer: anytype, options: jed_file.WriteOptions) !void {
-            return jed_file.write(D, allocator, file, writer, options);
+            return jed_file.write(D.device_type, allocator, file, writer, options);
         }
         pub fn writeSVF(file: jedec.JedecFile, writer: anytype, options: svf_file.WriteOptions) !void {
             return svf_file.write(D, file, writer, options);
         }
-        pub fn writeReport(file: jedec.JedecFile, writer: anytype, options: report.WriteOptions) !void {
+        pub fn writeReport(file: jedec.JedecFile, writer: anytype, options: report.WriteOptions(D)) !void {
             return report.write(D, file, writer, options);
         }
     };
@@ -155,16 +156,16 @@ pub fn GlbConfig(comptime D: type) type {
             var configs: [num_glbs]Self = undefined;
             var i = 0;
             while (i < num_glbs) : (i += 1) {
-                configs[i] = initUnused(i);
+                configs[i] = initUnused();
             }
             return configs;
         }}
 
-        pub fn initUnused(glb: usize) Self {
+        pub fn initUnused() Self {
             var self = Self {
                 .mc = undefined,
-                .shared_pt_init = .{ .active_high = PTBuilder(D).never() },
-                .shared_pt_clock = .{ .positive = PTBuilder(D).never() },
+                .shared_pt_init = .{ .active_high = PTBuilder(D).always() },
+                .shared_pt_clock = .{ .positive = PTBuilder(D).always() },
                 .shared_pt_enable = PTBuilder(D).always(),
                 .shared_pt_enable_to_oe_bus = [_]bool { false } ** D.oe_bus_size,
                 .bclock0 = .clk0_pos,
@@ -176,10 +177,6 @@ pub fn GlbConfig(comptime D: type) type {
             if (D.clock_pins.len < 4) {
                 self.bclock1 = .clk0_neg;
                 self.bclock3 = .clk2_neg;
-            }
-
-            if (glb < D.oe_bus_size) {
-                self.shared_pt_enable_to_oe_bus[glb] = true;
             }
 
             for (self.mc) |*mc| {
@@ -203,8 +200,8 @@ pub fn MacrocellConfig(comptime family: common.DeviceFamily, comptime GRP: type)
 
     return struct {
         sum: []const PT(GRP),
-        sum_divert: ?common.ClusterRouting = null,
-        wide_sum_divert: ?common.WideRouting = null,
+        sum_routing: ?common.ClusterRouting = null,
+        wide_sum_routing: ?common.WideRouting = null,
         xor: union(enum) {
             none,
             invert,
@@ -249,6 +246,67 @@ pub fn MacrocellConfig(comptime family: common.DeviceFamily, comptime GRP: type)
                 .output = .{ .oe = .input_only },
             };
         }
+    };
+}
+
+pub const InputConfig = struct {
+    threshold: ?common.InputThreshold = null,
+};
+pub const InputConfigZE = struct {
+    threshold: ?common.InputThreshold = null,
+    bus_maintenance: ?common.BusMaintenance = null,
+    power_guard: ?common.PowerGuard = null,
+};
+
+pub fn OutputConfig(comptime GRP: type) type {
+    return struct {
+        slew_rate: ?common.SlewRate = null,
+        drive_type: ?common.DriveType = null,
+        oe: common.OutputEnableMode,
+        oe_routing: OutputRouting = .{ .relative = 0 },
+        routing: union(enum) {
+            same_as_oe,
+            self,
+            five_pt_fast_bypass: []const PT(GRP),
+            five_pt_fast_bypass_inverted: []const PT(GRP),
+        } = .{ .same_as_oe = {} },
+    };
+}
+pub const OutputConfigZE = struct {
+    slew_rate: ?common.SlewRate = null,
+    drive_type: ?common.DriveType = null,
+    oe: common.OutputEnableMode,
+    routing: OutputRouting = .{ .relative = 0 },
+};
+
+pub const OutputRouting = union(enum) {
+    relative: u3,
+    absolute: common.MacrocellIndex,
+};
+
+pub const GOEPolarity = enum {
+    active_high,
+    active_low,
+};
+
+pub const GOEConfig = struct {
+    polarity: GOEPolarity = .active_high,
+};
+
+pub const GOEConfigWithSource = struct {
+    polarity: GOEPolarity = .active_high,
+    source: enum {
+        bus,
+        input,
+    } = .bus,
+};
+
+pub fn OscTimerConfig(comptime Device: type) type {
+    return struct {
+        pub const signals = Device.osctimer;
+        enable_osc_out_and_disable: bool = false,
+        enable_timer_out_and_reset: bool = false,
+        timer_divisor: common.TimerDivisor = .div1048576,
     };
 }
 
@@ -350,66 +408,5 @@ pub fn PTBuilder(comptime Device: type) type {
             return base ++ [_]Factor(GRP) {  factor };
         }}
 
-    };
-}
-
-pub const InputConfig = struct {
-    threshold: ?common.InputThreshold = null,
-};
-pub const InputConfigZE = struct {
-    threshold: ?common.InputThreshold = null,
-    bus_maintenance: ?common.BusMaintenance = null,
-    power_guard: ?common.PowerGuard = null,
-};
-
-pub fn OutputConfig(comptime GRP: type) type {
-    return struct {
-        slew_rate: ?common.SlewRate = null,
-        drive_type: ?common.DriveType = null,
-        oe: common.OutputEnableMode,
-        oe_routing: OutputRouting = .{ .relative = 0 },
-        routing: union(enum) {
-            same_as_oe,
-            self,
-            five_pt_fast_bypass: []const PT(GRP),
-            five_pt_fast_bypass_inverted: []const PT(GRP),
-        } = .{ .same_as_oe = {} },
-    };
-}
-pub const OutputConfigZE = struct {
-    slew_rate: ?common.SlewRate = null,
-    drive_type: ?common.DriveType = null,
-    oe: common.OutputEnableMode,
-    routing: OutputRouting = .{ .relative = 0 },
-};
-
-pub const OutputRouting = union(enum) {
-    relative: u3,
-    absolute: common.MacrocellIndex,
-};
-
-pub const GOEPolarity = enum {
-    active_high,
-    active_low,
-};
-
-pub const GOEConfig = struct {
-    polarity: GOEPolarity = .active_high,
-};
-
-pub const GOEConfigWithSource = struct {
-    polarity: GOEPolarity = .active_high,
-    source: enum {
-        bus,
-        input,
-    } = .bus,
-};
-
-pub fn OscTimerConfig(comptime Device: type) type {
-    return struct {
-        pub const signals = Device.osctimer;
-        enable_osc_out_and_disable: bool = false,
-        enable_timer_out_and_reset: bool = false,
-        timer_divisor: common.TimerDivisor = .div1048576,
     };
 }

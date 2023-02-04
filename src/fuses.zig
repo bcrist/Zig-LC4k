@@ -4,6 +4,10 @@ const common = @import("common.zig");
 
 const MacrocellRef = common.MacrocellRef;
 
+pub fn getPTRange(comptime Device: type, glb: usize, glb_pt_offset: usize) jedec.FuseRange {
+    return Device.getGlbRange(glb).subColumns(glb_pt_offset, 1).subRows(0, Device.num_gis_per_glb * 2);
+}
+
 pub fn getSharedClockPolarityRange(comptime Device: type, glb: usize) jedec.FuseRange {
     const starting_row = Device.num_gis_per_glb * 2;
     return Device.getGlbRange(glb).subRows(starting_row, 1).subColumns(82, 1);
@@ -68,7 +72,7 @@ pub fn getPT4OERange(comptime Device: type, mcref: MacrocellRef) jedec.FuseRange
     return getMacrocellRange(Device, mcref).subRows(12, 1);
 }
 
-pub fn getXorRange(comptime Device: type, mcref: MacrocellRef) jedec.FuseRange {
+pub fn getInputXorRange(comptime Device: type, mcref: MacrocellRef) jedec.FuseRange {
     return getMacrocellRange(Device, mcref).subRows(13, 1);
 }
 

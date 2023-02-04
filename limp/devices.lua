@@ -111,10 +111,12 @@ local grp_device = grp_map[which]
 include 'pins'
 include 'threshold'
 include 'goes'
+include 'zerohold'
 
 info.pins, info.pins_by_type = load_pins(which)
 local pin_to_threshold_fuse = load_input_threshold_fuses(which)
 local goes = load_goe_fuses(which)
+local zerohold = load_zerohold_fuse(which)
 
 compute_grp_names(info.pins_by_type, pin_to_threshold_fuse)
 
@@ -176,6 +178,8 @@ if grp_device then write([[
 const grp_device = @import("]], grp_device, [[.zig");
 
 pub const GRP = grp_device.GRP;
+pub const mc_signals = grp_device.mc_signals;
+pub const mc_output_signals = grp_device.mc_output_signals;
 pub const gi_options = grp_device.gi_options;
 pub const gi_options_by_grp = grp_device.gi_options_by_grp;
 pub const getGlbRange = grp_device.getGlbRange;
@@ -202,6 +206,35 @@ pub const GRP = enum {]], indent)
     write(unindent, nl, [[
 };
 
+pub const mc_signals = [num_glbs][num_mcs_per_glb]GRP {]])
+    indent()
+    for glb = 1, info.num_glbs do
+        write(nl, '.{')
+        for mc = 0, 15 do
+            write(' .mc_', string.char(64 + glb), mc, ',')
+        end
+        write(' },')
+    end
+    write(unindent, nl, [[
+};
+
+pub const mc_output_signals = [num_glbs][num_mcs_per_glb]?GRP {]])
+    indent()
+    for glb = 1, info.num_glbs do
+        write(nl, '.{')
+        for mc = 0, 15 do
+            local name = 'io_'..string.char(64 + glb)..mc
+            if grp_names[name] then
+                write(' .', name, ',')
+            else
+                write(' null,')
+            end
+        end
+        write(' },')
+    end
+    write(unindent, nl, [[
+};
+
 pub const gi_options = [num_gis_per_glb][gi_mux_size]GRP {]])
 
     indent()
@@ -224,6 +257,7 @@ pub const gi_options = [num_gis_per_glb][gi_mux_size]GRP {]])
 pub const gi_options_by_grp = internal.invertGIMapping(GRP, gi_mux_size, &gi_options);
 
 pub fn getGlbRange(glb: usize) jedec.FuseRange {
+    std.debug.assert(glb < num_glbs);
     ]]
     if info.gi_mux_size == 19 then
         writeln('var index = num_glbs - glb - 1;', indent)
@@ -238,6 +272,7 @@ pub fn getGlbRange(glb: usize) jedec.FuseRange {
 }
 
 pub fn getGiRange(glb: usize, gi: usize) jedec.FuseRange {
+    std.debug.assert(gi < num_gis_per_glb);
     ]]
     if info.gi_mux_size == 19 then
         writeln('var left_glb = glb | 1;', indent);
@@ -297,23 +332,27 @@ pub fn getGOESourceFuse(goe: usize) jedec.Fuse {
     end
     unindent(2)
 
-    write[[
+    write([[
 
         else => unreachable,
     };
 }
-]]
+
+pub fn getZeroHoldTimeFuse() jedec.Fuse {
+    return jedec.Fuse.init(]],zerohold[1],', ',zerohold[2],[[);
+}
+
+]])
+
 if info.family == 'zero_power_enhanced' then
-    include 'zerohold'
     include 'osctimer'
-    local zerohold = load_zerohold_fuse(which)
     local osctimer = load_osctimer_fuses(which)
 
     local min, max
     for _, f in ipairs(osctimer.enables) do
         if min == nil then
-            min = f
-            max = f
+            min = { f[1], f[2] }
+            max = { f[1], f[2] }
         else
             min[1] = math.min(min[1], f[1])
             min[2] = math.min(min[2], f[2])
@@ -323,11 +362,6 @@ if info.family == 'zero_power_enhanced' then
     end
 
     write([[
-
-pub fn getZeroHoldTimeFuse() jedec.Fuse {
-    return jedec.Fuse.init(]],zerohold[1],', ',zerohold[2],[[);
-}
-
 pub fn getOscTimerEnableRange() jedec.FuseRange {
     return jedec.FuseRange.between(
         jedec.Fuse.init(]],min[1],', ',min[2],[[),

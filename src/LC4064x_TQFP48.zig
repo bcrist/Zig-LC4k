@@ -1,4 +1,4 @@
-//[[!! include('devices', 'LC4064x_TQFP48') !! 576 ]]
+//[[!! include('devices', 'LC4064x_TQFP48') !! 597 ]]
 //[[ ################# !! GENERATED CODE -- DO NOT MODIFY !! ################# ]]
 const std = @import("std");
 const common = @import("common.zig");
@@ -122,6 +122,20 @@ pub const GRP = enum {
     mc_D15,
 };
 
+pub const mc_signals = [num_glbs][num_mcs_per_glb]GRP {
+    .{ .mc_A0, .mc_A1, .mc_A2, .mc_A3, .mc_A4, .mc_A5, .mc_A6, .mc_A7, .mc_A8, .mc_A9, .mc_A10, .mc_A11, .mc_A12, .mc_A13, .mc_A14, .mc_A15, },
+    .{ .mc_B0, .mc_B1, .mc_B2, .mc_B3, .mc_B4, .mc_B5, .mc_B6, .mc_B7, .mc_B8, .mc_B9, .mc_B10, .mc_B11, .mc_B12, .mc_B13, .mc_B14, .mc_B15, },
+    .{ .mc_C0, .mc_C1, .mc_C2, .mc_C3, .mc_C4, .mc_C5, .mc_C6, .mc_C7, .mc_C8, .mc_C9, .mc_C10, .mc_C11, .mc_C12, .mc_C13, .mc_C14, .mc_C15, },
+    .{ .mc_D0, .mc_D1, .mc_D2, .mc_D3, .mc_D4, .mc_D5, .mc_D6, .mc_D7, .mc_D8, .mc_D9, .mc_D10, .mc_D11, .mc_D12, .mc_D13, .mc_D14, .mc_D15, },
+};
+
+pub const mc_output_signals = [num_glbs][num_mcs_per_glb]?GRP {
+    .{ .io_A0, null, .io_A2, null, .io_A4, null, .io_A6, null, .io_A8, null, .io_A10, null, .io_A12, null, .io_A14, null, },
+    .{ .io_B0, null, .io_B2, null, .io_B4, null, .io_B6, null, .io_B8, null, .io_B10, null, .io_B12, null, .io_B14, null, },
+    .{ .io_C0, null, .io_C2, null, .io_C4, null, .io_C6, null, .io_C8, null, .io_C10, null, .io_C12, null, .io_C14, null, },
+    .{ .io_D0, null, .io_D2, null, .io_D4, null, .io_D6, null, .io_D8, null, .io_D10, null, .io_D12, null, .io_D14, null, },
+};
+
 pub const gi_options = [num_gis_per_glb][gi_mux_size]GRP {
     .{ .mc_B9, .mc_A6, .mc_A11, .mc_B1, .mc_A1, .mc_C8, .mc_C10, .mc_D12, .mc_C2, .mc_C0, },
     .{ .io_A8, .io_A4, .mc_B4, .mc_B13, .mc_B0, .mc_C8, .io_D4, .io_C2, .mc_D1, .io_C14, },
@@ -164,11 +178,13 @@ pub const gi_options = [num_gis_per_glb][gi_mux_size]GRP {
 pub const gi_options_by_grp = internal.invertGIMapping(GRP, gi_mux_size, &gi_options);
 
 pub fn getGlbRange(glb: usize) jedec.FuseRange {
+    std.debug.assert(glb < num_glbs);
     const index = num_glbs - glb - 1;
     return jedec_dimensions.subColumns(88 * index + 5, 83);
 }
 
 pub fn getGiRange(glb: usize, gi: usize) jedec.FuseRange {
+    std.debug.assert(gi < num_gis_per_glb);
     return getGlbRange(glb).expandColumns(-5).subColumns(0, 5).subRows(gi * 2, 2);
 }
 
@@ -193,6 +209,11 @@ pub fn getGOESourceFuse(goe: usize) jedec.Fuse {
         else => unreachable,
     };
 }
+
+pub fn getZeroHoldTimeFuse() jedec.Fuse {
+    return jedec.Fuse.init(87, 351);
+}
+
 
 pub fn getGlobalBusMaintenanceRange() jedec.FuseRange {
     return jedec.FuseRange.fromFuse(

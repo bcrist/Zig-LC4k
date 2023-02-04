@@ -96,8 +96,8 @@ pub const ClusterRouter = struct {
                     .five_pt_fast_bypass, .five_pt_fast_bypass_inverted => available = 0,
                 }
             }
-            if (mc_config.sum_divert) |routing| self.forced_cluster_routing[mc] = routing;
-            if (mc_config.wide_sum_divert) |routing| self.forced_wide_routing[mc] = routing;
+            if (mc_config.sum_routing) |routing| self.forced_cluster_routing[mc] = routing;
+            if (mc_config.wide_sum_routing) |routing| self.forced_wide_routing[mc] = routing;
 
             self.cluster_size[mc] = available;
 
@@ -121,7 +121,7 @@ pub const ClusterRouter = struct {
         return std.math.order(a_score, b_score); // min heap
     }
 
-    pub fn route(self: *ClusterRouter, results: *assembly.AssembledResults) !RoutingData {
+    pub fn route(self: *ClusterRouter, results: *assembly.AssemblyResults) !RoutingData {
         _ = results; // TODO use to record errors
 
         for (self.sum_size) |sum_size, mc| if (sum_size > 0) {
@@ -595,7 +595,7 @@ fn PTIterator(comptime Device: type) type {
     };
 }
 
-fn getCAForCluster(source_cluster: usize, routing: ClusterRouting) ?usize {
+pub fn getCAForCluster(source_cluster: usize, routing: ClusterRouting) ?usize {
     return switch (routing) {
         .self_minus_two => if (source_cluster >= 2) source_cluster - 2 else null,
         .self_minus_one => if (source_cluster >= 1) source_cluster - 1 else null,
@@ -604,7 +604,7 @@ fn getCAForCluster(source_cluster: usize, routing: ClusterRouting) ?usize {
     };
 }
 
-fn getCADestination(source_ca: usize, routing: WideRouting) usize {
+pub fn getCADestination(source_ca: usize, routing: WideRouting) usize {
     const maybe_oob_ca = switch (routing) {
         .self => source_ca,
         .self_plus_four => source_ca + 4,

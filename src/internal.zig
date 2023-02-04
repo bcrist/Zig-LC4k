@@ -177,6 +177,13 @@ pub fn isAlways(pt: anytype) bool {
     return true;
 }
 
+pub fn isNever(pt: anytype) bool {
+    for (pt) |factor| {
+        if (factor == .never) return true;
+    }
+    return false;
+}
+
 pub fn isSumAlways(pts: anytype) bool {
     for (pts) |pt| {
         if (isAlways(pt)) return true;

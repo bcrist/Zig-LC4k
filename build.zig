@@ -1,14 +1,13 @@
 const std = @import("std");
 const Pkg = std.build.Pkg;
 
-const sx = Pkg {
-    .name = "sx",
-    .source = .{ .path = "../sx/sx.zig" },
-};
-
 const lc4k = Pkg {
     .name = "lc4k",
     .source = .{ .path = "src/lc4k.zig" },
+};
+const sx = Pkg {
+    .name = "sx",
+    .source = .{ .path = "../sx/sx.zig" },
 };
 
 pub fn build(b: *std.build.Builder) void {

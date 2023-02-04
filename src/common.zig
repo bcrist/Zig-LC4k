@@ -105,6 +105,7 @@ pub const DeviceType = enum {
     }
 };
 
+pub const GiIndex = u8;
 pub const GlbIndex = u8;
 pub const MacrocellIndex = u8;
 pub const ClockIndex = u8;
@@ -112,6 +113,13 @@ pub const ClockIndex = u8;
 pub const MacrocellRef = struct {
     glb: GlbIndex,
     mc: MacrocellIndex,
+
+    pub fn init(glb: usize, mc: usize) MacrocellRef {
+        return .{
+            .glb = @intCast(GlbIndex, glb),
+            .mc = @intCast(MacrocellIndex, mc),
+        };
+    }
 };
 
 pub const PinFunction = union(enum) {
@@ -151,9 +159,21 @@ pub const BusMaintenance = enum(u2) {
     pullup = 3,
 };
 
+// The datasheets and IBIS models are quite vague about
+// the actual input structure used in the devices, and
+// in particular what the input threshold fuse actually
+// does.  So these are mostly gusses based on the published
+// Vil and Vih limits in the datasheet, and assuming that
+// the threshold voltage is always based on Vcc, not Vcco.
+//
+// Generally speaking, the high threshold is suitable for
+// either 2.5V or 3.3V signals, and the low threshold is
+// for 1.8V or 1.5V signals.
 pub const InputThreshold = enum(u1) {
-    low = 1,  // for 1.5V or 1.8V signals
-    high = 0, // for 2.5V or 3.3V signals
+                //   ZE                   C/ZC         B           V
+    low = 1,    // 0.50*Vcc             0.50*Vcc    0.36*Vcc    0.28*Vcc
+    high = 0,   // 0.68*Vcc (falling)   0.73*Vcc    0.50*Vcc    0.40*Vcc
+                // 0.79*Vcc (rising)
 };
 
 pub const DriveType = enum(u1) {
@@ -186,6 +206,7 @@ pub const TimerDivisor = enum(u2) {
     div128 = 0,
     div1024 = 2,
     div1048576 = 1,
+    _
 };
 
 pub const MacrocellFunction = enum(u2) {

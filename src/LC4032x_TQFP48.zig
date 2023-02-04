@@ -1,4 +1,4 @@
-//[[!! include('devices', 'LC4032x_TQFP48') !! 542 ]]
+//[[!! include('devices', 'LC4032x_TQFP48') !! 559 ]]
 //[[ ################# !! GENERATED CODE -- DO NOT MODIFY !! ################# ]]
 const std = @import("std");
 const common = @import("common.zig");
@@ -90,6 +90,16 @@ pub const GRP = enum {
     mc_B15,
 };
 
+pub const mc_signals = [num_glbs][num_mcs_per_glb]GRP {
+    .{ .mc_A0, .mc_A1, .mc_A2, .mc_A3, .mc_A4, .mc_A5, .mc_A6, .mc_A7, .mc_A8, .mc_A9, .mc_A10, .mc_A11, .mc_A12, .mc_A13, .mc_A14, .mc_A15, },
+    .{ .mc_B0, .mc_B1, .mc_B2, .mc_B3, .mc_B4, .mc_B5, .mc_B6, .mc_B7, .mc_B8, .mc_B9, .mc_B10, .mc_B11, .mc_B12, .mc_B13, .mc_B14, .mc_B15, },
+};
+
+pub const mc_output_signals = [num_glbs][num_mcs_per_glb]?GRP {
+    .{ .io_A0, .io_A1, .io_A2, .io_A3, .io_A4, .io_A5, .io_A6, .io_A7, .io_A8, .io_A9, .io_A10, .io_A11, .io_A12, .io_A13, .io_A14, .io_A15, },
+    .{ .io_B0, .io_B1, .io_B2, .io_B3, .io_B4, .io_B5, .io_B6, .io_B7, .io_B8, .io_B9, .io_B10, .io_B11, .io_B12, .io_B13, .io_B14, .io_B15, },
+};
+
 pub const gi_options = [num_gis_per_glb][gi_mux_size]GRP {
     .{ .io_B0, .io_B6, .mc_B6, .io_A0, .mc_B15, .mc_A5, },
     .{ .io_A12, .mc_A15, .mc_A11, .io_B11, .io_A7, .mc_A3, },
@@ -132,11 +142,13 @@ pub const gi_options = [num_gis_per_glb][gi_mux_size]GRP {
 pub const gi_options_by_grp = internal.invertGIMapping(GRP, gi_mux_size, &gi_options);
 
 pub fn getGlbRange(glb: usize) jedec.FuseRange {
+    std.debug.assert(glb < num_glbs);
     const index = num_glbs - glb - 1;
     return jedec_dimensions.subColumns(86 * index + 3, 83);
 }
 
 pub fn getGiRange(glb: usize, gi: usize) jedec.FuseRange {
+    std.debug.assert(gi < num_gis_per_glb);
     return getGlbRange(glb).expandColumns(-3).subColumns(0, 3).subRows(gi * 2, 2);
 }
 
@@ -159,6 +171,11 @@ pub fn getGOESourceFuse(goe: usize) jedec.Fuse {
         else => unreachable,
     };
 }
+
+pub fn getZeroHoldTimeFuse() jedec.Fuse {
+    return jedec.Fuse.init(87, 171);
+}
+
 
 pub fn getGlobalBusMaintenanceRange() jedec.FuseRange {
     return jedec.FuseRange.fromFuse(
