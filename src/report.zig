@@ -533,12 +533,14 @@ fn writeGOE(writer: anytype, comptime Device: type, highlight: bool, goe_index: 
             3 => try writePinGOEquation(writer, Device, goe_config.polarity, Device.oe_pins[1], options),
             else => unreachable,
         },
-        4 => switch (goe_index) {
-            0, 1 => switch (goe_config.source) {
+        4 => switch (@TypeOf(goe_config)) {
+            // goe_index == 0 or 1
+            lc4k.GOEConfigWithSource => switch (goe_config.source) {
                 .bus => try writeBusGOEEquation(writer, Device, goe_config.polarity, config, goe_index),
                 .input => try writePinGOEquation(writer, Device, goe_config.polarity, Device.oe_pins[goe_index], options),
             },
-            2, 3 => try writeBusGOEEquation(writer, Device, goe_config.polarity, config, goe_index),
+            // goe_index == 2 or 3
+            lc4k.GOEConfig => try writeBusGOEEquation(writer, Device, goe_config.polarity, config, goe_index),
             else => unreachable,
         },
         else => unreachable,

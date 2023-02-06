@@ -95,10 +95,10 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
                             const glb_pt_offset = mc * 5 + pt_index;
                             if (next_sum_pt < pts.len) {
                                 const pt = pts[next_sum_pt];
-                                try writePTFuses(Device, &results, glb, glb_pt_offset, gi_routing, pt);
+                                try writePTFuses(Device, &results, glb, glb_pt_offset, &gi_routing, pt);
                                 next_sum_pt += 1;
                             } else if (!internal.isSumAlways(pts)) {
-                                try writePTFuses(Device, &results, glb, glb_pt_offset, gi_routing, PTs(Device).never());
+                                try writePTFuses(Device, &results, glb, glb_pt_offset, &gi_routing, PTs(Device).never());
                             }
                         }
                         if (next_sum_pt < pts.len and !internal.isSumAlways(pts)) {

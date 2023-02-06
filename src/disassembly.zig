@@ -357,10 +357,10 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
             if (@TypeOf(mc_config.output) != lc4k.OutputConfigZE) {
                 if (fuses.getOutputRoutingModeRange(Device, mcref)) |range| {
                     mc_config.output.routing = switch (readField(file.data, u2, range)) {
-                        0 => .{ .five_pt_fast_bypass = .{} },
-                        1 => .{ .five_pt_fast_bypass_inverted = .{} },
-                        2 => .{ .same_as_oe = void },
-                        3 => .{ .self = void },
+                        0 => .{ .five_pt_fast_bypass = &.{} },
+                        1 => .{ .five_pt_fast_bypass_inverted = &.{} },
+                        2 => .{ .same_as_oe = {} },
+                        3 => .{ .self = {} },
                     };
                 }
             }
