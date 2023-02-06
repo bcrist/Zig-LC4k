@@ -6,6 +6,8 @@ const Fuse = jedec.Fuse;
 const JedecData = jedec.JedecData;
 const JedecFile = jedec.JedecFile;
 
+const NoData = void;
+
 pub fn getIDCode(comptime Device: type) u32 {
     return switch (Device.family) {
         .zero_power_enhanced => switch (Device.num_glbs) {
@@ -137,18 +139,18 @@ pub fn write(comptime Device: type, file: JedecFile, writer: anytype, options: W
     try writeCommand(.SAMPLE_PRELOAD, std.meta.Int(.unsigned, getBoundaryScanLength(Device)), 0, null, writer, nl);
     try writer.writeAll(nl);
 
-    try writeCommand(.ISC_ENABLE, bool, null, null, writer, nl);
+    try writeCommand(.ISC_ENABLE, NoData, null, null, writer, nl);
     try writer.writeAll(nl);
 
     if (options.erase) {
-        try writeCommand(.ISC_ERASE, bool, null, null, writer, nl);
-        try writeCommand(.ISC_DISCHARGE, bool, null, null, writer, nl);
+        try writeCommand(.ISC_ERASE, NoData, null, null, writer, nl);
+        try writeCommand(.ISC_DISCHARGE, NoData, null, null, writer, nl);
         try writer.writeAll(nl);
     }
 
     {
-        try writeCommand(.ISC_ADDRESS_INIT, bool, null, null, writer, nl);
-        try writeCommand(.ISC_PROGRAM, bool, null, null, writer, nl);
+        try writeCommand(.ISC_ADDRESS_INIT, NoData, null, null, writer, nl);
+        try writeCommand(.ISC_PROGRAM, NoData, null, null, writer, nl);
 
         var row: u16 = 0;
         while (row < Device.jedec_dimensions.height()) : (row += 1) {
@@ -165,7 +167,7 @@ pub fn write(comptime Device: type, file: JedecFile, writer: anytype, options: W
         const AddressShiftType = std.meta.Int(.unsigned, @intCast(u16, rows));
         const address_shift = @as(AddressShiftType, 1) << (rows - 1);
         try writeCommand(.ISC_ADDRESS_SHIFT, AddressShiftType, address_shift, null, writer, nl);
-        try writeCommand(.ISC_READ, bool, null, null, writer, nl);
+        try writeCommand(.ISC_READ, NoData, null, null, writer, nl);
 
         var row: u16 = 0;
         while (row < Device.jedec_dimensions.height()) : (row += 1) {
@@ -191,19 +193,19 @@ pub fn write(comptime Device: type, file: JedecFile, writer: anytype, options: W
 
     if (file.security) |g| {
         if (g != 0) {
-            try writeCommand(.ISC_PROGRAM_SECURITY, bool, null, null, writer, nl);
+            try writeCommand(.ISC_PROGRAM_SECURITY, NoData, null, null, writer, nl);
             try writer.writeAll(nl);
         }
     }
 
-    try writeCommand(.ISC_PROGRAM_DONE, bool, null, null, writer, nl);
-    try writeCommand(.ISC_PROGRAM_DONE, bool, null, null, writer, nl); // not sure why this is done twice...?
-    try writeCommand(.ISC_DISABLE, bool, null, null, writer, nl);
-    try writeCommand(.BYPASS, bool, null, null, writer, nl);
+    try writeCommand(.ISC_PROGRAM_DONE, NoData, null, null, writer, nl);
+    try writeCommand(.ISC_PROGRAM_DONE, NoData, null, null, writer, nl); // not sure why this is done twice...?
+    try writeCommand(.ISC_DISABLE, NoData, null, null, writer, nl);
+    try writeCommand(.BYPASS, NoData, null, null, writer, nl);
     try writer.print("! {s}{s}", .{ @tagName(JtagCommand.IDCODE), nl });
     try writer.print("SIR\t8\tTDI  ({X:0>2}){s}", .{ @enumToInt(JtagCommand.IDCODE), nl });
     try writer.print("\t\tTDO  ({X:0>2});{s}", .{ 0x1D, nl });
-    try writeCommand(.ISC_DISABLE, bool, null, null, writer, nl);
+    try writeCommand(.ISC_DISABLE, NoData, null, null, writer, nl);
     try writeState("RESET", writer, nl);
 }
 
@@ -225,11 +227,19 @@ fn writeRowHex(data: jedec.JedecData, row: u16, writer: anytype) !void {
 }
 
 fn writeHex(comptime T: type, data: T, writer: anytype) !void {
-    // TODO this assumes it's running on little endian, maybe refactor?
-    if (T != bool) {
+    if (T != NoData) {
+        // Ideally we could use std.fmt to print this all at once,
+        // but it currently fails when trying to print large numbers:
+        // https://github.com/ziglang/zig/issues/1534
         const bits = @bitSizeOf(T);
         const digits = comptime (bits + 3) / 4;
-        try writer.print(std.fmt.comptimePrint("{{X:0>{}}}", .{ digits }), .{ data });
+
+        var d: usize = 0;
+        while (d < digits) : (d += 1) {
+            const shift = @intCast(std.math.Log2Int(T), 4 * (digits - d - 1));
+            const part = @truncate(u4, data >> shift);
+            try writer.print("{X:0>1}", .{ part });
+        }
     }
 }
 
