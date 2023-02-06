@@ -39,13 +39,15 @@ pub fn routeGIs(comptime Device: type, gi_signals: *[Device.num_gis_per_glb]?Dev
             const options = gi_options_by_grp.get(signal_to_route) orelse return error.InvalidSignal;
             for (options) |option| {
                 if (routed[option] == null) {
-                    routed[option] = signal;
+                    routed[option] = signal_to_route;
+                    //std.debug.print("GI {} is now {}\n", .{ option, signal_to_route });
                     break;
                 }
             } else {
-                const index_to_replace = rnd.intRangeLessThan(usize, 0, options.len);
+                const index_to_replace = options[rnd.intRangeLessThan(usize, 0, options.len)];
                 const temp = routed[index_to_replace].?;
                 routed[index_to_replace] = signal_to_route;
+                //std.debug.print("GI {} is now {}; replaced {}\n", .{ index_to_replace, signal_to_route, temp });
                 signal_to_route = temp;
                 continue;
             }
