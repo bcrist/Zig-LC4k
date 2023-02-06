@@ -41,7 +41,8 @@ Once you have your in-memory representation of the design, you can do a number o
 
 # TODO
 * Assembly error reporting
-* More examples - larson scanner, 16:1 mux, address decoder, adder?
+* More examples - 16:1 mux, address decoder, adder?
+* Rename GRP -> Signal
 * Tests
 * ease of use: PTs.eql
 * ease of use: PTs.parse() []PT
