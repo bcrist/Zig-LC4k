@@ -429,7 +429,7 @@ pub fn getGlobalBusMaintenanceRange() jedec.FuseRange {
         jedec.Fuse.init(]], f1[1], ', ', f1[2], [[)
     );
 }
-pub fn getExtraFloatInputFuses() []jedec.Fuse {
+pub fn getExtraFloatInputFuses() []const jedec.Fuse {
     return &.{]])
     indent(2)
     for _, f in ipairs(extra) do

@@ -61,7 +61,7 @@ pub fn getGlobalBusMaintenanceRange() jedec.FuseRange {
         jedec.Fuse.init(86, 101)
     );
 }
-pub fn getExtraFloatInputFuses() []jedec.Fuse {
+pub fn getExtraFloatInputFuses() []const jedec.Fuse {
     return &.{
         jedec.Fuse.init(92, 24),
         jedec.Fuse.init(92, 44),
