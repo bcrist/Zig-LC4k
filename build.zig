@@ -25,7 +25,8 @@ pub fn build(b: *std.build.Builder) void {
 
     const Example = enum {
         all,
-        counter,
+        counter1,
+        counter2,
         basic_test,
     };
     if (b.option(Example, "example", "Build example program")) |example| switch (example) {
