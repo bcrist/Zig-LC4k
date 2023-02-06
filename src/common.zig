@@ -162,7 +162,7 @@ pub const BusMaintenance = enum(u2) {
 // The datasheets and IBIS models are quite vague about
 // the actual input structure used in the devices, and
 // in particular what the input threshold fuse actually
-// does.  So these are mostly gusses based on the published
+// does.  So these are mostly guesses based on the published
 // Vil and Vih limits in the datasheet, and assuming that
 // the threshold voltage is always based on Vcc, not Vcco.
 //
