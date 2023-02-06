@@ -30,21 +30,23 @@ pub fn main() !void {
         mc.clock = .{ .bclock = 2 };
         mc.output.oe = .goe0;
 
-        comptime var sum: []const Chip.PT = &.{};
-        comptime var all_ones = PTs.always();
-        comptime var n = bit;
-        inline while (n > 0) : (n -= 1) {
-            const out_n = output_pins[n - 1];
-            all_ones = comptime PTs.all(.{ all_ones, out_n });
-            sum = sum ++ &[_]Chip.PT {
-                comptime PTs.all(.{
-                    out,
-                    PTs.not(out_n),
-                }),
-            };
-        }
-        all_ones = comptime PTs.all(.{ all_ones, PTs.not(out) });
-        mc.sum = sum ++ &[_]Chip.PT { all_ones };
+        mc.sum = comptime blk: {
+            var sum: []const Chip.PT = &.{};
+            var all_ones = PTs.always();
+            var n = bit;
+            while (n > 0) : (n -= 1) {
+                const out_n = output_pins[n - 1];
+                all_ones = PTs.all(.{ all_ones, out_n });
+                sum = sum ++ &[_]Chip.PT {
+                    PTs.all(.{
+                        out,
+                        PTs.not(out_n),
+                    }),
+                };
+            }
+            all_ones = PTs.all(.{ all_ones, PTs.not(out) });
+            break :blk sum ++ &[_]Chip.PT { all_ones };
+        };
     }
 
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
