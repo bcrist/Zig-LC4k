@@ -164,7 +164,7 @@ pub fn GlbConfig(comptime D: type) type {
         pub fn initUnused() Self {
             var self = Self {
                 .mc = undefined,
-                .shared_pt_init = .{ .active_high = PTBuilder(D).always() },
+                .shared_pt_init = .{ .active_low = PTBuilder(D).always() },
                 .shared_pt_clock = .{ .positive = PTBuilder(D).always() },
                 .shared_pt_enable = PTBuilder(D).always(),
                 .shared_pt_enable_to_oe_bus = [_]bool { false } ** D.oe_bus_size,
