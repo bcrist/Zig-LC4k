@@ -28,6 +28,7 @@ pub fn build(b: *std.build.Builder) void {
         basic_test,
         counter1,
         counter2,
+        gray_code,
         larson_scanner,
     };
     if (b.option(Example, "example", "Build example program")) |example| switch (example) {

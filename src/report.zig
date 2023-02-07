@@ -711,11 +711,13 @@ fn writeInputPin(writer: anytype, highlight: bool, comptime Device: type, pin_in
     try writeBusMaintenance(writer, bus_maintenance);
     try endCell(writer);
 
-    try beginCell(writer, .{});
-    if (power_guard) |pg| {
-        try writePowerGuard(writer, pg);
+    if (Device.family == .zero_power_enhanced) {
+        try beginCell(writer, .{});
+        if (power_guard) |pg| {
+            try writePowerGuard(writer, pg);
+        }
+        try endCell(writer);
     }
-    try endCell(writer);
 
     try endRow(writer);
 }
