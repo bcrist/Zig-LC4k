@@ -49,8 +49,8 @@ pub fn main() !void {
     inline for (gray_code_bits) |out, bit| {
         var mc = chip.mc(out);
         mc.output.oe = .output_only;
-        if (bit > 0) {
-            mc.xor = .{ .pt0 = PTs.of(counter_bits[bit - 1]) };
+        if (bit < gray_code_bits.len - 1) {
+            mc.xor = .{ .pt0 = PTs.of(counter_bits[bit + 1]) };
         }
         mc.sum = &[_]Chip.PT { PTs.of(counter_bits[bit]) };
     }
