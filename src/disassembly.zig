@@ -553,9 +553,8 @@ fn readGoeConfig(comptime Device: type, data: jedec.JedecData, goe_config: anyty
 }
 
 fn readGoeSourceBus(comptime Device: type, data: jedec.JedecData, goe_config: anytype, goe_index: usize, results: *DisassemblyResults(Device)) !void {
-    goe_config.source = .{ .none = {}};
+    goe_config.source = .{ .constant_high = {}};
     var glb: common.GlbIndex = 0;
-
     var already_reported_goe_collision = false;
     while (glb < Device.num_glbs) : (glb += 1) {
         switch (readField(data, u1, fuses.getSharedEnableToOEBusRange(Device, glb).subRows(goe_index, 1))) {

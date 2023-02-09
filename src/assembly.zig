@@ -347,7 +347,7 @@ fn writeGoeFuses(comptime Device: type, data: *jedec.JedecData, goe_config: anyt
             .input => {
                 data.put(Device.getGOESourceFuse(goe_index), 0);
             },
-            .none => {
+            .constant_high => {
                 data.put(Device.getGOESourceFuse(goe_index), 1);
             },
             .glb_shared_pt_enable => |glb| {
@@ -356,7 +356,7 @@ fn writeGoeFuses(comptime Device: type, data: *jedec.JedecData, goe_config: anyt
             },
         },
         lc4k.GOEConfigBus => switch (goe_config.source) {
-            .none => {},
+            .constant_high => {},
             .glb_shared_pt_enable => |glb| {
                 writeField(data, u1, 0, fuses.getSharedEnableToOEBusRange(Device, glb).subRows(goe_index, 1));
             },

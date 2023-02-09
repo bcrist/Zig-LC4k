@@ -298,18 +298,18 @@ pub const GOEConfigPin = struct {
 pub const GOEConfigBus = struct {
     polarity: GOEPolarity = .active_high,
     source: union(enum) {
-        none: void,
+        constant_high: void,
         glb_shared_pt_enable: common.GlbIndex,
-    } = .{ .none = {} },
+    } = .{ .constant_high = {} },
 };
 
 pub const GOEConfigBusOrPin = struct {
     polarity: GOEPolarity = .active_high,
     source: union(enum) {
-        none: void,
+        constant_high: void,
         input: void,
         glb_shared_pt_enable: common.GlbIndex,
-    } = .{ .none = {} },
+    } = .{ .constant_high = {} },
 };
 
 pub fn OscTimerConfig(comptime Device: type) type {

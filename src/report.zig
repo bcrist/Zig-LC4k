@@ -318,13 +318,13 @@ fn ReportData(comptime Device: type) type {
         fn parseGoePtUsage(goe_config: anytype, glb: usize, glb_data: *GlbReportData) void {
             switch (@TypeOf(goe_config)) {
                 lc4k.GOEConfigBusOrPin => switch (goe_config.source) {
-                    .input, .none => {},
+                    .input, .constant_high => {},
                     .glb_shared_pt_enable => |goe_glb| {
                         if (glb == goe_glb) glb_data.pt_usage[shared_enable_pt] = .oe;
                     },
                 },
                 lc4k.GOEConfigBus => switch (goe_config.source) {
-                    .none => {},
+                    .constant_high => {},
                     .glb_shared_pt_enable => |goe_glb| {
                         if (glb == goe_glb) glb_data.pt_usage[shared_enable_pt] = .oe;
                     },
@@ -548,12 +548,12 @@ fn writeGOE(writer: anytype, comptime Device: type, highlight: bool, goe_index: 
     try beginCell(writer, .{ .class = "left" });
     switch (@TypeOf(goe_config)) {
         lc4k.GOEConfigBusOrPin => switch (goe_config.source) {
-            .none => try writeUnusedGOEEquation(writer, goe_config.polarity),
+            .constant_high => try writeUnusedGOEEquation(writer, goe_config.polarity),
             .input => try writePinGOEEquation(writer, Device, goe_config.polarity, Device.oe_pins[goe_index], options),
             .glb_shared_pt_enable => |glb| try writeBusGOEEquation(writer, goe_config.polarity, glb),
         },
         lc4k.GOEConfigBus => switch (goe_config.source) {
-            .none => try writeUnusedGOEEquation(writer, goe_config.polarity),
+            .constant_high => try writeUnusedGOEEquation(writer, goe_config.polarity),
             .glb_shared_pt_enable => |glb| try writeBusGOEEquation(writer, goe_config.polarity, glb),
         },
         lc4k.GOEConfigPin => {
