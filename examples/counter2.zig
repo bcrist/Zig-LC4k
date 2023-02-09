@@ -19,7 +19,7 @@ pub fn main() !void {
     var chip = Chip {};
 
     chip.glb[0].shared_pt_enable = PTs.of(Chip.pins._20);
-    chip.glb[0].shared_pt_enable_to_oe_bus[0] = true;
+    chip.goe0.source = .{ .glb_shared_pt_enable = 0 };
     chip.goe0.polarity = .active_high;
 
     const output_pins = [_]lc4k.PinInfo {

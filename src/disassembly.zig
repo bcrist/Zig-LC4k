@@ -44,48 +44,6 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
         return results;
     }
 
-    results.config.goe0.polarity = switch (file.data.get(Device.getGOEPolarityFuse(0))) {
-        0 => .active_low,
-        1 => .active_high,
-    };
-    results.config.goe1.polarity = switch (file.data.get(Device.getGOEPolarityFuse(1))) {
-        0 => .active_low,
-        1 => .active_high,
-    };
-    results.config.goe2.polarity = switch (file.data.get(Device.getGOEPolarityFuse(2))) {
-        0 => .active_low,
-        1 => .active_high,
-    };
-    results.config.goe3.polarity = switch (file.data.get(Device.getGOEPolarityFuse(3))) {
-        0 => .active_low,
-        1 => .active_high,
-    };
-
-    if (@TypeOf(results.config.goe0) == lc4k.GOEConfigWithSource) {
-        results.config.goe0.source = switch (file.data.get(Device.getGOESourceFuse(0))) {
-            0 => .input,
-            1 => .bus,
-        };
-    }
-    if (@TypeOf(results.config.goe1) == lc4k.GOEConfigWithSource) {
-        results.config.goe1.source = switch (file.data.get(Device.getGOESourceFuse(1))) {
-            0 => .input,
-            1 => .bus,
-        };
-    }
-    if (@TypeOf(results.config.goe2) == lc4k.GOEConfigWithSource) {
-        results.config.goe2.source = switch (file.data.get(Device.getGOESourceFuse(2))) {
-            0 => .input,
-            1 => .bus,
-        };
-    }
-    if (@TypeOf(results.config.goe3) == lc4k.GOEConfigWithSource) {
-        results.config.goe3.source = switch (file.data.get(Device.getGOESourceFuse(3))) {
-            0 => .input,
-            1 => .bus,
-        };
-    }
-
     results.config.zero_hold_time = !file.data.isSet(Device.getZeroHoldTimeFuse());
 
     if (Device.family == .zero_power_enhanced) {
@@ -223,9 +181,10 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
 
         glb_config.shared_pt_enable = try parsePTFuses(Device, allocator, glb, 82, gi_routing, file.data, &results);
 
-        for (glb_config.shared_pt_enable_to_oe_bus) |*enable, oe| {
-            enable.* = readField(file.data, u1, fuses.getSharedEnableToOEBusRange(Device, glb).subRows(oe, 1)) == 0;
-        }
+        try readGoeConfig(Device, file.data, &results.config.goe0, 0, &results);
+        try readGoeConfig(Device, file.data, &results.config.goe1, 1, &results);
+        try readGoeConfig(Device, file.data, &results.config.goe2, 2, &results);
+        try readGoeConfig(Device, file.data, &results.config.goe3, 3, &results);
 
         glb_config.bclock0 = switch (readField(file.data, u1, Device.getBClockRange(glb).subRows(0, 1))) {
             0 => .clk1_neg,
@@ -325,7 +284,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
                 3 => .{ .always_active = {} },
             };
 
-            mc_config.init_state = readField(file.data, u1, fuses.getInitStateRange(Device, mcref));
+            mc_config.init_state = 1 ^ readField(file.data, u1, fuses.getInitStateRange(Device, mcref));
             mc_config.init_source = switch (readField(file.data, u1, fuses.getInitSourceRange(Device, mcref))) {
                 0 => .{ .pt3_active_high = try parsePTFuses(Device, allocator, glb, mc * 5 + 3, gi_routing, file.data, &results) },
                 1 => .{ .shared_pt_init = {} },
@@ -576,6 +535,55 @@ pub fn parsePTFuses(
 
     return pt;
 }
+
+fn readGoeConfig(comptime Device: type, data: jedec.JedecData, goe_config: anytype, goe_index: usize, results: *DisassemblyResults(Device)) !void {
+    switch (@TypeOf(goe_config.*)) {
+        lc4k.GOEConfigBusOrPin => switch (data.get(Device.getGOESourceFuse(goe_index))) {
+            0 => goe_config.source = .{ .input = {} },
+            1 => try readGoeSourceBus(Device, data, goe_config, goe_index, results),
+        },
+        lc4k.GOEConfigBus => try readGoeSourceBus(Device, data, goe_config, goe_index, results),
+        lc4k.GOEConfigPin => {},
+        else => unreachable,
+    }
+    goe_config.polarity = switch (data.get(Device.getGOEPolarityFuse(goe_index))) {
+        0 => .active_low,
+        1 => .active_high,
+    };
+}
+
+fn readGoeSourceBus(comptime Device: type, data: jedec.JedecData, goe_config: anytype, goe_index: usize, results: *DisassemblyResults(Device)) !void {
+    goe_config.source = .{ .none = {}};
+    var glb: common.GlbIndex = 0;
+
+    var already_reported_goe_collision = false;
+    while (glb < Device.num_glbs) : (glb += 1) {
+        switch (readField(data, u1, fuses.getSharedEnableToOEBusRange(Device, glb).subRows(goe_index, 1))) {
+            0 => {
+                switch (goe_config.source) {
+                    .glb_shared_pt_enable => |old_glb| {
+                        if (!already_reported_goe_collision) {
+                            already_reported_goe_collision = true;
+                            try results.errors.append(.{
+                                .err = error.GOECollision,
+                                .details = "Multiple GLBs' shared enable PT are driving the same PT OE bus line",
+                                .glb = @intCast(common.GlbIndex, old_glb),
+                            });
+                        }
+                        try results.errors.append(.{
+                            .err = error.GOECollision,
+                            .details = "Multiple GLBs' shared enable PT are driving the same PT OE bus line",
+                            .glb = @intCast(common.GlbIndex, glb),
+                        });
+                    },
+                    else => goe_config.source = .{ .glb_shared_pt_enable = glb },
+                }
+            },
+            1 => {},
+        }
+    }
+}
+
 
 fn readField(data: jedec.JedecData, comptime T: type, range: jedec.FuseRange) T {
     assert(@bitSizeOf(T) == range.count());

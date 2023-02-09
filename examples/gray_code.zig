@@ -1,4 +1,5 @@
-// This example implements a larson scanner "moving lights" effect.
+// This example outputs a 16-bit binary counter on GLB B, and
+// the gray-code equivalent of the current counter value on GLB A.
 
 const std = @import("std");
 const lc4k = @import("lc4k");

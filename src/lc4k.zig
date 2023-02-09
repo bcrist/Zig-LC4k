@@ -64,8 +64,12 @@ pub fn LC4k(comptime device: common.DeviceType) type {
     };
 
     const GOE01_Config = switch (D.num_glbs) {
-        2 => GOEConfig,
-        else => GOEConfigWithSource,
+        2 => GOEConfigBus,
+        else => GOEConfigBusOrPin,
+    };
+    const GOE23_Config = switch (D.num_glbs) {
+        2 => GOEConfigPin,
+        else => GOEConfigBus,
     };
 
     const Ext = switch (D.family) {
@@ -83,8 +87,8 @@ pub fn LC4k(comptime device: common.DeviceType) type {
 
         goe0: GOE01_Config = .{},
         goe1: GOE01_Config = .{},
-        goe2: GOEConfig = .{},
-        goe3: GOEConfig = .{},
+        goe2: GOE23_Config = .{},
+        goe3: GOE23_Config = .{},
 
         zero_hold_time: bool = false,
 
@@ -144,7 +148,6 @@ pub fn GlbConfig(comptime D: type) type {
             negative: PT(D.GRP), // active low when used as a latch or clock enable
         },
         shared_pt_enable: PT(D.GRP),
-        shared_pt_enable_to_oe_bus: [D.oe_bus_size] bool,
         bclock0: enum { clk0_pos, clk1_neg },
         bclock1: enum { clk1_pos, clk0_neg },
         bclock2: enum { clk2_pos, clk3_neg },
@@ -167,7 +170,6 @@ pub fn GlbConfig(comptime D: type) type {
                 .shared_pt_init = .{ .active_low = PTBuilder(D).always() },
                 .shared_pt_clock = .{ .positive = PTBuilder(D).always() },
                 .shared_pt_enable = PTBuilder(D).always(),
-                .shared_pt_enable_to_oe_bus = [_]bool { false } ** D.oe_bus_size,
                 .bclock0 = .clk0_pos,
                 .bclock1 = .clk1_pos,
                 .bclock2 = .clk2_pos,
@@ -289,16 +291,25 @@ pub const GOEPolarity = enum {
     active_low,
 };
 
-pub const GOEConfig = struct {
+pub const GOEConfigPin = struct {
     polarity: GOEPolarity = .active_high,
 };
 
-pub const GOEConfigWithSource = struct {
+pub const GOEConfigBus = struct {
     polarity: GOEPolarity = .active_high,
-    source: enum {
-        bus,
-        input,
-    } = .bus,
+    source: union(enum) {
+        none: void,
+        glb_shared_pt_enable: common.GlbIndex,
+    } = .{ .none = {} },
+};
+
+pub const GOEConfigBusOrPin = struct {
+    polarity: GOEPolarity = .active_high,
+    source: union(enum) {
+        none: void,
+        input: void,
+        glb_shared_pt_enable: common.GlbIndex,
+    } = .{ .none = {} },
 };
 
 pub fn OscTimerConfig(comptime Device: type) type {

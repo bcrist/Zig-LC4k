@@ -191,7 +191,8 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
             };
             writeField(&results.jedec.data, u2, ce, fuses.getCERange(Device, mcref));
 
-            writeField(&results.jedec.data, u1, mc_config.init_state, fuses.getInitStateRange(Device, mcref));
+            const init_state: u1 = mc_config.init_state ^ 1;
+            writeField(&results.jedec.data, u1, init_state, fuses.getInitStateRange(Device, mcref));
             const init_src: u1 = switch (mc_config.init_source) {
                 .pt3_active_high => 0,
                 .shared_pt_init => 1,
@@ -276,10 +277,6 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
         };
         writeField(&results.jedec.data, u1, spt_clk_pol, fuses.getSharedClockPolarityRange(Device, glb));
 
-        for (glb_config.shared_pt_enable_to_oe_bus) |enable, oe| {
-            writeField(&results.jedec.data, u1, @boolToInt(!enable), fuses.getSharedEnableToOEBusRange(Device, glb).subRows(oe, 1));
-        }
-
         const bclk0: u1 = switch (glb_config.bclock0) {
             .clk0_pos => 1,
             .clk1_neg => 0,
@@ -302,23 +299,10 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
         writeField(&results.jedec.data, u1, bclk3, Device.getBClockRange(glb).subRows(3, 1));
     }
 
-    results.jedec.data.put(Device.getGOEPolarityFuse(0), @boolToInt(config.goe0.polarity == .active_high));
-    results.jedec.data.put(Device.getGOEPolarityFuse(1), @boolToInt(config.goe1.polarity == .active_high));
-    results.jedec.data.put(Device.getGOEPolarityFuse(2), @boolToInt(config.goe2.polarity == .active_high));
-    results.jedec.data.put(Device.getGOEPolarityFuse(3), @boolToInt(config.goe3.polarity == .active_high));
-
-    if (@TypeOf(config.goe0) == lc4k.GOEConfigWithSource) {
-        results.jedec.data.put(Device.getGOESourceFuse(0), @boolToInt(config.goe0.source == .bus));
-    }
-    if (@TypeOf(config.goe1) == lc4k.GOEConfigWithSource) {
-        results.jedec.data.put(Device.getGOESourceFuse(1), @boolToInt(config.goe1.source == .bus));
-    }
-    if (@TypeOf(config.goe2) == lc4k.GOEConfigWithSource) {
-        results.jedec.data.put(Device.getGOESourceFuse(2), @boolToInt(config.goe2.source == .bus));
-    }
-    if (@TypeOf(config.goe3) == lc4k.GOEConfigWithSource) {
-        results.jedec.data.put(Device.getGOESourceFuse(3), @boolToInt(config.goe3.source == .bus));
-    }
+    writeGoeFuses(Device, &results.jedec.data, config.goe0, 0);
+    writeGoeFuses(Device, &results.jedec.data, config.goe1, 1);
+    writeGoeFuses(Device, &results.jedec.data, config.goe2, 2);
+    writeGoeFuses(Device, &results.jedec.data, config.goe3, 3);
 
     results.jedec.data.put(Device.getZeroHoldTimeFuse(), @boolToInt(!config.zero_hold_time));
 
@@ -355,6 +339,31 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
     results.jedec.security = @boolToInt(config.security);
 
     return results;
+}
+
+fn writeGoeFuses(comptime Device: type, data: *jedec.JedecData, goe_config: anytype, goe_index: usize) void {
+    switch (@TypeOf(goe_config)) {
+        lc4k.GOEConfigBusOrPin => switch (goe_config.source) {
+            .input => {
+                data.put(Device.getGOESourceFuse(goe_index), 0);
+            },
+            .none => {
+                data.put(Device.getGOESourceFuse(goe_index), 1);
+            },
+            .glb_shared_pt_enable => |glb| {
+                data.put(Device.getGOESourceFuse(goe_index), 1);
+                writeField(data, u1, 0, fuses.getSharedEnableToOEBusRange(Device, glb).subRows(goe_index, 1));
+            },
+        },
+        lc4k.GOEConfigBus => switch (goe_config.source) {
+            .none => {},
+            .glb_shared_pt_enable => |glb| {
+                writeField(data, u1, 0, fuses.getSharedEnableToOEBusRange(Device, glb).subRows(goe_index, 1));
+            },
+        },
+        else => {},
+    }
+    data.put(Device.getGOEPolarityFuse(goe_index), @boolToInt(goe_config.polarity == .active_high));
 }
 
 fn writeDedicatedInputFuses(comptime Device: type, data: *jedec.JedecData, pin_info: common.PinInfo, config: *const LC4k(Device.device_type), input_config: anytype) void {
