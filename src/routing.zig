@@ -512,12 +512,20 @@ pub const RoutingData = struct {
         return self;
     }
 
-    pub fn getCATargetLimited(self: RoutingData, initial_ca: usize, max_hops: usize) ?usize {
+    const GetCATargetResult = struct {
+        macrocell: usize,
+        hops: usize,
+    };
+
+    fn getCATargetLimited(self: RoutingData, initial_ca: usize, max_hops: usize) ?GetCATargetResult {
         var ca = initial_ca;
         var hop: usize = 0;
         while (hop <= max_hops) : (hop += 1) {
             var new_ca = getCADestination(ca, self.wide[ca]);
-            if (new_ca == ca) return ca;
+            if (new_ca == ca) return .{
+                .macrocell = ca,
+                .hops = hop,
+            };
             std.debug.assert(new_ca != initial_ca);
             ca = new_ca;
         }
@@ -569,8 +577,9 @@ fn PTIterator(comptime Device: type) type {
                     }
                     self.cluster = next_cluster;
                     if (getCAForCluster(next_cluster, self.data.cluster[next_cluster])) |ca| {
-                        if (self.data.getCATargetLimited(ca, @intCast(usize, self.hops))) |mc| {
-                            if (mc != self.mc) continue;
+                        var max_hops = self.hops;
+                        if (self.data.getCATargetLimited(ca, @intCast(usize, max_hops))) |result| {
+                            if (result.macrocell != self.mc or result.hops < max_hops) continue;
                         } else {
                             self.has_more_hops = true;
                             continue;
