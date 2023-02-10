@@ -35,11 +35,12 @@ pub fn main() !void {
 
     inline for (output_pins) |out, bit| {
         var mc = chip.mc(out);
-        mc.func = .d_ff;
-        mc.clock = .{ .bclock = 2 };
+        mc.func = .{ .d_ff = .{
+            .clock = .{ .bclock = 2 },
+        }};
         mc.output.oe = .goe0;
 
-        mc.sum = comptime blk: {
+        mc.logic = .{ .sum = comptime blk: {
             // Each bit of the counter will be set on the next clock cycle when:
             //      a) it is currently 0 and every lower bit is a 1
             //      b) it is currently 1 but at least one lower bit is not 1
@@ -61,7 +62,7 @@ pub fn main() !void {
             }
             all_ones = PTs.all(.{ all_ones, PTs.not(out) });
             break :blk sum ++ &[_]Chip.PT { all_ones };
-        };
+        }};
     }
 
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);

@@ -32,11 +32,12 @@ pub fn main() !void {
 
     inline for (counter_bits) |out, bit| {
         var mc = chip.mc(out);
-        mc.func = .t_ff;
-        mc.clock = .{ .shared_pt_clock = {} };
+        mc.func = .{ .t_ff = .{
+            .clock = .{ .shared_pt_clock = {} },
+        }};
         mc.output.oe = .output_only;
 
-        mc.sum = &[_]Chip.PT { comptime blk: {
+        mc.logic = .{ .sum = &[_]Chip.PT { comptime blk: {
             // Each bit of the counter should toggle when every lower bit is a 1
             var all_ones = PTs.always();
             var n = 0;
@@ -44,16 +45,20 @@ pub fn main() !void {
                 all_ones = PTs.all(.{ all_ones, counter_bits[n] });
             }
             break :blk all_ones;
-        } };
+        }}};
     }
 
     inline for (gray_code_bits) |out, bit| {
         var mc = chip.mc(out);
         mc.output.oe = .output_only;
         if (bit < gray_code_bits.len - 1) {
-            mc.xor = .{ .pt0 = PTs.of(counter_bits[bit + 1]) };
+            mc.logic = .{ .sum_xor_pt0 = .{
+                .sum = &.{ PTs.of(counter_bits[bit]) },
+                .pt0 = PTs.of(counter_bits[bit + 1]),
+            }};
+        } else {
+            mc.logic = .{ .sum = &[_]Chip.PT { PTs.of(counter_bits[bit]) }};
         }
-        mc.sum = &[_]Chip.PT { PTs.of(counter_bits[bit]) };
     }
 
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);

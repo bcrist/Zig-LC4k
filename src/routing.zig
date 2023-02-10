@@ -4,7 +4,6 @@ const common = @import("common.zig");
 const internal = @import("internal.zig");
 const assembly = @import("assembly.zig");
 
-const getSpecialPT = internal.getSpecialPT;
 const ClusterRouting = common.ClusterRouting;
 const WideRouting = common.WideRouting;
 
@@ -103,8 +102,18 @@ pub const ClusterRouter = struct {
 
             self.cluster_size[mc] = available;
 
-            if (!internal.isSumAlways(mc_config.sum)) {
-                self.sum_size[mc] = @intCast(u8, mc_config.sum.len);
+            switch (mc_config.logic) {
+                .sum, .sum_inverted => |sum| {
+                    if (!internal.isSumAlways(sum)) {
+                        self.sum_size[mc] = @intCast(u8, sum.len);
+                    }
+                },
+                .sum_xor_pt0, .sum_xor_pt0_inverted => |logic| {
+                    if (!internal.isSumAlways(logic.sum)) {
+                        self.sum_size[mc] = @intCast(u8, logic.sum.len);
+                    }
+                },
+                .input_buffer, .pt0, .pt0_inverted => {},
             }
         }
 

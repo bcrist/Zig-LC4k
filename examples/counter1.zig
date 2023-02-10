@@ -26,11 +26,12 @@ pub fn main() !void {
 
     inline for (output_pins) |out, bit| {
         var mc = chip.mc(out);
-        mc.func = .t_ff;
-        mc.clock = .{ .bclock = 2 };
+        mc.func = .{ .t_ff = .{
+            .clock = .{ .bclock = 2 },
+        }};
         mc.output.oe = .goe0;
 
-        mc.sum = &[_]Chip.PT { comptime blk: {
+        mc.logic = .{ .sum = &[_]Chip.PT { comptime blk: {
             // Each bit of the counter should toggle when every lower bit is a 1
             var all_ones = PTs.always();
             var n = 0;
@@ -38,7 +39,7 @@ pub fn main() !void {
                 all_ones = PTs.all(.{ all_ones, output_pins[n] });
             }
             break :blk all_ones;
-        } };
+        }}};
     }
 
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);

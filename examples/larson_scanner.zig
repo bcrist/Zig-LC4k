@@ -30,15 +30,17 @@ pub fn main() !void {
     chip.glb[2].shared_pt_clock = .{ .positive = PTs.of(Chip.pins._12) };
 
     var dir_mc = chip.mc(dir_signal);
-    dir_mc.init_state = 1;
-    dir_mc.func = .t_ff;
-    dir_mc.clock = .{ .shared_pt_clock = {} };
+    dir_mc.func = .{ .t_ff = .{
+        .init_state = 1,
+        .clock = .{ .shared_pt_clock = {} },
+
+    }};
     dir_mc.output.oe = .output_only;
-    dir_mc.sum = &.{ PTs.of(none_signal) };
+    dir_mc.logic = .{ .sum = &.{ PTs.of(none_signal) } };
 
     var none_mc = chip.mc(none_signal);
     none_mc.output.oe = .output_only;
-    none_mc.sum = &.{ all(.{
+    none_mc.logic = .{ .sum = &.{ all(.{
         not(outputs[0]),
         not(outputs[3]),
         not(outputs[6]),
@@ -51,14 +53,15 @@ pub fn main() !void {
         not(outputs[25]),
         not(outputs[28]),
         not(outputs[31]),
-    }) };
+    }) } };
 
     inline for (outputs) |out, bit| {
         var mc = chip.mc(out);
-        mc.func = .d_ff;
-        mc.clock = .{ .shared_pt_clock = {} };
+        mc.func = .{ .d_ff = .{
+            .clock = .{ .shared_pt_clock = {} },
+        }};
         mc.output.oe = .output_only;
-        mc.sum = switch (bit) {
+        mc.logic = .{ .sum = switch (bit) {
             0 => &[_]Chip.PT {
                 all(.{ dir_signal, outputs[bit + 1] }),
                 all(.{ dir_signal, none_signal }),
@@ -79,7 +82,7 @@ pub fn main() !void {
                 all(.{ not(dir_signal), outputs[bit - 1] }),
                 all(.{     dir_signal,  outputs[bit + 1] }),
             },
-        };
+        }};
     }
 
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);

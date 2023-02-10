@@ -189,57 +189,61 @@ fn ReportData(comptime Device: type) type {
                         mcs_used.insert(Device.mc_signals[src_mcref.glb][src_mcref.mc]);
                     }
 
-                    switch (mc_config.xor) {
-                        .none, .invert, .input => {},
-                        .pt0, .pt0_inverted => {
+                    switch (mc_config.logic) {
+                        .sum, .sum_inverted, .input_buffer => {},
+                        .pt0, .pt0_inverted, .sum_xor_pt0, .sum_xor_pt0_inverted => {
                             glb_data.pt_usage[mc * 5] = .xor;
                         },
                     }
-                    switch (mc_config.clock) {
-                        .none, .bclock => {},
-                        .shared_pt_clock => {
-                            glb_data.pt_usage[shared_clock_pt] = switch (glb_data.pt_usage[shared_clock_pt]) {
-                                .ce => .clock_and_ce,
-                                else => .clock,
-                            };
-                        },
-                        .pt1_positive, .pt1_negative => {
-                            glb_data.pt_usage[mc * 5 + 1] = .clock;
-                        },
-                    }
-                    switch (mc_config.ce) {
-                        .always_active => {
-                            switch (mc_config.async_source) {
-                                .none => {},
-                                .pt2_active_high => {
-                                    glb_data.pt_usage[mc * 5 + 2] = .@"async";
+
+                    switch (mc_config.func) {
+                        .combinational => {},
+                        .latch, .t_ff, .d_ff => |reg_config| {
+                            switch (reg_config.clock) {
+                                .none, .bclock => {},
+                                .shared_pt_clock => {
+                                    glb_data.pt_usage[shared_clock_pt] = switch (glb_data.pt_usage[shared_clock_pt]) {
+                                        .ce => .clock_and_ce,
+                                        else => .clock,
+                                    };
+                                },
+                                .pt1_positive, .pt1_negative => {
+                                    glb_data.pt_usage[mc * 5 + 1] = .clock;
                                 },
                             }
-                        },
-                        .shared_pt_clock => {
-                            glb_data.pt_usage[shared_clock_pt] = switch (glb_data.pt_usage[shared_clock_pt]) {
-                                .clock => .clock_and_ce,
-                                else => .ce,
-                            };
-                            switch (mc_config.async_source) {
-                                .none => {},
-                                .pt2_active_high => {
-                                    glb_data.pt_usage[mc * 5 + 2] = .@"async";
+                            switch (reg_config.ce) {
+                                .always_active => {
+                                    switch (reg_config.async_source) {
+                                        .none => {},
+                                        .pt2_active_high => {
+                                            glb_data.pt_usage[mc * 5 + 2] = .@"async";
+                                        },
+                                    }
+                                },
+                                .shared_pt_clock => {
+                                    glb_data.pt_usage[shared_clock_pt] = switch (glb_data.pt_usage[shared_clock_pt]) {
+                                        .clock => .clock_and_ce,
+                                        else => .ce,
+                                    };
+                                    switch (reg_config.async_source) {
+                                        .none => {},
+                                        .pt2_active_high => {
+                                            glb_data.pt_usage[mc * 5 + 2] = .@"async";
+                                        },
+                                    }
+                                },
+                                .pt2_active_low, .pt2_active_high => {
+                                    glb_data.pt_usage[mc * 5 + 2] = .ce;
                                 },
                             }
-                        },
-                        .pt2_active_low, .pt2_active_high => {
-                            glb_data.pt_usage[mc * 5 + 2] = .ce;
-                        },
-                    }
-                    switch (mc_config.init_source) {
-                        .shared_pt_init => {
-                            if (mc_config.func != .combinational) {
-                                glb_data.pt_usage[shared_init_pt] = .init;
+                            switch (reg_config.init_source) {
+                                .shared_pt_init => {
+                                    glb_data.pt_usage[shared_init_pt] = .init;
+                                },
+                                .pt3_active_high => {
+                                    glb_data.pt_usage[mc * 5 + 3] = .init;
+                                },
                             }
-                        },
-                        .pt3_active_high => {
-                            glb_data.pt_usage[mc * 5 + 3] = .init;
                         },
                     }
 
@@ -943,7 +947,7 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
             });
             try tableHeader(writer, .{
                 "MC", "Cluster", "PTs",
-                "XOR", "Type", "Clock", "CE", "Init", "Async",
+                "Logic", "Type", "Clock", "CE", "Init", "Async",
                 "Pin",
                 "From", "OE", "Slew", "Drive",
                 "Threshold", "Term",
@@ -961,7 +965,7 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
             });
             try tableHeader(writer, .{
                 "MC", "Cluster", "PTs",
-                "XOR", "Type", "Clock", "CE", "Init", "Async",
+                "Logic", "Type", "Clock", "CE", "Init", "Async",
                 "Pin",
                 "From", "OE", "Slew", "Drive",
                 "Threshold", "Term",
@@ -1015,9 +1019,16 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
             try endCell(writer);
 
             var sum_pts: usize = 0;
-            for (mc_config.sum) |pt| {
-                if (!internal.isAlways(pt)) sum_pts += 1;
+            switch (mc_config.logic) {
+                .sum, .sum_inverted => |sum| for (sum) |pt| {
+                    if (!internal.isAlways(pt)) sum_pts += 1;
+                },
+                .sum_xor_pt0, .sum_xor_pt0_inverted => |logic| for (logic.sum) |pt| {
+                    if (!internal.isAlways(pt)) sum_pts += 1;
+                },
+                .input_buffer, .pt0, .pt0_inverted => {},
             }
+
             if (@TypeOf(mc_config.output) != lc4k.OutputConfigZE) {
                 switch (mc_config.output.routing) {
                     .five_pt_fast_bypass, .five_pt_fast_bypass_inverted => |pts| {
@@ -1033,21 +1044,15 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
             try endCell(writer);
 
             try beginCell(writer, cell_options);
-            switch (mc_config.xor) {
-                .none => {},
-                .invert => {
-                    try writer.writeAll("<kbd class=\"xor invert\">Invert</kbd>");
-                },
-                .input => {
-                    try writer.writeAll("<kbd class=\"xor input\">Input</kbd>");
-                },
-                .pt0 => {
-                    try writer.writeAll("<kbd class=\"xor pt\">PT</kbd>");
-                },
-                .pt0_inverted => {
-                    try writer.writeAll("<kbd class=\"xor pt\">PT</kbd> <kbd class=\"xor invert\">Invert</kbd>");
-                },
-            }
+            try writer.writeAll(switch (mc_config.logic) {
+                .sum          => "<kbd class=\"logic sum\">Sum</kbd>",
+                .sum_inverted => "<kbd class=\"logic sum\">Sum</kbd> <kbd class=\"logic invert\">Invert</kbd>",
+                .input_buffer => "<kbd class=\"logic input\">Input</kbd>",
+                .pt0          => "<kbd class=\"logic pt\">PT</kbd>",
+                .pt0_inverted => "<kbd class=\"logic pt\">PT</kbd> <kbd class=\"logic invert\">Invert</kbd>",
+                .sum_xor_pt0  => "<kbd class=\"logic xor-pt\">XOR PT</kbd>",
+                .sum_xor_pt0_inverted => "<kbd class=\"logic xor-pt\">XOR PT</kbd> <kbd class=\"logic invert\">Invert</kbd>",
+            });
             try endCell(writer);
 
             try beginCell(writer, cell_options);
@@ -1060,26 +1065,29 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
             try endCell(writer);
 
             try beginCell(writer, cell_options);
-            const clock_invert: ?bool = switch (mc_config.clock) {
-                .none => null,
-                .shared_pt_clock => blk: {
-                    try writer.writeAll("<kbd class=\"clk shared-pt\">Shared PT</kbd>");
-                    break :blk switch (glb_config.shared_pt_clock) {
-                        .positive => false,
-                        .negative => true,
-                    };
-                },
-                .pt1_positive => blk: {
-                    try writer.writeAll("<kbd class=\"clk pt\">PT</kbd>");
-                    break :blk false;
-                },
-                .pt1_negative => blk: {
-                    try writer.writeAll("<kbd class=\"clk pt\">PT</kbd>");
-                    break :blk true;
-                },
-                .bclock => |bclk| blk: {
-                    try writer.print("<kbd class=\"clk bclk{}\">BCLK {}</kbd>", .{ bclk, bclk });
-                    break :blk false;
+            const clock_invert: ?bool = switch (mc_config.func) {
+                .combinational => null,
+                .latch, .t_ff, .d_ff => |reg_config| switch (reg_config.clock) {
+                    .none => null,
+                    .shared_pt_clock => blk: {
+                        try writer.writeAll("<kbd class=\"clk shared-pt\">Shared PT</kbd>");
+                        break :blk switch (glb_config.shared_pt_clock) {
+                            .positive => false,
+                            .negative => true,
+                        };
+                    },
+                    .pt1_positive => blk: {
+                        try writer.writeAll("<kbd class=\"clk pt\">PT</kbd>");
+                        break :blk false;
+                    },
+                    .pt1_negative => blk: {
+                        try writer.writeAll("<kbd class=\"clk pt\">PT</kbd>");
+                        break :blk true;
+                    },
+                    .bclock => |bclk| blk: {
+                        try writer.print("<kbd class=\"clk bclk{}\">BCLK {}</kbd>", .{ bclk, bclk });
+                        break :blk false;
+                    },
                 },
             };
             if (clock_invert) |invert| {
@@ -1091,37 +1099,45 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
             try endCell(writer);
 
             try beginCell(writer, cell_options);
-            try writer.writeAll(switch (mc_config.ce) {
-                .pt2_active_high => "<kbd class=\"ce pt\">PT</kbd> <kbd class=\"ce pos\">Active High</kbd>",
-                .pt2_active_low => "<kbd class=\"ce pt\">PT</kbd> <kbd class=\"ce neg\">Active Low</kbd>",
-                .shared_pt_clock => switch (glb_config.shared_pt_clock) {
-                    .positive => "<kbd class=\"ce shared-pt\">Shared PT</kbd> <kbd class=\"ce pos\">Active High</kbd>",
-                    .negative => "<kbd class=\"ce shared-pt\">Shared PT</kbd> <kbd class=\"ce neg\">Active Low</kbd>",
+            try writer.writeAll(switch (mc_config.func) {
+                .combinational => "",
+                .latch, .t_ff, .d_ff => |reg_config| switch (reg_config.ce) {
+                    .pt2_active_high => "<kbd class=\"ce pt\">PT</kbd> <kbd class=\"ce pos\">Active High</kbd>",
+                    .pt2_active_low => "<kbd class=\"ce pt\">PT</kbd> <kbd class=\"ce neg\">Active Low</kbd>",
+                    .shared_pt_clock => switch (glb_config.shared_pt_clock) {
+                        .positive => "<kbd class=\"ce shared-pt\">Shared PT</kbd> <kbd class=\"ce pos\">Active High</kbd>",
+                        .negative => "<kbd class=\"ce shared-pt\">Shared PT</kbd> <kbd class=\"ce neg\">Active Low</kbd>",
+                    },
+                    .always_active => "",
                 },
-                .always_active => "",
             });
             try endCell(writer);
 
             try beginCell(writer, cell_options);
-            if (mc_config.func != .combinational) {
-                try writer.print("{}", .{ mc_config.init_state });
-                try writer.writeAll(switch (mc_config.init_source) {
-                    .pt3_active_high => " <kbd class=\"init pt\">PT</kbd> <kbd class=\"init pos\">Active High</kbd>",
-                    .shared_pt_init => switch (glb_config.shared_pt_init) {
-                        .active_high => " <kbd class=\"init shared-pt\">Shared PT</kbd> <kbd class=\"init pos\">Active High</kbd>",
-                        .active_low => " <kbd class=\"init shared-pt\">Shared PT</kbd> <kbd class=\"init neg\">Active Low</kbd>",
-                    },
-                });
+            switch (mc_config.func) {
+                .combinational => {},
+                .latch, .t_ff, .d_ff => |reg_config| {
+                    try writer.print("{}", .{ reg_config.init_state });
+                    try writer.writeAll(switch (reg_config.init_source) {
+                        .pt3_active_high => " <kbd class=\"init pt\">PT</kbd> <kbd class=\"init pos\">Active High</kbd>",
+                        .shared_pt_init => switch (glb_config.shared_pt_init) {
+                            .active_high => " <kbd class=\"init shared-pt\">Shared PT</kbd> <kbd class=\"init pos\">Active High</kbd>",
+                            .active_low => " <kbd class=\"init shared-pt\">Shared PT</kbd> <kbd class=\"init neg\">Active Low</kbd>",
+                        },
+                    });
+                },
             }
             try endCell(writer);
 
             try beginCell(writer, cell_options);
-            try writer.writeAll(switch (mc_config.async_source) {
-                .none => "",
-                .pt2_active_high => "<kbd class=\"async pt\">PT</kbd> <kbd class=\"async pos\">Active High</kbd>",
+            try writer.writeAll(switch (mc_config.func) {
+                .combinational => "",
+                .latch, .t_ff, .d_ff => |reg_config| switch (reg_config.async_source) {
+                    .none => "",
+                    .pt2_active_high => "<kbd class=\"async pt\">PT</kbd> <kbd class=\"async pos\">Active High</kbd>",
+                },
             });
             try endCell(writer);
-
 
             if (data.mc_pin_info.get(mcref)) |pin_info| {
                 try beginCell(writer, cell_options);

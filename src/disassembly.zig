@@ -218,16 +218,16 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
 
                 const pt0xor_fuse = fuses.getPT0XorRange(Device, mcref).min;
                 const invert_fuse = fuses.getInvertRange(Device, mcref).min;
-                const input_xor_fuse = fuses.getInputXorRange(Device, mcref).min;
+                const input_bypass_fuse = fuses.getInputBypassRange(Device, mcref).min;
 
                 const pt0xor = !file.data.isSet(pt0xor_fuse);
                 const invert = file.data.isSet(invert_fuse);
 
-                if (!file.data.isSet(input_xor_fuse)) {
-                    mc_config.xor = .{ .input = {} };
+                if (!file.data.isSet(input_bypass_fuse)) {
+                    mc_config.logic = .{ .input_buffer = {} };
                     if (pt0xor) {
                         try results.errors.append(.{
-                            .err = error.InvalidXorConfig,
+                            .err = error.InvalidLogicConfig,
                             .details = "PT0 should not be assigned to XOR when using fast input register",
                             .fuse = pt0xor_fuse,
                             .glb = mcref.glb,
@@ -236,7 +236,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
                     }
                     if (invert) {
                         try results.errors.append(.{
-                            .err = error.InvalidXorConfig,
+                            .err = error.InvalidLogicConfig,
                             .details = "The XOR invert fuse has no effect when using fast input register",
                             .fuse = invert_fuse,
                             .glb = mcref.glb,
@@ -246,56 +246,106 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
                 } else if (pt0xor) {
                     const pt = try parsePTFuses(Device, allocator, glb, mc * 5, gi_routing, file.data, &results);
                     if (invert) {
-                        mc_config.xor = .{ .pt0_inverted = pt };
+                        mc_config.logic = .{ .pt0_inverted = pt };
                     } else {
-                        mc_config.xor = .{ .pt0 = pt };
+                        mc_config.logic = .{ .pt0 = pt };
                     }
                 } else if (invert) {
-                    mc_config.xor = .{ .invert = {} };
+                    mc_config.logic = .{ .sum_inverted = &.{} };
                 } else {
-                    mc_config.xor = .{ .none = {} };
+                    mc_config.logic = .{ .sum = &.{} };
                 }
             }
 
-            {
-                // parse mc_config.clock
+            mc_config.func = switch (readField(file.data, common.MacrocellFunction, fuses.getMcFuncRange(Device, mcref))) {
+                .combinational => .{ .combinational = {} },
+                .latch => .{ .latch = .{} },
+                .t_ff => .{ .t_ff = .{} },
+                .d_ff => .{ .d_ff = .{} },
+            };
 
+            const RegisterConfig = lc4k.RegisterConfig(Device.GRP);
+
+            var clock: @TypeOf((RegisterConfig {}).clock) = .{ .none = {} };
+            {
                 const low_range = fuses.getClockSourceLowRange(Device, mcref);
                 const high_fuse = fuses.getClockSourceHighRange(Device, mcref).min;
 
                 const low_data = readField(file.data, u2, low_range);
 
                 if (file.data.isSet(high_fuse)) {
-                    mc_config.clock = switch (low_data) {
+                    clock = switch (low_data) {
                         0 => .{ .pt1_positive = try parsePTFuses(Device, allocator, glb, mc * 5 + 1, gi_routing, file.data, &results) },
                         1 => .{ .pt1_negative = try parsePTFuses(Device, allocator, glb, mc * 5 + 1, gi_routing, file.data, &results) },
                         2 => .{ .shared_pt_clock = {} },
                         3 => .{ .none = {} },
                     };
                 } else {
-                    mc_config.clock = .{ .bclock = low_data };
+                    clock = .{ .bclock = low_data };
                 }
             }
 
-            mc_config.ce = switch (readField(file.data, u2, fuses.getCERange(Device, mcref))) {
+            var ce: @TypeOf((RegisterConfig {}).ce) = switch (readField(file.data, u2, fuses.getCERange(Device, mcref))) {
                 0 => .{ .pt2_active_high = try parsePTFuses(Device, allocator, glb, mc * 5 + 2, gi_routing, file.data, &results) },
                 1 => .{ .pt2_active_low = try parsePTFuses(Device, allocator, glb, mc * 5 + 2, gi_routing, file.data, &results) },
                 2 => .{ .shared_pt_clock = {} },
                 3 => .{ .always_active = {} },
             };
 
-            mc_config.init_state = 1 ^ readField(file.data, u1, fuses.getInitStateRange(Device, mcref));
-            mc_config.init_source = switch (readField(file.data, u1, fuses.getInitSourceRange(Device, mcref))) {
+            var init_state: u1 = 1 ^ readField(file.data, u1, fuses.getInitStateRange(Device, mcref));
+            var init_source: @TypeOf((RegisterConfig {}).init_source) = switch (readField(file.data, u1, fuses.getInitSourceRange(Device, mcref))) {
                 0 => .{ .pt3_active_high = try parsePTFuses(Device, allocator, glb, mc * 5 + 3, gi_routing, file.data, &results) },
                 1 => .{ .shared_pt_init = {} },
             };
 
-            mc_config.async_source = switch (readField(file.data, u1, fuses.getAsyncSourceRange(Device, mcref))) {
+            var async_source: @TypeOf((RegisterConfig {}).async_source) = switch (readField(file.data, u1, fuses.getAsyncSourceRange(Device, mcref))) {
                 0 => .{ .pt2_active_high = try parsePTFuses(Device, allocator, glb, mc * 5 + 2, gi_routing, file.data, &results) },
                 1 => .{ .none = {} },
             };
 
-            mc_config.func = readField(file.data, common.MacrocellFunction, fuses.getMcFuncRange(Device, mcref));
+            switch (mc_config.func) {
+                .combinational => {
+                    if (clock != .none) {
+                        try results.errors.append(.{
+                            .err = error.InvalidRegisterConfig,
+                            .details = "Macrocell is combinational, but has a clock defined",
+                            .glb = mcref.glb,
+                            .mc = mcref.mc,
+                        });
+                    }
+                    if (ce != .always_active) {
+                        try results.errors.append(.{
+                            .err = error.InvalidRegisterConfig,
+                            .details = "Macrocell is combinational, but has a CE defined",
+                            .glb = mcref.glb,
+                            .mc = mcref.mc,
+                        });
+                    }
+                    if (init_source != .shared_pt_init) {
+                        try results.errors.append(.{
+                            .err = error.InvalidRegisterConfig,
+                            .details = "Macrocell is combinational, but uses shared PT init",
+                            .glb = mcref.glb,
+                            .mc = mcref.mc,
+                        });
+                    }
+                    if (async_source != .none) {
+                        try results.errors.append(.{
+                            .err = error.InvalidRegisterConfig,
+                            .details = "Macrocell is combinational, but has PT2 async source defined",
+                            .glb = mcref.glb,
+                            .mc = mcref.mc,
+                        });
+                    }
+                },
+                .latch, .t_ff, .d_ff => |*reg_config| {
+                    reg_config.clock = clock;
+                    reg_config.ce = ce;
+                    reg_config.init_state = init_state;
+                    reg_config.init_source = init_source;
+                    reg_config.async_source = async_source;
+                },
+            }
 
             if (!file.data.isSet(fuses.getPT4OERange(Device, mcref).min)) {
                 mc_config.pt4_oe = try parsePTFuses(Device, allocator, glb, mc * 5 + 4, gi_routing, file.data, &results);
@@ -400,7 +450,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
                 }
                 if (sum_is_always) num_pts += 1;
 
-                if (num_pts > 0) {
+                const pts = if (num_pts > 0) blk: {
                     var pts = try allocator.alloc(PT(Device.GRP), num_pts);
                     var next_pt_index: usize = 0;
                     sum_is_always = false;
@@ -427,10 +477,40 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
                             .mc = mcref.mc,
                         });
                     }
-                    mc_config.sum = pts;
-                } else {
-                    mc_config.sum.len = 0;
-                }
+                    break :blk pts;
+                } else &[_]PT(Device.GRP) {};
+
+                mc_config.logic = switch (mc_config.logic) {
+                    .sum => .{ .sum = pts },
+                    .sum_inverted => .{ .sum_inverted = pts },
+                    .input_buffer => blk: {
+                        if (pts.len > 0) {
+                            try results.errors.append(.{
+                                .err = error.TooManySumPTs,
+                                .details = "Macrocell is configured for input bypass, but there are sum PTs",
+                                .glb = mcref.glb,
+                                .mc = mcref.mc,
+                            });
+                        }
+                        break :blk .{ .input_buffer = {} };
+                    },
+                    .pt0 => |pt0| .{ .sum_xor_pt0 = .{
+                        .pt0 = pt0,
+                        .sum = pts,
+                    }},
+                    .pt0_inverted => |pt0| .{ .sum_xor_pt0_inverted = .{
+                        .pt0 = pt0,
+                        .sum = pts,
+                    }},
+                    .sum_xor_pt0 => |logic| .{ .sum_xor_pt0 = .{
+                        .pt0 = logic.pt0,
+                        .sum = pts,
+                    }},
+                    .sum_xor_pt0_inverted => |logic| .{ .sum_xor_pt0_inverted = .{
+                        .pt0 = logic.pt0,
+                        .sum = pts,
+                    }},
+                };
             }
         }
     }

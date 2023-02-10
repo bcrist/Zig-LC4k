@@ -72,7 +72,7 @@ pub fn getPT4OERange(comptime Device: type, mcref: MacrocellRef) jedec.FuseRange
     return getMacrocellRange(Device, mcref).subRows(12, 1);
 }
 
-pub fn getInputXorRange(comptime Device: type, mcref: MacrocellRef) jedec.FuseRange {
+pub fn getInputBypassRange(comptime Device: type, mcref: MacrocellRef) jedec.FuseRange {
     return getMacrocellRange(Device, mcref).subRows(13, 1);
 }
 

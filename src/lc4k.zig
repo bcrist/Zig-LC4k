@@ -201,41 +201,24 @@ pub fn MacrocellConfig(comptime family: common.DeviceFamily, comptime GRP: type)
     };
 
     return struct {
-        sum: []const PT(GRP),
         sum_routing: ?common.ClusterRouting = null,
         wide_sum_routing: ?common.WideRouting = null,
-        xor: union(enum) {
-            none,
-            invert,
-            input,
+        logic: union(enum) {
+            sum: []const PT(GRP),
+            sum_inverted: []const PT(GRP),
+            input_buffer,
             pt0: PT(GRP),
             pt0_inverted: PT(GRP),
-        } = .{ .none = {} },
-        func: common.MacrocellFunction,
-        clock: union(enum) {
-            none,
-            shared_pt_clock,
-            pt1_positive: PT(GRP),
-            pt1_negative: PT(GRP),
-            bclock: u2,
-        } = .{ .none = {} },
-        ce: union(enum) {
-            pt2_active_high: PT(GRP),
-            pt2_active_low: PT(GRP),
-            shared_pt_clock,
-            always_active,
-        } = .{ .always_active = {} },
-        init_state: u1 = 0,
-        init_source: union(enum) {
-            pt3_active_high: PT(GRP),
-            shared_pt_init,
-        } = .{ .shared_pt_init = {} },
-        async_source: union(enum) {
-            none,
-            pt2_active_high: PT(GRP),
-        } = .{ .none = {} },
+            sum_xor_pt0: SumXorPt0(GRP),
+            sum_xor_pt0_inverted: SumXorPt0(GRP),
+        },
+        func: union(common.MacrocellFunction) {
+            combinational: void,
+            latch: RegisterConfig(GRP),
+            t_ff: RegisterConfig(GRP),
+            d_ff: RegisterConfig(GRP),
+        },
         pt4_oe: ?PT(GRP) = null,
-
         input: Input_Config = .{},
         output: Output_Config,
 
@@ -243,8 +226,8 @@ pub fn MacrocellConfig(comptime family: common.DeviceFamily, comptime GRP: type)
 
         pub fn initUnused() Self {
             return .{
-                .sum = &[_]PT(GRP) { &.{} },
-                .func = .combinational,
+                .logic = .{ .sum = &[_]PT(GRP) { &.{} } },
+                .func = .{ .combinational = {} },
                 .output = .{ .oe = .input_only },
             };
         }
@@ -318,6 +301,40 @@ pub fn OscTimerConfig(comptime Device: type) type {
         enable_osc_out_and_disable: bool = false,
         enable_timer_out_and_reset: bool = false,
         timer_divisor: common.TimerDivisor = .div1048576,
+    };
+}
+
+pub fn SumXorPt0(comptime GRP: type) type {
+    return struct {
+        sum: []const PT(GRP),
+        pt0: PT(GRP),
+    };
+}
+
+pub fn RegisterConfig(comptime GRP: type) type {
+    return struct {
+        clock: union(enum) {
+            none,
+            shared_pt_clock,
+            pt1_positive: PT(GRP),
+            pt1_negative: PT(GRP),
+            bclock: u2,
+        } = .{ .none = {} },
+        ce: union(enum) {
+            pt2_active_high: PT(GRP),
+            pt2_active_low: PT(GRP),
+            shared_pt_clock,
+            always_active,
+        } = .{ .always_active = {} },
+        init_state: u1 = 0,
+        init_source: union(enum) {
+            pt3_active_high: PT(GRP),
+            shared_pt_init,
+        } = .{ .shared_pt_init = {} },
+        async_source: union(enum) {
+            none,
+            pt2_active_high: PT(GRP),
+        } = .{ .none = {} },
     };
 }
 

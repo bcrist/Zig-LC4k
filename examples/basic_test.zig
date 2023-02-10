@@ -13,11 +13,11 @@ pub fn main() !void {
 
     var mc1 = chip.mc(Chip.pins._23);
     mc1.output.oe = .output_only;
-    mc1.sum = &.{ PTs.always() };
+    mc1.logic = .{ .sum = &.{ PTs.always() } };
 
     var mc2 = chip.mc(Chip.pins._24);
     mc2.output.oe = .output_only;
-    mc2.sum = &.{ PTs.never() };
+    mc2.logic = .{ .sum = &.{ PTs.never() } };
 
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();

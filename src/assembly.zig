@@ -48,8 +48,20 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
         try routing.addSignalsFromPT(Device, &gi_routing, glb_config.shared_pt_enable);
 
         for (glb_config.mc) |mc_config| {
-            for (mc_config.sum) |pt| {
-                try routing.addSignalsFromPT(Device, &gi_routing, pt);
+            switch (mc_config.logic) {
+                .sum, .sum_inverted => |sum| for (sum) |pt| {
+                    try routing.addSignalsFromPT(Device, &gi_routing, pt);
+                },
+                .pt0, .pt0_inverted => |pt| {
+                    try routing.addSignalsFromPT(Device, &gi_routing, pt);
+                },
+                .sum_xor_pt0, .sum_xor_pt0_inverted => |logic| {
+                    try routing.addSignalsFromPT(Device, &gi_routing, logic.pt0);
+                    for (logic.sum) |pt| {
+                        try routing.addSignalsFromPT(Device, &gi_routing, pt);
+                    }
+                },
+                .input_buffer => {},
             }
             var special_pt: usize = 0;
             while (special_pt < 5) : (special_pt += 1) {
@@ -108,19 +120,23 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
                 }
             }
             {
-                // sum PTs
+                const sum_pts = switch (mc_config.logic) {
+                    .sum, .sum_inverted => |sum| sum,
+                    .input_buffer, .pt0, .pt0_inverted => &[_]PT(Device.GRP) {},
+                    .sum_xor_pt0, .sum_xor_pt0_inverted => |logic| logic.sum,
+                };
                 var next_sum_pt: usize = 0;
                 var pt_iter = cluster_routing.iterator(Device, &glb_config, mc);
                 while (pt_iter.next()) |glb_pt_offset| {
-                    if (next_sum_pt < mc_config.sum.len) {
-                        const pt = mc_config.sum[next_sum_pt];
+                    if (next_sum_pt < sum_pts.len) {
+                        const pt = sum_pts[next_sum_pt];
                         try writePTFuses(Device, &results, glb, glb_pt_offset, &gi_routing, pt);
                         next_sum_pt += 1;
-                    } else if (!internal.isSumAlways(mc_config.sum)) {
+                    } else if (!internal.isSumAlways(sum_pts)) {
                         try writePTFuses(Device, &results, glb, glb_pt_offset, &gi_routing, PTs(Device).never());
                     }
                 }
-                if (next_sum_pt < mc_config.sum.len and !internal.isSumAlways(mc_config.sum)) {
+                if (next_sum_pt < sum_pts.len and !internal.isSumAlways(sum_pts)) {
                     return error.TooManySumPTs;
                 }
             }
@@ -148,63 +164,66 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
             writeField(&results.jedec.data, common.ClusterRouting, cluster_routing.cluster[mc], fuses.getClusterRoutingRange(Device, mcref));
             writeField(&results.jedec.data, common.WideRouting, cluster_routing.wide[mc], fuses.getWideRoutingRange(Device, mcref));
 
-            const pt0xor: u1 = switch (mc_config.xor) {
-                .pt0, .pt0_inverted => 0,
-                .none, .input, .invert => 1,
+            const pt0xor: u1 = switch (mc_config.logic) {
+                .pt0, .pt0_inverted, .sum_xor_pt0, .sum_xor_pt0_inverted => 0,
+                .sum, .sum_inverted, .input_buffer => 1,
             };
             writeField(&results.jedec.data, u1, pt0xor, fuses.getPT0XorRange(Device, mcref));
 
-            const invert: u1 = switch (mc_config.xor) {
-                .invert, .pt0_inverted => 1,
-                .none, .input, .pt0 => 0,
+            const invert: u1 = switch (mc_config.logic) {
+                .sum_inverted, .pt0_inverted, .sum_xor_pt0_inverted => 1,
+                .sum, .input_buffer, .pt0, .sum_xor_pt0 => 0,
             };
             writeField(&results.jedec.data, u1, invert, fuses.getInvertRange(Device, mcref));
 
-            const xor: u1 = switch (mc_config.xor) {
-                .input => 0,
-                .invert, .none, .pt0, .pt0_inverted => 1,
+            const input_bypass: u1 = switch (mc_config.logic) {
+                .input_buffer => 0,
+                else => 1,
             };
-            writeField(&results.jedec.data, u1, xor, fuses.getInputXorRange(Device, mcref));
-
-            switch (mc_config.clock) {
-                .none => {},
-                .pt1_positive => {
-                    writeField(&results.jedec.data, u2, 0, fuses.getClockSourceLowRange(Device, mcref));
-                },
-                .pt1_negative => {
-                    writeField(&results.jedec.data, u2, 1, fuses.getClockSourceLowRange(Device, mcref));
-                },
-                .shared_pt_clock => {
-                    writeField(&results.jedec.data, u2, 2, fuses.getClockSourceLowRange(Device, mcref));
-                },
-                .bclock => |bclk| {
-                    writeField(&results.jedec.data, u2, bclk, fuses.getClockSourceLowRange(Device, mcref));
-                    writeField(&results.jedec.data, u1, 0, fuses.getClockSourceHighRange(Device, mcref));
-                },
-            }
-
-            const ce: u2 = switch (mc_config.ce) {
-                .pt2_active_high => 0,
-                .pt2_active_low => 1,
-                .shared_pt_clock => 2,
-                .always_active => 3,
-            };
-            writeField(&results.jedec.data, u2, ce, fuses.getCERange(Device, mcref));
-
-            const init_state: u1 = mc_config.init_state ^ 1;
-            writeField(&results.jedec.data, u1, init_state, fuses.getInitStateRange(Device, mcref));
-            const init_src: u1 = switch (mc_config.init_source) {
-                .pt3_active_high => 0,
-                .shared_pt_init => 1,
-            };
-            writeField(&results.jedec.data, u1, init_src, fuses.getInitSourceRange(Device, mcref));
-            const async_src: u1 = switch (mc_config.async_source) {
-                .pt2_active_high => 0,
-                .none => 1,
-            };
-            writeField(&results.jedec.data, u1, async_src, fuses.getAsyncSourceRange(Device, mcref));
+            writeField(&results.jedec.data, u1, input_bypass, fuses.getInputBypassRange(Device, mcref));
 
             writeField(&results.jedec.data, common.MacrocellFunction, mc_config.func, fuses.getMcFuncRange(Device, mcref));
+            switch (mc_config.func) {
+                .combinational => {},
+                .latch, .t_ff, .d_ff => |reg_config| {
+                    switch (reg_config.clock) {
+                        .none => {},
+                        .pt1_positive => {
+                            writeField(&results.jedec.data, u2, 0, fuses.getClockSourceLowRange(Device, mcref));
+                        },
+                        .pt1_negative => {
+                            writeField(&results.jedec.data, u2, 1, fuses.getClockSourceLowRange(Device, mcref));
+                        },
+                        .shared_pt_clock => {
+                            writeField(&results.jedec.data, u2, 2, fuses.getClockSourceLowRange(Device, mcref));
+                        },
+                        .bclock => |bclk| {
+                            writeField(&results.jedec.data, u2, bclk, fuses.getClockSourceLowRange(Device, mcref));
+                            writeField(&results.jedec.data, u1, 0, fuses.getClockSourceHighRange(Device, mcref));
+                        },
+                    }
+                    const ce: u2 = switch (reg_config.ce) {
+                        .pt2_active_high => 0,
+                        .pt2_active_low => 1,
+                        .shared_pt_clock => 2,
+                        .always_active => 3,
+                    };
+                    writeField(&results.jedec.data, u2, ce, fuses.getCERange(Device, mcref));
+
+                    const init_state: u1 = reg_config.init_state ^ 1;
+                    writeField(&results.jedec.data, u1, init_state, fuses.getInitStateRange(Device, mcref));
+                    const init_src: u1 = switch (reg_config.init_source) {
+                        .pt3_active_high => 0,
+                        .shared_pt_init => 1,
+                    };
+                    writeField(&results.jedec.data, u1, init_src, fuses.getInitSourceRange(Device, mcref));
+                    const async_src: u1 = switch (reg_config.async_source) {
+                        .pt2_active_high => 0,
+                        .none => 1,
+                    };
+                    writeField(&results.jedec.data, u1, async_src, fuses.getAsyncSourceRange(Device, mcref));
+                },
+            }
 
             const oe: u1 = if (mc_config.pt4_oe == null) 1 else 0;
             writeField(&results.jedec.data, u1, oe, fuses.getPT4OERange(Device, mcref));
