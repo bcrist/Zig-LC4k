@@ -41,10 +41,11 @@ Once you have your in-memory representation of the design, you can do a number o
 
 # TODO
 * Assembly error reporting
+* Error when PT4 is needed for ORM routing, but pt4_oe fuse is not cleared
+* Error when there are duplicate sum PTs or they can be simplified
 * More examples - 16:1 mux, address decoder, adder?
 * Rename GRP -> Signal
 * Tests
-* ease of use: PTs.eql
 * ease of use: PTs.parse() []PT
 * ease of use: helpers to set up common MC configurations?
 * How-To in readme

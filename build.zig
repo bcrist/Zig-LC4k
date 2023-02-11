@@ -26,6 +26,7 @@ pub fn build(b: *std.build.Builder) void {
     const Example = enum {
         all,
         basic_test,
+        demux,
         counter1,
         counter2,
         gray_code,

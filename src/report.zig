@@ -1050,8 +1050,8 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
                 .input_buffer => "<kbd class=\"logic input\">Input</kbd>",
                 .pt0          => "<kbd class=\"logic pt\">PT</kbd>",
                 .pt0_inverted => "<kbd class=\"logic pt\">PT</kbd> <kbd class=\"logic invert\">Invert</kbd>",
-                .sum_xor_pt0  => "<kbd class=\"logic xor-pt\">XOR PT</kbd>",
-                .sum_xor_pt0_inverted => "<kbd class=\"logic xor-pt\">XOR PT</kbd> <kbd class=\"logic invert\">Invert</kbd>",
+                .sum_xor_pt0  => "<kbd class=\"logic sum\">Sum</kbd> <kbd class=\"logic xor-pt\">XOR PT</kbd>",
+                .sum_xor_pt0_inverted => "<kbd class=\"logic sum\">Sum</kbd> <kbd class=\"logic xor-pt\">XOR PT</kbd> <kbd class=\"logic invert\">Invert</kbd>",
             });
             try endCell(writer);
 
@@ -1202,8 +1202,8 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
                         out_options = oe_options;
                     },
                     .self => {},
-                    .five_pt_fast_bypass => out_from_extra = "<kbd class=\"out fast\">Fast-Bypass</kbd>",
-                    .five_pt_fast_bypass_inverted => out_from_extra = "<kbd class=\"out fast\">Fast-Bypass</kbd> <kbd class=\"out invert\">Invert</kbd>",
+                    .five_pt_fast_bypass => out_from_extra = " <kbd class=\"out fast\">Fast-Bypass</kbd>",
+                    .five_pt_fast_bypass_inverted => out_from_extra = " <kbd class=\"out fast\">Fast-Bypass</kbd> <kbd class=\"out invert\">Invert</kbd>",
                 }
 
                 switch (mc_config.output.oe) {

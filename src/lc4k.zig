@@ -396,10 +396,68 @@ pub fn PTBuilder(comptime Device: type) type {
 
         pub fn all(comptime which: anytype) PT(GRP) { comptime {
             var pt: PT(GRP) = &.{};
-            const info = @typeInfo(@TypeOf(which)).Struct;
-            std.debug.assert(info.is_tuple);
-            for (info.fields) |field| {
-                pt = andPT(pt, of(@field(which, field.name)));
+            switch (@typeInfo(@TypeOf(which))) {
+                .Struct => |info| {
+                    std.debug.assert(info.is_tuple);
+                    for (info.fields) |field| {
+                        pt = andPT(pt, of(@field(which, field.name)));
+                    }
+                },
+                .Array => {
+                    for (which) |signal| {
+                        pt = andPT(pt, of(signal));
+                    }
+                },
+                .Pointer => |info| {
+                    std.debug.assert(info.size == .Slice);
+                    for (which) |signal| {
+                        pt = andPT(pt, of(signal));
+                    }
+                },
+                else => unreachable,
+            }
+            return pt;
+        }}
+
+        pub fn eql(comptime which: anytype, comptime value: usize) PT(GRP) { comptime {
+            var pt: PT(GRP) = &.{};
+            switch (@typeInfo(@TypeOf(which))) {
+                .Struct => |info| {
+                    std.debug.assert(info.is_tuple);
+                    var bit_value: usize = 1;
+                    for (info.fields) |field| {
+                        var factor = of(@field(which, field.name));
+                        if ((value & bit_value) == 0) {
+                            factor = not(factor);
+                        }
+                        pt = andPT(pt, factor);
+                        bit_value <<= 1;
+                    }
+                },
+                .Array => {
+                    var bit_value: usize = 1;
+                    for (which) |signal| {
+                        var factor = of(signal);
+                        if ((value & bit_value) == 0) {
+                            factor = not(factor);
+                        }
+                        pt = andPT(pt, factor);
+                        bit_value <<= 1;
+                    }
+                },
+                .Pointer => |info| {
+                    std.debug.assert(info.size == .Slice);
+                    var bit_value: usize = 1;
+                    for (which) |signal| {
+                        var factor = of(signal);
+                        if ((value & bit_value) == 0) {
+                            factor = not(factor);
+                        }
+                        pt = andPT(pt, factor);
+                        bit_value <<= 1;
+                    }
+                },
+                else => unreachable,
             }
             return pt;
         }}
