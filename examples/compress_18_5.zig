@@ -1,5 +1,4 @@
-// Implements a 16 to 5 bit compressor.
-// a.k.a. the popcnt instruction on a 16b word.
+// Implements a 18 to 5 bit compressor (pop. count)
 
 // This might look a little convoluted if you've never thought about implementing it before,
 // but it makes more sense if you draw a block diagram of the connections between the adders.
@@ -10,8 +9,8 @@
 // It does this by combining 2 or 3 input signals with the same weight, using a half or full adder, to
 // yield one signal at the same weight, and one signal at the next higher weight.
 
-// In the first layer we start will all 16 inputs having weight 1, and sum 15 them in groups of three using full adders.
-// That gives us 5 new bits with weight 1 (plus one original bit that we haven't used yet), and 5 bits with weight 2.
+// In the first layer we start will all inputs having weight 1, and sum them in groups of three using full adders.
+// That gives us 6 new bits with weight 1 and 6 bits with weight 2.
 
 // In the second layer we sum the weight 2 and weight 1 groups separately, again in groups of 2 or 3 with half or full adders.
 // Coming out of layer 2 we have:
@@ -37,6 +36,9 @@
 
 // Since layer 5 and 6 are quite simple, we can merge them into the same layer and decrease propagation delay
 // by embedding the layer 5 carry equation directly into the layer 6's product terms.
+
+// This strategy can be extended to wider bit-widths, but 18:5 is the largest that will fit in a 32-macrocell device;
+// you'd need to go up to a 64-macrocell device for a full 32 bit compressor (and eventually you need another layer).
 
 const std = @import("std");
 const lc4k = @import("lc4k");
@@ -65,6 +67,8 @@ pub fn main() !void {
         .io_A13,
         .io_A14,
         .io_A15,
+        .io_B15,
+        .io_B14,
     };
 
     const outputs = [_]Chip.GRP {
@@ -81,42 +85,43 @@ pub fn main() !void {
         .mc_A2,
         .mc_A3,
         .mc_A4,
+        .mc_A5,
     };
     const layer1_i0_o1 = [_]Chip.GRP {
-        .mc_A5,
         .mc_A6,
         .mc_A7,
         .mc_A8,
         .mc_A9,
+        .mc_A10,
+        .mc_A11,
     };
 
+    const layer2_i0_o0_0 = Chip.GRP.mc_A12;
+    const layer2_i0_o0_1 = Chip.GRP.mc_A13;
+    const layer2_i0_o1_0 = Chip.GRP.mc_A14;
+    const layer2_i0_o1_1 = Chip.GRP.mc_A15;
+    const layer2_i1_o1_0 = Chip.GRP.mc_B15;
+    const layer2_i1_o1_1 = Chip.GRP.mc_B14;
+    const layer2_i1_o2_0 = Chip.GRP.mc_B13;
+    const layer2_i1_o2_1 = Chip.GRP.mc_B12;
 
-    const layer2_i0_o0_0 = Chip.GRP.mc_A10;
-    const layer2_i0_o0_1 = Chip.GRP.mc_A11;
-    const layer2_i0_o1_0 = Chip.GRP.mc_A12;
-    const layer2_i0_o1_1 = Chip.GRP.mc_A13;
-    const layer2_i1_o1_0 = Chip.GRP.mc_A14;
-    const layer2_i1_o1_1 = Chip.GRP.mc_A15;
-    const layer2_i1_o2_0 = Chip.GRP.mc_B15;
-    const layer2_i1_o2_1 = Chip.GRP.mc_B14;
+    const layer3_i0_o1 = Chip.GRP.mc_B11;
+    const layer3_i1_o1 = Chip.GRP.mc_B10;
+    const layer3_i1_o2 = Chip.GRP.mc_B9;
 
-    const layer3_i0_o1 = Chip.GRP.mc_B13;
-    const layer3_i1_o1 = Chip.GRP.mc_B12;
-    const layer3_i1_o2 = Chip.GRP.mc_B11;
-
-    const layer4_i1_o2 = Chip.GRP.mc_B10;
-    const layer4_i2_o2 = Chip.GRP.mc_B9;
-    const layer4_i2_o3 = Chip.GRP.mc_B8;
+    const layer4_i1_o2 = Chip.GRP.mc_B8;
+    const layer4_i2_o2 = Chip.GRP.mc_B7;
+    const layer4_i2_o3 = Chip.GRP.mc_B6;
 
     inline for (layer1_i0_o0) |_, n| {
         const base = n * 3;
         full_adder(&chip, inputs[base],    inputs[base+1],  inputs[base+2],  layer1_i0_o0[n], layer1_i0_o1[n]);
     }
 
-    full_adder(&chip,     inputs[15],      layer1_i0_o0[0], layer1_i0_o0[1], layer2_i0_o0_0,  layer2_i0_o1_0);
-    full_adder(&chip,     layer1_i0_o0[2], layer1_i0_o0[3], layer1_i0_o0[4], layer2_i0_o0_1,  layer2_i0_o1_1);
+    full_adder(&chip,     layer1_i0_o0[0], layer1_i0_o0[1], layer1_i0_o0[2], layer2_i0_o0_0,  layer2_i0_o1_0);
+    full_adder(&chip,     layer1_i0_o0[3], layer1_i0_o0[4], layer1_i0_o0[5], layer2_i0_o0_1,  layer2_i0_o1_1);
     full_adder(&chip,     layer1_i0_o1[0], layer1_i0_o1[1], layer1_i0_o1[2], layer2_i1_o1_0,  layer2_i1_o2_0);
-    half_adder(&chip,     layer1_i0_o1[3], layer1_i0_o1[4],                  layer2_i1_o1_1,  layer2_i1_o2_1);
+    full_adder(&chip,     layer1_i0_o1[3], layer1_i0_o1[4], layer1_i0_o1[5], layer2_i1_o1_1,  layer2_i1_o2_1);
 
     half_adder(&chip,     layer2_i0_o0_0,  layer2_i0_o0_1,                   outputs[0],      layer3_i0_o1);
     full_adder(&chip,     layer2_i0_o1_0,  layer2_i1_o1_0, layer2_i1_o1_1,   layer3_i1_o1,    layer3_i1_o2);
@@ -149,15 +154,15 @@ pub fn main() !void {
 
     const results = try chip.assemble(arena.allocator());
 
-    var jed_file = try std.fs.cwd().createFile("examples/compress_16_5.jed", .{});
+    var jed_file = try std.fs.cwd().createFile("examples/compress_18_5.jed", .{});
     defer jed_file.close();
     try Chip.writeJED(arena.allocator(), results.jedec, jed_file.writer(), .{});
 
-    var svf_file = try std.fs.cwd().createFile("examples/compress_16_5.svf", .{});
+    var svf_file = try std.fs.cwd().createFile("examples/compress_18_5.svf", .{});
     defer svf_file.close();
     try Chip.writeSVF(results.jedec, svf_file.writer(), .{});
 
-    var report_file = try std.fs.cwd().createFile("examples/compress_16_5.html", .{});
+    var report_file = try std.fs.cwd().createFile("examples/compress_18_5.html", .{});
     defer report_file.close();
     try Chip.writeReport(results.jedec, report_file.writer(), .{
         .assembly_errors = results.errors.items,
