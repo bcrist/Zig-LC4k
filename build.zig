@@ -31,6 +31,7 @@ pub fn build(b: *std.build.Builder) void {
         counter2,
         gray_code,
         larson_scanner,
+        compress_16_5,
     };
     if (b.option(Example, "example", "Build example program")) |example| switch (example) {
         .all => inline for (comptime std.enums.values(Example)) |eg| {
