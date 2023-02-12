@@ -32,6 +32,7 @@ pub fn build(b: *std.build.Builder) void {
         gray_code,
         larson_scanner,
         compress_18_5,
+        priority_encoder,
     };
     if (b.option(Example, "example", "Build example program")) |example| switch (example) {
         .all => inline for (comptime std.enums.values(Example)) |eg| {

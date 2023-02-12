@@ -1,4 +1,4 @@
-// Implements a 18 to 5 bit compressor (pop. count)
+// Implements a 18 to 5 bit compressor (i.e. count number of set bits)
 
 // This might look a little convoluted if you've never thought about implementing it before,
 // but it makes more sense if you draw a block diagram of the connections between the adders.
@@ -35,7 +35,8 @@
 // Layer 6 is again just a half adder on the weight 8 bits, yielding the fourth and fifth output bits.
 
 // Since layer 5 and 6 are quite simple, we can merge them into the same layer and decrease propagation delay
-// by embedding the layer 5 carry equation directly into the layer 6's product terms.
+// by embedding the layer 5 carry equation directly into layer 6's product terms.
+// Total worst-case propagation delay on a `-5` speed class device should be a little over 20ns.
 
 // This strategy can be extended to wider bit-widths, but 18:5 is the largest that will fit in a 32-macrocell device;
 // you'd need to go up to a 64-macrocell device for a full 32 bit compressor (and eventually you need another layer).
