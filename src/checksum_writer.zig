@@ -44,7 +44,7 @@ pub fn ChecksumWriter(comptime SumType: type, comptime Writer: type) type {
 
         pub fn writeByteNTimes(self: *Self, byte: u8, n: usize) !void {
             try self.inner.writeByteNTimes(byte, n);
-            self.checksum +%= @truncate(SumType, @as(SumType, byte) *% n);
+            self.checksum +%= @truncate(@as(SumType, byte) *% n);
         }
 
         pub fn writeIntNative(self: *Self, comptime T: type, value: T) !void {

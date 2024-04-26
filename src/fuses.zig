@@ -26,7 +26,7 @@ pub fn getSharedInitPolarityRange(comptime Device: type, glb: usize) jedec.FuseR
 pub fn getMacrocellRange(comptime Device: type, mcref: MacrocellRef) jedec.FuseRange {
     const starting_row = Device.num_gis_per_glb * 2;
     const range = Device.getGlbRange(mcref.glb).subRows(starting_row, Device.jedec_dimensions.height() - starting_row);
-    return switch (@truncate(u1, mcref.mc)) {
+    return switch (@as(u1, @truncate(mcref.mc))) {
         0 => range.subColumns(mcref.mc * 5 + 4, 1),
         1 => range.subColumns(mcref.mc * 5, 1)
     };
@@ -85,7 +85,7 @@ pub fn getWideRoutingRange(comptime Device: type, mcref: MacrocellRef) jedec.Fus
 }
 
 pub fn getOutputRoutingRange(comptime Device: type, mcref: MacrocellRef) ?jedec.FuseRange {
-    if (Device.jedec_dimensions.height() == 95 and @truncate(u1, mcref.mc) == 1) {
+    if (Device.jedec_dimensions.height() == 95 and (mcref.mc & 1) == 1) {
         return null;
     } else {
         return getMacrocellRange(Device, mcref).subRows(17, 3);
@@ -96,7 +96,7 @@ pub fn getOutputRoutingModeRange(comptime Device: type, mcref: MacrocellRef) ?je
     if (Device.family == .zero_power_enhanced) {
         return null;
     } else if (Device.jedec_dimensions.height() == 95) {
-        if (@truncate(u1, mcref.mc) == 1) {
+        if ((mcref.mc & 1) == 1) {
             return null;
         } else {
             return getMacrocellRange(Device, mcref).expandColumns(1).subRows(20, 1);
@@ -108,7 +108,7 @@ pub fn getOutputRoutingModeRange(comptime Device: type, mcref: MacrocellRef) ?je
 
 pub fn getOESourceRange(comptime Device: type, mcref: MacrocellRef) ?jedec.FuseRange {
     if (Device.jedec_dimensions.height() == 95) {
-        if (@truncate(u1, mcref.mc) == 1) {
+        if ((mcref.mc & 1) == 1) {
             return null;
         } else {
             return getMacrocellRange(Device, mcref).expandColumns(1).subColumns(1, 1).subRows(17, 3);
@@ -125,7 +125,7 @@ pub fn getBusMaintenanceRange(comptime Device: type, mcref: MacrocellRef) jedec.
 
 pub fn getSlewRateRange(comptime Device: type, mcref: MacrocellRef) ?jedec.FuseRange {
     if (Device.jedec_dimensions.height() == 95) {
-        if (@truncate(u1, mcref.mc) == 1) {
+        if ((mcref.mc & 1) == 1) {
             return null;
         } else {
             return getMacrocellRange(Device, mcref).expandColumns(1).subColumns(1, 1).subRows(21, 1);
@@ -137,7 +137,7 @@ pub fn getSlewRateRange(comptime Device: type, mcref: MacrocellRef) ?jedec.FuseR
 
 pub fn getDriveTypeRange(comptime Device: type, mcref: MacrocellRef) ?jedec.FuseRange {
     if (Device.jedec_dimensions.height() == 95) {
-        if (@truncate(u1, mcref.mc) == 1) {
+        if ((mcref.mc & 1) == 1) {
             return null;
         } else {
             return getMacrocellRange(Device, mcref).subRows(21, 1);
@@ -149,7 +149,7 @@ pub fn getDriveTypeRange(comptime Device: type, mcref: MacrocellRef) ?jedec.Fuse
 
 pub fn getInputThresholdRange(comptime Device: type, mcref: MacrocellRef) ?jedec.FuseRange {
     if (Device.jedec_dimensions.height() == 95) {
-        if (@truncate(u1, mcref.mc) == 1) {
+        if ((mcref.mc & 1) == 1) {
             return null;
         } else {
             return getMacrocellRange(Device, mcref).subRows(22, 1);

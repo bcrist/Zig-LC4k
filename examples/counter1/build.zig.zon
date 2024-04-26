@@ -1,0 +1,9 @@
+.{
+    .name = "counter1",
+    .version = "0.0.1",
+    .minimum_zig_version = "0.12.0",
+    .paths = .{""},
+    .dependencies = .{
+        .lc4k = .{ .path = "../.." },
+    },
+}

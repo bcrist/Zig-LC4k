@@ -25,7 +25,7 @@ other safety-critical applications.
 
 ## Usage
 
-To use this library, import `lc4k.zig` and create an instance of one of the device data structures defined there.  This can be done in two ways:
+To use this library, import `lc4k` and create an instance of one of the device data structures defined there.  This can be done in two ways:
 
 * Manually initialize the macrocells and other configuration necessary to define your design, using Zig code as a low-level pseudo-HDL.
 * Load an existing bitstream/JEDEC file.
@@ -34,7 +34,7 @@ Note that this library does not and will not provide support for synthesizing a 
 
 Once you have your in-memory representation of the design, you can do a number of things with it:
 
-* Generate an HTML report detailing the design.
+* Generate an HTML report detailing the design, including timing information.
 * Export the design as a JEDEC or SVF file for programming devices.
 * (Planned) Export a Verilog model of the design for simulation/validation/etc.
 * Write your own Zig code that does whatever you want.
@@ -43,11 +43,10 @@ Once you have your in-memory representation of the design, you can do a number o
 * Assembly error reporting
 * Error when PT4 is needed for ORM routing, but pt4_oe fuse is not cleared
 * Error when there are duplicate sum PTs or they can be simplified
-* More examples - 16:1 mux, address decoder, adder?
+* More examples - 16:1 mux, address decoder, 74x181?
 * Rename GRP -> Signal
 * Tests
 * ease of use: PTs.parse() []PT
 * ease of use: helpers to set up common MC configurations?
 * How-To in readme
-* Add timing analysis to report generation
 * Verilog export

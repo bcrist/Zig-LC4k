@@ -124,7 +124,7 @@ pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: [
             .location, .hex => {
                 var end_of_digits: usize = 0;
                 while (end_of_digits < field.extra.len) : (end_of_digits += 1) {
-                    var c = field.extra[end_of_digits];
+                    const c = field.extra[end_of_digits];
                     if (c < '0' or c > '9') break;
                 }
 
@@ -165,7 +165,7 @@ pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: [
 
     if (data) |s| {
         if (fuse_checksum) |found_checksum| {
-            var computed_checksum = checksum(s);
+            const computed_checksum = checksum(s);
             if (found_checksum != computed_checksum) {
                 try std.io.getStdErr().writer().print("Fuse checksum mismatch; file specifies {X:0>4} but computed {X:0>4}\n", .{ found_checksum, computed_checksum });
                 return error.CorruptedJedecFile;
@@ -209,9 +209,9 @@ fn parseHexString(data: *JedecData, starting_fuse: usize, text: []const u8) !voi
     var i: usize = starting_fuse;
     for (text) |c| {
         const val: ?u4 = switch (c) {
-            '0'...'9' => @intCast(u4, c - '0'),
-            'A'...'F' => @intCast(u4, c - 'A' + 0xA),
-            'a'...'f' => @intCast(u4, c - 'a' + 0xA),
+            '0'...'9' => @intCast(c - '0'),
+            'A'...'F' => @intCast(c - 'A' + 0xA),
+            'a'...'f' => @intCast(c - 'a' + 0xA),
             '\r', '\n', '\t', ' ' => null,
             else => return error.InvalidData,
         };
@@ -281,10 +281,10 @@ pub fn write(device_type: common.DeviceType, allocator: std.mem.Allocator, f: Je
         var unwritten_defaults: usize = 8888;
         var fuse: usize = 0;
         while (fuse < len) : (fuse += 4) {
-            const b0: u4 = @boolToInt(f.data.raw.isSet(fuse + 0));
-            const b1: u4 = if (fuse + 1 < len) @boolToInt(f.data.raw.isSet(fuse + 1)) else default;
-            const b2: u4 = if (fuse + 2 < len) @boolToInt(f.data.raw.isSet(fuse + 2)) else default;
-            const b3: u4 = if (fuse + 3 < len) @boolToInt(f.data.raw.isSet(fuse + 3)) else default;
+            const b0: u4 = @intFromBool(f.data.raw.isSet(fuse + 0));
+            const b1: u4 = if (fuse + 1 < len) @intFromBool(f.data.raw.isSet(fuse + 1)) else default;
+            const b2: u4 = if (fuse + 2 < len) @intFromBool(f.data.raw.isSet(fuse + 2)) else default;
+            const b3: u4 = if (fuse + 3 < len) @intFromBool(f.data.raw.isSet(fuse + 3)) else default;
 
             const val: u8 = 8*b0 + 4*b1 + 2*b2 + b3;
             const hex = if (val < 0xA) '0' + val else 'A' + val - 0xA;
@@ -347,7 +347,7 @@ pub fn checksum(data: JedecData) u16 {
         var x = mask;
         comptime var i = 0;
         inline while (i < @sizeOf(MaskInt)) : (i += 1) {
-            sum +%= @truncate(u8, x);
+            sum +%= @as(u8, @truncate(x));
             x = x >> 8;
         }
     }

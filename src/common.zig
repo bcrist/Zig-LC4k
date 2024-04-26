@@ -108,7 +108,9 @@ pub const DeviceType = enum {
 pub const GiIndex = u8;
 pub const GlbIndex = u8;
 pub const MacrocellIndex = u8;
+pub const PTIndex = u8;
 pub const ClockIndex = u8;
+pub const GoeIndex = u8;
 
 pub const MacrocellRef = struct {
     glb: GlbIndex,
@@ -116,8 +118,20 @@ pub const MacrocellRef = struct {
 
     pub fn init(glb: usize, mc: usize) MacrocellRef {
         return .{
-            .glb = @intCast(GlbIndex, glb),
-            .mc = @intCast(MacrocellIndex, mc),
+            .glb = @intCast(glb),
+            .mc = @intCast(mc),
+        };
+    }
+};
+
+pub const PTRef = struct {
+    mcref: MacrocellRef,
+    pt: PTIndex,
+
+    pub fn init(glb: usize, mc: usize, pt: usize) PTRef {
+        return .{
+            .mcref = MacrocellRef.init(glb, mc),
+            .pt = @intCast(pt),
         };
     }
 };
@@ -197,6 +211,14 @@ pub const OutputEnableMode = enum(u3) {
     input_only = 7,
 };
 
+// note: non-ZE family only
+pub const OutputRoutingMode = enum(u2) {
+    same_as_oe = 2,
+    self = 3,
+    five_pt_fast_bypass = 0,
+    five_pt_fast_bypass_inverted = 1,
+};
+
 pub const PowerGuard = enum(u1) {
     from_bie = 0,
     disabled = 1,
@@ -226,6 +248,39 @@ pub const ClusterRouting = enum(u2) {
 pub const WideRouting = enum(u1) {
     self_plus_four = 0,
     self = 1,
+};
+
+pub const Clock_Source = enum(u3) {
+    none,
+    shared_pt_clock,
+    pt1_positive,
+    pt1_negative,
+    bclock0,
+    bclock1,
+    bclock2,
+    bclock3,
+};
+
+pub const Clock_Enable_Source = enum(u2) {
+    pt2_active_high = 0,
+    pt2_active_low = 1,
+    shared_pt_clock = 2,
+    always_active = 3,
+};
+
+pub const Async_Trigger_Source = enum(u1) {
+    pt2_active_high = 0,
+    none = 1,
+};
+
+pub const Init_Source = enum(u1) {
+    pt3_active_high = 0,
+    shared_pt_init = 1,
+};
+
+pub const Macrocell_Output_Enable_Source = enum(u1) {
+    pt4_active_high = 0,
+    always_low = 1,
 };
 
 pub fn getGlbName(glb: usize) []const u8 {

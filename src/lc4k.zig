@@ -211,6 +211,7 @@ pub fn MacrocellConfig(comptime family: common.DeviceFamily, comptime GRP: type)
             pt0_inverted: PT(GRP),
             sum_xor_pt0: SumXorPt0(GRP),
             sum_xor_pt0_inverted: SumXorPt0(GRP),
+            sum_xor_input_buffer: []const PT(GRP), // TODO test this; datasheet's schematic of MC implies it is, but timing model implies it isn't.
         },
         func: union(common.MacrocellFunction) {
             combinational: void,
@@ -249,7 +250,7 @@ pub fn OutputConfig(comptime GRP: type) type {
         drive_type: ?common.DriveType = null,
         oe: common.OutputEnableMode,
         oe_routing: OutputRouting = .{ .relative = 0 },
-        routing: union(enum) {
+        routing: union(common.OutputRoutingMode) {
             same_as_oe,
             self,
             five_pt_fast_bypass: []const PT(GRP),
@@ -313,27 +314,30 @@ pub fn SumXorPt0(comptime GRP: type) type {
 
 pub fn RegisterConfig(comptime GRP: type) type {
     return struct {
-        clock: union(enum) {
+        clock: union(common.Clock_Source) {
             none,
             shared_pt_clock,
             pt1_positive: PT(GRP),
             pt1_negative: PT(GRP),
-            bclock: u2,
+            bclock0,
+            bclock1,
+            bclock2,
+            bclock3,
         } = .{ .none = {} },
-        ce: union(enum) {
+        ce: union(common.Clock_Enable_Source) {
             pt2_active_high: PT(GRP),
             pt2_active_low: PT(GRP),
             shared_pt_clock,
             always_active,
         } = .{ .always_active = {} },
         init_state: u1 = 0,
-        init_source: union(enum) {
+        init_source: union(common.Init_Source) {
             pt3_active_high: PT(GRP),
             shared_pt_init,
         } = .{ .shared_pt_init = {} },
-        async_source: union(enum) {
-            none,
+        async_source: union(common.Async_Trigger_Source) {
             pt2_active_high: PT(GRP),
+            none,
         } = .{ .none = {} },
     };
 }
@@ -370,7 +374,7 @@ pub fn PTBuilder(comptime Device: type) type {
                 PT(GRP) => what,
                 Factor(GRP) => &.{ what },
                 GRP => &.{ .{ .when_high = what } },
-                common.PinInfo => &.{ .{ .when_high = @intToEnum(GRP, what.grp_ordinal.?) } },
+                common.PinInfo => &.{ .{ .when_high = @enumFromInt(what.grp_ordinal.?) } },
                 else => &.{ .{ .when_high = Device.getGrp(what) } },
             };
         }}
@@ -389,7 +393,7 @@ pub fn PTBuilder(comptime Device: type) type {
                     .when_low => |grp| &.{ Factor(GRP) { .when_high = grp } },
                 },
                 GRP => &.{ Factor(GRP) { .when_low = what } },
-                common.PinInfo => &.{ Factor(GRP) { .when_low = @intToEnum(GRP, what.grp_ordinal.?) } },
+                common.PinInfo => &.{ Factor(GRP) { .when_low = @enumFromInt(what.grp_ordinal.?) } },
                 else => &.{ Factor(GRP) { .when_low = Device.getGrp(what) } },
             };
         }}

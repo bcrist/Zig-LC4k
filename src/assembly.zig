@@ -34,9 +34,9 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
     };
 
     var prng = std.rand.Xoroshiro128.init(0x0416_fff9_140b_a135); // random but consistent seed
-    var rnd = prng.random();
+    const rnd = prng.random();
 
-    for (config.glb) |glb_config, glb| {
+    for (config.glb, 0..) |glb_config, glb| {
         // Compile list of GRP signals needed in this GLB:
         var gi_routing = [_]?Device.GRP { null } ** Device.num_gis_per_glb;
         switch (glb_config.shared_pt_init) {
@@ -81,7 +81,7 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
 
         // Route GRP signals to specific GI fuses:
         try routing.routeGIs(Device, &gi_routing, rnd);
-        for (gi_routing) |maybe_signal, gi| if (maybe_signal) |signal| {
+        for (gi_routing, 0..) |maybe_signal, gi| if (maybe_signal) |signal| {
             const option_index = std.mem.indexOfScalar(Device.GRP, &Device.gi_options[gi], signal).?;
             const range = Device.getGiRange(glb, gi);
             var iter = range.iterator();
@@ -95,7 +95,7 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
         var cluster_routing = try router.route(&results);
 
         // Program PT fuses
-        for (glb_config.mc) |mc_config, mc| {
+        for (glb_config.mc, 0..) |mc_config, mc| {
              if (Device.family != .zero_power_enhanced) {
                 switch (mc_config.output.routing) {
                     .same_as_oe, .self => {},
@@ -158,7 +158,7 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
         try writePTFuses(Device, &results, glb, 82, &gi_routing, glb_config.shared_pt_enable);
 
         // Program MC-slice configuration fuses (Replace default/unset parameters with the defaults)
-        for (glb_config.mc) |mc_config, mc| {
+        for (glb_config.mc, 0..) |mc_config, mc| {
             const mcref = common.MacrocellRef.init(glb, mc);
 
             writeField(&results.jedec.data, common.ClusterRouting, cluster_routing.cluster[mc], fuses.getClusterRoutingRange(Device, mcref));
@@ -234,14 +234,14 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
 
             if (fuses.getOutputRoutingRange(Device, mcref)) |range| {
                 const oe_routing = if (@TypeOf(mc_config.output) == lc4k.OutputConfigZE) mc_config.output.routing else mc_config.output.oe_routing;
-                const relative = switch (oe_routing) {
+                const relative: u3 = switch (oe_routing) {
                     .relative => |delta| delta,
                     .absolute => |src_mc| rel: {
                         const delta = @as(i32, src_mc) - mcref.mc;
                         if (delta < 0 or delta > 7) {
                             return error.InvalidOutputRouting;
                         }
-                        break :rel @intCast(u3, delta);
+                        break :rel @intCast(delta);
                     },
                 };
                 writeField(&results.jedec.data, u3, relative, range);
@@ -323,15 +323,15 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
     writeGoeFuses(Device, &results.jedec.data, config.goe2, 2);
     writeGoeFuses(Device, &results.jedec.data, config.goe3, 3);
 
-    results.jedec.data.put(Device.getZeroHoldTimeFuse(), @boolToInt(!config.zero_hold_time));
+    results.jedec.data.put(Device.getZeroHoldTimeFuse(), @intFromBool(!config.zero_hold_time));
 
     if (Device.family == .zero_power_enhanced) {
 
         if (config.ext.osctimer) |osctimer| {
             results.jedec.data.putRange(Device.getOscTimerEnableRange(), 0);
             writeField(&results.jedec.data, common.TimerDivisor, osctimer.timer_divisor, Device.getTimerDivRange());
-            results.jedec.data.put(Device.getOscOutFuse(), @boolToInt(!osctimer.enable_osc_out_and_disable));
-            results.jedec.data.put(Device.getTimerOutFuse(), @boolToInt(!osctimer.enable_timer_out_and_reset));
+            results.jedec.data.put(Device.getOscOutFuse(), @intFromBool(!osctimer.enable_osc_out_and_disable));
+            results.jedec.data.put(Device.getTimerOutFuse(), @intFromBool(!osctimer.enable_timer_out_and_reset));
         }
     } else {
         writeField(&results.jedec.data, common.BusMaintenance, config.default_bus_maintenance, Device.getGlobalBusMaintenanceRange());
@@ -343,19 +343,19 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
     }
 
     // Program clock/input fuses
-    for (config.clock) |clock_config, clock_pin_index| {
+    for (config.clock, 0..) |clock_config, clock_pin_index| {
         const pin_info = Device.clock_pins[clock_pin_index];
         writeDedicatedInputFuses(Device, &results.jedec.data, pin_info, &config, clock_config);
     }
 
-    for (config.input) |input_config, input_pin_index| {
+    for (config.input, 0..) |input_config, input_pin_index| {
         const pin_info = Device.input_pins[input_pin_index];
         writeDedicatedInputFuses(Device, &results.jedec.data, pin_info, &config, input_config);
     }
 
     results.jedec.pin_count = Device.all_pins.len;
     results.jedec.usercode = config.usercode;
-    results.jedec.security = @boolToInt(config.security);
+    results.jedec.security = @intFromBool(config.security);
 
     return results;
 }
@@ -382,11 +382,11 @@ fn writeGoeFuses(comptime Device: type, data: *jedec.JedecData, goe_config: anyt
         },
         else => {},
     }
-    data.put(Device.getGOEPolarityFuse(goe_index), @boolToInt(goe_config.polarity == .active_high));
+    data.put(Device.getGOEPolarityFuse(goe_index), @intFromBool(goe_config.polarity == .active_high));
 }
 
 fn writeDedicatedInputFuses(comptime Device: type, data: *jedec.JedecData, pin_info: common.PinInfo, config: *const LC4k(Device.device_type), input_config: anytype) void {
-    const grp = @intToEnum(Device.GRP, pin_info.grp_ordinal.?);
+    const grp: Device.GRP = @enumFromInt(pin_info.grp_ordinal.?);
 
     const threshold = input_config.threshold orelse config.default_input_threshold;
     writeField(data, common.InputThreshold, threshold, jedec.FuseRange.fromFuse(Device.getInputThresholdFuse(grp)));
@@ -413,7 +413,7 @@ fn writePTFuses(comptime Device: type, results: *AssemblyResults, glb: usize, gl
         .always => {},
         .never => is_never = true,
         .when_high, .when_low => |grp| {
-            const fuse = for (gi_signals) |maybe_grp, gi| {
+            const fuse = for (gi_signals, 0..) |maybe_grp, gi| {
                 if (maybe_grp) |gi_grp| {
                     if (gi_grp == grp) {
                         const gi_fuses = range.subRows(gi * 2, 2); // should be exactly 2 fuses stacked vertically
@@ -440,12 +440,12 @@ fn writePTFuses(comptime Device: type, results: *AssemblyResults, glb: usize, gl
 
 fn writeField(data: *jedec.JedecData, comptime T: type, value: T, range: jedec.FuseRange) void {
     std.debug.assert(@bitSizeOf(T) == range.count());
-    const v = if (@typeInfo(T) == .Enum) @enumToInt(value) else value;
+    const v = if (@typeInfo(T) == .Enum) @intFromEnum(value) else value;
     const IntT = std.meta.Int(.unsigned, @bitSizeOf(T));
-    var int_value = @as(u64, @bitCast(IntT, v));
+    var int_value = @as(u64, @as(IntT, @bitCast(v)));
     var iter = range.iterator();
     while (iter.next()) |fuse| {
-        data.put(fuse, @truncate(u1, int_value));
+        data.put(fuse, @truncate(int_value));
         int_value = int_value >> 1;
     }
 }

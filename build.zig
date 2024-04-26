@@ -1,59 +1,25 @@
 const std = @import("std");
-const Pkg = std.build.Pkg;
 
-const lc4k = Pkg {
-    .name = "lc4k",
-    .source = .{ .path = "src/lc4k.zig" },
-};
-const sx = Pkg {
-    .name = "sx",
-    .source = .{ .path = "../sx/sx.zig" },
-};
+pub fn build(b: *std.Build) void {
+    const lc4k = b.addModule("lc4k", .{
+        .root_source_file = .{ .path = "src/lc4k.zig" },
+    });
 
-pub fn build(b: *std.build.Builder) void {
-    const target = b.standardTargetOptions(.{});
-    const mode = b.standardReleaseOptions();
-
-    const tests = b.addTest("test/tests.zig");
-    tests.addPackage(lc4k);
-    tests.addPackage(sx);
-    tests.setTarget(target);
-    tests.setBuildMode(mode);
-
+    const tests = b.addTest(.{
+        .root_source_file = .{ .path = "test/tests.zig" },
+        .optimize = b.standardOptimizeOption(.{}),
+        .target = b.standardTargetOptions(.{}),
+    });
+    tests.root_module.addImport("lc4k", lc4k);
+    const run_tests = b.addRunArtifact(tests);
     const test_step = b.step("test", "Run all tests");
-    test_step.dependOn(&tests.step);
+    test_step.dependOn(&run_tests.step);
 
-    const Example = enum {
-        all,
-        basic_test,
-        demux,
-        counter1,
-        counter2,
-        gray_code,
-        larson_scanner,
-        compress_18_5,
-        priority_encoder,
-    };
-    if (b.option(Example, "example", "Build example program")) |example| switch (example) {
-        .all => inline for (comptime std.enums.values(Example)) |eg| {
-            if (eg != .all) buildExample(b, @tagName(eg), target, mode);
-        },
-        inline else => |eg| buildExample(b, @tagName(eg), target, mode),
-    };
-}
-
-fn buildExample(b: *std.build.Builder, comptime name: []const u8, target: std.zig.CrossTarget, mode: std.builtin.Mode) void {
-    const exe = b.addExecutable(name, "examples/" ++ name ++ ".zig");
-    exe.addPackage(lc4k);
-    exe.setTarget(target);
-    exe.setBuildMode(mode);
-    exe.install();
-    _ = makeRunStep(b, exe, name, "run " ++ name);
-}
-
-fn makeRunStep(b: *std.build.Builder, exe: *std.build.LibExeObjStep, name: []const u8, desc: []const u8) *std.build.RunStep {
-    var run = exe.run();
-    run.step.dependOn(b.getInstallStep());
-    b.step(name, desc).dependOn(&run.step);
-    return run;
+    // const limp = b.dependency("limp", .{}).artifact("limp");
+    // const run_limp = b.addRunArtifact(limp);
+    // run_limp.addDirectoryArg(.{ .path = "src/device" });
+    // run_limp.addArgs(&.{ "--set", "re4k" });
+    // run_limp.addDirectoryArg(b.dependency("re4k", .{}).path("."));
+    // const limp_step = b.step("codegen", "Run LIMP codegen");
+    // limp_step.dependOn(&run_limp.step);
 }

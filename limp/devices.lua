@@ -142,9 +142,9 @@ end
 
 template([[
 const std = @import("std");
-const common = @import("common.zig");
-const internal = @import("internal.zig");
-const jedec = @import("jedec.zig");
+const common = @import("../common.zig");
+const internal = @import("../internal.zig");
+const jedec = @import("../jedec.zig");
 
 pub const device_type = common.DeviceType.`device`;
 
@@ -512,7 +512,7 @@ for _, pin in spairs(info.pins, natural_cmp) do
     end
 
     if pin.grp_name ~= '' then
-        t[#t+1] = '    .grp_ordinal = @enumToInt(GRP.'..pin.grp_name..'),'
+        t[#t+1] = '    .grp_ordinal = @intFromEnum(GRP.'..pin.grp_name..'),'
         t[#t+1] = nl
     end
 

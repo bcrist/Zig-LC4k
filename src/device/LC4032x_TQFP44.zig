@@ -1,9 +1,9 @@
 //[[!! include('devices', 'LC4032x_TQFP44') !! 404 ]]
 //[[ ################# !! GENERATED CODE -- DO NOT MODIFY !! ################# ]]
 const std = @import("std");
-const common = @import("common.zig");
-const internal = @import("internal.zig");
-const jedec = @import("jedec.zig");
+const common = @import("../common.zig");
+const internal = @import("../internal.zig");
+const jedec = @import("../jedec.zig");
 
 pub const device_type = common.DeviceType.LC4032x_TQFP44;
 

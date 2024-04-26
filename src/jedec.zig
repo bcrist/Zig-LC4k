@@ -152,13 +152,13 @@ pub const FuseRange = struct {
     pub fn expandColumns(self: FuseRange, num_columns: isize) FuseRange {
         if (num_columns < 0) {
             return FuseRange.between(
-                Fuse.init(self.min.row, self.min.col - @intCast(usize, -num_columns)),
+                Fuse.init(self.min.row, self.min.col - @as(usize, @intCast(-num_columns))),
                 self.max,
             );
         } else {
             return FuseRange.between(
                 self.min,
-                Fuse.init(self.max.row, self.max.col + @intCast(usize, num_columns)),
+                Fuse.init(self.max.row, self.max.col + @as(usize, @intCast(num_columns))),
             );
         }
     }
@@ -166,13 +166,13 @@ pub const FuseRange = struct {
     pub fn expandRows(self: FuseRange, num_rows: isize) FuseRange {
         if (num_rows < 0) {
             return FuseRange.between(
-                Fuse.init(self.min.row - @intCast(usize, -num_rows), self.min.col),
+                Fuse.init(self.min.row - @as(usize, @intCast(-num_rows)), self.min.col),
                 self.max,
             );
         } else {
             return FuseRange.between(
                 self.min,
-                Fuse.init(self.max.row + @intCast(usize, num_rows), self.max.col),
+                Fuse.init(self.max.row + @as(usize, @intCast(num_rows)), self.max.col),
             );
         }
     }
@@ -306,7 +306,7 @@ pub const JedecData = struct {
 
     pub fn get(self: JedecData, fuse: Fuse) u1 {
         std.debug.assert(self.extents.contains(fuse));
-        return @boolToInt(self.raw.isSet(fuse.toOffset(self)));
+        return @intFromBool(self.raw.isSet(fuse.toOffset(self)));
     }
 
     pub fn put(self: *JedecData, fuse: Fuse, val: u1) void {
@@ -341,7 +341,7 @@ pub const JedecData = struct {
         if (self.extents.eql(a.extents)) {
             const MaskInt = @TypeOf(self.raw.masks[0]);
             const num_masks = (self.raw.bit_length + (@bitSizeOf(MaskInt) - 1)) / @bitSizeOf(MaskInt);
-            for (self.raw.masks[0..num_masks]) |*mask, i| {
+            for (self.raw.masks[0..num_masks], 0..) |*mask, i| {
                 mask.* |= a.raw.masks[i] ^ b.raw.masks[i];
             }
         } else {

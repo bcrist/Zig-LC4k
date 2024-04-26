@@ -9,7 +9,7 @@ pub fn invertGIMapping(
 ) std.EnumMap(GRP, []const u8) { comptime {
     @setEvalBranchQuota(10_000);
     var results = std.EnumMap(GRP, []const u8) {};
-    for (mapping) |options, gi| {
+    for (mapping, 0..) |options, gi| {
         for (options) |grp| {
             results.put(grp, (results.get(grp) orelse &[_]u8 {}) ++ [_]u8 { gi });
         }
@@ -38,7 +38,7 @@ pub fn getMacrocellRef(comptime GRP: type, comptime which: anytype) common.Macro
 
 pub fn getGlbIndex(comptime Device: type, comptime which: anytype) common.GlbIndex { comptime {
     const T = @TypeOf(which);
-    const ordinal: usize = @enumToInt(switch (T) {
+    const ordinal: usize = @intFromEnum(switch (T) {
         common.MacrocellRef => return which.glb,
         common.PinInfo => return which.glb.?,
         Device.GRP => which,
@@ -60,7 +60,7 @@ pub fn getGrp(comptime GRP: type, comptime which: anytype) GRP { comptime {
             common.getGlbName(which.glb),
             which.mc,
         })),
-        common.PinInfo => @intToEnum(GRP, which.grp_ordinal.?),
+        common.PinInfo => @enumFromInt(which.grp_ordinal.?),
         else => std.enums.nameCast(GRP, which),
     };
 }}
@@ -129,7 +129,7 @@ pub fn getPin(comptime Device: type, comptime which: anytype) common.PinInfo { c
         },
         common.PinInfo => return which,
         else => {
-            const ordinal = @enumToInt(std.enums.nameCast(Device.GRP, which));
+            const ordinal = @intFromEnum(std.enums.nameCast(Device.GRP, which));
             for (Device.all_pins) |pin| {
                 if (pin.grp_ordinal) |pin_ordinal| {
                     if (ordinal == pin_ordinal) return pin;

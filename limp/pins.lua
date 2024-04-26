@@ -1,5 +1,5 @@
 function load_pins (device_name)
-    local path = fs.compose_path('..', '..', '..', device_name:sub(1,6), device_name, 'pins.csv')
+    local path = fs.compose_path('..', 'pins', device_name .. '.csv')
 
     local pins = {}
     local pins_by_type = {
