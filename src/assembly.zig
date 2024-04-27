@@ -1,7 +1,6 @@
 const std = @import("std");
 const lc4k = @import("lc4k.zig");
 const jedec = @import("jedec.zig");
-const common = @import("common.zig");
 const routing = @import("routing.zig");
 const internal = @import("internal.zig");
 const fuses = @import("fuses.zig");
@@ -14,9 +13,9 @@ const PTs = lc4k.PTBuilder;
 pub const AssemblyError = struct {
     err: anyerror,
     details: []const u8,
-    gi: ?common.GiIndex = null,
-    glb: ?common.GlbIndex = null,
-    mc: ?common.MacrocellIndex = null,
+    gi: ?lc4k.GiIndex = null,
+    glb: ?lc4k.GlbIndex = null,
+    mc: ?lc4k.MacrocellIndex = null,
     // mc_pt: ?u8 = null,
 };
 
@@ -159,10 +158,10 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
 
         // Program MC-slice configuration fuses (Replace default/unset parameters with the defaults)
         for (glb_config.mc, 0..) |mc_config, mc| {
-            const mcref = common.MacrocellRef.init(glb, mc);
+            const mcref = lc4k.MacrocellRef.init(glb, mc);
 
-            writeField(&results.jedec.data, common.ClusterRouting, cluster_routing.cluster[mc], fuses.getClusterRoutingRange(Device, mcref));
-            writeField(&results.jedec.data, common.WideRouting, cluster_routing.wide[mc], fuses.getWideRoutingRange(Device, mcref));
+            writeField(&results.jedec.data, lc4k.ClusterRouting, cluster_routing.cluster[mc], fuses.getClusterRoutingRange(Device, mcref));
+            writeField(&results.jedec.data, lc4k.WideRouting, cluster_routing.wide[mc], fuses.getWideRoutingRange(Device, mcref));
 
             const pt0xor: u1 = switch (mc_config.logic) {
                 .pt0, .pt0_inverted, .sum_xor_pt0, .sum_xor_pt0_inverted => 0,
@@ -182,7 +181,7 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
             };
             writeField(&results.jedec.data, u1, input_bypass, fuses.getInputBypassRange(Device, mcref));
 
-            writeField(&results.jedec.data, common.MacrocellFunction, mc_config.func, fuses.getMcFuncRange(Device, mcref));
+            writeField(&results.jedec.data, lc4k.MacrocellFunction, mc_config.func, fuses.getMcFuncRange(Device, mcref));
             switch (mc_config.func) {
                 .combinational => {},
                 .latch, .t_ff, .d_ff => |reg_config| {
@@ -229,7 +228,7 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
             writeField(&results.jedec.data, u1, oe, fuses.getPT4OERange(Device, mcref));
 
             if (fuses.getOESourceRange(Device, mcref)) |range| {
-                writeField(&results.jedec.data, common.OutputEnableMode, mc_config.output.oe, range);
+                writeField(&results.jedec.data, lc4k.OutputEnableMode, mc_config.output.oe, range);
             }
 
             if (fuses.getOutputRoutingRange(Device, mcref)) |range| {
@@ -261,25 +260,25 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
 
             if (fuses.getSlewRateRange(Device, mcref)) |range| {
                 const value = mc_config.output.slew_rate orelse config.default_slew_rate;
-                writeField(&results.jedec.data, common.SlewRate, value, range);
+                writeField(&results.jedec.data, lc4k.SlewRate, value, range);
             }
 
             if (fuses.getDriveTypeRange(Device, mcref)) |range| {
                 const value = mc_config.output.drive_type orelse config.default_drive_type;
-                writeField(&results.jedec.data, common.DriveType, value, range);
+                writeField(&results.jedec.data, lc4k.DriveType, value, range);
             }
 
             if (fuses.getInputThresholdRange(Device, mcref)) |range| {
                 const value = mc_config.input.threshold orelse config.default_input_threshold;
-                writeField(&results.jedec.data, common.InputThreshold, value, range);
+                writeField(&results.jedec.data, lc4k.InputThreshold, value, range);
             }
 
             if (@TypeOf(mc_config.input) == lc4k.InputConfigZE) {
                 const value = mc_config.input.bus_maintenance orelse config.default_bus_maintenance;
-                writeField(&results.jedec.data, common.BusMaintenance, value, fuses.getBusMaintenanceRange(Device, mcref));
+                writeField(&results.jedec.data, lc4k.BusMaintenance, value, fuses.getBusMaintenanceRange(Device, mcref));
 
                 const pgdf = mc_config.input.power_guard orelse config.ext.default_power_guard;
-                writeField(&results.jedec.data, common.PowerGuard, pgdf, fuses.getPowerGuardRange(Device, mcref));
+                writeField(&results.jedec.data, lc4k.PowerGuard, pgdf, fuses.getPowerGuardRange(Device, mcref));
             }
 
         }
@@ -329,12 +328,12 @@ pub fn assemble(comptime Device: type, config: LC4k(Device.device_type), allocat
 
         if (config.ext.osctimer) |osctimer| {
             results.jedec.data.putRange(Device.getOscTimerEnableRange(), 0);
-            writeField(&results.jedec.data, common.TimerDivisor, osctimer.timer_divisor, Device.getTimerDivRange());
+            writeField(&results.jedec.data, lc4k.TimerDivisor, osctimer.timer_divisor, Device.getTimerDivRange());
             results.jedec.data.put(Device.getOscOutFuse(), @intFromBool(!osctimer.enable_osc_out_and_disable));
             results.jedec.data.put(Device.getTimerOutFuse(), @intFromBool(!osctimer.enable_timer_out_and_reset));
         }
     } else {
-        writeField(&results.jedec.data, common.BusMaintenance, config.default_bus_maintenance, Device.getGlobalBusMaintenanceRange());
+        writeField(&results.jedec.data, lc4k.BusMaintenance, config.default_bus_maintenance, Device.getGlobalBusMaintenanceRange());
         if (config.default_bus_maintenance == .float) {
             for (Device.getExtraFloatInputFuses()) |fuse| {
                 results.jedec.data.put(fuse, 0);
@@ -385,18 +384,18 @@ fn writeGoeFuses(comptime Device: type, data: *jedec.JedecData, goe_config: anyt
     data.put(Device.getGOEPolarityFuse(goe_index), @intFromBool(goe_config.polarity == .active_high));
 }
 
-fn writeDedicatedInputFuses(comptime Device: type, data: *jedec.JedecData, pin_info: common.PinInfo, config: *const LC4k(Device.device_type), input_config: anytype) void {
+fn writeDedicatedInputFuses(comptime Device: type, data: *jedec.JedecData, pin_info: lc4k.PinInfo, config: *const LC4k(Device.device_type), input_config: anytype) void {
     const grp: Device.GRP = @enumFromInt(pin_info.grp_ordinal.?);
 
     const threshold = input_config.threshold orelse config.default_input_threshold;
-    writeField(data, common.InputThreshold, threshold, jedec.FuseRange.fromFuse(Device.getInputThresholdFuse(grp)));
+    writeField(data, lc4k.InputThreshold, threshold, jedec.FuseRange.fromFuse(Device.getInputThresholdFuse(grp)));
 
     if (@TypeOf(input_config) == lc4k.InputConfigZE) {
         const maintenance = input_config.bus_maintenance orelse config.default_bus_maintenance;
-        writeField(data, common.BusMaintenance, maintenance, Device.getInputBusMaintenanceRange(grp));
+        writeField(data, lc4k.BusMaintenance, maintenance, Device.getInputBusMaintenanceRange(grp));
 
         const pgdf = input_config.power_guard orelse config.ext.default_power_guard;
-        writeField(data, common.PowerGuard, pgdf, jedec.FuseRange.fromFuse(Device.getInputPowerGuardFuse(grp)));
+        writeField(data, lc4k.PowerGuard, pgdf, jedec.FuseRange.fromFuse(Device.getInputPowerGuardFuse(grp)));
     }
 }
 

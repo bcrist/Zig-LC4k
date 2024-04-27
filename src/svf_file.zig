@@ -1,5 +1,5 @@
 const std = @import("std");
-const common = @import("common.zig");
+const lc4k = @import("lc4k.zig");
 const jedec = @import("jedec.zig");
 
 const Fuse = jedec.Fuse;
@@ -164,7 +164,7 @@ pub fn write(comptime Device: type, file: JedecFile, writer: anytype, options: W
 
     if (options.verify) {
         const rows = comptime Device.jedec_dimensions.height();
-        const AddressShiftType = std.meta.Int(.unsigned, @intCast(u16, rows));
+        const AddressShiftType = std.meta.Int(.unsigned, @intCast(rows));
         const address_shift = @as(AddressShiftType, 1) << (rows - 1);
         try writeCommand(.ISC_ADDRESS_SHIFT, AddressShiftType, address_shift, null, writer, nl);
         try writeCommand(.ISC_READ, NoData, null, null, writer, nl);
@@ -173,7 +173,7 @@ pub fn write(comptime Device: type, file: JedecFile, writer: anytype, options: W
         while (row < Device.jedec_dimensions.height()) : (row += 1) {
             try writeIdle(.ISC_READ, writer, nl);
             try writer.print("SDR\t{}\tTDI  (", .{ Device.jedec_dimensions.width() });
-            var chars: u16 = @intCast(u16, (Device.jedec_dimensions.width() + 3) / 4);
+            const chars: u16 = @intCast((Device.jedec_dimensions.width() + 3) / 4);
             try writer.writeByteNTimes('0', chars);
             try writer.print("){s}\t\tTDO  (", .{ nl });
 
@@ -203,23 +203,23 @@ pub fn write(comptime Device: type, file: JedecFile, writer: anytype, options: W
     try writeCommand(.ISC_DISABLE, NoData, null, null, writer, nl);
     try writeCommand(.BYPASS, NoData, null, null, writer, nl);
     try writer.print("! {s}{s}", .{ @tagName(JtagCommand.IDCODE), nl });
-    try writer.print("SIR\t8\tTDI  ({X:0>2}){s}", .{ @enumToInt(JtagCommand.IDCODE), nl });
+    try writer.print("SIR\t8\tTDI  ({X:0>2}){s}", .{ @intFromEnum(JtagCommand.IDCODE), nl });
     try writer.print("\t\tTDO  ({X:0>2});{s}", .{ 0x1D, nl });
     try writeCommand(.ISC_DISABLE, NoData, null, null, writer, nl);
     try writeState("RESET", writer, nl);
 }
 
 fn writeRowHex(data: jedec.JedecData, row: u16, writer: anytype) !void {
-    const chars: u16 = @intCast(u16, (data.extents.width() + 3) / 4);
+    const chars: u16 = @intCast((data.extents.width() + 3) / 4);
     var col: i32 = chars * 4;
     while (col >= 4) : (col -= 4) {
         var val: u4 = 0;
         comptime var b = 1;
         inline while (b <= 4) : (b += 1) {
-            var c = col - b;
+            const c = col - b;
             if (c < data.extents.width()) {
                 val *= 2;
-                val += data.get(Fuse.init(row, @intCast(u16, c)));
+                val += data.get(Fuse.init(row, @intCast(c)));
             }
         }
         try writer.print("{X:0>1}", .{ val });
@@ -236,8 +236,8 @@ fn writeHex(comptime T: type, data: T, writer: anytype) !void {
 
         var d: usize = 0;
         while (d < digits) : (d += 1) {
-            const shift = @intCast(std.math.Log2Int(T), 4 * (digits - d - 1));
-            const part = @truncate(u4, data >> shift);
+            const shift: std.math.Log2Int(T) = @intCast(4 * (digits - d - 1));
+            const part: u4 = @truncate(data >> shift);
             try writer.print("{X:0>1}", .{ part });
         }
     }
@@ -245,7 +245,7 @@ fn writeHex(comptime T: type, data: T, writer: anytype) !void {
 
 fn writeCommand(command: JtagCommand, comptime T: type, tdi_data: ?T, tdo_data: ?T, writer: anytype, nl: []const u8) !void {
     try writer.print("! {s}{s}", .{ @tagName(command), nl });
-    try writer.print("SIR\t8\tTDI  ({X:0>2});{s}", .{ @enumToInt(command), nl });
+    try writer.print("SIR\t8\tTDI  ({X:0>2});{s}", .{ @intFromEnum(command), nl });
 
     if (tdi_data) |tdi| {
         try writer.print("SDR\t{}\tTDI  (", .{ @bitSizeOf(T) });
@@ -270,7 +270,7 @@ fn writeState(state: []const u8, writer: anytype, nl: []const u8) !void {
 }
 
 fn writeIdle(command: JtagCommand, writer: anytype, nl: []const u8) !void {
-    var delay = command.getDelay();
+    const delay = command.getDelay();
     if (delay.min_ms > 0 and delay.min_clocks > 0) {
         try writer.print("RUNTEST\tIDLE\t{} TCK\t{}.E-3 SEC;{s}", .{ delay.min_clocks, delay.min_ms, nl });
     } else if (delay.min_ms > 0) {

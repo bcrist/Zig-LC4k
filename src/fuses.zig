@@ -1,8 +1,8 @@
 const std = @import("std");
 const jedec = @import("jedec.zig");
-const common = @import("common.zig");
+const lc4k = @import("lc4k.zig");
 
-const MacrocellRef = common.MacrocellRef;
+const MacrocellRef = lc4k.MacrocellRef;
 
 pub fn getPTRange(comptime Device: type, glb: usize, glb_pt_offset: usize) jedec.FuseRange {
     return Device.getGlbRange(glb).subColumns(glb_pt_offset, 1).subRows(0, Device.num_gis_per_glb * 2);

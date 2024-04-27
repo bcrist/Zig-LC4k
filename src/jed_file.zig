@@ -1,6 +1,6 @@
 const std = @import("std");
 const jedec = @import("jedec.zig");
-const common = @import("common.zig");
+const lc4k = @import("lc4k.zig");
 
 const Fuse = jedec.Fuse;
 const FuseRange = jedec.FuseRange;
@@ -236,7 +236,7 @@ pub const WriteOptions = struct {
     notes: []const u8 = "",
 };
 
-pub fn write(device_type: common.DeviceType, allocator: std.mem.Allocator, f: JedecFile, writer: anytype, options: WriteOptions) !void {
+pub fn write(device_type: lc4k.DeviceType, allocator: std.mem.Allocator, f: JedecFile, writer: anytype, options: WriteOptions) !void {
     var w = @import("checksum_writer.zig").checksumWriter(u16, allocator, writer);
 
     try w.writeByte(0x2); // STX

@@ -1,11 +1,10 @@
 const std = @import("std");
 const lc4k = @import("lc4k.zig");
-const common = @import("common.zig");
 const internal = @import("internal.zig");
 const assembly = @import("assembly.zig");
 
-const ClusterRouting = common.ClusterRouting;
-const WideRouting = common.WideRouting;
+const ClusterRouting = lc4k.ClusterRouting;
+const WideRouting = lc4k.WideRouting;
 
 pub fn addSignalsFromPT(comptime Device: type, gi_signals: *[Device.num_gis_per_glb]?Device.GRP, pt: lc4k.PT(Device.GRP)) !void {
     for (pt) |factor| switch (factor) {
@@ -83,7 +82,7 @@ pub const ClusterRouter = struct {
         };
         self.open_heap = std.PriorityQueue(CompactRoutingData, *ClusterRouter, comparePriority).init(allocator, &self);
 
-        for (glb_config.mc) |mc_config, mc| {
+        for (glb_config.mc, 0..) |mc_config, mc| {
             var available: u8 = 0;
             var special_pt: u8 = 0;
             while (special_pt < 5) : (special_pt += 1) {
@@ -105,12 +104,12 @@ pub const ClusterRouter = struct {
             switch (mc_config.logic) {
                 .sum, .sum_inverted => |sum| {
                     if (!internal.isSumAlways(sum)) {
-                        self.sum_size[mc] = @intCast(u8, sum.len);
+                        self.sum_size[mc] = @intCast(sum.len);
                     }
                 },
                 .sum_xor_pt0, .sum_xor_pt0_inverted => |logic| {
                     if (!internal.isSumAlways(logic.sum)) {
-                        self.sum_size[mc] = @intCast(u8, logic.sum.len);
+                        self.sum_size[mc] = @intCast(logic.sum.len);
                     }
                 },
                 .input_buffer, .pt0, .pt0_inverted => {},
@@ -135,10 +134,10 @@ pub const ClusterRouter = struct {
     pub fn route(self: *ClusterRouter, results: *assembly.AssemblyResults) !RoutingData {
         _ = results; // TODO use to record errors
 
-        for (self.sum_size) |sum_size, mc| if (sum_size > 0) {
+        for (self.sum_size, 0..) |sum_size, mc| if (sum_size > 0) {
             try self.markForcedWideRouting(mc, .self);
         };
-        for (self.sum_size) |sum_size, mc| if (sum_size > 0) {
+        for (self.sum_size, 0..) |sum_size, mc| if (sum_size > 0) {
             var max_pts = self.computeMaxPTsWithoutWideRouting(mc);
             var next_ca = getNextCA(mc);
             while (max_pts < sum_size) : (next_ca = getNextCA(next_ca)) {
@@ -151,10 +150,10 @@ pub const ClusterRouter = struct {
         };
 
         var initial_routing: CompactRoutingData = undefined;
-        for (self.forced_cluster_routing) |r, cluster| {
+        for (self.forced_cluster_routing, 0..) |r, cluster| {
             initial_routing.setClusterRouting(cluster, r orelse .self);
         }
-        for (self.forced_wide_routing) |r, ca| {
+        for (self.forced_wide_routing, 0..) |r, ca| {
             initial_routing.setWideRouting(ca, r orelse .self);
         }
 
@@ -168,7 +167,7 @@ pub const ClusterRouter = struct {
         loop: while (true) {
             const available_pts = initial_routing.getAvailablePTs(self.cluster_size);
 
-            for (self.forced_cluster_routing) |forced_routing, cluster| if (forced_routing == null) {
+            for (self.forced_cluster_routing, 0..) |forced_routing, cluster| if (forced_routing == null) {
                 const target_mc = initial_routing.getCATarget(getCAForCluster(cluster, initial_routing.getClusterRouting(cluster)).?);
                 const sum_size = self.sum_size[target_mc];
                 if (sum_size + self.cluster_size[cluster] <= available_pts[target_mc]) {
@@ -195,7 +194,7 @@ pub const ClusterRouter = struct {
             };
 
 
-            for (self.forced_wide_routing) |forced_routing, ca| {
+            for (self.forced_wide_routing, 0..) |forced_routing, ca| {
                 if (forced_routing == null and initial_routing.tryDonateCA(ca, self.sum_size, self.cluster_size)) {
                     continue :loop;
                 }
@@ -206,7 +205,7 @@ pub const ClusterRouter = struct {
 
         var available_pts = initial_routing.getAvailablePTs(self.cluster_size);
         // un-donate any superfluous clusters
-        for (self.forced_cluster_routing) |forced_routing, cluster| {
+        for (self.forced_cluster_routing, 0..) |forced_routing, cluster| {
             if (forced_routing == null and initial_routing.getClusterRouting(cluster) != .self and initial_routing.getWideRouting(cluster) == .self and self.sum_size[cluster] == 0) {
                 const cluster_size = self.cluster_size[cluster];
                 const target_mc = initial_routing.getCATarget(getCAForCluster(cluster, initial_routing.getClusterRouting(cluster)).?);
@@ -219,7 +218,7 @@ pub const ClusterRouter = struct {
             }
         }
 
-        try self.open_set.put(@bitCast(u48, initial_routing), {});
+        try self.open_set.put(@bitCast(initial_routing), {});
         try self.open_heap.add(initial_routing);
 
         while (self.open_heap.removeOrNull()) |routing| {
@@ -228,7 +227,7 @@ pub const ClusterRouter = struct {
                 return RoutingData.init(routing);
             }
 
-            for (self.forced_cluster_routing) |forced_routing, cluster| if (forced_routing == null) {
+            for (self.forced_cluster_routing, 0..) |forced_routing, cluster| if (forced_routing == null) {
                 inline for (comptime std.enums.values(ClusterRouting)) |cluster_routing| {
                     if (cluster_routing != routing.getClusterRouting(cluster)) {
                         if (getCAForCluster(cluster, cluster_routing)) |ca| {
@@ -237,8 +236,8 @@ pub const ClusterRouter = struct {
                                 var new_routing = routing;
                                 new_routing.setClusterRouting(cluster, cluster_routing);
                                 const new_score = new_routing.computeScore(self.cluster_size, self.sum_size);
-                                if (new_score.success <= score.success and !self.closed_set.contains(@bitCast(u48, new_routing))) {
-                                    try self.open_set.put(@bitCast(u48, new_routing), {});
+                                if (new_score.success <= score.success and !self.closed_set.contains(@bitCast(new_routing))) {
+                                    try self.open_set.put(@bitCast(new_routing), {});
                                     try self.open_heap.add(new_routing);
                                 }
                             }
@@ -246,7 +245,7 @@ pub const ClusterRouter = struct {
                     }
                 }
             };
-            for (self.forced_wide_routing) |forced_routing, ca| if (forced_routing == null) {
+            for (self.forced_wide_routing, 0..) |forced_routing, ca| if (forced_routing == null) {
                 inline for (comptime std.enums.values(WideRouting)) |wide_routing| {
                     if (wide_routing != routing.getWideRouting(ca)) {
                         const target_mc = routing.getCATarget(getCADestination(ca, wide_routing));
@@ -254,8 +253,8 @@ pub const ClusterRouter = struct {
                             var new_routing = routing;
                             new_routing.setWideRouting(ca, wide_routing);
                             const new_score = new_routing.computeScore(self.cluster_size, self.sum_size);
-                            if (new_score.success <= score.success and !self.closed_set.contains(@bitCast(u48, new_routing))) {
-                                try self.open_set.put(@bitCast(u48, new_routing), {});
+                            if (new_score.success <= score.success and !self.closed_set.contains(@bitCast(new_routing))) {
+                                try self.open_set.put(@bitCast(new_routing), {});
                                 try self.open_heap.add(new_routing);
                             }
                         }
@@ -263,16 +262,16 @@ pub const ClusterRouter = struct {
                 }
             };
 
-            try self.closed_set.put(@bitCast(u48, routing), {});
-            _ = self.open_set.remove(@bitCast(u48, routing));
+            try self.closed_set.put(@bitCast(routing), {});
+            _ = self.open_set.remove(@bitCast(routing));
         }
 
         return error.ClusterRoutingFailed;
     }
 
     fn getNextCA(ca: usize) usize {
-        var maybe_oob_ca = @intCast(i32, ca) - 4;
-        return @intCast(usize, @mod(maybe_oob_ca, 16));
+        const maybe_oob_ca: i32 = @intCast(ca - 4);
+        return @intCast(@mod(maybe_oob_ca, 16));
     }
 
     fn markForcedWideRouting(self: *ClusterRouter, mc: usize, routing: WideRouting) !void {
@@ -430,10 +429,10 @@ const CompactRoutingData = packed struct (u48) {
 
     pub fn getAvailablePTs(self: CompactRoutingData, cluster_size: [16]u8) [16]u16 {
         var available_pts = [_]u16 { 0 } ** 16;
-        for (cluster_size) |size, cluster| {
+        for (cluster_size, 0..) |size, cluster| {
             available_pts[getCAForCluster(cluster, self.getClusterRouting(cluster)).?] += size;
         }
-        for (available_pts) |available, ca| {
+        for (available_pts, 0..) |available, ca| {
             const target = self.getCATarget(ca);
             if (target != ca) {
                 available_pts[target] += available;
@@ -446,14 +445,14 @@ const CompactRoutingData = packed struct (u48) {
     pub fn computeScore(self: CompactRoutingData, cluster_size: [16]u8, sum_size: [16]u8) RoutingScore {
         var score = RoutingScore { .success = 0, .weighted = 0 };
         var available_pts = [_]u16 { 0 } ** 16;
-        for (cluster_size) |size, cluster| {
+        for (cluster_size, 0..) |size, cluster| {
             const routing = self.getClusterRouting(cluster);
             available_pts[getCAForCluster(cluster, routing).?] += size;
             if (routing != .self) {
                 score.weighted += 1;
             }
         }
-        for (available_pts) |available, ca| {
+        for (available_pts, 0..) |available, ca| {
             const routing = self.getWideRouting(ca);
             if (routing != .self) {
                 available_pts[getCADestination(ca, routing)] += available;
@@ -462,7 +461,7 @@ const CompactRoutingData = packed struct (u48) {
             }
         }
 
-        for (sum_size) |required_pts, mc| {
+        for (sum_size, 0..) |required_pts, mc| {
             if (required_pts > available_pts[mc]) {
                 score.success += @as(usize, 10) + required_pts - available_pts[mc];
             }
@@ -498,7 +497,7 @@ const CompactRoutingData = packed struct (u48) {
     pub fn getCATarget(self: CompactRoutingData, initial_ca: usize) usize {
         var ca = initial_ca;
         while (true) {
-            var new_ca = getCADestination(ca, self.getWideRouting(ca));
+            const new_ca = getCADestination(ca, self.getWideRouting(ca));
             if (new_ca == ca) return ca;
             std.debug.assert(new_ca != initial_ca);
             ca = new_ca;
@@ -530,7 +529,7 @@ pub const RoutingData = struct {
         var ca = initial_ca;
         var hop: usize = 0;
         while (hop <= max_hops) : (hop += 1) {
-            var new_ca = getCADestination(ca, self.wide[ca]);
+            const new_ca = getCADestination(ca, self.wide[ca]);
             if (new_ca == ca) return .{
                 .macrocell = ca,
                 .hops = hop,
@@ -545,8 +544,8 @@ pub const RoutingData = struct {
         return .{
             .glb_config = glb_config,
             .data = self,
-            .mc = @intCast(u8, mc),
-            .cluster = @intCast(u8, @mod(mc + Device.num_mcs_per_glb - 1, Device.num_mcs_per_glb)),
+            .mc = @intCast(mc),
+            .cluster = @intCast(@mod(mc + Device.num_mcs_per_glb - 1, Device.num_mcs_per_glb)),
             .next_pt = 5,
             .hops = -1,
             .has_more_hops = true,
@@ -586,8 +585,8 @@ fn PTIterator(comptime Device: type) type {
                     }
                     self.cluster = next_cluster;
                     if (getCAForCluster(next_cluster, self.data.cluster[next_cluster])) |ca| {
-                        var max_hops = self.hops;
-                        if (self.data.getCATargetLimited(ca, @intCast(usize, max_hops))) |result| {
+                        const max_hops = self.hops;
+                        if (self.data.getCATargetLimited(ca, @intCast(max_hops))) |result| {
                             if (result.macrocell != self.mc or result.hops < max_hops) continue;
                         } else {
                             self.has_more_hops = true;

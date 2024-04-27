@@ -1,7 +1,7 @@
 const std = @import("std");
-const common = @import("common.zig");
+const lc4k = @import("lc4k.zig");
 
-const DeviceType = common.DeviceType;
+const DeviceType = lc4k.DeviceType;
 
 pub const Fuse = struct {
     row: usize,

@@ -1,15 +1,304 @@
-const std = @import("std");
-const common = @import("common.zig");
-const jedec = @import("jedec.zig");
+
+pub const DeviceFamily = enum {
+    low_power, // V/B/C suffix
+    zero_power, // ZC suffix
+    zero_power_enhanced, // ZE suffix
+};
+
+pub const DevicePackage = enum {
+    TQFP44,
+    TQFP48,
+    csBGA56,
+    csBGA64,
+    ucBGA64,
+    TQFP100,
+    TQFP128,
+    csBGA132,
+    ucBGA132,
+    TQFP144,
+    csBGA144,
+};
+
+pub const DeviceType = enum {
+    //[[!! include 'devices'
+    // for device in spairs(devices) do
+    //     write(device, ',', nl)
+    // end
+    // writeln(nl, 'pub fn get(comptime self: DeviceType) type {', indent)
+    // write('return switch(self) {', indent)
+    // for device in spairs(devices) do
+    //     write(nl, '.', device, ' => @import("', device, '.zig"),')
+    // end
+    // writeln(unindent, nl, '};', unindent, nl, '}')
+    //!! 63 ]]
+    //[[ ################# !! GENERATED CODE -- DO NOT MODIFY !! ################# ]]
+    LC4032ZC_TQFP48,
+    LC4032ZC_csBGA56,
+    LC4032ZE_TQFP48,
+    LC4032ZE_csBGA64,
+    LC4032x_TQFP44,
+    LC4032x_TQFP48,
+    LC4064ZC_TQFP100,
+    LC4064ZC_TQFP48,
+    LC4064ZC_csBGA132,
+    LC4064ZC_csBGA56,
+    LC4064ZE_TQFP100,
+    LC4064ZE_TQFP48,
+    LC4064ZE_csBGA144,
+    LC4064ZE_csBGA64,
+    LC4064ZE_ucBGA64,
+    LC4064x_TQFP100,
+    LC4064x_TQFP44,
+    LC4064x_TQFP48,
+    LC4128V_TQFP144,
+    LC4128ZC_TQFP100,
+    LC4128ZC_csBGA132,
+    LC4128ZE_TQFP100,
+    LC4128ZE_TQFP144,
+    LC4128ZE_csBGA144,
+    LC4128ZE_ucBGA132,
+    LC4128x_TQFP100,
+    LC4128x_TQFP128,
+
+    pub fn get(comptime self: DeviceType) type {
+        return switch(self) {
+            .LC4032ZC_TQFP48 => @import("device/LC4032ZC_TQFP48.zig"),
+            .LC4032ZC_csBGA56 => @import("device/LC4032ZC_csBGA56.zig"),
+            .LC4032ZE_TQFP48 => @import("device/LC4032ZE_TQFP48.zig"),
+            .LC4032ZE_csBGA64 => @import("device/LC4032ZE_csBGA64.zig"),
+            .LC4032x_TQFP44 => @import("device/LC4032x_TQFP44.zig"),
+            .LC4032x_TQFP48 => @import("device/LC4032x_TQFP48.zig"),
+            .LC4064ZC_TQFP100 => @import("device/LC4064ZC_TQFP100.zig"),
+            .LC4064ZC_TQFP48 => @import("device/LC4064ZC_TQFP48.zig"),
+            .LC4064ZC_csBGA132 => @import("device/LC4064ZC_csBGA132.zig"),
+            .LC4064ZC_csBGA56 => @import("device/LC4064ZC_csBGA56.zig"),
+            .LC4064ZE_TQFP100 => @import("device/LC4064ZE_TQFP100.zig"),
+            .LC4064ZE_TQFP48 => @import("device/LC4064ZE_TQFP48.zig"),
+            .LC4064ZE_csBGA144 => @import("device/LC4064ZE_csBGA144.zig"),
+            .LC4064ZE_csBGA64 => @import("device/LC4064ZE_csBGA64.zig"),
+            .LC4064ZE_ucBGA64 => @import("device/LC4064ZE_ucBGA64.zig"),
+            .LC4064x_TQFP100 => @import("device/LC4064x_TQFP100.zig"),
+            .LC4064x_TQFP44 => @import("device/LC4064x_TQFP44.zig"),
+            .LC4064x_TQFP48 => @import("device/LC4064x_TQFP48.zig"),
+            .LC4128V_TQFP144 => @import("device/LC4128V_TQFP144.zig"),
+            .LC4128ZC_TQFP100 => @import("device/LC4128ZC_TQFP100.zig"),
+            .LC4128ZC_csBGA132 => @import("device/LC4128ZC_csBGA132.zig"),
+            .LC4128ZE_TQFP100 => @import("device/LC4128ZE_TQFP100.zig"),
+            .LC4128ZE_TQFP144 => @import("device/LC4128ZE_TQFP144.zig"),
+            .LC4128ZE_csBGA144 => @import("device/LC4128ZE_csBGA144.zig"),
+            .LC4128ZE_ucBGA132 => @import("device/LC4128ZE_ucBGA132.zig"),
+            .LC4128x_TQFP100 => @import("device/LC4128x_TQFP100.zig"),
+            .LC4128x_TQFP128 => @import("device/LC4128x_TQFP128.zig"),
+        };
+    }
+
+    //[[ ######################### END OF GENERATED CODE ######################### ]]
+
+    pub fn parse(name: []const u8) ?DeviceType {
+        for (std.enums.values(DeviceType)) |e| {
+            if (std.mem.eql(u8, name, @tagName(e))) {
+                return e;
+            }
+        }
+        return null;
+    }
+};
+
+pub const GiIndex = u8;
+pub const GlbIndex = u8;
+pub const MacrocellIndex = u8;
+pub const PTIndex = u8;
+pub const ClockIndex = u8;
+pub const GoeIndex = u8;
+
+pub const MacrocellRef = struct {
+    glb: GlbIndex,
+    mc: MacrocellIndex,
+
+    pub fn init(glb: usize, mc: usize) MacrocellRef {
+        return .{
+            .glb = @intCast(glb),
+            .mc = @intCast(mc),
+        };
+    }
+};
+
+pub const PTRef = struct {
+    mcref: MacrocellRef,
+    pt: PTIndex,
+
+    pub fn init(glb: usize, mc: usize, pt: usize) PTRef {
+        return .{
+            .mcref = MacrocellRef.init(glb, mc),
+            .pt = @intCast(pt),
+        };
+    }
+};
+
+pub const PinFunction = union(enum) {
+    io: MacrocellIndex,
+    io_oe0: MacrocellIndex,
+    io_oe1: MacrocellIndex,
+    input,
+    clock: ClockIndex,
+    no_connect,
+    gnd,
+    vcc_core,
+    vcco,
+    tck,
+    tms,
+    tdi,
+    tdo,
+};
+
+pub const PinInfo = struct {
+    id: []const u8, // pin number or ball location
+    func: PinFunction,
+    glb: ?GlbIndex = null, // only meaningful when func is io, io_oe0, io_oe1, input, or clock
+    grp_ordinal: ?u16 = null, // use with @intToEnum(GRP, grp_ordinal)
+
+    pub fn mcRef(self: PinInfo) ?MacrocellRef {
+        return if (self.glb) |glb| switch (self.func) {
+            .io, .io_oe0, .io_oe1 => |mc| MacrocellRef { .glb = glb, .mc = mc },
+            else => null,
+        } else null;
+    }
+};
+
+pub const BusMaintenance = enum(u2) {
+    pulldown = 0,
+    float = 1,
+    keeper = 2,
+    pullup = 3,
+};
+
+// The datasheets and IBIS models are quite vague about
+// the actual input structure used in the devices, and
+// in particular what the input threshold fuse actually
+// does.  So these are mostly guesses based on the published
+// Vil and Vih limits in the datasheet, and assuming that
+// the threshold voltage is always based on Vcc, not Vcco.
+//
+// Generally speaking, the high threshold is suitable for
+// either 2.5V or 3.3V signals, and the low threshold is
+// for 1.8V or 1.5V signals.
+pub const InputThreshold = enum(u1) {
+                //   ZE                   C/ZC         B           V
+    low = 1,    // 0.50*Vcc             0.50*Vcc    0.36*Vcc    0.28*Vcc
+    high = 0,   // 0.68*Vcc (falling)   0.73*Vcc    0.50*Vcc    0.40*Vcc
+                // 0.79*Vcc (rising)
+};
+
+pub const DriveType = enum(u1) {
+    push_pull = 1,
+    open_drain = 0,
+};
+
+pub const SlewRate = enum(u1) {
+    slow = 1,
+    fast = 0,
+};
+
+pub const OutputEnableMode = enum(u3) {
+    goe0 = 0,
+    goe1 = 1,
+    goe2 = 2,
+    goe3 = 3,
+    from_orm_active_high = 4,
+    from_orm_active_low = 5,
+    output_only = 6,
+    input_only = 7,
+};
+
+// note: non-ZE family only
+pub const OutputRoutingMode = enum(u2) {
+    same_as_oe = 2,
+    self = 3,
+    five_pt_fast_bypass = 0,
+    five_pt_fast_bypass_inverted = 1,
+};
+
+pub const PowerGuard = enum(u1) {
+    from_bie = 0,
+    disabled = 1,
+};
+
+pub const TimerDivisor = enum(u2) {
+    div128 = 0,
+    div1024 = 2,
+    div1048576 = 1,
+    _
+};
+
+pub const MacrocellFunction = enum(u2) {
+    combinational = 0,
+    latch = 1,
+    t_ff = 2,
+    d_ff = 3,
+};
+
+pub const ClusterRouting = enum(u2) {
+    self_minus_two = 0,
+    self = 1,
+    self_plus_one = 2,
+    self_minus_one = 3,
+};
+
+pub const WideRouting = enum(u1) {
+    self_plus_four = 0,
+    self = 1,
+};
+
+pub const Clock_Source = enum(u3) {
+    none,
+    shared_pt_clock,
+    pt1_positive,
+    pt1_negative,
+    bclock0,
+    bclock1,
+    bclock2,
+    bclock3,
+};
+
+pub const Clock_Enable_Source = enum(u2) {
+    pt2_active_high = 0,
+    pt2_active_low = 1,
+    shared_pt_clock = 2,
+    always_active = 3,
+};
+
+pub const Async_Trigger_Source = enum(u1) {
+    pt2_active_high = 0,
+    none = 1,
+};
+
+pub const Init_Source = enum(u1) {
+    pt3_active_high = 0,
+    shared_pt_init = 1,
+};
+
+pub const Macrocell_Output_Enable_Source = enum(u1) {
+    pt4_active_high = 0,
+    always_low = 1,
+};
+
+pub fn getGlbName(glb: usize) []const u8 {
+    return "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[glb..glb+1];
+}
+
+
+
+pub const jedec = @import("jedec.zig");
 const assembly = @import("assembly.zig");
 const disassembly = @import("disassembly.zig");
 const routing = @import("routing.zig");
 const jed_file = @import("jed_file.zig");
 const svf_file = @import("svf_file.zig");
 const report = @import("report.zig");
-pub usingnamespace common;
+
 pub usingnamespace jedec;
-const lc4k = @This();
+
+const std = @import("std");
 
 pub const LC4032V_TQFP44 = LC4k(.LC4032x_TQFP44);
 pub const LC4032B_TQFP44 = LC4k(.LC4032x_TQFP44);
@@ -55,7 +344,7 @@ pub const LC4128ZC_csBGA132 = LC4k(.LC4128ZC_csBGA132);
 pub const LC4128ZE_csBGA144 = LC4k(.LC4128ZE_csBGA144);
 pub const LC4128ZE_ucBGA132 = LC4k(.LC4128ZE_ucBGA132);
 
-pub fn LC4k(comptime device: common.DeviceType) type {
+pub fn LC4k(comptime device: DeviceType) type {
     const D = device.get();
 
     const Input_Config = switch (D.family) {
@@ -74,7 +363,7 @@ pub fn LC4k(comptime device: common.DeviceType) type {
 
     const Ext = switch (D.family) {
         .zero_power_enhanced => struct {
-            default_power_guard: common.PowerGuard = .disabled,
+            default_power_guard: PowerGuard = .disabled,
             osctimer: ?OscTimerConfig(D) = null,
         },
         else => struct {},
@@ -95,15 +384,15 @@ pub fn LC4k(comptime device: common.DeviceType) type {
         usercode: ?u32 = null,
         security: bool = false,
 
-        default_bus_maintenance: common.BusMaintenance = .keeper,
-        default_input_threshold: common.InputThreshold = .high,
-        default_slew_rate: common.SlewRate = .slow,
-        default_drive_type: common.DriveType = .push_pull,
+        default_bus_maintenance: BusMaintenance = .keeper,
+        default_input_threshold: InputThreshold = .high,
+        default_slew_rate: SlewRate = .slow,
+        default_drive_type: DriveType = .push_pull,
 
         ext: Ext = .{},
 
         pub usingnamespace D;
-        pub const PT = lc4k.PT(D.GRP);
+        pub const PT = ProductTerm(D.GRP);
         pub const PTs = PTBuilder(D);
 
         const Self = @This();
@@ -140,14 +429,14 @@ pub fn GlbConfig(comptime D: type) type {
     return struct {
         mc: [D.num_mcs_per_glb] MacrocellConfig(D.family, D.GRP),
         shared_pt_init: union(enum) {
-            active_high: PT(D.GRP),
-            active_low: PT(D.GRP),
+            active_high: ProductTerm(D.GRP),
+            active_low: ProductTerm(D.GRP),
         },
         shared_pt_clock: union(enum) {
-            positive: PT(D.GRP), // active high when used as a latch or clock enable
-            negative: PT(D.GRP), // active low when used as a latch or clock enable
+            positive: ProductTerm(D.GRP), // active high when used as a latch or clock enable
+            negative: ProductTerm(D.GRP), // active low when used as a latch or clock enable
         },
-        shared_pt_enable: PT(D.GRP),
+        shared_pt_enable: ProductTerm(D.GRP),
         bclock0: enum { clk0_pos, clk1_neg },
         bclock1: enum { clk1_pos, clk0_neg },
         bclock2: enum { clk2_pos, clk3_neg },
@@ -190,7 +479,7 @@ pub fn GlbConfig(comptime D: type) type {
     };
 }
 
-pub fn MacrocellConfig(comptime family: common.DeviceFamily, comptime GRP: type) type {
+pub fn MacrocellConfig(comptime family: DeviceFamily, comptime GRP: type) type {
     const Input_Config = switch (family) {
         .zero_power_enhanced => InputConfigZE,
         else => InputConfig,
@@ -201,25 +490,25 @@ pub fn MacrocellConfig(comptime family: common.DeviceFamily, comptime GRP: type)
     };
 
     return struct {
-        sum_routing: ?common.ClusterRouting = null,
-        wide_sum_routing: ?common.WideRouting = null,
+        sum_routing: ?ClusterRouting = null,
+        wide_sum_routing: ?WideRouting = null,
         logic: union(enum) {
-            sum: []const PT(GRP),
-            sum_inverted: []const PT(GRP),
+            sum: []const ProductTerm(GRP),
+            sum_inverted: []const ProductTerm(GRP),
             input_buffer,
-            pt0: PT(GRP),
-            pt0_inverted: PT(GRP),
+            pt0: ProductTerm(GRP),
+            pt0_inverted: ProductTerm(GRP),
             sum_xor_pt0: SumXorPt0(GRP),
             sum_xor_pt0_inverted: SumXorPt0(GRP),
-            sum_xor_input_buffer: []const PT(GRP), // TODO test this; datasheet's schematic of MC implies it is, but timing model implies it isn't.
+            sum_xor_input_buffer: []const ProductTerm(GRP), // TODO test this; datasheet's schematic of MC implies it is, but timing model implies it isn't.
         },
-        func: union(common.MacrocellFunction) {
+        func: union(MacrocellFunction) {
             combinational: void,
             latch: RegisterConfig(GRP),
             t_ff: RegisterConfig(GRP),
             d_ff: RegisterConfig(GRP),
         },
-        pt4_oe: ?PT(GRP) = null,
+        pt4_oe: ?ProductTerm(GRP) = null,
         input: Input_Config = .{},
         output: Output_Config,
 
@@ -227,7 +516,7 @@ pub fn MacrocellConfig(comptime family: common.DeviceFamily, comptime GRP: type)
 
         pub fn initUnused() Self {
             return .{
-                .logic = .{ .sum = &[_]PT(GRP) { &.{} } },
+                .logic = .{ .sum = &[_]ProductTerm(GRP) { &.{} } },
                 .func = .{ .combinational = {} },
                 .output = .{ .oe = .input_only },
             };
@@ -236,38 +525,38 @@ pub fn MacrocellConfig(comptime family: common.DeviceFamily, comptime GRP: type)
 }
 
 pub const InputConfig = struct {
-    threshold: ?common.InputThreshold = null,
+    threshold: ?InputThreshold = null,
 };
 pub const InputConfigZE = struct {
-    threshold: ?common.InputThreshold = null,
-    bus_maintenance: ?common.BusMaintenance = null,
-    power_guard: ?common.PowerGuard = null,
+    threshold: ?InputThreshold = null,
+    bus_maintenance: ?BusMaintenance = null,
+    power_guard: ?PowerGuard = null,
 };
 
 pub fn OutputConfig(comptime GRP: type) type {
     return struct {
-        slew_rate: ?common.SlewRate = null,
-        drive_type: ?common.DriveType = null,
-        oe: common.OutputEnableMode,
+        slew_rate: ?SlewRate = null,
+        drive_type: ?DriveType = null,
+        oe: OutputEnableMode,
         oe_routing: OutputRouting = .{ .relative = 0 },
-        routing: union(common.OutputRoutingMode) {
+        routing: union(OutputRoutingMode) {
             same_as_oe,
             self,
-            five_pt_fast_bypass: []const PT(GRP),
-            five_pt_fast_bypass_inverted: []const PT(GRP),
+            five_pt_fast_bypass: []const ProductTerm(GRP),
+            five_pt_fast_bypass_inverted: []const ProductTerm(GRP),
         } = .{ .same_as_oe = {} },
     };
 }
 pub const OutputConfigZE = struct {
-    slew_rate: ?common.SlewRate = null,
-    drive_type: ?common.DriveType = null,
-    oe: common.OutputEnableMode,
+    slew_rate: ?SlewRate = null,
+    drive_type: ?DriveType = null,
+    oe: OutputEnableMode,
     routing: OutputRouting = .{ .relative = 0 },
 };
 
 pub const OutputRouting = union(enum) {
     relative: u3,
-    absolute: common.MacrocellIndex,
+    absolute: MacrocellIndex,
 };
 
 pub const GOEPolarity = enum {
@@ -283,7 +572,7 @@ pub const GOEConfigBus = struct {
     polarity: GOEPolarity = .active_high,
     source: union(enum) {
         constant_high: void,
-        glb_shared_pt_enable: common.GlbIndex,
+        glb_shared_pt_enable: GlbIndex,
     } = .{ .constant_high = {} },
 };
 
@@ -292,7 +581,7 @@ pub const GOEConfigBusOrPin = struct {
     source: union(enum) {
         constant_high: void,
         input: void,
-        glb_shared_pt_enable: common.GlbIndex,
+        glb_shared_pt_enable: GlbIndex,
     } = .{ .constant_high = {} },
 };
 
@@ -301,48 +590,48 @@ pub fn OscTimerConfig(comptime Device: type) type {
         pub const signals = Device.osctimer;
         enable_osc_out_and_disable: bool = false,
         enable_timer_out_and_reset: bool = false,
-        timer_divisor: common.TimerDivisor = .div1048576,
+        timer_divisor: TimerDivisor = .div1048576,
     };
 }
 
 pub fn SumXorPt0(comptime GRP: type) type {
     return struct {
-        sum: []const PT(GRP),
-        pt0: PT(GRP),
+        sum: []const ProductTerm(GRP),
+        pt0: ProductTerm(GRP),
     };
 }
 
 pub fn RegisterConfig(comptime GRP: type) type {
     return struct {
-        clock: union(common.Clock_Source) {
+        clock: union(Clock_Source) {
             none,
             shared_pt_clock,
-            pt1_positive: PT(GRP),
-            pt1_negative: PT(GRP),
+            pt1_positive: ProductTerm(GRP),
+            pt1_negative: ProductTerm(GRP),
             bclock0,
             bclock1,
             bclock2,
             bclock3,
         } = .{ .none = {} },
-        ce: union(common.Clock_Enable_Source) {
-            pt2_active_high: PT(GRP),
-            pt2_active_low: PT(GRP),
+        ce: union(Clock_Enable_Source) {
+            pt2_active_high: ProductTerm(GRP),
+            pt2_active_low: ProductTerm(GRP),
             shared_pt_clock,
             always_active,
         } = .{ .always_active = {} },
         init_state: u1 = 0,
-        init_source: union(common.Init_Source) {
-            pt3_active_high: PT(GRP),
+        init_source: union(Init_Source) {
+            pt3_active_high: ProductTerm(GRP),
             shared_pt_init,
         } = .{ .shared_pt_init = {} },
-        async_source: union(common.Async_Trigger_Source) {
-            pt2_active_high: PT(GRP),
+        async_source: union(Async_Trigger_Source) {
+            pt2_active_high: ProductTerm(GRP),
             none,
         } = .{ .none = {} },
     };
 }
 
-pub fn PT(comptime GRP: type) type {
+pub fn ProductTerm(comptime GRP: type) type {
     return []const Factor(GRP);
 }
 
@@ -361,27 +650,27 @@ pub fn PTBuilder(comptime Device: type) type {
     const GRP = Device.GRP;
     return struct {
 
-        pub fn always() PT(GRP) { comptime {
+        pub fn always() ProductTerm(GRP) { comptime {
             return &.{};
         }}
 
-        pub fn never() PT(GRP) { comptime {
+        pub fn never() ProductTerm(GRP) { comptime {
             return &.{ .{ .never = {} } };
         }}
 
-        pub fn of(comptime what: anytype) PT(GRP) { comptime {
+        pub fn of(comptime what: anytype) ProductTerm(GRP) { comptime {
             return switch (@TypeOf(what)) {
-                PT(GRP) => what,
+                ProductTerm(GRP) => what,
                 Factor(GRP) => &.{ what },
                 GRP => &.{ .{ .when_high = what } },
-                common.PinInfo => &.{ .{ .when_high = @enumFromInt(what.grp_ordinal.?) } },
+                PinInfo => &.{ .{ .when_high = @enumFromInt(what.grp_ordinal.?) } },
                 else => &.{ .{ .when_high = Device.getGrp(what) } },
             };
         }}
 
-        pub fn not(comptime what: anytype) PT(GRP) { comptime {
+        pub fn not(comptime what: anytype) ProductTerm(GRP) { comptime {
             return switch (@TypeOf(what)) {
-                PT(GRP) => switch (what.len) {
+                ProductTerm(GRP) => switch (what.len) {
                     0 => never(),
                     1 => not(what[0]),
                     else => unreachable,
@@ -393,13 +682,13 @@ pub fn PTBuilder(comptime Device: type) type {
                     .when_low => |grp| &.{ Factor(GRP) { .when_high = grp } },
                 },
                 GRP => &.{ Factor(GRP) { .when_low = what } },
-                common.PinInfo => &.{ Factor(GRP) { .when_low = @enumFromInt(what.grp_ordinal.?) } },
+                PinInfo => &.{ Factor(GRP) { .when_low = @enumFromInt(what.grp_ordinal.?) } },
                 else => &.{ Factor(GRP) { .when_low = Device.getGrp(what) } },
             };
         }}
 
-        pub fn all(comptime which: anytype) PT(GRP) { comptime {
-            var pt: PT(GRP) = &.{};
+        pub fn all(comptime which: anytype) ProductTerm(GRP) { comptime {
+            var pt: ProductTerm(GRP) = &.{};
             switch (@typeInfo(@TypeOf(which))) {
                 .Struct => |info| {
                     std.debug.assert(info.is_tuple);
@@ -423,8 +712,8 @@ pub fn PTBuilder(comptime Device: type) type {
             return pt;
         }}
 
-        pub fn eql(comptime which: anytype, comptime value: usize) PT(GRP) { comptime {
-            var pt: PT(GRP) = &.{};
+        pub fn eql(comptime which: anytype, comptime value: usize) ProductTerm(GRP) { comptime {
+            var pt: ProductTerm(GRP) = &.{};
             switch (@typeInfo(@TypeOf(which))) {
                 .Struct => |info| {
                     std.debug.assert(info.is_tuple);
@@ -466,7 +755,7 @@ pub fn PTBuilder(comptime Device: type) type {
             return pt;
         }}
 
-        fn andPT(comptime base: PT(GRP), comptime extra: PT(GRP)) PT(GRP) { comptime {
+        fn andPT(comptime base: ProductTerm(GRP), comptime extra: ProductTerm(GRP)) ProductTerm(GRP) { comptime {
             var pt = base;
             for (extra) |factor| {
                 pt = andFactor(pt, factor);
@@ -474,7 +763,7 @@ pub fn PTBuilder(comptime Device: type) type {
             return pt;
         }}
 
-        fn andFactor(comptime base: PT(GRP), comptime factor: Factor(GRP)) PT(GRP) { comptime {
+        fn andFactor(comptime base: ProductTerm(GRP), comptime factor: Factor(GRP)) ProductTerm(GRP) { comptime {
             switch (factor) {
                 .always => return base,
                 .never => return &.{ factor },
