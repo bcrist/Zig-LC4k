@@ -92,15 +92,15 @@ pub fn main() !void {
 
     var jed_file = try std.fs.cwd().createFile("examples/larson_scanner.jed", .{});
     defer jed_file.close();
-    try Chip.writeJED(arena.allocator(), results.jedec, jed_file.writer(), .{});
+    try Chip.write_jed(arena.allocator(), results.jedec, jed_file.writer(), .{});
 
     var svf_file = try std.fs.cwd().createFile("examples/larson_scanner.svf", .{});
     defer svf_file.close();
-    try Chip.writeSVF(results.jedec, svf_file.writer(), .{});
+    try Chip.write_svf(results.jedec, svf_file.writer(), .{});
 
     var report_file = try std.fs.cwd().createFile("examples/larson_scanner.html", .{});
     defer report_file.close();
-    try Chip.writeReport(results.jedec, report_file.writer(), .{
+    try Chip.write_report(results.jedec, report_file.writer(), .{
         .assembly_errors = results.errors.items,
     });
 }

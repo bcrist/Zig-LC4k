@@ -12,20 +12,20 @@ pub const Node = union (enum) {
     pad: GRP_Index,
 
     in: GRP_Index,
-    oe_in: lc4k.GoeIndex,
-    gclk: lc4k.ClockIndex,
+    oe_in: lc4k.GOE_Index,
+    gclk: lc4k.Clock_Index,
 
-    bclock0: lc4k.GlbIndex,
-    bclock1: lc4k.GlbIndex,
-    bclock2: lc4k.GlbIndex,
-    bclock3: lc4k.GlbIndex,
+    bclock0: lc4k.GLB_Index,
+    bclock1: lc4k.GLB_Index,
+    bclock2: lc4k.GLB_Index,
+    bclock3: lc4k.GLB_Index,
 
     grp: GRP_Index,
 
-    pt: lc4k.PTRef,
-    sptoe: lc4k.GlbIndex, // a.k.a. BIE
-    sptclk: lc4k.GlbIndex,
-    sptinit: lc4k.GlbIndex,
+    pt: lc4k.PT_Ref,
+    sptoe: lc4k.GLB_Index, // a.k.a. BIE
+    sptclk: lc4k.GLB_Index,
+    sptinit: lc4k.GLB_Index,
 
     igoe0,
     igoe1,
@@ -36,27 +36,27 @@ pub const Node = union (enum) {
     goe2,
     goe3,
 
-    mc_cluster: lc4k.MacrocellRef, // combination of pts for this MC
-    mc_cluster_group: lc4k.MacrocellRef, // output of (narrow) cluster routing
-    mcd: lc4k.MacrocellRef, // after tMCELL, tEXP
-    mcd_setup: lc4k.MacrocellRef, // mc + register setup time
-    mc_clk: lc4k.MacrocellRef, // after tPTCLK, tBCLK, tGCLK
-    mc_clk_d_hold: lc4k.MacrocellRef, // mc_clk + register hold time
-    mc_clk_ce_hold: lc4k.MacrocellRef, // mc_clk + ce hold time
-    mc_ce: lc4k.MacrocellRef, // 
-    mc_ce_setup: lc4k.MacrocellRef, // mc_ce + tCES
-    mc_init: lc4k.MacrocellRef, // after tPTSR, tBSR
-    mc_async: lc4k.MacrocellRef, // after tPTSR, tBSR
-    mc_oe: lc4k.MacrocellRef,
-    mcq: lc4k.MacrocellRef,
-    routed_mcq: lc4k.MacrocellRef,
+    mc_cluster: lc4k.MC_Ref, // combination of pts for this MC
+    mc_cluster_group: lc4k.MC_Ref, // output of (narrow) cluster routing
+    mcd: lc4k.MC_Ref, // after tMCELL, tEXP
+    mcd_setup: lc4k.MC_Ref, // mc + register setup time
+    mc_clk: lc4k.MC_Ref, // after tPTCLK, tBCLK, tGCLK
+    mc_clk_d_hold: lc4k.MC_Ref, // mc_clk + register hold time
+    mc_clk_ce_hold: lc4k.MC_Ref, // mc_clk + ce hold time
+    mc_ce: lc4k.MC_Ref, // 
+    mc_ce_setup: lc4k.MC_Ref, // mc_ce + tCES
+    mc_init: lc4k.MC_Ref, // after tPTSR, tBSR
+    mc_async: lc4k.MC_Ref, // after tPTSR, tBSR
+    mc_oe: lc4k.MC_Ref,
+    mcq: lc4k.MC_Ref,
+    routed_mcq: lc4k.MC_Ref,
     
-    fb: lc4k.MacrocellRef,
+    fb: lc4k.MC_Ref,
 
-    out: lc4k.MacrocellRef,
-    out_oe: lc4k.MacrocellRef,
-    out_en: lc4k.MacrocellRef,
-    out_dis: lc4k.MacrocellRef,
+    out: lc4k.MC_Ref,
+    out_oe: lc4k.MC_Ref,
+    out_en: lc4k.MC_Ref,
+    out_dis: lc4k.MC_Ref,
 };
 
 pub const Segment = struct {
@@ -85,7 +85,7 @@ pub const Path = struct {
     };
 };
 
-pub fn Analyzer(comptime device: DeviceType, comptime speed_grade: comptime_int) type {
+pub fn Analyzer(comptime device: Device_Type, comptime speed_grade: comptime_int) type {
     const D = device.get();
 
     const Timing = switch (D.family) {
@@ -233,7 +233,7 @@ pub fn Analyzer(comptime device: DeviceType, comptime speed_grade: comptime_int)
 
                 .out_oe => |mcref| {
                     if (fuses.getOESourceRange(D, mcref)) |range| {
-                        switch (disassembly.readField(self.jedec, lc4k.OutputEnableMode, range)) {
+                        switch (disassembly.readField(self.jedec, lc4k.Output_Enable_Mode, range)) {
                             .goe0 => return try self.clone_with_new_dest(source, .goe0, dest, visited),
                             .goe1 => return try self.clone_with_new_dest(source, .goe1, dest, visited),
                             .goe2 => return try self.clone_with_new_dest(source, .goe2, dest, visited),
@@ -250,8 +250,8 @@ pub fn Analyzer(comptime device: DeviceType, comptime speed_grade: comptime_int)
 
                 .routed_mcq => |mcref| {
                     if (D.family != .zero_power_enhanced) {
-                        if (fuses.getOutputRoutingModeRange(D, mcref)) |range| {
-                            switch (disassembly.readField(self.jedec, lc4k.OutputRoutingMode, range)) {
+                        if (fuses.getOutput_Routing_ModeRange(D, mcref)) |range| {
+                            switch (disassembly.readField(self.jedec, lc4k.Output_Routing_Mode, range)) {
                                 .same_as_oe => {},
                                 .self => return try self.clone_with_new_dest(source, .{ .mcq = mcref }, dest, visited),
                                 .five_pt_fast_bypass, .five_pt_fast_bypass_inverted => {
@@ -270,7 +270,7 @@ pub fn Analyzer(comptime device: DeviceType, comptime speed_grade: comptime_int)
 
                 .mcq => |mcref| {
                     const range = fuses.getMcFuncRange(D, mcref);
-                    switch (disassembly.readField(self.jedec, lc4k.MacrocellFunction, range)) {
+                    switch (disassembly.readField(self.jedec, lc4k.Macrocell_Function, range)) {
                         .combinational => {
                             return try self.append_to_parent(source, .{ .mcd = mcref }, dest, "tPDi", visited, Timing.tPDi);
                         },
@@ -364,7 +364,7 @@ pub fn Analyzer(comptime device: DeviceType, comptime speed_grade: comptime_int)
 
                 .mc_clk_d_hold => |mcref| {
                     const range = fuses.getMcFuncRange(D, mcref);
-                    switch (disassembly.readField(self.jedec, lc4k.MacrocellFunction, range)) {
+                    switch (disassembly.readField(self.jedec, lc4k.Macrocell_Function, range)) {
                         .combinational => return error.InvalidSegment,
                         .latch => {
                             return try self.append_to_parent(source, .{ .mc_clk = mcref }, dest, "tHL", visited, Timing.tHL);
@@ -413,7 +413,7 @@ pub fn Analyzer(comptime device: DeviceType, comptime speed_grade: comptime_int)
                         .none, .bclock0, .bclock1, .bclock2, .bclock3 => false,
                     };
                     const range = fuses.getMcFuncRange(D, mcref);
-                    switch (disassembly.readField(self.jedec, lc4k.MacrocellFunction, range)) {
+                    switch (disassembly.readField(self.jedec, lc4k.Macrocell_Function, range)) {
                         .combinational => return error.InvalidSegment,
                         .latch => {
                             if (is_ptclk) {
@@ -463,7 +463,7 @@ pub fn Analyzer(comptime device: DeviceType, comptime speed_grade: comptime_int)
                         }
                     }
 
-                    if (disassembly.readField(self.jedec, lc4k.WideRouting, fuses.getWideRoutingRange(D, mcref)) == .self) {
+                    if (disassembly.readField(self.jedec, lc4k.Wide_Routing, fuses.getWide_RoutingRange(D, mcref)) == .self) {
                         if (try self.maybe_append_to_parent(source, .{ .mc_cluster_group = mcref }, dest, "tMCELL", visited, Timing.tMCELL)) |path| {
                             options.appendAssumeCapacity(path);
                         }
@@ -476,15 +476,15 @@ pub fn Analyzer(comptime device: DeviceType, comptime speed_grade: comptime_int)
                     var buf: [5]Path = undefined;
                     var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
 
-                    if (disassembly.readField(self.jedec, lc4k.ClusterRouting, fuses.getClusterRoutingRange(D, mcref)) == .self) {
+                    if (disassembly.readField(self.jedec, lc4k.Cluster_Routing, fuses.getCluster_RoutingRange(D, mcref)) == .self) {
                         if (try self.maybe_find_critical_path(source, .{ .mc_cluster = mcref }, visited)) |path| {
                             options.appendAssumeCapacity(path);
                         }
                     }
 
                     if (mcref.mc >= 1) {
-                        const other_mcref = lc4k.MacrocellRef.init(mcref.glb, mcref.mc - 1);
-                        if (disassembly.readField(self.jedec, lc4k.ClusterRouting, fuses.getClusterRoutingRange(D, other_mcref)) == .self_plus_one) {
+                        const other_mcref = lc4k.MC_Ref.init(mcref.glb, mcref.mc - 1);
+                        if (disassembly.readField(self.jedec, lc4k.Cluster_Routing, fuses.getCluster_RoutingRange(D, other_mcref)) == .self_plus_one) {
                             if (try self.maybe_find_critical_path(source, .{ .mc_cluster = other_mcref }, visited)) |path| {
                                 options.appendAssumeCapacity(path);
                             }
@@ -492,8 +492,8 @@ pub fn Analyzer(comptime device: DeviceType, comptime speed_grade: comptime_int)
                     }
 
                     if (mcref.mc < D.num_mcs_per_glb - 1) {
-                        const other_mcref = lc4k.MacrocellRef.init(mcref.glb, mcref.mc + 1);
-                        if (disassembly.readField(self.jedec, lc4k.ClusterRouting, fuses.getClusterRoutingRange(D, other_mcref)) == .self_minus_one) {
+                        const other_mcref = lc4k.MC_Ref.init(mcref.glb, mcref.mc + 1);
+                        if (disassembly.readField(self.jedec, lc4k.Cluster_Routing, fuses.getCluster_RoutingRange(D, other_mcref)) == .self_minus_one) {
                             if (try self.maybe_find_critical_path(source, .{ .mc_cluster = other_mcref }, visited)) |path| {
                                 options.appendAssumeCapacity(path);
                             }
@@ -501,16 +501,16 @@ pub fn Analyzer(comptime device: DeviceType, comptime speed_grade: comptime_int)
                     }
 
                     if (mcref.mc < D.num_mcs_per_glb - 2) {
-                        const other_mcref = lc4k.MacrocellRef.init(mcref.glb, mcref.mc + 2);
-                        if (disassembly.readField(self.jedec, lc4k.ClusterRouting, fuses.getClusterRoutingRange(D, other_mcref)) == .self_minus_two) {
+                        const other_mcref = lc4k.MC_Ref.init(mcref.glb, mcref.mc + 2);
+                        if (disassembly.readField(self.jedec, lc4k.Cluster_Routing, fuses.getCluster_RoutingRange(D, other_mcref)) == .self_minus_two) {
                             if (try self.maybe_find_critical_path(source, .{ .mc_cluster = other_mcref }, visited)) |path| {
                                 options.appendAssumeCapacity(path);
                             }
                         }
                     }
 
-                    const prev_wide_cluster = lc4k.MacrocellRef.init(mcref.glb, (mcref.mc + D.num_mcs_per_glb - 4) % D.num_mcs_per_glb);
-                    if (disassembly.readField(self.jedec, lc4k.WideRouting, fuses.getWideRoutingRange(D, prev_wide_cluster)) == .self_plus_four) {
+                    const prev_wide_cluster = lc4k.MC_Ref.init(mcref.glb, (mcref.mc + D.num_mcs_per_glb - 4) % D.num_mcs_per_glb);
+                    if (disassembly.readField(self.jedec, lc4k.Wide_Routing, fuses.getWide_RoutingRange(D, prev_wide_cluster)) == .self_plus_four) {
                         if (try self.maybe_append_to_parent(source, .{ .mc_cluster_group = prev_wide_cluster }, dest, "tEXP", visited, Timing.tEXP)) |path| {
                             options.appendAssumeCapacity(path);
                         }
@@ -573,7 +573,7 @@ pub fn Analyzer(comptime device: DeviceType, comptime speed_grade: comptime_int)
                 .igoe2 => return try self.compute_igoe_critical_path(source, dest, 2, visited),
                 .igoe3 => return try self.compute_igoe_critical_path(source, dest, 3, visited),
 
-                .pt => |ptref| return self.compute_pt_critical_path(source, dest, ptref.mcref.glb, ptref.mcref.mc * 5 + ptref.pt, visited),
+                .pt => |PT_Ref| return self.compute_pt_critical_path(source, dest, PT_Ref.mcref.glb, PT_Ref.mcref.mc * 5 + PT_Ref.pt, visited),
                 .sptoe => |glb| return self.compute_pt_critical_path(source, dest, glb, D.num_mcs_per_glb * 5 + 2, visited),
                 .sptclk => |glb| return self.compute_pt_critical_path(source, dest, glb, D.num_mcs_per_glb * 5 + 1, visited),
                 .sptinit => |glb| return self.compute_pt_critical_path(source, dest, glb, D.num_mcs_per_glb * 5 + 0, visited),
@@ -639,7 +639,7 @@ pub fn Analyzer(comptime device: DeviceType, comptime speed_grade: comptime_int)
             }
         }
 
-        fn compute_goe_critical_path(self: *Self, source: Node, dest: Node, goe: lc4k.GoeIndex, visited: *Node_Set) !Path {
+        fn compute_goe_critical_path(self: *Self, source: Node, dest: Node, goe: lc4k.GOE_Index, visited: *Node_Set) !Path {
             if (D.num_glbs == 2) {
                 return switch (goe) {
                     0 => self.append_to_parent(source, .igoe0, dest, "tGPTOE", visited, Timing.tGPTOE),
@@ -690,7 +690,7 @@ pub fn Analyzer(comptime device: DeviceType, comptime speed_grade: comptime_int)
             return try self.choose_critical_path_and_clone_with_new_dest(options.items, dest);
         }
 
-        fn compute_bclock_critical_path(self: *Self, source: Node, dest: Node, n: lc4k.ClockIndex, glb: lc4k.GlbIndex, visited: *Node_Set) !Path {
+        fn compute_bclock_critical_path(self: *Self, source: Node, dest: Node, n: lc4k.Clock_Index, glb: lc4k.GLB_Index, visited: *Node_Set) !Path {
             const fuse_iter = D.getBClockRange(glb).iterator();
             for (0..n) |_| {
                 _ = fuse_iter.next();
@@ -704,7 +704,7 @@ pub fn Analyzer(comptime device: DeviceType, comptime speed_grade: comptime_int)
             return try self.clone_with_new_dest(source, .{ .gclk = src_clk }, dest, visited);
         }
 
-        fn compute_pt_critical_path(self: *Self, source: Node, dest: Node, glb: lc4k.GlbIndex, pt_offset: usize, visited: *Node_Set) !Path {
+        fn compute_pt_critical_path(self: *Self, source: Node, dest: Node, glb: lc4k.GLB_Index, pt_offset: usize, visited: *Node_Set) !Path {
             var buf: [D.num_gis_per_glb]Path = undefined;
             var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
 
@@ -828,16 +828,16 @@ pub fn Analyzer(comptime device: DeviceType, comptime speed_grade: comptime_int)
             _ = self;
             _ = grp;
             // TODO
-            // if (fuses.getInputThresholdRange(D, mcref)) |range| {
-            //     if (disassembly.readField(self.jedec, lc4k.InputThreshold, range) == .high) {
+            // if (fuses.getInput_ThresholdRange(D, mcref)) |range| {
+            //     if (disassembly.readField(self.jedec, lc4k.Input_Threshold, range) == .high) {
             //         return Timing.tIOI_high;
             //     }
             // }
-            //const threshold_range = jedec.FuseRange.fromFuse(D.getInputThresholdFuse(grp));
+            //const threshold_range = jedec.FuseRange.fromFuse(D.getInput_ThresholdFuse(grp));
             return Timing.tIOI_low;
         }
 
-        fn tIOO(self: *Self, mcref: lc4k.MacrocellRef) Picoseconds {
+        fn tIOO(self: *Self, mcref: lc4k.MC_Ref) Picoseconds {
             _ = self;
             _ = mcref;
             // TODO support specifying Vcc_io for each bank and using a specific tIOO for each
@@ -845,9 +845,9 @@ pub fn Analyzer(comptime device: DeviceType, comptime speed_grade: comptime_int)
             return Timing.tIOO;
         }
 
-        fn tSLEW(self: *Self, mcref: lc4k.MacrocellRef) Picoseconds {
-            if (fuses.getSlewRateRange(D, mcref)) |range| {
-                if (disassembly.readField(self.jedec, lc4k.SlewRate, range) == .slow) {
+        fn tSLEW(self: *Self, mcref: lc4k.MC_Ref) Picoseconds {
+            if (fuses.getSlew_RateRange(D, mcref)) |range| {
+                if (disassembly.readField(self.jedec, lc4k.Slew_Rate, range) == .slow) {
                     return Timing.tSLEW;
                 }
             }
@@ -867,6 +867,6 @@ const disassembly = @import("disassembly.zig");
 const fuses = @import("fuses.zig");
 const JedecData = jedec.JedecData;
 const jedec = @import("jedec.zig");
-const DeviceType = lc4k.DeviceType;
+const Device_Type = lc4k.Device_Type;
 const lc4k = @import("lc4k.zig");
 const std = @import("std");

@@ -5,10 +5,10 @@ const lc4k = @import("../lc4k.zig");
 const internal = @import("../internal.zig");
 const jedec = @import("../jedec.zig");
 
-pub const device_type = lc4k.DeviceType.LC4128ZE_csBGA144;
+pub const device_type = lc4k.Device_Type.LC4128ZE_csBGA144;
 
-pub const family = lc4k.DeviceFamily.zero_power_enhanced;
-pub const package = lc4k.DevicePackage.csBGA144;
+pub const family = lc4k.Device_Family.zero_power_enhanced;
+pub const package = lc4k.Device_Package.csBGA144;
 
 pub const num_glbs = 8;
 pub const num_mcs = 128;
@@ -38,7 +38,7 @@ pub const getGiRange = grp_device.getGiRange;
 pub const getBClockRange = grp_device.getBClockRange;
 
 
-pub fn getGOEPolarityFuse(goe: usize) jedec.Fuse {
+pub fn getGOE_PolarityFuse(goe: usize) jedec.Fuse {
     return switch (goe) {
         0 => jedec.Fuse.init(90, 101),
         1 => jedec.Fuse.init(91, 101),
@@ -83,7 +83,7 @@ pub fn getTimerDivRange() jedec.FuseRange {
     );
 }
 
-pub fn getInputPowerGuardFuse(input: GRP) jedec.Fuse {
+pub fn getInputPower_GuardFuse(input: GRP) jedec.Fuse {
     return switch (input) {
         .clk0 => jedec.Fuse.init(87, 98),
         .clk1 => jedec.Fuse.init(88, 98),
@@ -93,7 +93,7 @@ pub fn getInputPowerGuardFuse(input: GRP) jedec.Fuse {
     };
 }
 
-pub fn getInputBusMaintenanceRange(input: GRP) jedec.FuseRange {
+pub fn getInputBus_MaintenanceRange(input: GRP) jedec.FuseRange {
     return switch (input) {
         .clk0 => jedec.FuseRange.between(jedec.Fuse.init(85, 101), jedec.Fuse.init(86, 101)),
         .clk1 => jedec.FuseRange.between(jedec.Fuse.init(85, 100), jedec.Fuse.init(86, 100)),
@@ -103,7 +103,7 @@ pub fn getInputBusMaintenanceRange(input: GRP) jedec.FuseRange {
     };
 }
 
-pub fn getInputThresholdFuse(input: GRP) jedec.Fuse {
+pub fn getInput_ThresholdFuse(input: GRP) jedec.Fuse {
     return switch (input) {
         .clk0 => jedec.Fuse.init(94, 98),
         .clk1 => jedec.Fuse.init(94, 99),
@@ -113,12 +113,12 @@ pub fn getInputThresholdFuse(input: GRP) jedec.Fuse {
     };
 }
 
-pub fn getMacrocellRef(comptime which: anytype) lc4k.MacrocellRef {
-    return internal.getMacrocellRef(GRP, which);
+pub fn getMC_Ref(comptime which: anytype) lc4k.MC_Ref {
+    return internal.getMC_Ref(GRP, which);
 }
 
-pub fn getGlbIndex(comptime which: anytype) lc4k.GlbIndex {
-    return internal.getGlbIndex(@This(), which);
+pub fn getGLB_Index(comptime which: anytype) lc4k.GLB_Index {
+    return internal.getGLB_Index(@This(), which);
 }
 
 pub fn getGrp(comptime which: anytype) GRP {
@@ -133,805 +133,805 @@ pub fn getGrpFeedback(comptime which: anytype) GRP {
     return internal.getGrpFeedback(GRP, which);
 }
 
-pub fn getPin(comptime which: anytype) lc4k.PinInfo {
+pub fn getPin(comptime which: anytype) lc4k.Pin_Info {
     return internal.getPin(@This(), which);
 }
 
 pub const pins = struct {
-    pub const A01 = lc4k.PinInfo {
+    pub const A01 = lc4k.Pin_Info {
         .id = "A01",
         .func = .{ .tdi = {} },
     };
-    pub const A2 = lc4k.PinInfo {
+    pub const A2 = lc4k.Pin_Info {
         .id = "A2",
         .func = .{ .no_connect = {} },
     };
-    pub const A3 = lc4k.PinInfo {
+    pub const A3 = lc4k.Pin_Info {
         .id = "A3",
         .func = .{ .io = 12 },
         .glb = 0,
         .grp_ordinal = @intFromEnum(GRP.io_A12),
     };
-    pub const A4 = lc4k.PinInfo {
+    pub const A4 = lc4k.Pin_Info {
         .id = "A4",
         .func = .{ .io = 8 },
         .glb = 0,
         .grp_ordinal = @intFromEnum(GRP.io_A8),
     };
-    pub const A5 = lc4k.PinInfo {
+    pub const A5 = lc4k.Pin_Info {
         .id = "A5",
         .func = .{ .io = 6 },
         .glb = 0,
         .grp_ordinal = @intFromEnum(GRP.io_A6),
     };
-    pub const A6 = lc4k.PinInfo {
+    pub const A6 = lc4k.Pin_Info {
         .id = "A6",
         .func = .{ .io = 2 },
         .glb = 0,
         .grp_ordinal = @intFromEnum(GRP.io_A2),
     };
-    pub const A7 = lc4k.PinInfo {
+    pub const A7 = lc4k.Pin_Info {
         .id = "A7",
         .func = .{ .clock = 0 },
         .glb = 0,
         .grp_ordinal = @intFromEnum(GRP.clk0),
     };
-    pub const A8 = lc4k.PinInfo {
+    pub const A8 = lc4k.Pin_Info {
         .id = "A8",
         .func = .{ .io = 2 },
         .glb = 7,
         .grp_ordinal = @intFromEnum(GRP.io_H2),
     };
-    pub const A9 = lc4k.PinInfo {
+    pub const A9 = lc4k.Pin_Info {
         .id = "A9",
         .func = .{ .io = 6 },
         .glb = 7,
         .grp_ordinal = @intFromEnum(GRP.io_H6),
     };
-    pub const A10 = lc4k.PinInfo {
+    pub const A10 = lc4k.Pin_Info {
         .id = "A10",
         .func = .{ .io = 8 },
         .glb = 7,
         .grp_ordinal = @intFromEnum(GRP.io_H8),
     };
-    pub const A11 = lc4k.PinInfo {
+    pub const A11 = lc4k.Pin_Info {
         .id = "A11",
         .func = .{ .io = 13 },
         .glb = 7,
         .grp_ordinal = @intFromEnum(GRP.io_H13),
     };
-    pub const A12 = lc4k.PinInfo {
+    pub const A12 = lc4k.Pin_Info {
         .id = "A12",
         .func = .{ .no_connect = {} },
     };
-    pub const B1 = lc4k.PinInfo {
+    pub const B1 = lc4k.Pin_Info {
         .id = "B1",
         .func = .{ .io = 1 },
         .glb = 1,
         .grp_ordinal = @intFromEnum(GRP.io_B1),
     };
-    pub const B2 = lc4k.PinInfo {
+    pub const B2 = lc4k.Pin_Info {
         .id = "B2",
         .func = .{ .io = 0 },
         .glb = 1,
         .grp_ordinal = @intFromEnum(GRP.io_B0),
     };
-    pub const B3 = lc4k.PinInfo {
+    pub const B3 = lc4k.Pin_Info {
         .id = "B3",
         .func = .{ .io = 14 },
         .glb = 0,
         .grp_ordinal = @intFromEnum(GRP.io_A14),
     };
-    pub const B4 = lc4k.PinInfo {
+    pub const B4 = lc4k.Pin_Info {
         .id = "B4",
         .func = .{ .io = 9 },
         .glb = 0,
         .grp_ordinal = @intFromEnum(GRP.io_A9),
     };
-    pub const B5 = lc4k.PinInfo {
+    pub const B5 = lc4k.Pin_Info {
         .id = "B5",
         .func = .{ .io = 5 },
         .glb = 0,
         .grp_ordinal = @intFromEnum(GRP.io_A5),
     };
-    pub const B6 = lc4k.PinInfo {
+    pub const B6 = lc4k.Pin_Info {
         .id = "B6",
         .func = .{ .io = 1 },
         .glb = 0,
         .grp_ordinal = @intFromEnum(GRP.io_A1),
     };
-    pub const B7 = lc4k.PinInfo {
+    pub const B7 = lc4k.Pin_Info {
         .id = "B7",
         .func = .{ .io_oe1 = 0 },
         .glb = 7,
         .grp_ordinal = @intFromEnum(GRP.io_H0),
     };
-    pub const B8 = lc4k.PinInfo {
+    pub const B8 = lc4k.Pin_Info {
         .id = "B8",
         .func = .{ .io = 5 },
         .glb = 7,
         .grp_ordinal = @intFromEnum(GRP.io_H5),
     };
-    pub const B9 = lc4k.PinInfo {
+    pub const B9 = lc4k.Pin_Info {
         .id = "B9",
         .func = .{ .io = 10 },
         .glb = 7,
         .grp_ordinal = @intFromEnum(GRP.io_H10),
     };
-    pub const B10 = lc4k.PinInfo {
+    pub const B10 = lc4k.Pin_Info {
         .id = "B10",
         .func = .{ .io = 14 },
         .glb = 7,
         .grp_ordinal = @intFromEnum(GRP.io_H14),
     };
-    pub const B11 = lc4k.PinInfo {
+    pub const B11 = lc4k.Pin_Info {
         .id = "B11",
         .func = .{ .tdo = {} },
     };
-    pub const B12 = lc4k.PinInfo {
+    pub const B12 = lc4k.Pin_Info {
         .id = "B12",
         .func = .{ .io = 0 },
         .glb = 6,
         .grp_ordinal = @intFromEnum(GRP.io_G0),
     };
-    pub const C1 = lc4k.PinInfo {
+    pub const C1 = lc4k.Pin_Info {
         .id = "C1",
         .func = .{ .io = 5 },
         .glb = 1,
         .grp_ordinal = @intFromEnum(GRP.io_B5),
     };
-    pub const C2 = lc4k.PinInfo {
+    pub const C2 = lc4k.Pin_Info {
         .id = "C2",
         .func = .{ .io = 4 },
         .glb = 1,
         .grp_ordinal = @intFromEnum(GRP.io_B4),
     };
-    pub const C3 = lc4k.PinInfo {
+    pub const C3 = lc4k.Pin_Info {
         .id = "C3",
         .func = .{ .io = 2 },
         .glb = 1,
         .grp_ordinal = @intFromEnum(GRP.io_B2),
     };
-    pub const C4 = lc4k.PinInfo {
+    pub const C4 = lc4k.Pin_Info {
         .id = "C4",
         .func = .{ .io = 13 },
         .glb = 0,
         .grp_ordinal = @intFromEnum(GRP.io_A13),
     };
-    pub const C5 = lc4k.PinInfo {
+    pub const C5 = lc4k.Pin_Info {
         .id = "C5",
         .func = .{ .io = 10 },
         .glb = 0,
         .grp_ordinal = @intFromEnum(GRP.io_A10),
     };
-    pub const C6 = lc4k.PinInfo {
+    pub const C6 = lc4k.Pin_Info {
         .id = "C6",
         .func = .{ .io = 4 },
         .glb = 0,
         .grp_ordinal = @intFromEnum(GRP.io_A4),
     };
-    pub const C7 = lc4k.PinInfo {
+    pub const C7 = lc4k.Pin_Info {
         .id = "C7",
         .func = .{ .clock = 3 },
         .glb = 7,
         .grp_ordinal = @intFromEnum(GRP.clk3),
     };
-    pub const C8 = lc4k.PinInfo {
+    pub const C8 = lc4k.Pin_Info {
         .id = "C8",
         .func = .{ .io = 4 },
         .glb = 7,
         .grp_ordinal = @intFromEnum(GRP.io_H4),
     };
-    pub const C9 = lc4k.PinInfo {
+    pub const C9 = lc4k.Pin_Info {
         .id = "C9",
         .func = .{ .io = 9 },
         .glb = 7,
         .grp_ordinal = @intFromEnum(GRP.io_H9),
     };
-    pub const C10 = lc4k.PinInfo {
+    pub const C10 = lc4k.Pin_Info {
         .id = "C10",
         .func = .{ .no_connect = {} },
     };
-    pub const C11 = lc4k.PinInfo {
+    pub const C11 = lc4k.Pin_Info {
         .id = "C11",
         .func = .{ .io = 1 },
         .glb = 6,
         .grp_ordinal = @intFromEnum(GRP.io_G1),
     };
-    pub const C12 = lc4k.PinInfo {
+    pub const C12 = lc4k.Pin_Info {
         .id = "C12",
         .func = .{ .io = 2 },
         .glb = 6,
         .grp_ordinal = @intFromEnum(GRP.io_G2),
     };
-    pub const D1 = lc4k.PinInfo {
+    pub const D1 = lc4k.Pin_Info {
         .id = "D1",
         .func = .{ .io = 6 },
         .glb = 1,
         .grp_ordinal = @intFromEnum(GRP.io_B6),
     };
-    pub const D2 = lc4k.PinInfo {
+    pub const D2 = lc4k.Pin_Info {
         .id = "D2",
         .func = .{ .no_connect = {} },
     };
-    pub const D3 = lc4k.PinInfo {
+    pub const D3 = lc4k.Pin_Info {
         .id = "D3",
         .func = .{ .no_connect = {} },
     };
-    pub const D4 = lc4k.PinInfo {
+    pub const D4 = lc4k.Pin_Info {
         .id = "D4",
         .func = .{ .io = 12 },
         .glb = 1,
         .grp_ordinal = @intFromEnum(GRP.io_B12),
     };
-    pub const D05 = lc4k.PinInfo {
+    pub const D05 = lc4k.Pin_Info {
         .id = "D05",
         .func = .{ .vcco = {} },
     };
-    pub const D6 = lc4k.PinInfo {
+    pub const D6 = lc4k.Pin_Info {
         .id = "D6",
         .func = .{ .io_oe0 = 0 },
         .glb = 0,
         .grp_ordinal = @intFromEnum(GRP.io_A0),
     };
-    pub const D7 = lc4k.PinInfo {
+    pub const D7 = lc4k.Pin_Info {
         .id = "D7",
         .func = .{ .io = 1 },
         .glb = 7,
         .grp_ordinal = @intFromEnum(GRP.io_H1),
     };
-    pub const D08 = lc4k.PinInfo {
+    pub const D08 = lc4k.Pin_Info {
         .id = "D08",
         .func = .{ .vcco = {} },
     };
-    pub const D9 = lc4k.PinInfo {
+    pub const D9 = lc4k.Pin_Info {
         .id = "D9",
         .func = .{ .io = 12 },
         .glb = 7,
         .grp_ordinal = @intFromEnum(GRP.io_H12),
     };
-    pub const D10 = lc4k.PinInfo {
+    pub const D10 = lc4k.Pin_Info {
         .id = "D10",
         .func = .{ .io = 9 },
         .glb = 6,
         .grp_ordinal = @intFromEnum(GRP.io_G9),
     };
-    pub const D11 = lc4k.PinInfo {
+    pub const D11 = lc4k.Pin_Info {
         .id = "D11",
         .func = .{ .io = 5 },
         .glb = 6,
         .grp_ordinal = @intFromEnum(GRP.io_G5),
     };
-    pub const D12 = lc4k.PinInfo {
+    pub const D12 = lc4k.Pin_Info {
         .id = "D12",
         .func = .{ .no_connect = {} },
     };
-    pub const E1 = lc4k.PinInfo {
+    pub const E1 = lc4k.Pin_Info {
         .id = "E1",
         .func = .{ .io = 8 },
         .glb = 1,
         .grp_ordinal = @intFromEnum(GRP.io_B8),
     };
-    pub const E2 = lc4k.PinInfo {
+    pub const E2 = lc4k.Pin_Info {
         .id = "E2",
         .func = .{ .io = 9 },
         .glb = 1,
         .grp_ordinal = @intFromEnum(GRP.io_B9),
     };
-    pub const E3 = lc4k.PinInfo {
+    pub const E3 = lc4k.Pin_Info {
         .id = "E3",
         .func = .{ .io = 13 },
         .glb = 2,
         .grp_ordinal = @intFromEnum(GRP.io_C13),
     };
-    pub const E4 = lc4k.PinInfo {
+    pub const E4 = lc4k.Pin_Info {
         .id = "E4",
         .func = .{ .vcco = {} },
     };
-    pub const E05 = lc4k.PinInfo {
+    pub const E05 = lc4k.Pin_Info {
         .id = "E05",
         .func = .{ .vcc_core = {} },
     };
-    pub const E6 = lc4k.PinInfo {
+    pub const E6 = lc4k.Pin_Info {
         .id = "E6",
         .func = .{ .gnd = {} },
     };
-    pub const E07 = lc4k.PinInfo {
+    pub const E07 = lc4k.Pin_Info {
         .id = "E07",
         .func = .{ .gnd = {} },
     };
-    pub const E08 = lc4k.PinInfo {
+    pub const E08 = lc4k.Pin_Info {
         .id = "E08",
         .func = .{ .vcc_core = {} },
     };
-    pub const E9 = lc4k.PinInfo {
+    pub const E9 = lc4k.Pin_Info {
         .id = "E9",
         .func = .{ .io = 4 },
         .glb = 6,
         .grp_ordinal = @intFromEnum(GRP.io_G4),
     };
-    pub const E10 = lc4k.PinInfo {
+    pub const E10 = lc4k.Pin_Info {
         .id = "E10",
         .func = .{ .io = 6 },
         .glb = 6,
         .grp_ordinal = @intFromEnum(GRP.io_G6),
     };
-    pub const E11 = lc4k.PinInfo {
+    pub const E11 = lc4k.Pin_Info {
         .id = "E11",
         .func = .{ .io = 12 },
         .glb = 6,
         .grp_ordinal = @intFromEnum(GRP.io_G12),
     };
-    pub const E12 = lc4k.PinInfo {
+    pub const E12 = lc4k.Pin_Info {
         .id = "E12",
         .func = .{ .io = 10 },
         .glb = 6,
         .grp_ordinal = @intFromEnum(GRP.io_G10),
     };
-    pub const F1 = lc4k.PinInfo {
+    pub const F1 = lc4k.Pin_Info {
         .id = "F1",
         .func = .{ .io = 13 },
         .glb = 1,
         .grp_ordinal = @intFromEnum(GRP.io_B13),
     };
-    pub const F2 = lc4k.PinInfo {
+    pub const F2 = lc4k.Pin_Info {
         .id = "F2",
         .func = .{ .io = 10 },
         .glb = 1,
         .grp_ordinal = @intFromEnum(GRP.io_B10),
     };
-    pub const F3 = lc4k.PinInfo {
+    pub const F3 = lc4k.Pin_Info {
         .id = "F3",
         .func = .{ .io = 14 },
         .glb = 1,
         .grp_ordinal = @intFromEnum(GRP.io_B14),
     };
-    pub const F04 = lc4k.PinInfo {
+    pub const F04 = lc4k.Pin_Info {
         .id = "F04",
         .func = .{ .vcco = {} },
     };
-    pub const F05 = lc4k.PinInfo {
+    pub const F05 = lc4k.Pin_Info {
         .id = "F05",
         .func = .{ .gnd = {} },
     };
-    pub const F06 = lc4k.PinInfo {
+    pub const F06 = lc4k.Pin_Info {
         .id = "F06",
         .func = .{ .gnd = {} },
     };
-    pub const F07 = lc4k.PinInfo {
+    pub const F07 = lc4k.Pin_Info {
         .id = "F07",
         .func = .{ .gnd = {} },
     };
-    pub const F08 = lc4k.PinInfo {
+    pub const F08 = lc4k.Pin_Info {
         .id = "F08",
         .func = .{ .gnd = {} },
     };
-    pub const F9 = lc4k.PinInfo {
+    pub const F9 = lc4k.Pin_Info {
         .id = "F9",
         .func = .{ .vcco = {} },
     };
-    pub const F10 = lc4k.PinInfo {
+    pub const F10 = lc4k.Pin_Info {
         .id = "F10",
         .func = .{ .io = 8 },
         .glb = 6,
         .grp_ordinal = @intFromEnum(GRP.io_G8),
     };
-    pub const F11 = lc4k.PinInfo {
+    pub const F11 = lc4k.Pin_Info {
         .id = "F11",
         .func = .{ .io = 13 },
         .glb = 6,
         .grp_ordinal = @intFromEnum(GRP.io_G13),
     };
-    pub const F12 = lc4k.PinInfo {
+    pub const F12 = lc4k.Pin_Info {
         .id = "F12",
         .func = .{ .io = 14 },
         .glb = 6,
         .grp_ordinal = @intFromEnum(GRP.io_G14),
     };
-    pub const G1 = lc4k.PinInfo {
+    pub const G1 = lc4k.Pin_Info {
         .id = "G1",
         .func = .{ .io = 14 },
         .glb = 2,
         .grp_ordinal = @intFromEnum(GRP.io_C14),
     };
-    pub const G2 = lc4k.PinInfo {
+    pub const G2 = lc4k.Pin_Info {
         .id = "G2",
         .func = .{ .io = 12 },
         .glb = 2,
         .grp_ordinal = @intFromEnum(GRP.io_C12),
     };
-    pub const G3 = lc4k.PinInfo {
+    pub const G3 = lc4k.Pin_Info {
         .id = "G3",
         .func = .{ .io = 10 },
         .glb = 2,
         .grp_ordinal = @intFromEnum(GRP.io_C10),
     };
-    pub const G4 = lc4k.PinInfo {
+    pub const G4 = lc4k.Pin_Info {
         .id = "G4",
         .func = .{ .vcco = {} },
     };
-    pub const G05 = lc4k.PinInfo {
+    pub const G05 = lc4k.Pin_Info {
         .id = "G05",
         .func = .{ .gnd = {} },
     };
-    pub const G06 = lc4k.PinInfo {
+    pub const G06 = lc4k.Pin_Info {
         .id = "G06",
         .func = .{ .gnd = {} },
     };
-    pub const G07 = lc4k.PinInfo {
+    pub const G07 = lc4k.Pin_Info {
         .id = "G07",
         .func = .{ .gnd = {} },
     };
-    pub const G08 = lc4k.PinInfo {
+    pub const G08 = lc4k.Pin_Info {
         .id = "G08",
         .func = .{ .gnd = {} },
     };
-    pub const G09 = lc4k.PinInfo {
+    pub const G09 = lc4k.Pin_Info {
         .id = "G09",
         .func = .{ .vcco = {} },
     };
-    pub const G10 = lc4k.PinInfo {
+    pub const G10 = lc4k.Pin_Info {
         .id = "G10",
         .func = .{ .io = 14 },
         .glb = 5,
         .grp_ordinal = @intFromEnum(GRP.io_F14),
     };
-    pub const G11 = lc4k.PinInfo {
+    pub const G11 = lc4k.Pin_Info {
         .id = "G11",
         .func = .{ .io = 10 },
         .glb = 5,
         .grp_ordinal = @intFromEnum(GRP.io_F10),
     };
-    pub const G12 = lc4k.PinInfo {
+    pub const G12 = lc4k.Pin_Info {
         .id = "G12",
         .func = .{ .io = 13 },
         .glb = 5,
         .grp_ordinal = @intFromEnum(GRP.io_F13),
     };
-    pub const H1 = lc4k.PinInfo {
+    pub const H1 = lc4k.Pin_Info {
         .id = "H1",
         .func = .{ .io = 9 },
         .glb = 2,
         .grp_ordinal = @intFromEnum(GRP.io_C9),
     };
-    pub const H2 = lc4k.PinInfo {
+    pub const H2 = lc4k.Pin_Info {
         .id = "H2",
         .func = .{ .no_connect = {} },
     };
-    pub const H3 = lc4k.PinInfo {
+    pub const H3 = lc4k.Pin_Info {
         .id = "H3",
         .func = .{ .io = 8 },
         .glb = 2,
         .grp_ordinal = @intFromEnum(GRP.io_C8),
     };
-    pub const H04 = lc4k.PinInfo {
+    pub const H04 = lc4k.Pin_Info {
         .id = "H04",
         .func = .{ .gnd = {} },
     };
-    pub const H05 = lc4k.PinInfo {
+    pub const H05 = lc4k.Pin_Info {
         .id = "H05",
         .func = .{ .vcc_core = {} },
     };
-    pub const H06 = lc4k.PinInfo {
+    pub const H06 = lc4k.Pin_Info {
         .id = "H06",
         .func = .{ .gnd = {} },
     };
-    pub const H7 = lc4k.PinInfo {
+    pub const H7 = lc4k.Pin_Info {
         .id = "H7",
         .func = .{ .gnd = {} },
     };
-    pub const H08 = lc4k.PinInfo {
+    pub const H08 = lc4k.Pin_Info {
         .id = "H08",
         .func = .{ .vcc_core = {} },
     };
-    pub const H9 = lc4k.PinInfo {
+    pub const H9 = lc4k.Pin_Info {
         .id = "H9",
         .func = .{ .vcco = {} },
     };
-    pub const H10 = lc4k.PinInfo {
+    pub const H10 = lc4k.Pin_Info {
         .id = "H10",
         .func = .{ .io = 8 },
         .glb = 5,
         .grp_ordinal = @intFromEnum(GRP.io_F8),
     };
-    pub const H11 = lc4k.PinInfo {
+    pub const H11 = lc4k.Pin_Info {
         .id = "H11",
         .func = .{ .io = 12 },
         .glb = 5,
         .grp_ordinal = @intFromEnum(GRP.io_F12),
     };
-    pub const H12 = lc4k.PinInfo {
+    pub const H12 = lc4k.Pin_Info {
         .id = "H12",
         .func = .{ .io = 9 },
         .glb = 5,
         .grp_ordinal = @intFromEnum(GRP.io_F9),
     };
-    pub const J1 = lc4k.PinInfo {
+    pub const J1 = lc4k.Pin_Info {
         .id = "J1",
         .func = .{ .io = 6 },
         .glb = 2,
         .grp_ordinal = @intFromEnum(GRP.io_C6),
     };
-    pub const J2 = lc4k.PinInfo {
+    pub const J2 = lc4k.Pin_Info {
         .id = "J2",
         .func = .{ .io = 4 },
         .glb = 2,
         .grp_ordinal = @intFromEnum(GRP.io_C4),
     };
-    pub const J3 = lc4k.PinInfo {
+    pub const J3 = lc4k.Pin_Info {
         .id = "J3",
         .func = .{ .io = 5 },
         .glb = 2,
         .grp_ordinal = @intFromEnum(GRP.io_C5),
     };
-    pub const J4 = lc4k.PinInfo {
+    pub const J4 = lc4k.Pin_Info {
         .id = "J4",
         .func = .{ .io = 12 },
         .glb = 3,
         .grp_ordinal = @intFromEnum(GRP.io_D12),
     };
-    pub const J05 = lc4k.PinInfo {
+    pub const J05 = lc4k.Pin_Info {
         .id = "J05",
         .func = .{ .vcco = {} },
     };
-    pub const J6 = lc4k.PinInfo {
+    pub const J6 = lc4k.Pin_Info {
         .id = "J6",
         .func = .{ .io = 2 },
         .glb = 3,
         .grp_ordinal = @intFromEnum(GRP.io_D2),
     };
-    pub const J7 = lc4k.PinInfo {
+    pub const J7 = lc4k.Pin_Info {
         .id = "J7",
         .func = .{ .io = 4 },
         .glb = 4,
         .grp_ordinal = @intFromEnum(GRP.io_E4),
     };
-    pub const J08 = lc4k.PinInfo {
+    pub const J08 = lc4k.Pin_Info {
         .id = "J08",
         .func = .{ .vcco = {} },
     };
-    pub const J09 = lc4k.PinInfo {
+    pub const J09 = lc4k.Pin_Info {
         .id = "J09",
         .func = .{ .gnd = {} },
     };
-    pub const J10 = lc4k.PinInfo {
+    pub const J10 = lc4k.Pin_Info {
         .id = "J10",
         .func = .{ .io = 5 },
         .glb = 5,
         .grp_ordinal = @intFromEnum(GRP.io_F5),
     };
-    pub const J11 = lc4k.PinInfo {
+    pub const J11 = lc4k.Pin_Info {
         .id = "J11",
         .func = .{ .no_connect = {} },
     };
-    pub const J12 = lc4k.PinInfo {
+    pub const J12 = lc4k.Pin_Info {
         .id = "J12",
         .func = .{ .no_connect = {} },
     };
-    pub const K1 = lc4k.PinInfo {
+    pub const K1 = lc4k.Pin_Info {
         .id = "K1",
         .func = .{ .io = 2 },
         .glb = 2,
         .grp_ordinal = @intFromEnum(GRP.io_C2),
     };
-    pub const K2 = lc4k.PinInfo {
+    pub const K2 = lc4k.Pin_Info {
         .id = "K2",
         .func = .{ .io = 1 },
         .glb = 2,
         .grp_ordinal = @intFromEnum(GRP.io_C1),
     };
-    pub const K3 = lc4k.PinInfo {
+    pub const K3 = lc4k.Pin_Info {
         .id = "K3",
         .func = .{ .no_connect = {} },
     };
-    pub const K4 = lc4k.PinInfo {
+    pub const K4 = lc4k.Pin_Info {
         .id = "K4",
         .func = .{ .io = 10 },
         .glb = 3,
         .grp_ordinal = @intFromEnum(GRP.io_D10),
     };
-    pub const K5 = lc4k.PinInfo {
+    pub const K5 = lc4k.Pin_Info {
         .id = "K5",
         .func = .{ .io = 4 },
         .glb = 3,
         .grp_ordinal = @intFromEnum(GRP.io_D4),
     };
-    pub const K6 = lc4k.PinInfo {
+    pub const K6 = lc4k.Pin_Info {
         .id = "K6",
         .func = .{ .io = 0 },
         .glb = 3,
         .grp_ordinal = @intFromEnum(GRP.io_D0),
     };
-    pub const K7 = lc4k.PinInfo {
+    pub const K7 = lc4k.Pin_Info {
         .id = "K7",
         .func = .{ .io = 0 },
         .glb = 4,
         .grp_ordinal = @intFromEnum(GRP.io_E0),
     };
-    pub const K8 = lc4k.PinInfo {
+    pub const K8 = lc4k.Pin_Info {
         .id = "K8",
         .func = .{ .io = 10 },
         .glb = 4,
         .grp_ordinal = @intFromEnum(GRP.io_E10),
     };
-    pub const K9 = lc4k.PinInfo {
+    pub const K9 = lc4k.Pin_Info {
         .id = "K9",
         .func = .{ .io = 14 },
         .glb = 4,
         .grp_ordinal = @intFromEnum(GRP.io_E14),
     };
-    pub const K10 = lc4k.PinInfo {
+    pub const K10 = lc4k.Pin_Info {
         .id = "K10",
         .func = .{ .io = 2 },
         .glb = 5,
         .grp_ordinal = @intFromEnum(GRP.io_F2),
     };
-    pub const K11 = lc4k.PinInfo {
+    pub const K11 = lc4k.Pin_Info {
         .id = "K11",
         .func = .{ .io = 6 },
         .glb = 5,
         .grp_ordinal = @intFromEnum(GRP.io_F6),
     };
-    pub const K12 = lc4k.PinInfo {
+    pub const K12 = lc4k.Pin_Info {
         .id = "K12",
         .func = .{ .io = 4 },
         .glb = 5,
         .grp_ordinal = @intFromEnum(GRP.io_F4),
     };
-    pub const L1 = lc4k.PinInfo {
+    pub const L1 = lc4k.Pin_Info {
         .id = "L1",
         .func = .{ .io = 0 },
         .glb = 2,
         .grp_ordinal = @intFromEnum(GRP.io_C0),
     };
-    pub const L02 = lc4k.PinInfo {
+    pub const L02 = lc4k.Pin_Info {
         .id = "L02",
         .func = .{ .tck = {} },
     };
-    pub const L3 = lc4k.PinInfo {
+    pub const L3 = lc4k.Pin_Info {
         .id = "L3",
         .func = .{ .io = 13 },
         .glb = 3,
         .grp_ordinal = @intFromEnum(GRP.io_D13),
     };
-    pub const L4 = lc4k.PinInfo {
+    pub const L4 = lc4k.Pin_Info {
         .id = "L4",
         .func = .{ .io = 8 },
         .glb = 3,
         .grp_ordinal = @intFromEnum(GRP.io_D8),
     };
-    pub const L5 = lc4k.PinInfo {
+    pub const L5 = lc4k.Pin_Info {
         .id = "L5",
         .func = .{ .io = 5 },
         .glb = 3,
         .grp_ordinal = @intFromEnum(GRP.io_D5),
     };
-    pub const L6 = lc4k.PinInfo {
+    pub const L6 = lc4k.Pin_Info {
         .id = "L6",
         .func = .{ .clock = 1 },
         .glb = 3,
         .grp_ordinal = @intFromEnum(GRP.clk1),
     };
-    pub const L7 = lc4k.PinInfo {
+    pub const L7 = lc4k.Pin_Info {
         .id = "L7",
         .func = .{ .io = 2 },
         .glb = 4,
         .grp_ordinal = @intFromEnum(GRP.io_E2),
     };
-    pub const L8 = lc4k.PinInfo {
+    pub const L8 = lc4k.Pin_Info {
         .id = "L8",
         .func = .{ .io = 5 },
         .glb = 4,
         .grp_ordinal = @intFromEnum(GRP.io_E5),
     };
-    pub const L9 = lc4k.PinInfo {
+    pub const L9 = lc4k.Pin_Info {
         .id = "L9",
         .func = .{ .io = 9 },
         .glb = 4,
         .grp_ordinal = @intFromEnum(GRP.io_E9),
     };
-    pub const L10 = lc4k.PinInfo {
+    pub const L10 = lc4k.Pin_Info {
         .id = "L10",
         .func = .{ .io = 13 },
         .glb = 4,
         .grp_ordinal = @intFromEnum(GRP.io_E13),
     };
-    pub const L11 = lc4k.PinInfo {
+    pub const L11 = lc4k.Pin_Info {
         .id = "L11",
         .func = .{ .io = 1 },
         .glb = 5,
         .grp_ordinal = @intFromEnum(GRP.io_F1),
     };
-    pub const L12 = lc4k.PinInfo {
+    pub const L12 = lc4k.Pin_Info {
         .id = "L12",
         .func = .{ .io = 0 },
         .glb = 5,
         .grp_ordinal = @intFromEnum(GRP.io_F0),
     };
-    pub const M1 = lc4k.PinInfo {
+    pub const M1 = lc4k.Pin_Info {
         .id = "M1",
         .func = .{ .no_connect = {} },
     };
-    pub const M2 = lc4k.PinInfo {
+    pub const M2 = lc4k.Pin_Info {
         .id = "M2",
         .func = .{ .io = 14 },
         .glb = 3,
         .grp_ordinal = @intFromEnum(GRP.io_D14),
     };
-    pub const M3 = lc4k.PinInfo {
+    pub const M3 = lc4k.Pin_Info {
         .id = "M3",
         .func = .{ .io = 9 },
         .glb = 3,
         .grp_ordinal = @intFromEnum(GRP.io_D9),
     };
-    pub const M4 = lc4k.PinInfo {
+    pub const M4 = lc4k.Pin_Info {
         .id = "M4",
         .func = .{ .io = 6 },
         .glb = 3,
         .grp_ordinal = @intFromEnum(GRP.io_D6),
     };
-    pub const M5 = lc4k.PinInfo {
+    pub const M5 = lc4k.Pin_Info {
         .id = "M5",
         .func = .{ .io = 1 },
         .glb = 3,
         .grp_ordinal = @intFromEnum(GRP.io_D1),
     };
-    pub const M6 = lc4k.PinInfo {
+    pub const M6 = lc4k.Pin_Info {
         .id = "M6",
         .func = .{ .clock = 2 },
         .glb = 4,
         .grp_ordinal = @intFromEnum(GRP.clk2),
     };
-    pub const M7 = lc4k.PinInfo {
+    pub const M7 = lc4k.Pin_Info {
         .id = "M7",
         .func = .{ .io = 1 },
         .glb = 4,
         .grp_ordinal = @intFromEnum(GRP.io_E1),
     };
-    pub const M8 = lc4k.PinInfo {
+    pub const M8 = lc4k.Pin_Info {
         .id = "M8",
         .func = .{ .io = 6 },
         .glb = 4,
         .grp_ordinal = @intFromEnum(GRP.io_E6),
     };
-    pub const M9 = lc4k.PinInfo {
+    pub const M9 = lc4k.Pin_Info {
         .id = "M9",
         .func = .{ .io = 8 },
         .glb = 4,
         .grp_ordinal = @intFromEnum(GRP.io_E8),
     };
-    pub const M10 = lc4k.PinInfo {
+    pub const M10 = lc4k.Pin_Info {
         .id = "M10",
         .func = .{ .io = 12 },
         .glb = 4,
         .grp_ordinal = @intFromEnum(GRP.io_E12),
     };
-    pub const M11 = lc4k.PinInfo {
+    pub const M11 = lc4k.Pin_Info {
         .id = "M11",
         .func = .{ .no_connect = {} },
     };
-    pub const M12 = lc4k.PinInfo {
+    pub const M12 = lc4k.Pin_Info {
         .id = "M12",
         .func = .{ .tms = {} },
     };
 };
 
-pub const clock_pins = [_]lc4k.PinInfo {
+pub const clock_pins = [_]lc4k.Pin_Info {
     pins.A7,
     pins.L6,
     pins.M6,
     pins.C7,
 };
 
-pub const oe_pins = [_]lc4k.PinInfo {
+pub const oe_pins = [_]lc4k.Pin_Info {
     pins.D6,
     pins.B7,
 };
 
-pub const input_pins = [_]lc4k.PinInfo {
+pub const input_pins = [_]lc4k.Pin_Info {
 };
 
-pub const all_pins = [_]lc4k.PinInfo {
+pub const all_pins = [_]lc4k.Pin_Info {
     pins.A01,
     pins.A2,
     pins.A3,

@@ -1,7 +1,7 @@
 const std = @import("std");
 const lc4k = @import("lc4k.zig");
 
-const DeviceType = lc4k.DeviceType;
+const Device_Type = lc4k.Device_Type;
 
 pub const Fuse = struct {
     row: usize,
@@ -33,17 +33,17 @@ pub const Fuse = struct {
         const T = @TypeOf(device_or_jedec);
         return switch (T) {
             std.builtin.Type => device_or_jedec.jedec_dimensions,
-            DeviceType => device_or_jedec.get().jedec_dimensions,
+            Device_Type => device_or_jedec.get().jedec_dimensions,
             FuseRange => device_or_jedec,
             JedecData => device_or_jedec.extents,
             else => switch (@typeInfo(T)) {
                 .Pointer => |ptr_info| if (ptr_info.size == .One) switch (ptr_info.child) {
-                    DeviceType => device_or_jedec.get().jedec_dimensions,
+                    Device_Type => device_or_jedec.get().jedec_dimensions,
                     FuseRange => device_or_jedec.*,
                     JedecData => device_or_jedec.extents,
                     else => @compileError("Invalid pointer type: " ++ @typeName(T)),
                 } else @compileError("Expected a single pointer, not " ++ @typeName(T)),
-                else => @compileError("Expected DeviceType, DeviceType.get(), FuseRange, JedecData, or a pointer to such.  Found: " ++ @typeName(T)),
+                else => @compileError("Expected Device_Type, Device_Type.get(), FuseRange, JedecData, or a pointer to such.  Found: " ++ @typeName(T)),
             },
         };
     }
@@ -428,7 +428,7 @@ pub const JedecData = struct {
 
 };
 
-pub const JedecFile = struct {
+pub const Jedec_File = struct {
     data: JedecData,
     usercode: ?u32 = null,
     security: ?u1 = null,

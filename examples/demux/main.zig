@@ -13,13 +13,13 @@ pub fn main() !void {
     chip.goe0.source = .{ .glb_shared_pt_enable = 0 };
     chip.goe0.polarity = .active_high;
 
-    const input_pins = [_]lc4k.PinInfo {
+    const input_pins = [_]lc4k.Pin_Info {
         Chip.pins._22,
         Chip.pins._21,
         Chip.pins._20,
     };
 
-    const output_pins = [_]lc4k.PinInfo {
+    const output_pins = [_]lc4k.Pin_Info {
         Chip.pins._23,
         Chip.pins._24,
         Chip.pins._26,
@@ -45,15 +45,15 @@ pub fn main() !void {
 
     var jed_file = try std.fs.cwd().createFile("examples/demux.jed", .{});
     defer jed_file.close();
-    try Chip.writeJED(arena.allocator(), results.jedec, jed_file.writer(), .{});
+    try Chip.write_jed(arena.allocator(), results.jedec, jed_file.writer(), .{});
 
     var svf_file = try std.fs.cwd().createFile("examples/demux.svf", .{});
     defer svf_file.close();
-    try Chip.writeSVF(results.jedec, svf_file.writer(), .{});
+    try Chip.write_svf(results.jedec, svf_file.writer(), .{});
 
     var report_file = try std.fs.cwd().createFile("examples/demux.html", .{});
     defer report_file.close();
-    try Chip.writeReport(results.jedec, report_file.writer(), .{
+    try Chip.write_report(results.jedec, report_file.writer(), .{
         .assembly_errors = results.errors.items,
     });
 }

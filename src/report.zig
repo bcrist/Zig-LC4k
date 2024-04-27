@@ -7,25 +7,25 @@ const internal = @import("internal.zig");
 const routing = @import("routing.zig");
 const disassembly = @import("disassembly.zig");
 
-const JedecFile = jedec.JedecFile;
+const Jedec_File = jedec.Jedec_File;
 const JedecData = jedec.JedecData;
-const MacrocellRef = lc4k.MacrocellRef;
-const getGlbName = lc4k.getGlbName;
+const MC_Ref = lc4k.MC_Ref;
+const get_glb_name = lc4k.get_glb_name;
 
-pub fn WriteOptions(comptime Device: type) type {
+pub fn Write_Options(comptime Device: type) type {
     return struct {
         design_name: []const u8 = "",
         design_version: []const u8 = "",
         notes: []const u8 = "",
         assembly_errors: []const assembly.AssemblyError = &[_]assembly.AssemblyError{},
-        macrocellNameMapper: *const fn(lc4k.MacrocellRef) []const u8 = defaultMacrocellNameMapper(Device),
+        macrocellNameMapper: *const fn(lc4k.MC_Ref) []const u8 = defaultMacrocellNameMapper(Device),
         signalNameMapper: *const fn(Device.GRP) []const u8 = defaultSignalNameMapper(Device.GRP),
     };
 }
 
-pub fn defaultMacrocellNameMapper(comptime Device: type) fn(lc4k.MacrocellRef) []const u8 {
+pub fn defaultMacrocellNameMapper(comptime Device: type) fn(lc4k.MC_Ref) []const u8 {
     return struct {
-        pub fn func(mcref: lc4k.MacrocellRef) []const u8 {
+        pub fn func(mcref: lc4k.MC_Ref) []const u8 {
             return @tagName(Device.mc_signals[mcref.glb][mcref.mc])[3..];
         }
     }.func;
@@ -75,7 +75,7 @@ fn ReportData(comptime Device: type) type {
         config: lc4k.LC4k(Device.device_type),
         disassembly_errors: std.ArrayList(disassembly.DisassemblyError),
 
-        mc_pin_info: std.AutoHashMap(lc4k.MacrocellRef, lc4k.PinInfo),
+        mc_pin_info: std.AutoHashMap(lc4k.MC_Ref, lc4k.Pin_Info),
 
         glb: [Device.num_glbs]GlbReportData = undefined,
 
@@ -92,7 +92,7 @@ fn ReportData(comptime Device: type) type {
 
         const Self = @This();
 
-        pub fn init(alloc: std.mem.Allocator, file: JedecFile) !Self {
+        pub fn init(alloc: std.mem.Allocator, file: Jedec_File) !Self {
             std.debug.assert(file.data.extents.eql(Device.jedec_dimensions));
 
             const dis = try disassembly.disassemble(Device, alloc, file);
@@ -101,13 +101,13 @@ fn ReportData(comptime Device: type) type {
                 .jed = file.data,
                 .config = dis.config,
                 .disassembly_errors = dis.errors,
-                .mc_pin_info = std.AutoHashMap(lc4k.MacrocellRef, lc4k.PinInfo).init(alloc),
+                .mc_pin_info = std.AutoHashMap(lc4k.MC_Ref, lc4k.Pin_Info).init(alloc),
             };
 
             for (Device.all_pins) |pin_info| {
                 switch (pin_info.func) {
                     .io, .io_oe0, .io_oe1 => |mc| {
-                        try self.mc_pin_info.put(lc4k.MacrocellRef.init(pin_info.glb.?, mc), pin_info);
+                        try self.mc_pin_info.put(lc4k.MC_Ref.init(pin_info.glb.?, mc), pin_info);
                     },
                     else => {},
                 }
@@ -150,7 +150,7 @@ fn ReportData(comptime Device: type) type {
                 glb_data.pt_usage[shared_enable_pt] = .none;
 
                 inline for (glb_config.mc, 0..) |mc_config, mc| {
-                    const mcref = lc4k.MacrocellRef.init(glb, mc);
+                    const mcref = lc4k.MC_Ref.init(glb, mc);
 
                     const glb_pt_base = mc * 5;
                     var pt_offset: usize = 0;
@@ -159,7 +159,7 @@ fn ReportData(comptime Device: type) type {
                         const pt = try disassembly.parsePTFuses(Device, alloc, glb, glb_pt_offset, &glb_data.gi_routing, self.jed, null);
                         glb_data.pts[glb_pt_offset] = pt;
                         glb_data.pt_usage[glb_pt_offset] = .sum;
-                        if (@TypeOf(mc_config.output) == lc4k.OutputConfig(Device.GRP)) {
+                        if (@TypeOf(mc_config.output) == lc4k.Output_Config(Device.GRP)) {
                             switch (mc_config.output.routing) {
                                 .same_as_oe, .self => {},
                                 .five_pt_fast_bypass, .five_pt_fast_bypass_inverted => {
@@ -179,12 +179,12 @@ fn ReportData(comptime Device: type) type {
                             ios_used.insert(grp);
                         }
 
-                        const output_routing = if (@TypeOf(mc_config.output) == lc4k.OutputConfigZE)
+                        const output_routing = if (@TypeOf(mc_config.output) == lc4k.Output_Config_ZE)
                             mc_config.output.routing
                         else
                             mc_config.output.oe_routing;
 
-                        const src_mcref = lc4k.MacrocellRef.init(glb, output_routing.absolute);
+                        const src_mcref = lc4k.MC_Ref.init(glb, output_routing.absolute);
                         mcs_used.insert(Device.mc_signals[src_mcref.glb][src_mcref.mc]);
                     }
 
@@ -250,7 +250,7 @@ fn ReportData(comptime Device: type) type {
                         glb_data.pt_usage[mc * 5 + 4] = .oe;
                     }
 
-                    if (@TypeOf(mc_config.input) == lc4k.InputConfigZE) {
+                    if (@TypeOf(mc_config.input) == lc4k.Input_Config_ZE) {
                         if (mc_config.input.power_guard.? == .from_bie) {
                             glb_data.uses_bie = true;
                         }
@@ -320,26 +320,26 @@ fn ReportData(comptime Device: type) type {
 
         fn parseGoePtUsage(goe_config: anytype, glb: usize, glb_data: *GlbReportData) void {
             switch (@TypeOf(goe_config)) {
-                lc4k.GOEConfigBusOrPin => switch (goe_config.source) {
+                lc4k.GOE_Config_Bus_Or_Pin => switch (goe_config.source) {
                     .input, .constant_high => {},
                     .glb_shared_pt_enable => |goe_glb| {
                         if (glb == goe_glb) glb_data.pt_usage[shared_enable_pt] = .oe;
                     },
                 },
-                lc4k.GOEConfigBus => switch (goe_config.source) {
+                lc4k.GOE_Config_Bus => switch (goe_config.source) {
                     .constant_high => {},
                     .glb_shared_pt_enable => |goe_glb| {
                         if (glb == goe_glb) glb_data.pt_usage[shared_enable_pt] = .oe;
                     },
                 },
-                lc4k.GOEConfigPin => {},
+                lc4k.GOE_Config_Pin => {},
                 else => unreachable,
             }
         }
     };
 }
 
-pub fn write(comptime Device: type, file: JedecFile, writer: anytype, options: WriteOptions(Device)) !void {
+pub fn write(comptime Device: type, file: Jedec_File, writer: anytype, options: Write_Options(Device)) !void {
     var temp = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer temp.deinit();
     const alloc = temp.allocator();
@@ -415,10 +415,10 @@ pub fn write(comptime Device: type, file: JedecFile, writer: anytype, options: W
             try writer.print("<tr><td>{s}</td><td>{s}</td><td>", .{ @errorName(err.err), err.details });
             if (err.glb) |glb| {
                 if (err.mc) |mc| {
-                    const mc_name = options.macrocellNameMapper(lc4k.MacrocellRef.init(glb, mc));
+                    const mc_name = options.macrocellNameMapper(lc4k.MC_Ref.init(glb, mc));
                     try writer.print("{s} ", .{ mc_name });
                 } else {
-                    try writer.print("GLB {s} ", .{ lc4k.getGlbName(glb) });
+                    try writer.print("GLB {s} ", .{ lc4k.get_glb_name(glb) });
                     if (err.gi) |gi| {
                         try writer.print("GI {} ", .{ gi });
                     }
@@ -441,10 +441,10 @@ pub fn write(comptime Device: type, file: JedecFile, writer: anytype, options: W
             try writer.print("<tr><td>{s}</td><td>{s}</td><td>", .{ @errorName(err.err), err.details });
             if (err.glb) |glb| {
                 if (err.mc) |mc| {
-                    const mc_name = options.macrocellNameMapper(lc4k.MacrocellRef.init(glb, mc));
+                    const mc_name = options.macrocellNameMapper(lc4k.MC_Ref.init(glb, mc));
                     try writer.print("{s} ", .{ mc_name });
                 } else {
-                    try writer.print("GLB {s} ", .{ lc4k.getGlbName(glb) });
+                    try writer.print("GLB {s} ", .{ lc4k.get_glb_name(glb) });
                     if (err.gi) |gi| {
                         try writer.print("GI {} ", .{ gi });
                     }
@@ -475,7 +475,7 @@ pub fn write(comptime Device: type, file: JedecFile, writer: anytype, options: W
     try writer.writeAll("</html>\n");
 }
 
-fn writeGlobals(writer: anytype, comptime Device: type, data: ReportData(Device), options: WriteOptions(Device)) !void {
+fn writeGlobals(writer: anytype, comptime Device: type, data: ReportData(Device), options: Write_Options(Device)) !void {
     try beginSection(writer, "Global Resources", .{}, .{});
 
     try beginSection(writer, "Global Output Enables", .{}, .{ .tier = 3, .class = "inline" });
@@ -506,19 +506,19 @@ fn writeGlobals(writer: anytype, comptime Device: type, data: ReportData(Device)
             if (config.enable_osc_out_and_disable) {
                 try writer.writeAll("<tr>");
                 try writer.writeAll("<th>Oscillator disable/output signal</th>");
-                try writer.print("<td>{s}</td>", .{ options.signalNameMapper(lc4k.OscTimerConfig(Device).signals.osc_out) });
+                try writer.print("<td>{s}</td>", .{ options.signalNameMapper(lc4k.Oscillator_Timer_Config(Device).signals.osc_out) });
                 try writer.writeAll("</tr>\n");
             }
             if (config.enable_timer_out_and_reset) {
                 try writer.writeAll("<tr>");
                 try writer.writeAll("<th>Timer reset/output signal</th>");
-                try writer.print("<td>{s}</td>", .{ options.signalNameMapper(lc4k.OscTimerConfig(Device).signals.timer_out) });
+                try writer.print("<td>{s}</td>", .{ options.signalNameMapper(lc4k.Oscillator_Timer_Config(Device).signals.timer_out) });
                 try writer.writeAll("</tr>\n");
 
                 const divisor: usize = switch (config.timer_divisor) {
-                    .div128 => 128,
-                    .div1024 => 1024,
-                    .div1048576 => 1048576,
+                    .div_128 => 128,
+                    .div_1024 => 1024,
+                    .div_1048576 => 1048576,
                     else => 1,
                 };
                 const timer_frequency = (osc_frequency + divisor / 2) / divisor;
@@ -541,7 +541,7 @@ fn writeGlobals(writer: anytype, comptime Device: type, data: ReportData(Device)
     try endSection(writer);
 }
 
-fn writeGOE(writer: anytype, comptime Device: type, highlight: bool, goe_index: usize, goe_config: anytype, options: WriteOptions(Device)) !void {
+fn writeGOE(writer: anytype, comptime Device: type, highlight: bool, goe_index: usize, goe_config: anytype, options: Write_Options(Device)) !void {
     try beginRow(writer, .{ .highlight = highlight });
 
     try beginCell(writer, .{});
@@ -550,16 +550,16 @@ fn writeGOE(writer: anytype, comptime Device: type, highlight: bool, goe_index: 
 
     try beginCell(writer, .{ .class = "left" });
     switch (@TypeOf(goe_config)) {
-        lc4k.GOEConfigBusOrPin => switch (goe_config.source) {
+        lc4k.GOE_Config_Bus_Or_Pin => switch (goe_config.source) {
             .constant_high => try writeUnusedGOEEquation(writer, goe_config.polarity),
             .input => try writePinGOEEquation(writer, Device, goe_config.polarity, Device.oe_pins[goe_index], options),
             .glb_shared_pt_enable => |glb| try writeBusGOEEquation(writer, goe_config.polarity, glb),
         },
-        lc4k.GOEConfigBus => switch (goe_config.source) {
+        lc4k.GOE_Config_Bus => switch (goe_config.source) {
             .constant_high => try writeUnusedGOEEquation(writer, goe_config.polarity),
             .glb_shared_pt_enable => |glb| try writeBusGOEEquation(writer, goe_config.polarity, glb),
         },
-        lc4k.GOEConfigPin => {
+        lc4k.GOE_Config_Pin => {
             var oe_bus_index = goe_index;
             if (goe_index >= Device.oe_bus_size) {
                 oe_bus_index -= 2;
@@ -573,7 +573,7 @@ fn writeGOE(writer: anytype, comptime Device: type, highlight: bool, goe_index: 
     try endRow(writer);
 }
 
-fn writeBusGOEEquation(writer: anytype, polarity: lc4k.GOEPolarity, glb: usize) !void {
+fn writeBusGOEEquation(writer: anytype, polarity: lc4k.GOE_Polarity, glb: usize) !void {
     try writer.writeAll(switch (polarity) {
         .active_high => "<abbr>",
         .active_low => "<abbr><u>",
@@ -587,14 +587,14 @@ fn writeBusGOEEquation(writer: anytype, polarity: lc4k.GOEPolarity, glb: usize) 
     });
 }
 
-fn writeUnusedGOEEquation(writer: anytype, polarity: lc4k.GOEPolarity) !void {
+fn writeUnusedGOEEquation(writer: anytype, polarity: lc4k.GOE_Polarity) !void {
     try writer.writeAll(switch (polarity) {
         .active_high => "<abbr>true</abbr>",
         .active_low => "<abbr>false</abbr>",
     });
 }
 
-fn writePinGOEEquation(writer: anytype, comptime Device: type, polarity: lc4k.GOEPolarity, pin_info: lc4k.PinInfo, options: WriteOptions(Device)) !void {
+fn writePinGOEEquation(writer: anytype, comptime Device: type, polarity: lc4k.GOE_Polarity, pin_info: lc4k.Pin_Info, options: Write_Options(Device)) !void {
     try writer.writeAll(switch (polarity) {
         .active_high => "<abbr>",
         .active_low => "<abbr><u>",
@@ -608,7 +608,7 @@ fn writePinGOEEquation(writer: anytype, comptime Device: type, polarity: lc4k.GO
     });
 }
 
-fn writeInputs(writer: anytype, comptime Device: type, data: ReportData(Device), options: WriteOptions(Device)) !void {
+fn writeInputs(writer: anytype, comptime Device: type, data: ReportData(Device), options: Write_Options(Device)) !void {
     try beginSection(writer, "Clocks &amp; Dedicated Inputs", .{}, .{});
 
     try beginSection(writer, "Clock &amp; Input Pins", .{}, .{ .tier = 3, .class = "inline" });
@@ -624,8 +624,8 @@ fn writeInputs(writer: anytype, comptime Device: type, data: ReportData(Device),
     for (Device.clock_pins, 0..) |pin_info, i| {
         const config = data.config.clock[i];
         switch (@TypeOf(config)) {
-            lc4k.InputConfig => try writeInputPin(writer, (n & 1) == 1, Device, pin_info, config.threshold.?, data.config.default_bus_maintenance, null, options),
-            lc4k.InputConfigZE => try writeInputPin(writer, (n & 1) == 1, Device, pin_info, config.threshold.?, config.bus_maintenance.?, config.power_guard.?, options),
+            lc4k.Input_Config => try writeInputPin(writer, (n & 1) == 1, Device, pin_info, config.threshold.?, data.config.default_bus_maintenance, null, options),
+            lc4k.Input_Config_ZE => try writeInputPin(writer, (n & 1) == 1, Device, pin_info, config.threshold.?, config.bus_maintenance.?, config.power_guard.?, options),
             else => unreachable,
         }
         n += 1;
@@ -634,8 +634,8 @@ fn writeInputs(writer: anytype, comptime Device: type, data: ReportData(Device),
     for (Device.input_pins, 0..) |pin_info, i| {
         const config = data.config.input[i];
         switch (@TypeOf(config)) {
-            lc4k.InputConfig => try writeInputPin(writer, (n & 1) == 1, Device, pin_info, config.threshold.?, data.config.default_bus_maintenance, null, options),
-            lc4k.InputConfigZE => try writeInputPin(writer, (n & 1) == 1, Device, pin_info, config.threshold.?, config.bus_maintenance.?, config.power_guard.?, options),
+            lc4k.Input_Config => try writeInputPin(writer, (n & 1) == 1, Device, pin_info, config.threshold.?, data.config.default_bus_maintenance, null, options),
+            lc4k.Input_Config_ZE => try writeInputPin(writer, (n & 1) == 1, Device, pin_info, config.threshold.?, config.bus_maintenance.?, config.power_guard.?, options),
             else => unreachable,
         }
         n += 1;
@@ -662,7 +662,7 @@ fn writeInputs(writer: anytype, comptime Device: type, data: ReportData(Device),
     try endSection(writer);
 }
 
-fn writeBlockClock(writer: anytype, comptime Device: type, highlight: bool, bclk_index: usize, value: anytype, options: WriteOptions(Device)) !void {
+fn writeBlockClock(writer: anytype, comptime Device: type, highlight: bool, bclk_index: usize, value: anytype, options: Write_Options(Device)) !void {
     try beginRow(writer, .{ .highlight = highlight });
 
     try beginCell(writer, .{});
@@ -688,11 +688,11 @@ fn writeBlockClock(writer: anytype, comptime Device: type, highlight: bool, bclk
     try endRow(writer);
 }
 
-fn writeInputPin(writer: anytype, highlight: bool, comptime Device: type, pin_info: lc4k.PinInfo,
-    threshold: lc4k.InputThreshold,
-    bus_maintenance: lc4k.BusMaintenance,
-    power_guard: ?lc4k.PowerGuard,
-    options: WriteOptions(Device),
+fn writeInputPin(writer: anytype, highlight: bool, comptime Device: type, pin_info: lc4k.Pin_Info,
+    threshold: lc4k.Input_Threshold,
+    bus_maintenance: lc4k.Bus_Maintenance,
+    power_guard: ?lc4k.Power_Guard,
+    options: Write_Options(Device),
 ) !void {
     try beginRow(writer, .{
         .highlight = highlight,
@@ -709,17 +709,17 @@ fn writeInputPin(writer: anytype, highlight: bool, comptime Device: type, pin_in
     try endCell(writer);
 
     try beginCell(writer, .{});
-    try writeInputThreshold(writer, Device, threshold);
+    try writeInput_Threshold(writer, Device, threshold);
     try endCell(writer);
 
     try beginCell(writer, .{});
-    try writeBusMaintenance(writer, bus_maintenance);
+    try writeBus_Maintenance(writer, bus_maintenance);
     try endCell(writer);
 
     if (Device.family == .zero_power_enhanced) {
         try beginCell(writer, .{});
         if (power_guard) |pg| {
-            try writePowerGuard(writer, pg);
+            try writePower_Guard(writer, pg);
         }
         try endCell(writer);
     }
@@ -727,7 +727,7 @@ fn writeInputPin(writer: anytype, highlight: bool, comptime Device: type, pin_in
     try endRow(writer);
 }
 
-fn writeInputThreshold(writer: anytype, comptime Device: type, threshold: lc4k.InputThreshold) !void {
+fn writeInput_Threshold(writer: anytype, comptime Device: type, threshold: lc4k.Input_Threshold) !void {
     switch (Device.family) {
         .zero_power_enhanced => {
             try writer.writeAll(switch (threshold) {
@@ -750,7 +750,7 @@ fn writeInputThreshold(writer: anytype, comptime Device: type, threshold: lc4k.I
     }
 }
 
-fn writeBusMaintenance(writer: anytype, maint: lc4k.BusMaintenance) !void {
+fn writeBus_Maintenance(writer: anytype, maint: lc4k.Bus_Maintenance) !void {
     try writer.writeAll(switch (maint) {
         .pulldown => "<kbd class=\"maintenance pulldown\">Pulldown</kbd>",
         .float => "<kbd class=\"maintenance float\">Float</kbd>",
@@ -759,14 +759,14 @@ fn writeBusMaintenance(writer: anytype, maint: lc4k.BusMaintenance) !void {
     });
 }
 
-fn writePowerGuard(writer: anytype, pg: lc4k.PowerGuard) !void {
+fn writePower_Guard(writer: anytype, pg: lc4k.Power_Guard) !void {
     try writer.writeAll(switch (pg) {
         .from_bie => "<kbd class=\"power-guard enabled\">Enabled</kbd>",
         .disabled => "<kbd class=\"power-guard disabled\">Disabled</kbd>",
     });
 }
 
-fn writePTs(writer: anytype, comptime Device: type, data: ReportData(Device), options: WriteOptions(Device)) !void {
+fn writePTs(writer: anytype, comptime Device: type, data: ReportData(Device), options: Write_Options(Device)) !void {
     try beginSection(writer, "Product Terms", .{}, .{});
     for (data.glb, 0..) |glb_data, glb| {
         try beginGlbSection(writer, glb);
@@ -775,7 +775,7 @@ fn writePTs(writer: anytype, comptime Device: type, data: ReportData(Device), op
 
         var mc: usize = 0;
         while (mc < Device.num_mcs_per_glb) : (mc += 1) {
-            const mcref = lc4k.MacrocellRef.init(glb, mc);
+            const mcref = lc4k.MC_Ref.init(glb, mc);
 
             var pt_index: usize = 0;
             while (pt_index < 5) : (pt_index += 1) {
@@ -842,7 +842,7 @@ fn writePTUsage(writer: anytype, usage: PTUsage) !void {
     });
 }
 
-fn writePTEquation(writer: anytype, comptime Device: type, pt: lc4k.PT(Device.GRP), options: WriteOptions(Device)) !void {
+fn writePTEquation(writer: anytype, comptime Device: type, pt: lc4k.PT(Device.GRP), options: Write_Options(Device)) !void {
     try writer.writeAll("<td class=\"left\">");
 
     var first = true;
@@ -875,7 +875,7 @@ fn writePTEquation(writer: anytype, comptime Device: type, pt: lc4k.PT(Device.GR
     try writer.writeAll("</td>");
 }
 
-fn writeGlbRouting(writer: anytype, comptime Device: type, data: ReportData(Device), options: WriteOptions(Device)) !void {
+fn writeGlbRouting(writer: anytype, comptime Device: type, data: ReportData(Device), options: Write_Options(Device)) !void {
     try beginSection(writer, "GI Routing", .{}, .{});
     for (data.config.glb, 0..) |_, glb| {
         try beginGlbSection(writer, glb);
@@ -927,7 +927,7 @@ fn writeGlbRouting(writer: anytype, comptime Device: type, data: ReportData(Devi
     try endSection(writer);
 }
 
-fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Device), options: WriteOptions(Device)) !void {
+fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Device), options: Write_Options(Device)) !void {
     try beginSection(writer, "Macrocells", .{}, .{});
 
     for (data.config.glb, 0..) |glb_config, glb| {
@@ -972,7 +972,7 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
         }
 
         for (glb_config.mc, 0..) |mc_config, mc| {
-            const mcref = lc4k.MacrocellRef.init(glb, mc);
+            const mcref = lc4k.MC_Ref.init(glb, mc);
 
             var ca_jumps: usize = 0;
             var dest: ?usize = null;
@@ -1011,7 +1011,7 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
                     .class = ca_class,
                     .hover_selector = ca_selector,
                 });
-                try writer.writeAll(options.macrocellNameMapper(lc4k.MacrocellRef.init(glb, ca)));
+                try writer.writeAll(options.macrocellNameMapper(lc4k.MC_Ref.init(glb, ca)));
             } else {
                 try beginCell(writer, .{});
             }
@@ -1028,7 +1028,7 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
                 .input_buffer, .pt0, .pt0_inverted => {},
             }
 
-            if (@TypeOf(mc_config.output) != lc4k.OutputConfigZE) {
+            if (@TypeOf(mc_config.output) != lc4k.Output_Config_ZE) {
                 switch (mc_config.output.routing) {
                     .five_pt_fast_bypass, .five_pt_fast_bypass_inverted => |pts| {
                         for (pts) |pt| {
@@ -1158,9 +1158,9 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
             var oe_mc_delta: usize = 0;
             var temp_oe_buf: [64]u8 = undefined;
 
-            if (@TypeOf(mc_config.output) == lc4k.OutputConfigZE) {
+            if (@TypeOf(mc_config.output) == lc4k.Output_Config_ZE) {
                 const abs_output_mc = mc_config.output.routing.absolute;
-                out_mcref = lc4k.MacrocellRef.init(glb, abs_output_mc);
+                out_mcref = lc4k.MC_Ref.init(glb, abs_output_mc);
                 out_mc_delta = if (abs_output_mc < mc)
                     abs_output_mc + Device.num_mcs_per_glb - mc
                 else
@@ -1181,7 +1181,7 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
                 oe_mc_delta = out_mc_delta;
             } else {
                 const abs_oe_mc = mc_config.output.oe_routing.absolute;
-                oe_mcref = lc4k.MacrocellRef.init(glb, abs_oe_mc);
+                oe_mcref = lc4k.MC_Ref.init(glb, abs_oe_mc);
                 oe_mc_delta = if (abs_oe_mc < mc)
                     abs_oe_mc + Device.num_mcs_per_glb - mc
                 else
@@ -1271,24 +1271,24 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
 
             try beginCell(writer, cell_options);
             if (mc_config.output.oe != .output_only) {
-                try writeInputThreshold(writer, Device, mc_config.input.threshold.?);
+                try writeInput_Threshold(writer, Device, mc_config.input.threshold.?);
             }
             try endCell(writer);
 
-            if (@TypeOf(mc_config.input) == lc4k.InputConfigZE) {
+            if (@TypeOf(mc_config.input) == lc4k.Input_Config_ZE) {
                 try beginCell(writer, cell_options);
                 if (mc_config.output.oe != .output_only) {
-                    try writeBusMaintenance(writer, mc_config.input.bus_maintenance.?);
+                    try writeBus_Maintenance(writer, mc_config.input.bus_maintenance.?);
                 }
                 try endCell(writer);
 
                 try beginCell(writer, cell_options);
-                try writePowerGuard(writer, mc_config.input.power_guard.?);
+                try writePower_Guard(writer, mc_config.input.power_guard.?);
                 try endCell(writer);
             } else {
                 try beginCell(writer, cell_options);
                 if (mc_config.output.oe != .output_only) {
-                    try writeBusMaintenance(writer, data.config.default_bus_maintenance);
+                    try writeBus_Maintenance(writer, data.config.default_bus_maintenance);
                 }
                 try endCell(writer);
             }
@@ -1324,7 +1324,7 @@ fn beginSection(writer: anytype, comptime fmt: []const u8, args: anytype, option
 }
 
 fn beginGlbSection(writer: anytype, glb: usize) !void {
-    try beginSection(writer, "GLB {} ({s})", .{ glb, lc4k.getGlbName(glb) }, .{ .tier = 3, .class = "inline" });
+    try beginSection(writer, "GLB {} ({s})", .{ glb, lc4k.get_glb_name(glb) }, .{ .tier = 3, .class = "inline" });
 }
 
 fn endSection(writer: anytype) !void {

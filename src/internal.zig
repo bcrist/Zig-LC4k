@@ -16,11 +16,11 @@ pub fn invertGIMapping(
     return results;
 }}
 
-pub fn getMacrocellRef(comptime GRP: type, comptime which: anytype) lc4k.MacrocellRef { comptime {
+pub fn getMC_Ref(comptime GRP: type, comptime which: anytype) lc4k.MC_Ref { comptime {
     const T = @TypeOf(which);
     const name: []const u8 = switch (T) {
-        lc4k.MacrocellRef => return which,
-        lc4k.PinInfo => return which.mcRef().?,
+        lc4k.MC_Ref => return which,
+        lc4k.Pin_Info => return which.mc_ref().?,
         GRP => @tagName(which),
         else => switch (@typeInfo(T)) {
             .EnumLiteral => @tagName(which),
@@ -30,16 +30,16 @@ pub fn getMacrocellRef(comptime GRP: type, comptime which: anytype) lc4k.Macroce
 
     if (name.len >= 5 and (std.mem.startsWith(u8, name, "mc_") or std.mem.startsWith(u8, name, "io_"))) {
         const glb = name[3] - 'A';
-        const mc = std.fmt.parseUnsigned(lc4k.MacrocellIndex, name[4..], 10) catch unreachable;
+        const mc = std.fmt.parseUnsigned(lc4k.MC_Index, name[4..], 10) catch unreachable;
         return .{ .glb = glb, .mc = mc };
     }
 }}
 
-pub fn getGlbIndex(comptime Device: type, comptime which: anytype) lc4k.GlbIndex { comptime {
+pub fn getGLB_Index(comptime Device: type, comptime which: anytype) lc4k.GLB_Index { comptime {
     const T = @TypeOf(which);
     const ordinal: usize = @intFromEnum(switch (T) {
-        lc4k.MacrocellRef => return which.glb,
-        lc4k.PinInfo => return which.glb.?,
+        lc4k.MC_Ref => return which.glb,
+        lc4k.Pin_Info => return which.glb.?,
         Device.GRP => which,
         else => std.enums.nameCast(Device.GRP, which),
     });
@@ -55,23 +55,23 @@ pub fn getGlbIndex(comptime Device: type, comptime which: anytype) lc4k.GlbIndex
 
 pub fn getGrp(comptime GRP: type, comptime which: anytype) GRP { comptime {
     return switch (@TypeOf(which)) {
-        lc4k.MacrocellRef => @field(GRP, std.fmt.comptimePrint("mc_{s}{}", .{
-            lc4k.getGlbName(which.glb),
+        lc4k.MC_Ref => @field(GRP, std.fmt.comptimePrint("mc_{s}{}", .{
+            lc4k.get_glb_name(which.glb),
             which.mc,
         })),
-        lc4k.PinInfo => @enumFromInt(which.grp_ordinal.?),
+        lc4k.Pin_Info => @enumFromInt(which.grp_ordinal.?),
         else => std.enums.nameCast(GRP, which),
     };
 }}
 
 pub fn getGrpInput(comptime GRP: type, comptime which: anytype) GRP { comptime {
     switch (@TypeOf(which)) {
-        lc4k.MacrocellRef => return @field(GRP, std.fmt.comptimePrint("io_{s}{}", .{
-            lc4k.getGlbName(which.glb),
+        lc4k.MC_Ref => return @field(GRP, std.fmt.comptimePrint("io_{s}{}", .{
+            lc4k.get_glb_name(which.glb),
             which.mc,
         })),
-        lc4k.PinInfo => return @field(GRP, std.fmt.comptimePrint("io_{s}{}", .{
-            lc4k.getGlbName(which.glb.?),
+        lc4k.Pin_Info => return @field(GRP, std.fmt.comptimePrint("io_{s}{}", .{
+            lc4k.get_glb_name(which.glb.?),
             switch (which.func) {
                 .io, .io_oe0, .io_oe1 => |mc| mc,
                 else => unreachable,
@@ -90,12 +90,12 @@ pub fn getGrpInput(comptime GRP: type, comptime which: anytype) GRP { comptime {
 
 pub fn getGrpFeedback(comptime GRP: type, comptime which: anytype) GRP { comptime {
     switch (@TypeOf(which)) {
-        lc4k.MacrocellRef => return @field(GRP, std.fmt.comptimePrint("mc_{s}{}", .{
-            lc4k.getGlbName(which.glb),
+        lc4k.MC_Ref => return @field(GRP, std.fmt.comptimePrint("mc_{s}{}", .{
+            lc4k.get_glb_name(which.glb),
             which.mc,
         })),
-        lc4k.PinInfo => return @field(GRP, std.fmt.comptimePrint("mc_{s}{}", .{
-            lc4k.getGlbName(which.glb.?),
+        lc4k.Pin_Info => return @field(GRP, std.fmt.comptimePrint("mc_{s}{}", .{
+            lc4k.get_glb_name(which.glb.?),
             switch (which.func) {
                 .io, .io_oe0, .io_oe1 => |mc| mc,
                 else => unreachable,
@@ -114,10 +114,10 @@ pub fn getGrpFeedback(comptime GRP: type, comptime which: anytype) GRP { comptim
     }
 }}
 
-pub fn getPin(comptime Device: type, comptime which: anytype) lc4k.PinInfo { comptime {
+pub fn getPin(comptime Device: type, comptime which: anytype) lc4k.Pin_Info { comptime {
     const T = @TypeOf(which);
     switch (T) {
-        lc4k.MacrocellRef => {
+        lc4k.MC_Ref => {
             for (Device.all_pins) |pin| {
                 switch (pin.func) {
                     .io, .io_oe0, .io_oe1 => |mc| if (mc == which.mc and pin.glb.? == which.glb) return pin,
@@ -126,7 +126,7 @@ pub fn getPin(comptime Device: type, comptime which: anytype) lc4k.PinInfo { com
             }
             unreachable;
         },
-        lc4k.PinInfo => return which,
+        lc4k.Pin_Info => return which,
         else => {
             const ordinal = @intFromEnum(std.enums.nameCast(Device.GRP, which));
             for (Device.all_pins) |pin| {
@@ -141,7 +141,7 @@ pub fn getPin(comptime Device: type, comptime which: anytype) lc4k.PinInfo { com
 
 pub fn getSpecialPT(
     comptime Device: type, 
-    mc_config: lc4k.MacrocellConfig(Device.family, Device.GRP),
+    mc_config: lc4k.Macrocell_Config(Device.family, Device.GRP),
     pt_index: usize
 ) ?lc4k.PT(Device.GRP) {
     return switch (pt_index) {

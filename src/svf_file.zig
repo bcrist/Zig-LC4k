@@ -4,7 +4,7 @@ const jedec = @import("jedec.zig");
 
 const Fuse = jedec.Fuse;
 const JedecData = jedec.JedecData;
-const JedecFile = jedec.JedecFile;
+const Jedec_File = jedec.Jedec_File;
 
 const NoData = void;
 
@@ -94,14 +94,14 @@ pub const JtagCommand = enum (u8) {
     }
 };
 
-pub const WriteOptions = struct {
+pub const Write_Options = struct {
     erase: bool = true,
     verify: bool = true,
     line_ending: []const u8 = "\n",
     notes: []const u8 = "",
 };
 
-pub fn write(comptime Device: type, file: JedecFile, writer: anytype, options: WriteOptions) !void {
+pub fn write(comptime Device: type, file: Jedec_File, writer: anytype, options: Write_Options) !void {
     const nl = options.line_ending;
 
     std.debug.assert(file.data.extents.eql(Device.jedec_dimensions));

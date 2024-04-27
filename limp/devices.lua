@@ -146,10 +146,10 @@ const lc4k = @import("../lc4k.zig");
 const internal = @import("../internal.zig");
 const jedec = @import("../jedec.zig");
 
-pub const device_type = lc4k.DeviceType.`device`;
+pub const device_type = lc4k.Device_Type.`device`;
 
-pub const family = lc4k.DeviceFamily.`family`;
-pub const package = lc4k.DevicePackage.`package`;
+pub const family = lc4k.Device_Family.`family`;
+pub const package = lc4k.Device_Package.`package`;
 
 pub const num_glbs = `num_glbs`;
 pub const num_mcs = `num_glbs * 16`;
@@ -261,7 +261,7 @@ pub fn getGlbRange(glb: usize) jedec.FuseRange {
     ]]
     if info.gi_mux_size == 19 then
         writeln('var index = num_glbs - glb - 1;', indent)
-        writeln('index ^= @truncate(u1, index >> 1);')
+        writeln('index ^= @as(u1, @truncate(index >> 1));')
         writeln('return jedec_dimensions.subColumns(83 * index + gi_mux_size * (index / 2 + 1), 83);', unindent)
     else
         local gi_cols = math.tointeger(info.gi_mux_size / 2)
@@ -276,8 +276,8 @@ pub fn getGiRange(glb: usize, gi: usize) jedec.FuseRange {
     ]]
     if info.gi_mux_size == 19 then
         writeln('var left_glb = glb | 1;', indent);
-        writeln('left_glb ^= @truncate(u1, left_glb >> 1) ^ 1;')
-        writeln('const row = gi * 2 + @truncate(u1, glb ^ (glb >> 1));')
+        writeln('left_glb ^= @as(u1, @truncate(left_glb >> 1)) ^ 1;')
+        writeln('const row = gi * 2 + @as(u1, @truncate(glb ^ (glb >> 1)));')
         writeln('return getGlbRange(left_glb).expandColumns(-19).subColumns(0, 19).subRows(row, 1);', unindent)
     else
         local gi_cols = math.tointeger(info.gi_mux_size / 2)
@@ -290,7 +290,7 @@ pub fn getBClockRange(glb: usize) jedec.FuseRange {
     ]]
     if info.gi_mux_size == 19 then
         writeln('var index = num_glbs - glb - 1;', indent)
-        writeln('index = @truncate(u1, (index >> 1) ^ index);')
+        writeln('index = @as(u1, @truncate((index >> 1) ^ index));')
         writeln('return getGlbRange(glb).subRows(79, 4).subColumns(82 * index, 1);', unindent)
     else
         writeln('return getGlbRange(glb).subRows(79, 4).subColumns(0, 1);')
@@ -302,7 +302,7 @@ end
 nl()
 
 write [[
-pub fn getGOEPolarityFuse(goe: usize) jedec.Fuse {
+pub fn getGOE_PolarityFuse(goe: usize) jedec.Fuse {
     return switch (goe) {]]
 
     indent(2)
@@ -385,7 +385,7 @@ pub fn getTimerDivRange() jedec.FuseRange {
     );
 }
 
-pub fn getInputPowerGuardFuse(input: GRP) jedec.Fuse {
+pub fn getInputPower_GuardFuse(input: GRP) jedec.Fuse {
     return switch (input) {]])
     include 'power_guard'
     local power_guard_fuses = load_power_guard_fuses(which)
@@ -401,7 +401,7 @@ pub fn getInputPowerGuardFuse(input: GRP) jedec.Fuse {
     };
 }
 
-pub fn getInputBusMaintenanceRange(input: GRP) jedec.FuseRange {
+pub fn getInputBus_MaintenanceRange(input: GRP) jedec.FuseRange {
     return switch (input) {]]
     include 'bus_maintenance'
     local fuse1, fuse2 = load_bus_maintenance_fuses(which)
@@ -422,7 +422,7 @@ else
     local f0, f1, extra = load_global_bus_maintenance_fuses(which)
     write([[
 
-pub fn getGlobalBusMaintenanceRange() jedec.FuseRange {
+pub fn getGlobalBus_MaintenanceRange() jedec.FuseRange {
     return jedec.FuseRange.fromFuse(
         jedec.Fuse.init(]], f0[1], ', ', f0[2], [[)
     ).expandToContain(
@@ -444,7 +444,7 @@ pub fn getExtraFloatInputFuses() []const jedec.Fuse {
 end
 write [[
 
-pub fn getInputThresholdFuse(input: GRP) jedec.Fuse {
+pub fn getInput_ThresholdFuse(input: GRP) jedec.Fuse {
     return switch (input) {]]
     indent(2)
     for _, pin in spairs(dedicated_inputs, natural_cmp) do
@@ -458,12 +458,12 @@ pub fn getInputThresholdFuse(input: GRP) jedec.Fuse {
     };
 }
 
-pub fn getMacrocellRef(comptime which: anytype) lc4k.MacrocellRef {
-    return internal.getMacrocellRef(GRP, which);
+pub fn getMC_Ref(comptime which: anytype) lc4k.MC_Ref {
+    return internal.getMC_Ref(GRP, which);
 }
 
-pub fn getGlbIndex(comptime which: anytype) lc4k.GlbIndex {
-    return internal.getGlbIndex(@This(), which);
+pub fn getGLB_Index(comptime which: anytype) lc4k.GLB_Index {
+    return internal.getGLB_Index(@This(), which);
 }
 
 pub fn getGrp(comptime which: anytype) GRP {
@@ -478,7 +478,7 @@ pub fn getGrpFeedback(comptime which: anytype) GRP {
     return internal.getGrpFeedback(GRP, which);
 }
 
-pub fn getPin(comptime which: anytype) lc4k.PinInfo {
+pub fn getPin(comptime which: anytype) lc4k.Pin_Info {
     return internal.getPin(@This(), which);
 }
 
@@ -486,7 +486,7 @@ pub const pins = struct {]]
 
 local write_pin = template [[
 
-pub const `safe_id` = lc4k.PinInfo {
+pub const `safe_id` = lc4k.Pin_Info {
     .id = "`id`",
 `...`};]]
 
@@ -524,7 +524,7 @@ write([[
 
 };
 
-pub const clock_pins = [_]lc4k.PinInfo {]])
+pub const clock_pins = [_]lc4k.Pin_Info {]])
 
 local function clock_cmp (a, b)
     local pa = info.pins_by_type.clock[a]
@@ -542,7 +542,7 @@ write([[
 
 };
 
-pub const oe_pins = [_]lc4k.PinInfo {]])
+pub const oe_pins = [_]lc4k.Pin_Info {]])
 
 local function oe_cmp (a, b)
     local pa = info.pins[a]
@@ -563,7 +563,7 @@ write([[
 
 };
 
-pub const input_pins = [_]lc4k.PinInfo {]])
+pub const input_pins = [_]lc4k.Pin_Info {]])
 
 local function input_cmp (a, b)
     local pa = info.pins_by_type.input[a]
@@ -581,7 +581,7 @@ write([[
 
 };
 
-pub const all_pins = [_]lc4k.PinInfo {]])
+pub const all_pins = [_]lc4k.Pin_Info {]])
 
 indent()
 for _, pin in spairs(info.pins, natural_cmp) do
