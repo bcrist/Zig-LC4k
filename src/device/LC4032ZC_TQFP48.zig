@@ -258,7 +258,7 @@ pub fn get_zero_hold_time_fuse() Fuse {
 
 
 pub fn get_global_bus_maintenance_range() Fuse_Range {
-    return Fuse.init(85, 171).range().expandToContain(Fuse.init(86, 171));
+    return Fuse.init(85, 171).range().expand_to_contain(Fuse.init(86, 171));
 }
 pub fn get_extra_float_input_fuses() []const Fuse {
     return &.{

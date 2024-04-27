@@ -53,7 +53,7 @@ pub fn intersection(a: Fuse_Range, b: Fuse_Range) Fuse_Range {
     };
 }
 
-pub fn expandToContain(self: Fuse_Range, fuse: Fuse) Fuse_Range {
+pub fn expand_to_contain(self: Fuse_Range, fuse: Fuse) Fuse_Range {
     var result = self;
     if (self.isEmpty()) {
         result.min = fuse;
@@ -79,7 +79,7 @@ pub fn contains(self: Fuse_Range, fuse: Fuse) bool {
         and fuse.col >= self.min.col and fuse.col <= self.max.col;
 }
 
-pub fn containsRange(self: Fuse_Range, other: Fuse_Range) bool {
+pub fn contains_range(self: Fuse_Range, other: Fuse_Range) bool {
     return other.isEmpty() or self.contains(other.min) and self.contains(other.max);
 }
 
@@ -107,7 +107,7 @@ pub fn isEmpty(self: Fuse_Range) bool {
     return self.max.row < self.min.row or self.max.col < self.min.col;
 }
 
-pub fn expandColumns(self: Fuse_Range, num_columns: isize) Fuse_Range {
+pub fn expand_columns(self: Fuse_Range, num_columns: isize) Fuse_Range {
     if (num_columns < 0) {
         return Fuse_Range.between(
             Fuse.init(self.min.row, self.min.col - @as(usize, @intCast(-num_columns))),
@@ -121,7 +121,7 @@ pub fn expandColumns(self: Fuse_Range, num_columns: isize) Fuse_Range {
     }
 }
 
-pub fn expandRows(self: Fuse_Range, num_rows: isize) Fuse_Range {
+pub fn expand_rows(self: Fuse_Range, num_rows: isize) Fuse_Range {
     if (num_rows < 0) {
         return Fuse_Range.between(
             Fuse.init(self.min.row - @as(usize, @intCast(-num_rows)), self.min.col),
@@ -135,7 +135,7 @@ pub fn expandRows(self: Fuse_Range, num_rows: isize) Fuse_Range {
     }
 }
 
-pub fn subColumns(self: Fuse_Range, col_offset: usize, num_cols: usize) Fuse_Range {
+pub fn sub_columns(self: Fuse_Range, col_offset: usize, num_cols: usize) Fuse_Range {
     const col = self.min.col + col_offset;
     std.debug.assert(col + num_cols - 1 <= self.max.col);
     return Fuse_Range.between(
@@ -144,7 +144,7 @@ pub fn subColumns(self: Fuse_Range, col_offset: usize, num_cols: usize) Fuse_Ran
     );
 }
 
-pub fn subRows(self: Fuse_Range, row_offset: usize, num_rows: usize) Fuse_Range {
+pub fn sub_rows(self: Fuse_Range, row_offset: usize, num_rows: usize) Fuse_Range {
     const row = self.min.row + row_offset;
     std.debug.assert(row + num_rows - 1 <= self.max.row);
     return Fuse_Range.between(

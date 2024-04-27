@@ -530,7 +530,7 @@ pub fn getTimerOutFuse() Fuse {
 
 pub fn getTimerDivRange() Fuse_Range {
     return Fuse.init(92, 99)
-        .range().expandToContain(Fuse.init(92, 100));
+        .range().expand_to_contain(Fuse.init(92, 100));
 }
 
 pub fn getInputPower_GuardFuse(input: GRP) Fuse {

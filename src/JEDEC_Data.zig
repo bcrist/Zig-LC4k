@@ -40,12 +40,12 @@ pub fn clone(self: JEDEC_Data, allocator: std.mem.Allocator, range: Fuse_Range) 
         };
     } else {
         var new = try init_empty(allocator, range);
-        new.copyRange(self, range);
+        new.copy_range(self, range);
         return new;
     }
 }
 
-pub fn isSet(self: JEDEC_Data, fuse: Fuse) bool {
+pub fn is_set(self: JEDEC_Data, fuse: Fuse) bool {
     std.debug.assert(self.extents.contains(fuse));
     return self.raw.isSet(fuse.to_offset(self));
 }
@@ -60,17 +60,17 @@ pub fn put(self: *JEDEC_Data, fuse: Fuse, val: u1) void {
     self.raw.setValue(fuse.to_offset(self), val != 0);
 }
 
-pub fn putRange(self: *JEDEC_Data, range: Fuse_Range, val: u1) void {
-    std.debug.assert(self.extents.containsRange(range));
+pub fn put_range(self: *JEDEC_Data, range: Fuse_Range, val: u1) void {
+    std.debug.assert(self.extents.contains_range(range));
     var iter = range.iterator();
     while (iter.next()) |fuse| {
         self.put(fuse, val);
     }
 }
 
-pub fn copyRange(self: *JEDEC_Data, other: JEDEC_Data, range: Fuse_Range) void {
-    std.debug.assert(self.extents.containsRange(range));
-    std.debug.assert(other.extents.containsRange(range));
+pub fn copy_range(self: *JEDEC_Data, other: JEDEC_Data, range: Fuse_Range) void {
+    std.debug.assert(self.extents.contains_range(range));
+    std.debug.assert(other.extents.contains_range(range));
 
     var iter = range.iterator();
     while (iter.next()) |fuse| {
@@ -78,11 +78,11 @@ pub fn copyRange(self: *JEDEC_Data, other: JEDEC_Data, range: Fuse_Range) void {
     }
 }
 
-pub fn unionAll(self: *JEDEC_Data, other: JEDEC_Data) void {
+pub fn union_all(self: *JEDEC_Data, other: JEDEC_Data) void {
     self.union_range(other, other.extents);
 }
 
-pub fn unionDiff(self: *JEDEC_Data, a: JEDEC_Data, b: JEDEC_Data) void {
+pub fn union_diff(self: *JEDEC_Data, a: JEDEC_Data, b: JEDEC_Data) void {
     std.debug.assert(a.extents.eql(b.extents));
     if (self.extents.eql(a.extents)) {
         const MaskInt = @TypeOf(self.raw.masks[0]);
@@ -91,7 +91,7 @@ pub fn unionDiff(self: *JEDEC_Data, a: JEDEC_Data, b: JEDEC_Data) void {
             mask.* |= a.raw.masks[i] ^ b.raw.masks[i];
         }
     } else {
-        std.debug.assert(self.extents.containsRange(a.extents));
+        std.debug.assert(self.extents.contains_range(a.extents));
         var iter = a.extents.iterator();
         while (iter.next()) |fuse| {
             if (0 != (a.get(fuse) ^ b.get(fuse))) {
@@ -109,7 +109,7 @@ pub fn union_range(self: JEDEC_Data, other: JEDEC_Data, range: Fuse_Range) void 
         std.debug.assert(other.extents.contains_range(range));
         var iter = range.iterator();
         while (iter.next()) |fuse| {
-            if (other.isSet(fuse)) {
+            if (other.is_set(fuse)) {
                 self.put(fuse, 1);
             }
         }
@@ -125,11 +125,11 @@ pub fn count_unset(self: JEDEC_Data) usize {
 }
 
 pub fn count_set_in_range(self: JEDEC_Data, range: Fuse_Range) usize {
-    std.debug.assert(self.extents.containsRange(range));
+    std.debug.assert(self.extents.contains_range(range));
     var iter = range.iterator();
     var count: usize = 0;
     while (iter.next()) |fuse| {
-        if (self.isSet(fuse)) {
+        if (self.is_set(fuse)) {
             count += 1;
         }
     }
@@ -137,11 +137,11 @@ pub fn count_set_in_range(self: JEDEC_Data, range: Fuse_Range) usize {
 }
 
 pub fn count_unset_in_range(self: JEDEC_Data, range: Fuse_Range) usize {
-    std.debug.assert(self.extents.containsRange(range));
+    std.debug.assert(self.extents.contains_range(range));
     var iter = range.iterator();
     var count: usize = 0;
     while (iter.next()) |fuse| {
-        if (!self.isSet(fuse)) {
+        if (!self.is_set(fuse)) {
             count += 1;
         }
     }

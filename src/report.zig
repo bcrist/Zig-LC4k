@@ -880,10 +880,10 @@ fn writeGlbRouting(writer: anytype, comptime Device: type, data: ReportData(Devi
 
             if (active) |grp| {
                 var fanout: usize = 0;
-                const pt_range = Device.get_glb_range(glb).subRows(gi * 2, 2);
+                const pt_range = Device.get_glb_range(glb).sub_rows(gi * 2, 2);
                 var col: usize = 0;
                 while (col < pt_range.width()) : (col += 1) {
-                    if (data.jed.count_unset_in_range(pt_range.subColumns(col, 1)) == 1) {
+                    if (data.jed.count_unset_in_range(pt_range.sub_columns(col, 1)) == 1) {
                         fanout += 1;
                     }
                 }

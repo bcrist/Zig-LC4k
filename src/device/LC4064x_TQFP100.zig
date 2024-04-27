@@ -351,17 +351,17 @@ pub const gi_options_by_grp = lc4k.invert_gi_mapping(GRP, gi_mux_size, &gi_optio
 pub fn get_glb_range(glb: usize) Fuse_Range {
     std.debug.assert(glb < num_glbs);
     const index = num_glbs - glb - 1;
-    return jedec_dimensions.subColumns(89 * index + 6, 83);
+    return jedec_dimensions.sub_columns(89 * index + 6, 83);
 
 }
 
 pub fn get_gi_range(glb: usize, gi: usize) Fuse_Range {
     std.debug.assert(gi < num_gis_per_glb);
-    return get_glb_range(glb).expandColumns(-6).subColumns(0, 6).subRows(gi * 2, 2);
+    return get_glb_range(glb).expand_columns(-6).sub_columns(0, 6).sub_rows(gi * 2, 2);
 }
 
 pub fn get_bclock_range(glb: usize) Fuse_Range {
-    return get_glb_range(glb).subRows(79, 4).subColumns(0, 1);
+    return get_glb_range(glb).sub_rows(79, 4).sub_columns(0, 1);
 }
 
 pub fn get_goe_polarity_fuse(goe: usize) Fuse {
@@ -388,7 +388,7 @@ pub fn get_zero_hold_time_fuse() Fuse {
 
 
 pub fn get_global_bus_maintenance_range() Fuse_Range {
-    return Fuse.init(85, 355).range().expandToContain(Fuse.init(86, 355));
+    return Fuse.init(85, 355).range().expand_to_contain(Fuse.init(86, 355));
 }
 pub fn get_extra_float_input_fuses() []const Fuse {
     return &.{

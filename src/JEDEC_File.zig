@@ -3,7 +3,7 @@ usercode: ?u32 = null,
 security: ?u1 = null,
 pin_count: ?usize = null,
 
-const JedecCommand = enum {
+const JEDEC_Command = enum {
     qty_pins,
     qty_fuses,
     note,
@@ -15,15 +15,15 @@ const JedecCommand = enum {
     checksum,
 };
 
-const JedecField = struct {
-    cmd: JedecCommand,
+const JEDEC_Field = struct {
+    cmd: JEDEC_Command,
     extra: []const u8,
 };
 
-const JedecFieldIterator = struct {
+const JEDEC_Field_Iterator = struct {
     remaining: []const u8,
 
-    fn next(self: *JedecFieldIterator) !?JedecField {
+    fn next(self: *JEDEC_Field_Iterator) !?JEDEC_Field {
         while (std.mem.indexOf(u8, self.remaining, "*")) |end| {
             const cmd = std.mem.trimLeft(u8, self.remaining[0..end], " \t\r\n");
             self.remaining = self.remaining[end + 1 ..];
@@ -33,20 +33,20 @@ const JedecFieldIterator = struct {
                 'Q' => {
                     if (cmd.len >= 2) {
                         switch (cmd[1]) {
-                            'F' => return JedecField { .cmd = .qty_fuses, .extra = cmd[2..] },
-                            'P' => return JedecField { .cmd = .qty_pins, .extra = cmd[2..] },
+                            'F' => return JEDEC_Field { .cmd = .qty_fuses, .extra = cmd[2..] },
+                            'P' => return JEDEC_Field { .cmd = .qty_pins, .extra = cmd[2..] },
                             else => {} // fall through
                         }
                     }
                     try std.io.getStdErr().writer().print("Ignoring unsupported field: {s}\n", .{ cmd });
                 },
-                'N' => return JedecField { .cmd = .note, .extra = cmd[1..] },
-                'G' => return JedecField { .cmd = .security, .extra = cmd[1..] },
-                'F' => return JedecField { .cmd = .default, .extra = cmd[1..] },
-                'L' => return JedecField { .cmd = .location, .extra = cmd[1..] },
-                'K' => return JedecField { .cmd = .hex, .extra = cmd[1..] },
-                'U' => return JedecField { .cmd = .usercode, .extra = cmd[1..] },
-                'C' => return JedecField { .cmd = .checksum, .extra = cmd[1..] },
+                'N' => return JEDEC_Field { .cmd = .note, .extra = cmd[1..] },
+                'G' => return JEDEC_Field { .cmd = .security, .extra = cmd[1..] },
+                'F' => return JEDEC_Field { .cmd = .default, .extra = cmd[1..] },
+                'L' => return JEDEC_Field { .cmd = .location, .extra = cmd[1..] },
+                'K' => return JEDEC_Field { .cmd = .hex, .extra = cmd[1..] },
+                'U' => return JEDEC_Field { .cmd = .usercode, .extra = cmd[1..] },
+                'C' => return JEDEC_Field { .cmd = .checksum, .extra = cmd[1..] },
                 else => {
                     try std.io.getStdErr().writer().print("Ignoring unsupported field: {s}\n", .{ cmd });
                 },
@@ -67,16 +67,16 @@ pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: [
 
     var data: ?JEDEC_Data = null;
 
-    const start_of_fields = 1 + (std.mem.indexOf(u8, text, "*") orelse return error.MalformedJEDEC_File);
+    const start_of_fields = 1 + (std.mem.indexOf(u8, text, "*") orelse return error.Malformed_JEDEC_File);
 
-    var iter = JedecFieldIterator {
+    var iter = JEDEC_Field_Iterator {
         .remaining = text[start_of_fields..],
     };
 
     while (try iter.next()) |field| {
         switch (field.cmd) {
             .qty_fuses => {
-                const qf = std.fmt.parseUnsigned(u32, field.extra, 10) catch return error.MalformedJEDEC_File;
+                const qf = std.fmt.parseUnsigned(u32, field.extra, 10) catch return error.Malformed_JEDEC_File;
                 if (actual_height) |h| {
                     const expected = h * width;
                     if (qf != expected) {
@@ -93,29 +93,29 @@ pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: [
                 }
             },
             .qty_pins => if (pin_count) |_| {
-                return error.MalformedJEDEC_File;
+                return error.Malformed_JEDEC_File;
             } else {
-                pin_count = std.fmt.parseUnsigned(u16, field.extra, 10) catch return error.MalformedJEDEC_File;
+                pin_count = std.fmt.parseUnsigned(u16, field.extra, 10) catch return error.Malformed_JEDEC_File;
             },
             .checksum => if (fuse_checksum) |_| {
-                return error.MalformedJEDEC_File;
+                return error.Malformed_JEDEC_File;
             } else {
-                fuse_checksum = std.fmt.parseUnsigned(u16, field.extra, 16) catch return error.MalformedJEDEC_File;
+                fuse_checksum = std.fmt.parseUnsigned(u16, field.extra, 16) catch return error.Malformed_JEDEC_File;
             },
             .security => if (security) |_| {
-                return error.MalformedJEDEC_File;
+                return error.Malformed_JEDEC_File;
             } else {
-                security = std.fmt.parseUnsigned(u1, field.extra, 10) catch return error.MalformedJEDEC_File;
+                security = std.fmt.parseUnsigned(u1, field.extra, 10) catch return error.Malformed_JEDEC_File;
             },
             .default => if (default) |_| {
-                return error.MalformedJEDEC_File;
+                return error.Malformed_JEDEC_File;
             } else {
-                default = std.fmt.parseUnsigned(u1, field.extra, 10) catch return error.MalformedJEDEC_File;
+                default = std.fmt.parseUnsigned(u1, field.extra, 10) catch return error.Malformed_JEDEC_File;
             },
             .usercode => if (usercode) |_| {
-                return error.MalformedJEDEC_File;
+                return error.Malformed_JEDEC_File;
             } else {
-                usercode = std.fmt.parseUnsigned(u32, field.extra, 2) catch return error.MalformedJEDEC_File;
+                usercode = std.fmt.parseUnsigned(u32, field.extra, 2) catch return error.Malformed_JEDEC_File;
             },
             .location, .hex => {
                 var end_of_digits: usize = 0;
@@ -126,18 +126,18 @@ pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: [
 
                 const location_str = field.extra[0..end_of_digits];
                 const data_str = field.extra[end_of_digits..];
-                const starting_fuse = std.fmt.parseUnsigned(u32, location_str, 10) catch return error.MalformedJEDEC_File;
+                const starting_fuse = std.fmt.parseUnsigned(u32, location_str, 10) catch return error.Malformed_JEDEC_File;
                 if (data == null) {
                     if (actual_height) |h| {
                         data = try JEDEC_Data.init(allocator, Fuse_Range.init(width, h), default orelse 1);
                     } else {
                         try std.io.getStdErr().writer().writeAll("Expected QF command before L or K command\n");
-                        return error.MalformedJEDEC_File;
+                        return error.Malformed_JEDEC_File;
                     }
                 }
                 switch (field.cmd) {
-                    .location => try parseBinaryString(&data.?, starting_fuse, data_str),
-                    .hex => try parseHexString(&data.?, starting_fuse, data_str),
+                    .location => try parse_binary_string(&data.?, starting_fuse, data_str),
+                    .hex => try parse_hex_string(&data.?, starting_fuse, data_str),
                     else => unreachable,
                 }
             },
@@ -147,7 +147,7 @@ pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: [
 
     if (iter.remaining[0] == 3 and iter.remaining.len >= 5) {
         // check final file checksum
-        const found_checksum = std.fmt.parseUnsigned(u16, iter.remaining[1..5], 16) catch return error.MalformedJEDEC_File;
+        const found_checksum = std.fmt.parseUnsigned(u16, iter.remaining[1..5], 16) catch return error.Malformed_JEDEC_File;
         var computed_checksum: u16 = 0;
         for (text[0..text.len-iter.remaining.len]) |byte| {
             computed_checksum += byte;
@@ -176,12 +176,12 @@ pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: [
         };
     } else {
         try std.io.getStdErr().writer().writeAll("Expected at least one L or K command\n");
-        return error.MalformedJEDEC_File;
+        return error.Malformed_JEDEC_File;
     }
 }
 
 
-fn parseBinaryString(data: *JEDEC_Data, starting_fuse: usize, text: []const u8) !void {
+fn parse_binary_string(data: *JEDEC_Data, starting_fuse: usize, text: []const u8) !void {
     const len = data.extents.count();
     var i: usize = starting_fuse;
     for (text) |c| {
@@ -201,7 +201,7 @@ fn parseBinaryString(data: *JEDEC_Data, starting_fuse: usize, text: []const u8) 
     }
 }
 
-fn parseHexString(data: *JEDEC_Data, starting_fuse: usize, text: []const u8) !void {
+fn parse_hex_string(data: *JEDEC_Data, starting_fuse: usize, text: []const u8) !void {
     const len = data.extents.count();
     var i: usize = starting_fuse;
     for (text) |c| {

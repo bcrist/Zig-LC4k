@@ -483,7 +483,7 @@ pub fn get_glb_range(glb: usize) Fuse_Range {
     std.debug.assert(glb < num_glbs);
     var index = num_glbs - glb - 1;
     index ^= @as(u1, @truncate(index >> 1));
-    return jedec_dimensions.subColumns(83 * index + gi_mux_size * (index / 2 + 1), 83);
+    return jedec_dimensions.sub_columns(83 * index + gi_mux_size * (index / 2 + 1), 83);
 
 }
 
@@ -492,13 +492,13 @@ pub fn get_gi_range(glb: usize, gi: usize) Fuse_Range {
     var left_glb = glb | 1;
     left_glb ^= @as(u1, @truncate(left_glb >> 1)) ^ 1;
     const row = gi * 2 + @as(u1, @truncate(glb ^ (glb >> 1)));
-    return get_glb_range(left_glb).expandColumns(-19).subColumns(0, 19).subRows(row, 1);
+    return get_glb_range(left_glb).expand_columns(-19).sub_columns(0, 19).sub_rows(row, 1);
 }
 
 pub fn get_bclock_range(glb: usize) Fuse_Range {
     var index = num_glbs - glb - 1;
     index = @as(u1, @truncate((index >> 1) ^ index));
-    return get_glb_range(glb).subRows(79, 4).subColumns(82 * index, 1);
+    return get_glb_range(glb).sub_rows(79, 4).sub_columns(82 * index, 1);
 }
 
 pub fn get_goe_polarity_fuse(goe: usize) Fuse {
@@ -525,7 +525,7 @@ pub fn get_zero_hold_time_fuse() Fuse {
 
 
 pub fn get_global_bus_maintenance_range() Fuse_Range {
-    return Fuse.init(85, 101).range().expandToContain(Fuse.init(86, 101));
+    return Fuse.init(85, 101).range().expand_to_contain(Fuse.init(86, 101));
 }
 pub fn get_extra_float_input_fuses() []const Fuse {
     return &.{

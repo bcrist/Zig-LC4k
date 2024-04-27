@@ -6,7 +6,7 @@ const JEDEC_File = @import("JEDEC_File.zig");
 
 const NoData = void;
 
-pub fn getIDCode(comptime Device: type) u32 {
+pub fn get_id_code(comptime Device: type) u32 {
     return switch (Device.family) {
         .zero_power_enhanced => switch (Device.num_glbs) {
             2 => 0x01806043,
@@ -33,7 +33,7 @@ pub fn getIDCode(comptime Device: type) u32 {
     };
 }
 
-pub fn getBoundaryScanLength(comptime Device: type) usize {
+pub fn get_boundary_scan_length(comptime Device: type) usize {
     switch (Device.device_type) {
         .LC4064x_TQFP44, .LC4064x_TQFP48 => return 68,
         else => {}
@@ -55,7 +55,7 @@ pub const Delay = struct {
     }
 };
 
-pub const JtagCommand = enum (u8) {
+pub const JTAG_Command = enum (u8) {
     EXTEST = 0x00,
     ISC_ADDRESS_SHIFT = 0x01,
     ISC_DATA_SHIFT = 0x02,
@@ -79,7 +79,7 @@ pub const JtagCommand = enum (u8) {
     ISC_NOOP = 0x30,
     BYPASS = 0xFF,
 
-    pub fn getDelay(self: JtagCommand) Delay {
+    pub fn getDelay(self: JTAG_Command) Delay {
         return switch (self) {
             .ISC_ENABLE => Delay.init(3, 20),
             .ISC_PROGRAM, .ISC_PROGRAM_USERCODE => Delay.init(3, 13),
@@ -117,7 +117,7 @@ pub fn write(comptime Device: type, file: JEDEC_File, writer: std.io.AnyWriter, 
         }
     }
     try writer.writeAll(nl);
-    try writeState("RESET", writer, nl);
+    try write_state("RESET", writer, nl);
     try writer.writeAll(nl);
     try writer.print("! Row_Width\t:{}{s}", .{ Device.jedec_dimensions.width(), nl });
     try writer.print("! Address_Length\t:{}{s}", .{ Device.jedec_dimensions.height(), nl });
@@ -128,34 +128,34 @@ pub fn write(comptime Device: type, file: JEDEC_File, writer: std.io.AnyWriter, 
     try writer.print("ENDDR\tDRPAUSE;{s}", .{ nl });
     try writer.print("ENDIR\tIDLE;{s}", .{ nl });
     try writer.print("! FREQUENCY\t25.E+6 HZ;{s}", .{ nl });
-    try writeState("IDLE", writer, nl);
+    try write_state("IDLE", writer, nl);
     try writer.writeAll(nl);
 
-    try writeCommand(.IDCODE, u32, 0xFFFFFFFF, getIDCode(Device), writer, nl);
+    try write_command(.IDCODE, u32, 0xFFFFFFFF, get_id_code(Device), writer, nl);
     try writer.writeAll(nl);
 
-    try writeCommand(.SAMPLE_PRELOAD, std.meta.Int(.unsigned, getBoundaryScanLength(Device)), 0, null, writer, nl);
+    try write_command(.SAMPLE_PRELOAD, std.meta.Int(.unsigned, get_boundary_scan_length(Device)), 0, null, writer, nl);
     try writer.writeAll(nl);
 
-    try writeCommand(.ISC_ENABLE, NoData, null, null, writer, nl);
+    try write_command(.ISC_ENABLE, NoData, null, null, writer, nl);
     try writer.writeAll(nl);
 
     if (options.erase) {
-        try writeCommand(.ISC_ERASE, NoData, null, null, writer, nl);
-        try writeCommand(.ISC_DISCHARGE, NoData, null, null, writer, nl);
+        try write_command(.ISC_ERASE, NoData, null, null, writer, nl);
+        try write_command(.ISC_DISCHARGE, NoData, null, null, writer, nl);
         try writer.writeAll(nl);
     }
 
     {
-        try writeCommand(.ISC_ADDRESS_INIT, NoData, null, null, writer, nl);
-        try writeCommand(.ISC_PROGRAM, NoData, null, null, writer, nl);
+        try write_command(.ISC_ADDRESS_INIT, NoData, null, null, writer, nl);
+        try write_command(.ISC_PROGRAM, NoData, null, null, writer, nl);
 
         var row: u16 = 0;
         while (row < Device.jedec_dimensions.height()) : (row += 1) {
             try writer.print("SDR\t{}\tTDI  (", .{ Device.jedec_dimensions.width() });
-            try writeRowHex(file.data, row, writer);
+            try write_row_hex(file.data, row, writer);
             try writer.print(");{s}", .{ nl });
-            try writeIdle(.ISC_PROGRAM, writer, nl);
+            try write_idle(.ISC_PROGRAM, writer, nl);
         }
         try writer.writeAll(nl);
     }
@@ -164,50 +164,50 @@ pub fn write(comptime Device: type, file: JEDEC_File, writer: std.io.AnyWriter, 
         const rows = comptime Device.jedec_dimensions.height();
         const AddressShiftType = std.meta.Int(.unsigned, @intCast(rows));
         const address_shift = @as(AddressShiftType, 1) << (rows - 1);
-        try writeCommand(.ISC_ADDRESS_SHIFT, AddressShiftType, address_shift, null, writer, nl);
-        try writeCommand(.ISC_READ, NoData, null, null, writer, nl);
+        try write_command(.ISC_ADDRESS_SHIFT, AddressShiftType, address_shift, null, writer, nl);
+        try write_command(.ISC_READ, NoData, null, null, writer, nl);
 
         var row: u16 = 0;
         while (row < Device.jedec_dimensions.height()) : (row += 1) {
-            try writeIdle(.ISC_READ, writer, nl);
+            try write_idle(.ISC_READ, writer, nl);
             try writer.print("SDR\t{}\tTDI  (", .{ Device.jedec_dimensions.width() });
             const chars: u16 = @intCast((Device.jedec_dimensions.width() + 3) / 4);
             try writer.writeByteNTimes('0', chars);
             try writer.print("){s}\t\tTDO  (", .{ nl });
 
-            try writeRowHex(file.data, row, writer);
+            try write_row_hex(file.data, row, writer);
             try writer.print(");{s}", .{ nl });
         }
         try writer.writeAll(nl);
     }
 
     if (file.usercode) |u| {
-        try writeCommand(.ISC_PROGRAM_USERCODE, u32, u, null, writer, nl);
+        try write_command(.ISC_PROGRAM_USERCODE, u32, u, null, writer, nl);
         if (options.verify) {
-            try writeCommand(.READ_USERCODE, u32, 0xFFFFFFFF, u, writer, nl);
+            try write_command(.READ_USERCODE, u32, 0xFFFFFFFF, u, writer, nl);
         }
         try writer.writeAll(nl);
     }
 
     if (file.security) |g| {
         if (g != 0) {
-            try writeCommand(.ISC_PROGRAM_SECURITY, NoData, null, null, writer, nl);
+            try write_command(.ISC_PROGRAM_SECURITY, NoData, null, null, writer, nl);
             try writer.writeAll(nl);
         }
     }
 
-    try writeCommand(.ISC_PROGRAM_DONE, NoData, null, null, writer, nl);
-    try writeCommand(.ISC_PROGRAM_DONE, NoData, null, null, writer, nl); // not sure why this is done twice...?
-    try writeCommand(.ISC_DISABLE, NoData, null, null, writer, nl);
-    try writeCommand(.BYPASS, NoData, null, null, writer, nl);
-    try writer.print("! {s}{s}", .{ @tagName(JtagCommand.IDCODE), nl });
-    try writer.print("SIR\t8\tTDI  ({X:0>2}){s}", .{ @intFromEnum(JtagCommand.IDCODE), nl });
+    try write_command(.ISC_PROGRAM_DONE, NoData, null, null, writer, nl);
+    try write_command(.ISC_PROGRAM_DONE, NoData, null, null, writer, nl); // not sure why this is done twice...?
+    try write_command(.ISC_DISABLE, NoData, null, null, writer, nl);
+    try write_command(.BYPASS, NoData, null, null, writer, nl);
+    try writer.print("! {s}{s}", .{ @tagName(JTAG_Command.IDCODE), nl });
+    try writer.print("SIR\t8\tTDI  ({X:0>2}){s}", .{ @intFromEnum(JTAG_Command.IDCODE), nl });
     try writer.print("\t\tTDO  ({X:0>2});{s}", .{ 0x1D, nl });
-    try writeCommand(.ISC_DISABLE, NoData, null, null, writer, nl);
-    try writeState("RESET", writer, nl);
+    try write_command(.ISC_DISABLE, NoData, null, null, writer, nl);
+    try write_state("RESET", writer, nl);
 }
 
-fn writeRowHex(data: JEDEC_Data, row: u16, writer: anytype) !void {
+fn write_row_hex(data: JEDEC_Data, row: u16, writer: anytype) !void {
     const chars: u16 = @intCast((data.extents.width() + 3) / 4);
     var col: i32 = chars * 4;
     while (col >= 4) : (col -= 4) {
@@ -224,7 +224,7 @@ fn writeRowHex(data: JEDEC_Data, row: u16, writer: anytype) !void {
     }
 }
 
-fn writeHex(comptime T: type, data: T, writer: anytype) !void {
+fn write_hex(comptime T: type, data: T, writer: anytype) !void {
     if (T != NoData) {
         // Ideally we could use std.fmt to print this all at once,
         // but it currently fails when trying to print large numbers:
@@ -241,17 +241,17 @@ fn writeHex(comptime T: type, data: T, writer: anytype) !void {
     }
 }
 
-fn writeCommand(command: JtagCommand, comptime T: type, tdi_data: ?T, tdo_data: ?T, writer: anytype, nl: []const u8) !void {
+fn write_command(command: JTAG_Command, comptime T: type, tdi_data: ?T, tdo_data: ?T, writer: anytype, nl: []const u8) !void {
     try writer.print("! {s}{s}", .{ @tagName(command), nl });
     try writer.print("SIR\t8\tTDI  ({X:0>2});{s}", .{ @intFromEnum(command), nl });
 
     if (tdi_data) |tdi| {
         try writer.print("SDR\t{}\tTDI  (", .{ @bitSizeOf(T) });
-        try writeHex(T, tdi, writer);
+        try write_hex(T, tdi, writer);
 
         if (tdo_data) |tdo| {
             try writer.print("){s}\t\tTDO  (", .{ nl });
-            try writeHex(T, tdo, writer);
+            try write_hex(T, tdo, writer);
         }
 
         try writer.print(");{s}", .{ nl });
@@ -259,15 +259,15 @@ fn writeCommand(command: JtagCommand, comptime T: type, tdi_data: ?T, tdo_data: 
 
     switch (command) {
         .ISC_PROGRAM, .ISC_READ => {},
-        else => try writeIdle(command, writer, nl),
+        else => try write_idle(command, writer, nl),
     }
 }
 
-fn writeState(state: []const u8, writer: anytype, nl: []const u8) !void {
+fn write_state(state: []const u8, writer: anytype, nl: []const u8) !void {
     try writer.print("STATE\t{s};{s}", .{ state, nl });
 }
 
-fn writeIdle(command: JtagCommand, writer: anytype, nl: []const u8) !void {
+fn write_idle(command: JTAG_Command, writer: anytype, nl: []const u8) !void {
     const delay = command.getDelay();
     if (delay.min_ms > 0 and delay.min_clocks > 0) {
         try writer.print("RUNTEST\tIDLE\t{} TCK\t{}.E-3 SEC;{s}", .{ delay.min_clocks, delay.min_ms, nl });

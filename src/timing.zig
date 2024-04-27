@@ -232,7 +232,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
                     Timing.tDIS + self.tIOO(mcref)),
 
                 .out_oe => |mcref| {
-                    if (fuses.getOESourceRange(D, mcref)) |range| {
+                    if (fuses.get_output_enable_source_range(D, mcref)) |range| {
                         switch (disassembly.readField(self.jedec, lc4k.Output_Enable_Mode, range)) {
                             .goe0 => return try self.clone_with_new_dest(source, .goe0, dest, visited),
                             .goe1 => return try self.clone_with_new_dest(source, .goe1, dest, visited),
@@ -250,7 +250,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
 
                 .routed_mcq => |mcref| {
                     if (D.family != .zero_power_enhanced) {
-                        if (fuses.getOutput_Routing_ModeRange(D, mcref)) |range| {
+                        if (fuses.get_output_routing_mode_range(D, mcref)) |range| {
                             switch (disassembly.readField(self.jedec, lc4k.Output_Routing_Mode, range)) {
                                 .same_as_oe => {},
                                 .self => return try self.clone_with_new_dest(source, .{ .mcq = mcref }, dest, visited),
@@ -269,7 +269,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
                 },
 
                 .mcq => |mcref| {
-                    const range = fuses.getMcFuncRange(D, mcref);
+                    const range = fuses.get_macrocell_function_range(D, mcref);
                     switch (disassembly.readField(self.jedec, lc4k.Macrocell_Function, range)) {
                         .combinational => {
                             return try self.append_to_parent(source, .{ .mcd = mcref }, dest, "tPDi", visited, Timing.tPDi);
@@ -363,7 +363,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
                 },
 
                 .mc_clk_d_hold => |mcref| {
-                    const range = fuses.getMcFuncRange(D, mcref);
+                    const range = fuses.get_macrocell_function_range(D, mcref);
                     switch (disassembly.readField(self.jedec, lc4k.Macrocell_Function, range)) {
                         .combinational => return error.InvalidSegment,
                         .latch => {
@@ -373,7 +373,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
                             return try self.append_to_parent(source, .{ .mc_clk = mcref }, dest, "tHT", visited, Timing.tHT);
                         },
                         .d_ff => {
-                            const is_input_register = !self.jedec.isSet(fuses.getInputBypassRange(D, mcref).min);
+                            const is_input_register = !self.jedec.is_set(fuses.get_input_bypass_range(D, mcref).min);
                             if (is_input_register) {
                                 const is_ptclk = switch (disassembly.read_clock_source(D, self.jedec, mcref)) {
                                     .shared_pt_clock, .pt1_positive, .pt1_negative => true,
@@ -412,7 +412,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
                         .shared_pt_clock, .pt1_positive, .pt1_negative => true,
                         .none, .bclock0, .bclock1, .bclock2, .bclock3 => false,
                     };
-                    const range = fuses.getMcFuncRange(D, mcref);
+                    const range = fuses.get_macrocell_function_range(D, mcref);
                     switch (disassembly.readField(self.jedec, lc4k.Macrocell_Function, range)) {
                         .combinational => return error.InvalidSegment,
                         .latch => {
@@ -430,7 +430,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
                             }
                         },
                         .d_ff => {
-                            const is_input_register = !self.jedec.isSet(fuses.getInputBypassRange(D, mcref).min);
+                            const is_input_register = !self.jedec.is_set(fuses.get_input_bypass_range(D, mcref).min);
                             if (is_input_register) {
                                 if (is_ptclk) {
                                     return try self.append_to_parent(source, .{ .mcd = mcref }, dest, "tSIR_PT", visited, Timing.tSIR_PT);
@@ -452,18 +452,18 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
                     var buf: [2]Path = undefined;
                     var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
 
-                    if (!self.jedec.isSet(fuses.getInputBypassRange(D, mcref).min)) {
+                    if (!self.jedec.is_set(fuses.get_input_bypass_range(D, mcref).min)) {
                         const delay = Timing.tINREG + self.tINDIO();
                         if (try self.maybe_append_to_parent(source, .{ .mc_in = mcref }, dest, "tINREG", visited, delay)) |path| {
                             options.appendAssumeCapacity(path);
                         }
-                    } else if (!self.jedec.isSet(fuses.getPT0XorRange(D, mcref).min)) {
+                    } else if (!self.jedec.is_set(fuses.get_pt0_xor_range(D, mcref).min)) {
                         if (try self.maybe_append_to_parent(source, .{ .pt = .{ .mcref = mcref, .pt = 0 }}, dest, "tMCELL", visited, Timing.tMCELL)) |path| {
                             options.appendAssumeCapacity(path);
                         }
                     }
 
-                    if (disassembly.readField(self.jedec, lc4k.Wide_Routing, fuses.getWide_RoutingRange(D, mcref)) == .self) {
+                    if (disassembly.readField(self.jedec, lc4k.Wide_Routing, fuses.get_wide_routing_range(D, mcref)) == .self) {
                         if (try self.maybe_append_to_parent(source, .{ .mc_cluster_group = mcref }, dest, "tMCELL", visited, Timing.tMCELL)) |path| {
                             options.appendAssumeCapacity(path);
                         }
@@ -476,7 +476,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
                     var buf: [5]Path = undefined;
                     var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
 
-                    if (disassembly.readField(self.jedec, lc4k.Cluster_Routing, fuses.getCluster_RoutingRange(D, mcref)) == .self) {
+                    if (disassembly.readField(self.jedec, lc4k.Cluster_Routing, fuses.get_cluster_routing_range(D, mcref)) == .self) {
                         if (try self.maybe_find_critical_path(source, .{ .mc_cluster = mcref }, visited)) |path| {
                             options.appendAssumeCapacity(path);
                         }
@@ -484,7 +484,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
 
                     if (mcref.mc >= 1) {
                         const other_mcref = lc4k.MC_Ref.init(mcref.glb, mcref.mc - 1);
-                        if (disassembly.readField(self.jedec, lc4k.Cluster_Routing, fuses.getCluster_RoutingRange(D, other_mcref)) == .self_plus_one) {
+                        if (disassembly.readField(self.jedec, lc4k.Cluster_Routing, fuses.get_cluster_routing_range(D, other_mcref)) == .self_plus_one) {
                             if (try self.maybe_find_critical_path(source, .{ .mc_cluster = other_mcref }, visited)) |path| {
                                 options.appendAssumeCapacity(path);
                             }
@@ -493,7 +493,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
 
                     if (mcref.mc < D.num_mcs_per_glb - 1) {
                         const other_mcref = lc4k.MC_Ref.init(mcref.glb, mcref.mc + 1);
-                        if (disassembly.readField(self.jedec, lc4k.Cluster_Routing, fuses.getCluster_RoutingRange(D, other_mcref)) == .self_minus_one) {
+                        if (disassembly.readField(self.jedec, lc4k.Cluster_Routing, fuses.get_cluster_routing_range(D, other_mcref)) == .self_minus_one) {
                             if (try self.maybe_find_critical_path(source, .{ .mc_cluster = other_mcref }, visited)) |path| {
                                 options.appendAssumeCapacity(path);
                             }
@@ -502,7 +502,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
 
                     if (mcref.mc < D.num_mcs_per_glb - 2) {
                         const other_mcref = lc4k.MC_Ref.init(mcref.glb, mcref.mc + 2);
-                        if (disassembly.readField(self.jedec, lc4k.Cluster_Routing, fuses.getCluster_RoutingRange(D, other_mcref)) == .self_minus_two) {
+                        if (disassembly.readField(self.jedec, lc4k.Cluster_Routing, fuses.get_cluster_routing_range(D, other_mcref)) == .self_minus_two) {
                             if (try self.maybe_find_critical_path(source, .{ .mc_cluster = other_mcref }, visited)) |path| {
                                 options.appendAssumeCapacity(path);
                             }
@@ -510,7 +510,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
                     }
 
                     const prev_wide_cluster = lc4k.MC_Ref.init(mcref.glb, (mcref.mc + D.num_mcs_per_glb - 4) % D.num_mcs_per_glb);
-                    if (disassembly.readField(self.jedec, lc4k.Wide_Routing, fuses.getWide_RoutingRange(D, prev_wide_cluster)) == .self_plus_four) {
+                    if (disassembly.readField(self.jedec, lc4k.Wide_Routing, fuses.get_wide_routing_range(D, prev_wide_cluster)) == .self_plus_four) {
                         if (try self.maybe_append_to_parent(source, .{ .mc_cluster_group = prev_wide_cluster }, dest, "tEXP", visited, Timing.tEXP)) |path| {
                             options.appendAssumeCapacity(path);
                         }
@@ -523,7 +523,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
                     var buf: [5]Path = undefined;
                     var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
 
-                    if (self.jedec.isSet(fuses.getPT0XorRange(D, mcref).min)) {
+                    if (self.jedec.is_set(fuses.get_pt0_xor_range(D, mcref).min)) {
                         if (try self.maybe_find_critical_path(source, .{ .pt = .{ .mcref = mcref, .pt = 0 }}, visited)) |path| {
                             options.appendAssumeCapacity(path);
                         }
@@ -553,7 +553,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
                         },
                     }
 
-                    switch (disassembly.readField(self.jedec, lc4k.Macrocell_Output_Enable_Source, fuses.getPT4OERange(D, mcref))) {
+                    switch (disassembly.readField(self.jedec, lc4k.Macrocell_Output_Enable_Source, fuses.get_pt4_output_enable_range(D, mcref))) {
                         .pt4_active_high => {},
                         else => if (try self.maybe_find_critical_path(source, .{ .pt = .{ .mcref = mcref, .pt = 4 }}, visited)) |path| {
                             options.appendAssumeCapacity(path);
@@ -588,7 +588,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
                             var fuse_iter = gi_fuses.iterator();
                             for (gi_options) |grp_option| {
                                 const fuse = fuse_iter.next().?;
-                                if (grp_option == grp and !self.jedec.isSet(fuse)) {
+                                if (grp_option == grp and !self.jedec.is_set(fuse)) {
                                     total_gis += 1;
                                     break;
                                 }
@@ -651,7 +651,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
             } else {
                 switch (goe) {
                     0, 1 => {
-                        if (self.jedec.isSet(D.get_goe_source_fuse(goe))) {
+                        if (self.jedec.is_set(D.get_goe_source_fuse(goe))) {
                             return switch (goe) {
                                 0 => self.append_to_parent(source, .igoe0, dest, "tGPTOE", visited, Timing.tGPTOE),
                                 1 => self.append_to_parent(source, .igoe1, dest, "tGPTOE", visited, Timing.tGPTOE),
@@ -675,12 +675,12 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
             var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
 
             for (0..D.num_glbs) |glb| {
-                var fuse_iter = fuses.getSharedEnableToOEBusRange(D, glb).iterator();
+                var fuse_iter = fuses.get_shared_enable_to_oe_bus_range(D, glb).iterator();
                 for (0..n) |_| {
                     _ = fuse_iter.next();
                 }
                 const fuse = fuse_iter.next();
-                if (!self.jedec.isSet(fuse)) {
+                if (!self.jedec.is_set(fuse)) {
                     if (try self.maybe_find_critical_path(source, .{ .sptoe = glb }, visited)) |path| {
                         options.appendAssumeCapacity(path);
                     }
@@ -698,7 +698,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
             const fuse = fuse_iter.next();
 
             var src_clk = n;
-            if (!self.jedec.isSet(fuse)) src_clk ^= 1;
+            if (!self.jedec.is_set(fuse)) src_clk ^= 1;
             src_clk %= D.clock_pins.len;
 
             return try self.clone_with_new_dest(source, .{ .gclk = src_clk }, dest, visited);
@@ -714,20 +714,20 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
                 var fuse_iter = gi_fuses.iterator();
                 for (gi_options) |grp| {
                     const fuse = fuse_iter.next().?;
-                    if (!self.jedec.isSet(fuse)) {
+                    if (!self.jedec.is_set(fuse)) {
                         signal.* = grp;
                     }
                 }
             }
 
-            const range = fuses.getPTRange(D, glb, pt_offset);
+            const range = fuses.get_pt_range(D, glb, pt_offset);
             var fuse_iter = range.iterator();
             for (gi_signals) |maybe_signal| {
                 const active_high_fuse = fuse_iter.next().?;
                 const active_low_fuse = fuse_iter.next().?;
 
-                const when_high = !self.jedec.isSet(active_high_fuse);
-                const when_low = !self.jedec.isSet(active_low_fuse);
+                const when_high = !self.jedec.is_set(active_high_fuse);
+                const when_low = !self.jedec.is_set(active_low_fuse);
 
                 if (when_high == when_low) continue;
 
@@ -828,7 +828,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
             _ = self;
             _ = grp;
             // TODO
-            // if (fuses.getInput_ThresholdRange(D, mcref)) |range| {
+            // if (fuses.get_input_threshold_range(D, mcref)) |range| {
             //     if (disassembly.readField(self.jedec, lc4k.Input_Threshold, range) == .high) {
             //         return Timing.tIOI_high;
             //     }
@@ -846,7 +846,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
         }
 
         fn tSLEW(self: *Self, mcref: lc4k.MC_Ref) Picoseconds {
-            if (fuses.getSlew_RateRange(D, mcref)) |range| {
+            if (fuses.get_slew_rate_range(D, mcref)) |range| {
                 if (disassembly.readField(self.jedec, lc4k.Slew_Rate, range) == .slow) {
                     return Timing.tSLEW;
                 }
@@ -855,7 +855,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
         }
 
         fn tINDIO(self: *Self) lc4k.Picosecond_Range {
-            const zero_hold_time = !self.jedec.isSet(D.get_zero_hold_time_fuse());
+            const zero_hold_time = !self.jedec.is_set(D.get_zero_hold_time_fuse());
             return if (zero_hold_time) Timing.tINDIO else 0;
         }
 

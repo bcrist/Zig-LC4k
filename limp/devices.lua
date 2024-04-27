@@ -361,11 +361,11 @@ pub fn get_glb_range(glb: usize) Fuse_Range {
     if info.gi_mux_size == 19 then
         writeln('var index = num_glbs - glb - 1;', indent)
         writeln('index ^= @as(u1, @truncate(index >> 1));')
-        writeln('return jedec_dimensions.subColumns(83 * index + gi_mux_size * (index / 2 + 1), 83);', unindent)
+        writeln('return jedec_dimensions.sub_columns(83 * index + gi_mux_size * (index / 2 + 1), 83);', unindent)
     else
         local gi_cols = math.tointeger(info.gi_mux_size / 2)
         writeln('const index = num_glbs - glb - 1;', indent)
-        writeln('return jedec_dimensions.subColumns(', 83 + gi_cols, ' * index + ', gi_cols, ', 83);', unindent)
+        writeln('return jedec_dimensions.sub_columns(', 83 + gi_cols, ' * index + ', gi_cols, ', 83);', unindent)
     end
     write [[
 
@@ -378,10 +378,10 @@ pub fn get_gi_range(glb: usize, gi: usize) Fuse_Range {
         writeln('var left_glb = glb | 1;', indent);
         writeln('left_glb ^= @as(u1, @truncate(left_glb >> 1)) ^ 1;')
         writeln('const row = gi * 2 + @as(u1, @truncate(glb ^ (glb >> 1)));')
-        writeln('return get_glb_range(left_glb).expandColumns(-19).subColumns(0, 19).subRows(row, 1);', unindent)
+        writeln('return get_glb_range(left_glb).expand_columns(-19).sub_columns(0, 19).sub_rows(row, 1);', unindent)
     else
         local gi_cols = math.tointeger(info.gi_mux_size / 2)
-        writeln('return get_glb_range(glb).expandColumns(-',gi_cols,').subColumns(0, ',gi_cols,').subRows(gi * 2, 2);')
+        writeln('return get_glb_range(glb).expand_columns(-',gi_cols,').sub_columns(0, ',gi_cols,').sub_rows(gi * 2, 2);')
     end
     write [[
 }
@@ -391,9 +391,9 @@ pub fn get_bclock_range(glb: usize) Fuse_Range {
     if info.gi_mux_size == 19 then
         writeln('var index = num_glbs - glb - 1;', indent)
         writeln('index = @as(u1, @truncate((index >> 1) ^ index));')
-        writeln('return get_glb_range(glb).subRows(79, 4).subColumns(82 * index, 1);', unindent)
+        writeln('return get_glb_range(glb).sub_rows(79, 4).sub_columns(82 * index, 1);', unindent)
     else
-        writeln('return get_glb_range(glb).subRows(79, 4).subColumns(0, 1);')
+        writeln('return get_glb_range(glb).sub_rows(79, 4).sub_columns(0, 1);')
     end
     write [[
 }
@@ -479,7 +479,7 @@ pub fn getTimerOutFuse() Fuse {
 
 pub fn getTimerDivRange() Fuse_Range {
     return Fuse.init(]], osctimer.timer_div[1][1], ', ', osctimer.timer_div[1][2], [[)
-        .range().expandToContain(Fuse.init(]], osctimer.timer_div[2][1], ', ', osctimer.timer_div[2][2], [[));
+        .range().expand_to_contain(Fuse.init(]], osctimer.timer_div[2][1], ', ', osctimer.timer_div[2][2], [[));
 }
 
 pub fn getInputPower_GuardFuse(input: GRP) Fuse {
@@ -520,7 +520,7 @@ else
     write([[
 
 pub fn get_global_bus_maintenance_range() Fuse_Range {
-    return Fuse.init(]], f0[1], ', ', f0[2], [[).range().expandToContain(Fuse.init(]], f1[1], ', ', f1[2], [[));
+    return Fuse.init(]], f0[1], ', ', f0[2], [[).range().expand_to_contain(Fuse.init(]], f1[1], ', ', f1[2], [[));
 }
 pub fn get_extra_float_input_fuses() []const Fuse {
     return &.{]])
