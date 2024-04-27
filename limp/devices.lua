@@ -347,14 +347,14 @@ pub const gi_options_by_grp = lc4k.invert_gi_mapping(GRP, gi_mux_size, &gi_optio
 if grp_device then
     write([[
 const base = @import("]], grp_device, [[.zig");
-pub const getGlbRange = base.getGlbRange;
-pub const getGiRange = base.getGiRange;
-pub const getBClockRange = base.getBClockRange;
+pub const get_glb_range = base.get_glb_range;
+pub const get_gi_range = base.get_gi_range;
+pub const get_bclock_range = base.get_bclock_range;
 ]])
 else
     
     write [[
-pub fn getGlbRange(glb: usize) jedec.FuseRange {
+pub fn get_glb_range(glb: usize) jedec.FuseRange {
     std.debug.assert(glb < num_glbs);
     ]]
     if info.gi_mux_size == 19 then
@@ -370,29 +370,29 @@ pub fn getGlbRange(glb: usize) jedec.FuseRange {
 
 }
 
-pub fn getGiRange(glb: usize, gi: usize) jedec.FuseRange {
+pub fn get_gi_range(glb: usize, gi: usize) jedec.FuseRange {
     std.debug.assert(gi < num_gis_per_glb);
     ]]
     if info.gi_mux_size == 19 then
         writeln('var left_glb = glb | 1;', indent);
         writeln('left_glb ^= @as(u1, @truncate(left_glb >> 1)) ^ 1;')
         writeln('const row = gi * 2 + @as(u1, @truncate(glb ^ (glb >> 1)));')
-        writeln('return getGlbRange(left_glb).expandColumns(-19).subColumns(0, 19).subRows(row, 1);', unindent)
+        writeln('return get_glb_range(left_glb).expandColumns(-19).subColumns(0, 19).subRows(row, 1);', unindent)
     else
         local gi_cols = math.tointeger(info.gi_mux_size / 2)
-        writeln('return getGlbRange(glb).expandColumns(-',gi_cols,').subColumns(0, ',gi_cols,').subRows(gi * 2, 2);')
+        writeln('return get_glb_range(glb).expandColumns(-',gi_cols,').subColumns(0, ',gi_cols,').subRows(gi * 2, 2);')
     end
     write [[
 }
 
-pub fn getBClockRange(glb: usize) jedec.FuseRange {
+pub fn get_bclock_range(glb: usize) jedec.FuseRange {
     ]]
     if info.gi_mux_size == 19 then
         writeln('var index = num_glbs - glb - 1;', indent)
         writeln('index = @as(u1, @truncate((index >> 1) ^ index));')
-        writeln('return getGlbRange(glb).subRows(79, 4).subColumns(82 * index, 1);', unindent)
+        writeln('return get_glb_range(glb).subRows(79, 4).subColumns(82 * index, 1);', unindent)
     else
-        writeln('return getGlbRange(glb).subRows(79, 4).subColumns(0, 1);')
+        writeln('return get_glb_range(glb).subRows(79, 4).subColumns(0, 1);')
     end
     write [[
 }
@@ -401,7 +401,7 @@ end
 nl()
 
 write [[
-pub fn getGOE_PolarityFuse(goe: usize) jedec.Fuse {
+pub fn get_goe_polarity_fuse(goe: usize) jedec.Fuse {
     return switch (goe) {]]
 
     indent(2)
@@ -419,7 +419,7 @@ pub fn getGOE_PolarityFuse(goe: usize) jedec.Fuse {
     };
 }
 
-pub fn getGOESourceFuse(goe: usize) jedec.Fuse {
+pub fn get_goe_source_fuse(goe: usize) jedec.Fuse {
     return switch (goe) {]]
 
     indent(2)
@@ -437,7 +437,7 @@ pub fn getGOESourceFuse(goe: usize) jedec.Fuse {
     };
 }
 
-pub fn getZeroHoldTimeFuse() jedec.Fuse {
+pub fn get_zero_hold_time_fuse() jedec.Fuse {
     return jedec.Fuse.init(]],zerohold[1],', ',zerohold[2],[[);
 }
 
@@ -521,14 +521,14 @@ else
     local f0, f1, extra = load_global_bus_maintenance_fuses(which)
     write([[
 
-pub fn getGlobalBus_MaintenanceRange() jedec.FuseRange {
+pub fn get_global_bus_maintenance_range() jedec.FuseRange {
     return jedec.FuseRange.fromFuse(
         jedec.Fuse.init(]], f0[1], ', ', f0[2], [[)
     ).expandToContain(
         jedec.Fuse.init(]], f1[1], ', ', f1[2], [[)
     );
 }
-pub fn getExtraFloatInputFuses() []const jedec.Fuse {
+pub fn get_extra_float_input_fuses() []const jedec.Fuse {
     return &.{]])
     indent(2)
     for _, f in ipairs(extra) do
@@ -543,7 +543,7 @@ pub fn getExtraFloatInputFuses() []const jedec.Fuse {
 end
 write [[
 
-pub fn getInput_ThresholdFuse(input: GRP) jedec.Fuse {
+pub fn get_input_threshold_fuse(input: GRP) jedec.Fuse {
     return switch (input) {]]
     indent(2)
     for _, pin in spairs(dedicated_inputs, natural_cmp) do

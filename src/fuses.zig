@@ -5,27 +5,27 @@ const lc4k = @import("lc4k.zig");
 const MC_Ref = lc4k.MC_Ref;
 
 pub fn getPTRange(comptime Device: type, glb: usize, glb_pt_offset: usize) jedec.FuseRange {
-    return Device.getGlbRange(glb).subColumns(glb_pt_offset, 1).subRows(0, Device.num_gis_per_glb * 2);
+    return Device.get_glb_range(glb).subColumns(glb_pt_offset, 1).subRows(0, Device.num_gis_per_glb * 2);
 }
 
 pub fn getSharedClockPolarityRange(comptime Device: type, glb: usize) jedec.FuseRange {
     const starting_row = Device.num_gis_per_glb * 2;
-    return Device.getGlbRange(glb).subRows(starting_row, 1).subColumns(82, 1);
+    return Device.get_glb_range(glb).subRows(starting_row, 1).subColumns(82, 1);
 }
 
 pub fn getSharedEnableToOEBusRange(comptime Device: type, glb: usize) jedec.FuseRange {
     const starting_row = Device.num_gis_per_glb * 2 + 1;
-    return Device.getGlbRange(glb).subRows(starting_row, Device.oe_bus_size).subColumns(82, 1);
+    return Device.get_glb_range(glb).subRows(starting_row, Device.oe_bus_size).subColumns(82, 1);
 }
 
 pub fn getSharedInitPolarityRange(comptime Device: type, glb: usize) jedec.FuseRange {
     const starting_row = Device.num_gis_per_glb * 2 + 1 + Device.oe_bus_size;
-    return Device.getGlbRange(glb).subRows(starting_row, 1).subColumns(82, 1);
+    return Device.get_glb_range(glb).subRows(starting_row, 1).subColumns(82, 1);
 }
 
 pub fn getMacrocellRange(comptime Device: type, mcref: MC_Ref) jedec.FuseRange {
     const starting_row = Device.num_gis_per_glb * 2;
-    const range = Device.getGlbRange(mcref.glb).subRows(starting_row, Device.jedec_dimensions.height() - starting_row);
+    const range = Device.get_glb_range(mcref.glb).subRows(starting_row, Device.jedec_dimensions.height() - starting_row);
     return switch (@as(u1, @truncate(mcref.mc))) {
         0 => range.subColumns(mcref.mc * 5 + 4, 1),
         1 => range.subColumns(mcref.mc * 5, 1)
@@ -161,6 +161,6 @@ pub fn getInput_ThresholdRange(comptime Device: type, mcref: MC_Ref) ?jedec.Fuse
 
 pub fn getPower_GuardRange(comptime Device: type, mcref: MC_Ref) jedec.FuseRange {
     std.debug.assert(Device.family == .zero_power_enhanced);
-    const range = Device.getGlbRange(mcref.glb).subRows(Device.jedec_dimensions.max.row, 1);
+    const range = Device.get_glb_range(mcref.glb).subRows(Device.jedec_dimensions.max.row, 1);
     return range.subColumns(mcref.mc * 5 + 3, 1);
 }

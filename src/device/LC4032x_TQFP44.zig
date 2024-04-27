@@ -231,11 +231,11 @@ pub const gi_options = [num_gis_per_glb][gi_mux_size]GRP {
 pub const gi_options_by_grp = lc4k.invert_gi_mapping(GRP, gi_mux_size, &gi_options);
 
 const base = @import("LC4032x_TQFP48.zig");
-pub const getGlbRange = base.getGlbRange;
-pub const getGiRange = base.getGiRange;
-pub const getBClockRange = base.getBClockRange;
+pub const get_glb_range = base.get_glb_range;
+pub const get_gi_range = base.get_gi_range;
+pub const get_bclock_range = base.get_bclock_range;
 
-pub fn getGOE_PolarityFuse(goe: usize) jedec.Fuse {
+pub fn get_goe_polarity_fuse(goe: usize) jedec.Fuse {
     return switch (goe) {
         0 => jedec.Fuse.init(88, 171),
         1 => jedec.Fuse.init(89, 171),
@@ -245,32 +245,32 @@ pub fn getGOE_PolarityFuse(goe: usize) jedec.Fuse {
     };
 }
 
-pub fn getGOESourceFuse(goe: usize) jedec.Fuse {
+pub fn get_goe_source_fuse(goe: usize) jedec.Fuse {
     return switch (goe) {
         else => unreachable,
     };
 }
 
-pub fn getZeroHoldTimeFuse() jedec.Fuse {
+pub fn get_zero_hold_time_fuse() jedec.Fuse {
     return jedec.Fuse.init(87, 171);
 }
 
 
-pub fn getGlobalBus_MaintenanceRange() jedec.FuseRange {
+pub fn get_global_bus_maintenance_range() jedec.FuseRange {
     return jedec.FuseRange.fromFuse(
         jedec.Fuse.init(85, 171)
     ).expandToContain(
         jedec.Fuse.init(86, 171)
     );
 }
-pub fn getExtraFloatInputFuses() []const jedec.Fuse {
+pub fn get_extra_float_input_fuses() []const jedec.Fuse {
     return &.{
         jedec.Fuse.init(92, 58),
         jedec.Fuse.init(92, 144),
     };
 }
 
-pub fn getInput_ThresholdFuse(input: GRP) jedec.Fuse {
+pub fn get_input_threshold_fuse(input: GRP) jedec.Fuse {
     return switch (input) {
         .clk0 => jedec.Fuse.init(95, 168),
         .clk2 => jedec.Fuse.init(95, 170),

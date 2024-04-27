@@ -863,6 +863,13 @@ pub inline fn invert_gi_mapping(comptime GRP: type, comptime gi_mux_size: compti
     };
 }
 
+pub fn is_sum_always(pts: anytype) bool {
+    for (pts) |pt| {
+        if (pt.is_always()) return true;
+    }
+    return false;
+}
+
 pub const jedec = @import("jedec.zig");
 pub const jed_file = @import("jed_file.zig");
 pub const svf_file = @import("svf_file.zig");

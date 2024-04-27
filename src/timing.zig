@@ -584,7 +584,7 @@ pub fn Analyzer(comptime device: Device_Type, comptime speed_grade: comptime_int
                     var total_gis: usize = 0;
                     for (0..D.num_glbs) |glb| {
                         for (0.., D.gi_options) |gi, gi_options| {
-                            const gi_fuses = D.getGiRange(glb, gi);
+                            const gi_fuses = D.get_gi_range(glb, gi);
                             var fuse_iter = gi_fuses.iterator();
                             for (gi_options) |grp_option| {
                                 const fuse = fuse_iter.next().?;
@@ -651,7 +651,7 @@ pub fn Analyzer(comptime device: Device_Type, comptime speed_grade: comptime_int
             } else {
                 switch (goe) {
                     0, 1 => {
-                        if (self.jedec.isSet(D.getGOESourceFuse(goe))) {
+                        if (self.jedec.isSet(D.get_goe_source_fuse(goe))) {
                             return switch (goe) {
                                 0 => self.append_to_parent(source, .igoe0, dest, "tGPTOE", visited, Timing.tGPTOE),
                                 1 => self.append_to_parent(source, .igoe1, dest, "tGPTOE", visited, Timing.tGPTOE),
@@ -691,7 +691,7 @@ pub fn Analyzer(comptime device: Device_Type, comptime speed_grade: comptime_int
         }
 
         fn compute_bclock_critical_path(self: *Self, source: Node, dest: Node, n: lc4k.Clock_Index, glb: lc4k.GLB_Index, visited: *Node_Set) !Path {
-            const fuse_iter = D.getBClockRange(glb).iterator();
+            const fuse_iter = D.get_bclock_range(glb).iterator();
             for (0..n) |_| {
                 _ = fuse_iter.next();
             }
@@ -710,7 +710,7 @@ pub fn Analyzer(comptime device: Device_Type, comptime speed_grade: comptime_int
 
             var gi_signals = [_]?D.GRP { null } ** D.num_gis_per_glb;
             for (0.., D.gi_options, &gi_signals) |gi, gi_options, *signal| {
-                const gi_fuses = D.getGiRange(glb, gi);
+                const gi_fuses = D.get_gi_range(glb, gi);
                 var fuse_iter = gi_fuses.iterator();
                 for (gi_options) |grp| {
                     const fuse = fuse_iter.next().?;
@@ -833,7 +833,7 @@ pub fn Analyzer(comptime device: Device_Type, comptime speed_grade: comptime_int
             //         return Timing.tIOI_high;
             //     }
             // }
-            //const threshold_range = jedec.FuseRange.fromFuse(D.getInput_ThresholdFuse(grp));
+            //const threshold_range = jedec.FuseRange.fromFuse(D.get_input_threshold_fuse(grp));
             return Timing.tIOI_low;
         }
 
@@ -855,14 +855,13 @@ pub fn Analyzer(comptime device: Device_Type, comptime speed_grade: comptime_int
         }
 
         fn tINDIO(self: *Self) lc4k.Picosecond_Range {
-            const zero_hold_time = !self.jedec.isSet(D.getZeroHoldTimeFuse());
+            const zero_hold_time = !self.jedec.isSet(D.get_zero_hold_time_fuse());
             return if (zero_hold_time) Timing.tINDIO else 0;
         }
 
     };
 }
 
-const internal = @import("internal.zig");
 const disassembly = @import("disassembly.zig");
 const fuses = @import("fuses.zig");
 const JedecData = jedec.JedecData;

@@ -3,7 +3,6 @@ const lc4k = @import("lc4k.zig");
 const jedec = @import("jedec.zig");
 const fuses = @import("fuses.zig");
 const assembly = @import("assembly.zig");
-const internal = @import("internal.zig");
 const routing = @import("routing.zig");
 const disassembly = @import("disassembly.zig");
 
@@ -876,7 +875,7 @@ fn writeGlbRouting(writer: anytype, comptime Device: type, data: ReportData(Devi
         });
 
         for (Device.gi_options, 0..) |gi_options, gi| {
-            const fuse_range = Device.getGiRange(glb, gi);
+            const fuse_range = Device.get_gi_range(glb, gi);
             var fuse_iter = fuse_range.iterator();
             var active: ?Device.GRP = null;
             try beginRow(writer, .{ .highlight = (gi & 1) == 1 });
@@ -894,7 +893,7 @@ fn writeGlbRouting(writer: anytype, comptime Device: type, data: ReportData(Devi
 
             if (active) |grp| {
                 var fanout: usize = 0;
-                const pt_range = Device.getGlbRange(glb).subRows(gi * 2, 2);
+                const pt_range = Device.get_glb_range(glb).subRows(gi * 2, 2);
                 var col: usize = 0;
                 while (col < pt_range.width()) : (col += 1) {
                     if (data.jed.countUnsetInRange(pt_range.subColumns(col, 1)) == 1) {

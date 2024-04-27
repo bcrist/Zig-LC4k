@@ -2,8 +2,8 @@ const std = @import("std");
 const lc4k = @import("lc4k.zig");
 const jedec = @import("jedec.zig");
 const fuses = @import("fuses.zig");
-const internal = @import("internal.zig");
 const routing = @import("routing.zig");
+const assembly = @import("assembly.zig");
 const Product_Term = lc4k.Product_Term;
 const Factor = lc4k.Factor;
 const assert = std.debug.assert;
@@ -43,7 +43,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
         return results;
     }
 
-    results.config.zero_hold_time = !file.data.isSet(Device.getZeroHoldTimeFuse());
+    results.config.zero_hold_time = !file.data.isSet(Device.get_zero_hold_time_fuse());
 
     if (Device.family == .zero_power_enhanced) {
         const osctimer_enable = readField(file.data, u2, Device.getOscTimerEnableRange());
@@ -83,9 +83,9 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
             });
         }
     } else {
-        results.config.default_bus_maintenance = readField(file.data, lc4k.Bus_Maintenance, Device.getGlobalBus_MaintenanceRange());
+        results.config.default_bus_maintenance = readField(file.data, lc4k.Bus_Maintenance, Device.get_global_bus_maintenance_range());
         if (results.config.default_bus_maintenance == .float) {
-            for (Device.getExtraFloatInputFuses()) |fuse| {
+            for (Device.get_extra_float_input_fuses()) |fuse| {
                 if (file.data.isSet(fuse)) {
                     try results.errors.append(.{
                         .err = error.FloatingBuriedInput,
@@ -102,7 +102,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
         const pin = Device.clock_pins[clock_pin_index];
         const grp: Device.GRP = pin.signal();
 
-        const threshold_range = jedec.FuseRange.fromFuse(Device.getInput_ThresholdFuse(grp));
+        const threshold_range = jedec.FuseRange.fromFuse(Device.get_input_threshold_fuse(grp));
         clock_config.threshold = readField(file.data, lc4k.Input_Threshold, threshold_range);
 
         if (@TypeOf(clock_config) == *lc4k.Input_Config_ZE) {
@@ -118,7 +118,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
         const pin = Device.input_pins[input_pin_index];
         const grp: Device.GRP = pin.signal();
 
-        const threshold_range = jedec.FuseRange.fromFuse(Device.getInput_ThresholdFuse(grp));
+        const threshold_range = jedec.FuseRange.fromFuse(Device.get_input_threshold_fuse(grp));
         input_config.threshold = readField(file.data, lc4k.Input_Threshold, threshold_range);
 
         if (@TypeOf(input_config) == *lc4k.Input_Config_ZE) {
@@ -138,7 +138,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
     for (&results.config.glb, 0..) |*glb_config, glb| {
         // Parse GI routing fuses
         for (Device.gi_options, 0..) |options, gi| {
-            const gi_fuses = Device.getGiRange(glb, gi);
+            const gi_fuses = Device.get_gi_range(glb, gi);
             assert(options.len == gi_fuses.count());
             var fuse_iter = gi_fuses.iterator();
             for (options) |grp| {
@@ -185,19 +185,19 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
         try readGoeConfig(Device, file.data, &results.config.goe2, 2, &results);
         try readGoeConfig(Device, file.data, &results.config.goe3, 3, &results);
 
-        glb_config.bclock0 = switch (readField(file.data, u1, Device.getBClockRange(glb).subRows(0, 1))) {
+        glb_config.bclock0 = switch (readField(file.data, u1, Device.get_bclock_range(glb).subRows(0, 1))) {
             0 => .clk1_neg,
             1 => .clk0_pos,
         };
-        glb_config.bclock1 = switch (readField(file.data, u1, Device.getBClockRange(glb).subRows(1, 1))) {
+        glb_config.bclock1 = switch (readField(file.data, u1, Device.get_bclock_range(glb).subRows(1, 1))) {
             0 => .clk0_neg,
             1 => .clk1_pos,
         };
-        glb_config.bclock2 = switch (readField(file.data, u1, Device.getBClockRange(glb).subRows(2, 1))) {
+        glb_config.bclock2 = switch (readField(file.data, u1, Device.get_bclock_range(glb).subRows(2, 1))) {
             0 => .clk3_neg,
             1 => .clk2_pos,
         };
-        glb_config.bclock3 = switch (readField(file.data, u1, Device.getBClockRange(glb).subRows(3, 1))) {
+        glb_config.bclock3 = switch (readField(file.data, u1, Device.get_bclock_range(glb).subRows(3, 1))) {
             0 => .clk2_neg,
             1 => .clk3_pos,
         };
@@ -400,7 +400,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
                         var num_pts: usize = 0;
                         var sum_is_always = false;
                         while (pt_index < 5) : (pt_index += 1) {
-                            if (internal.getSpecialPT(Device, mc_config.*, pt_index)) |_| continue;
+                            if (assembly.getSpecialPT(Device, mc_config.*, pt_index)) |_| continue;
                             const pt = try parsePTFuses(Device, allocator, glb, mc * 5 + pt_index, gi_routing, file.data, &results);
                             if (!pt.is_never() and !(sum_is_always and pt.is_always())) {
                                 pts[num_pts] = pt;
@@ -599,7 +599,7 @@ pub fn parsePTFuses(
 
 fn readGoeConfig(comptime Device: type, data: jedec.JedecData, goe_config: anytype, goe_index: usize, results: *Disassembly_Results(Device)) !void {
     switch (@TypeOf(goe_config.*)) {
-        lc4k.GOE_Config_Bus_Or_Pin => switch (data.get(Device.getGOESourceFuse(goe_index))) {
+        lc4k.GOE_Config_Bus_Or_Pin => switch (data.get(Device.get_goe_source_fuse(goe_index))) {
             0 => goe_config.source = .input,
             1 => try readGoeSourceBus(Device, data, goe_config, goe_index, results),
         },
@@ -607,7 +607,7 @@ fn readGoeConfig(comptime Device: type, data: jedec.JedecData, goe_config: anyty
         lc4k.GOE_Config_Pin => {},
         else => unreachable,
     }
-    goe_config.polarity = switch (data.get(Device.getGOE_PolarityFuse(goe_index))) {
+    goe_config.polarity = switch (data.get(Device.get_goe_polarity_fuse(goe_index))) {
         0 => .active_low,
         1 => .active_high,
     };

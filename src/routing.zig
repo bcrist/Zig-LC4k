@@ -1,6 +1,5 @@
 const std = @import("std");
 const lc4k = @import("lc4k.zig");
-const internal = @import("internal.zig");
 const assembly = @import("assembly.zig");
 
 const Cluster_Routing = lc4k.Cluster_Routing;
@@ -86,7 +85,7 @@ pub const ClusterRouter = struct {
             var available: u8 = 0;
             var special_pt: u8 = 0;
             while (special_pt < 5) : (special_pt += 1) {
-                if (internal.getSpecialPT(Device, mc_config, special_pt) == null) {
+                if (assembly.getSpecialPT(Device, mc_config, special_pt) == null) {
                     available += 1;
                 }
             }
@@ -103,17 +102,17 @@ pub const ClusterRouter = struct {
 
             switch (mc_config.logic) {
                 .sum, .sum_inverted => |sum| {
-                    if (!internal.isSumAlways(sum)) {
+                    if (!lc4k.is_sum_always(sum)) {
                         self.sum_size[mc] = @intCast(sum.len);
                     }
                 },
                 .sum_xor_pt0, .sum_xor_pt0_inverted => |logic| {
-                    if (!internal.isSumAlways(logic.sum)) {
+                    if (!lc4k.is_sum_always(logic.sum)) {
                         self.sum_size[mc] = @intCast(logic.sum.len);
                     }
                 },
                 .sum_xor_input_buffer => |sum| {
-                    if (!internal.isSumAlways(sum)) {
+                    if (!lc4k.is_sum_always(sum)) {
                         self.sum_size[mc] = @intCast(sum.len);
                     }
                 },
@@ -611,7 +610,7 @@ fn PTIterator(comptime Device: type) type {
                             .five_pt_fast_bypass, .five_pt_fast_bypass_inverted => continue,
                         }
                     }
-                    if (internal.getSpecialPT(Device, mc_config.*, pt) == null) {
+                    if (assembly.getSpecialPT(Device, mc_config.*, pt) == null) {
                         return self.cluster * 5 + pt;
                     }
                 }

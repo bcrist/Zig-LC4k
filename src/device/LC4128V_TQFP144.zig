@@ -478,7 +478,7 @@ pub const gi_options = [num_gis_per_glb][gi_mux_size]GRP {
 
 pub const gi_options_by_grp = lc4k.invert_gi_mapping(GRP, gi_mux_size, &gi_options);
 
-pub fn getGlbRange(glb: usize) jedec.FuseRange {
+pub fn get_glb_range(glb: usize) jedec.FuseRange {
     std.debug.assert(glb < num_glbs);
     var index = num_glbs - glb - 1;
     index ^= @as(u1, @truncate(index >> 1));
@@ -486,21 +486,21 @@ pub fn getGlbRange(glb: usize) jedec.FuseRange {
 
 }
 
-pub fn getGiRange(glb: usize, gi: usize) jedec.FuseRange {
+pub fn get_gi_range(glb: usize, gi: usize) jedec.FuseRange {
     std.debug.assert(gi < num_gis_per_glb);
     var left_glb = glb | 1;
     left_glb ^= @as(u1, @truncate(left_glb >> 1)) ^ 1;
     const row = gi * 2 + @as(u1, @truncate(glb ^ (glb >> 1)));
-    return getGlbRange(left_glb).expandColumns(-19).subColumns(0, 19).subRows(row, 1);
+    return get_glb_range(left_glb).expandColumns(-19).subColumns(0, 19).subRows(row, 1);
 }
 
-pub fn getBClockRange(glb: usize) jedec.FuseRange {
+pub fn get_bclock_range(glb: usize) jedec.FuseRange {
     var index = num_glbs - glb - 1;
     index = @as(u1, @truncate((index >> 1) ^ index));
-    return getGlbRange(glb).subRows(79, 4).subColumns(82 * index, 1);
+    return get_glb_range(glb).subRows(79, 4).subColumns(82 * index, 1);
 }
 
-pub fn getGOE_PolarityFuse(goe: usize) jedec.Fuse {
+pub fn get_goe_polarity_fuse(goe: usize) jedec.Fuse {
     return switch (goe) {
         0 => jedec.Fuse.init(90, 101),
         1 => jedec.Fuse.init(91, 101),
@@ -510,7 +510,7 @@ pub fn getGOE_PolarityFuse(goe: usize) jedec.Fuse {
     };
 }
 
-pub fn getGOESourceFuse(goe: usize) jedec.Fuse {
+pub fn get_goe_source_fuse(goe: usize) jedec.Fuse {
     return switch (goe) {
         0 => jedec.Fuse.init(88, 101),
         1 => jedec.Fuse.init(89, 101),
@@ -518,24 +518,24 @@ pub fn getGOESourceFuse(goe: usize) jedec.Fuse {
     };
 }
 
-pub fn getZeroHoldTimeFuse() jedec.Fuse {
+pub fn get_zero_hold_time_fuse() jedec.Fuse {
     return jedec.Fuse.init(87, 101);
 }
 
 
-pub fn getGlobalBus_MaintenanceRange() jedec.FuseRange {
+pub fn get_global_bus_maintenance_range() jedec.FuseRange {
     return jedec.FuseRange.fromFuse(
         jedec.Fuse.init(85, 101)
     ).expandToContain(
         jedec.Fuse.init(86, 101)
     );
 }
-pub fn getExtraFloatInputFuses() []const jedec.Fuse {
+pub fn get_extra_float_input_fuses() []const jedec.Fuse {
     return &.{
     };
 }
 
-pub fn getInput_ThresholdFuse(input: GRP) jedec.Fuse {
+pub fn get_input_threshold_fuse(input: GRP) jedec.Fuse {
     return switch (input) {
         .clk0 => jedec.Fuse.init(94, 98),
         .clk1 => jedec.Fuse.init(94, 99),

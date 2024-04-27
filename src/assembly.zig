@@ -2,7 +2,6 @@ const std = @import("std");
 const lc4k = @import("lc4k.zig");
 const jedec = @import("jedec.zig");
 const routing = @import("routing.zig");
-const internal = @import("internal.zig");
 const fuses = @import("fuses.zig");
 
 const Chip_Config = lc4k.Chip_Config;
@@ -70,7 +69,7 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
             }
             var special_pt: usize = 0;
             while (special_pt < 5) : (special_pt += 1) {
-                if (internal.getSpecialPT(Device, mc_config, special_pt)) |pt| {
+                if (getSpecialPT(Device, mc_config, special_pt)) |pt| {
                     try routing.addSignalsFromPT(Device, &gi_routing, pt);
                 }
             }
@@ -88,7 +87,7 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
         try routing.routeGIs(Device, &gi_routing, rnd);
         for (gi_routing, 0..) |maybe_signal, gi| if (maybe_signal) |signal| {
             const option_index = std.mem.indexOfScalar(Device.GRP, &Device.gi_options[gi], signal).?;
-            const range = Device.getGiRange(glb, gi);
+            const range = Device.get_gi_range(glb, gi);
             var iter = range.iterator();
             iter.skip(option_index);
             results.jedec.data.put(iter.next().?, 0);
@@ -108,17 +107,17 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
                         var next_sum_pt: usize = 0;
                         var pt_index: usize = 0;
                         while (pt_index < 5) : (pt_index += 1) {
-                            if (internal.getSpecialPT(Device, mc_config, pt_index)) |_| continue;
+                            if (getSpecialPT(Device, mc_config, pt_index)) |_| continue;
                             const glb_pt_offset = mc * 5 + pt_index;
                             if (next_sum_pt < pts.len) {
                                 const pt = pts[next_sum_pt];
                                 try writePTFuses(Device, &results, glb, glb_pt_offset, &gi_routing, pt);
                                 next_sum_pt += 1;
-                            } else if (!internal.isSumAlways(pts)) {
+                            } else if (!lc4k.is_sum_always(pts)) {
                                 try writePTFuses(Device, &results, glb, glb_pt_offset, &gi_routing, Product_Term(Device.GRP).never());
                             }
                         }
-                        if (next_sum_pt < pts.len and !internal.isSumAlways(pts)) {
+                        if (next_sum_pt < pts.len and !lc4k.is_sum_always(pts)) {
                             return error.TooManySumPTs;
                         }
                     },
@@ -137,18 +136,18 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
                         const pt = sum_pts[next_sum_pt];
                         try writePTFuses(Device, &results, glb, glb_pt_offset, &gi_routing, pt);
                         next_sum_pt += 1;
-                    } else if (!internal.isSumAlways(sum_pts)) {
+                    } else if (!lc4k.is_sum_always(sum_pts)) {
                         try writePTFuses(Device, &results, glb, glb_pt_offset, &gi_routing, Product_Term(Device.GRP).never());
                     }
                 }
-                if (next_sum_pt < sum_pts.len and !internal.isSumAlways(sum_pts)) {
+                if (next_sum_pt < sum_pts.len and !lc4k.is_sum_always(sum_pts)) {
                     return error.TooManySumPTs;
                 }
             }
 
             var special_pt: usize = 0;
             while (special_pt < 5) : (special_pt += 1) {
-                if (internal.getSpecialPT(Device, mc_config, special_pt)) |pt| {
+                if (getSpecialPT(Device, mc_config, special_pt)) |pt| {
                     try writePTFuses(Device, &results, glb, mc * 5 + special_pt, &gi_routing, pt);
                 }
             }
@@ -317,22 +316,22 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
             .clk0_pos => 1,
             .clk1_neg => 0,
         };
-        writeField(&results.jedec.data, u1, bclk0, Device.getBClockRange(glb).subRows(0, 1));
+        writeField(&results.jedec.data, u1, bclk0, Device.get_bclock_range(glb).subRows(0, 1));
         const bclk1: u1 = switch (glb_config.bclock1) {
             .clk1_pos => 1,
             .clk0_neg => 0,
         };
-        writeField(&results.jedec.data, u1, bclk1, Device.getBClockRange(glb).subRows(1, 1));
+        writeField(&results.jedec.data, u1, bclk1, Device.get_bclock_range(glb).subRows(1, 1));
         const bclk2: u1 = switch (glb_config.bclock2) {
             .clk2_pos => 1,
             .clk3_neg => 0,
         };
-        writeField(&results.jedec.data, u1, bclk2, Device.getBClockRange(glb).subRows(2, 1));
+        writeField(&results.jedec.data, u1, bclk2, Device.get_bclock_range(glb).subRows(2, 1));
         const bclk3: u1 = switch (glb_config.bclock3) {
             .clk3_pos => 1,
             .clk2_neg => 0,
         };
-        writeField(&results.jedec.data, u1, bclk3, Device.getBClockRange(glb).subRows(3, 1));
+        writeField(&results.jedec.data, u1, bclk3, Device.get_bclock_range(glb).subRows(3, 1));
     }
 
     writeGoeFuses(Device, &results.jedec.data, config.goe0, 0);
@@ -340,7 +339,7 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
     writeGoeFuses(Device, &results.jedec.data, config.goe2, 2);
     writeGoeFuses(Device, &results.jedec.data, config.goe3, 3);
 
-    results.jedec.data.put(Device.getZeroHoldTimeFuse(), @intFromBool(!config.zero_hold_time));
+    results.jedec.data.put(Device.get_zero_hold_time_fuse(), @intFromBool(!config.zero_hold_time));
 
     if (Device.family == .zero_power_enhanced) {
 
@@ -351,9 +350,9 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
             results.jedec.data.put(Device.getTimerOutFuse(), @intFromBool(!osctimer.enable_timer_out_and_reset));
         }
     } else {
-        writeField(&results.jedec.data, lc4k.Bus_Maintenance, config.default_bus_maintenance, Device.getGlobalBus_MaintenanceRange());
+        writeField(&results.jedec.data, lc4k.Bus_Maintenance, config.default_bus_maintenance, Device.get_global_bus_maintenance_range());
         if (config.default_bus_maintenance == .float) {
-            for (Device.getExtraFloatInputFuses()) |fuse| {
+            for (Device.get_extra_float_input_fuses()) |fuse| {
                 results.jedec.data.put(fuse, 0);
             }
         }
@@ -377,17 +376,57 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
     return results;
 }
 
+pub fn getSpecialPT(
+    comptime Device: type, 
+    mc_config: lc4k.Macrocell_Config(Device.family, Device.GRP),
+    pt_index: usize
+) ?lc4k.Product_Term(Device.GRP) {
+    return switch (pt_index) {
+        0 => switch (mc_config.logic) {
+            .pt0, .pt0_inverted => |pt| pt,
+            .sum_xor_pt0, .sum_xor_pt0_inverted => |logic| logic.pt0,
+            .sum, .sum_inverted, .sum_xor_input_buffer, .input_buffer => null,
+        },
+        1 => switch (mc_config.func) {
+            .combinational => null,
+            .latch, .t_ff, .d_ff => |reg_config| switch (reg_config.clock) {
+                .none, .shared_pt_clock, .bclock0, .bclock1, .bclock2, .bclock3 => null,
+                .pt1_positive, .pt1_negative => |pt| pt,
+            },
+        },
+        2 => switch (mc_config.func) {
+            .combinational => null,
+            .latch, .t_ff, .d_ff => |reg_config| switch (reg_config.ce) {
+                .always_active, .shared_pt_clock => switch (reg_config.async_source) {
+                    .none => null,
+                    .pt2_active_high => |pt| pt,
+                },
+                .pt2_active_low, .pt2_active_high => |pt| pt,
+            },
+        },
+        3 => switch (mc_config.func) {
+            .combinational => null,
+            .latch, .t_ff, .d_ff => |reg_config| switch (reg_config.init_source) {
+                .shared_pt_init => null,
+                .pt3_active_high => |pt| pt,
+            },
+        },
+        4 => if (mc_config.pt4_oe) |pt| pt else null,
+        else => unreachable,
+    };
+}
+
 fn writeGoeFuses(comptime Device: type, data: *jedec.JedecData, goe_config: anytype, goe_index: usize) void {
     switch (@TypeOf(goe_config)) {
         lc4k.GOE_Config_Bus_Or_Pin => switch (goe_config.source) {
             .input => {
-                data.put(Device.getGOESourceFuse(goe_index), 0);
+                data.put(Device.get_goe_source_fuse(goe_index), 0);
             },
             .constant_high => {
-                data.put(Device.getGOESourceFuse(goe_index), 1);
+                data.put(Device.get_goe_source_fuse(goe_index), 1);
             },
             .glb_shared_pt_enable => |glb| {
-                data.put(Device.getGOESourceFuse(goe_index), 1);
+                data.put(Device.get_goe_source_fuse(goe_index), 1);
                 writeField(data, u1, 0, fuses.getSharedEnableToOEBusRange(Device, glb).subRows(goe_index, 1));
             },
         },
@@ -399,14 +438,14 @@ fn writeGoeFuses(comptime Device: type, data: *jedec.JedecData, goe_config: anyt
         },
         else => {},
     }
-    data.put(Device.getGOE_PolarityFuse(goe_index), @intFromBool(goe_config.polarity == .active_high));
+    data.put(Device.get_goe_polarity_fuse(goe_index), @intFromBool(goe_config.polarity == .active_high));
 }
 
 fn writeDedicatedInputFuses(comptime Device: type, data: *jedec.JedecData, pin_info: lc4k.Pin_Info, config: *const Chip_Config(Device.device_type), input_config: anytype) void {
     const grp: Device.GRP = @enumFromInt(pin_info.grp_ordinal.?);
 
     const threshold = input_config.threshold orelse config.default_input_threshold;
-    writeField(data, lc4k.Input_Threshold, threshold, jedec.FuseRange.fromFuse(Device.getInput_ThresholdFuse(grp)));
+    writeField(data, lc4k.Input_Threshold, threshold, jedec.FuseRange.fromFuse(Device.get_input_threshold_fuse(grp)));
 
     if (@TypeOf(input_config) == lc4k.Input_Config_ZE) {
         const maintenance = input_config.bus_maintenance orelse config.default_bus_maintenance;
