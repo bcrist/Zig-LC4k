@@ -5,9 +5,6 @@ const lc4k = @import("lc4k");
 
 pub fn main() !void {
     const Chip = lc4k.LC4064ZC_TQFP100;
-    const PTs = Chip.PTs;
-    const not = PTs.not;
-    const all = PTs.all;
 
     var chip = Chip {};
 
@@ -25,62 +22,76 @@ pub fn main() !void {
     const dir_signal = Chip.GRP.mc_C0;
     const none_signal = Chip.GRP.mc_C15;
 
-    chip.glb[0].shared_pt_clock = .{ .positive = PTs.of(Chip.pins._12) };
-    chip.glb[1].shared_pt_clock = .{ .positive = PTs.of(Chip.pins._12) };
-    chip.glb[2].shared_pt_clock = .{ .positive = PTs.of(Chip.pins._12) };
+    chip.glb[0].shared_pt_clock = comptime .{ .positive = Chip.pins._12.when_high().pt() };
+    chip.glb[1].shared_pt_clock = comptime .{ .positive = Chip.pins._12.when_high().pt() };
+    chip.glb[2].shared_pt_clock = comptime .{ .positive = Chip.pins._12.when_high().pt() };
 
-    var dir_mc = chip.mc(dir_signal);
+    var dir_mc = chip.mc(dir_signal.mc());
     dir_mc.func = .{ .t_ff = .{
         .init_state = 1,
-        .clock = .{ .shared_pt_clock = {} },
-
+        .clock = .shared_pt_clock,
     }};
     dir_mc.output.oe = .output_only;
-    dir_mc.logic = .{ .sum = &.{ PTs.of(none_signal) } };
+    dir_mc.logic = comptime .{ .sum = &.{ none_signal.when_high().pt() } };
 
-    var none_mc = chip.mc(none_signal);
+    var none_mc = chip.mc(none_signal.mc());
     none_mc.output.oe = .output_only;
-    none_mc.logic = .{ .sum = &.{ all(.{
-        not(outputs[0]),
-        not(outputs[3]),
-        not(outputs[6]),
-        not(outputs[9]),
-        not(outputs[12]),
-        not(outputs[15]),
-        not(outputs[16]),
-        not(outputs[19]),
-        not(outputs[22]),
-        not(outputs[25]),
-        not(outputs[28]),
-        not(outputs[31]),
-    }) } };
+    none_mc.logic = comptime .{ .sum = &.{ outputs[0].when_low().pt()
+        .and_factor(outputs[3].when_low())
+        .and_factor(outputs[6].when_low())
+        .and_factor(outputs[9].when_low())
+        .and_factor(outputs[12].when_low())
+        .and_factor(outputs[15].when_low())
+        .and_factor(outputs[16].when_low())
+        .and_factor(outputs[19].when_low())
+        .and_factor(outputs[22].when_low())
+        .and_factor(outputs[25].when_low())
+        .and_factor(outputs[28].when_low())
+        .and_factor(outputs[31].when_low())
+    }};
 
-    inline for (outputs) |out, bit| {
-        var mc = chip.mc(out);
-        mc.func = .{ .d_ff = .{
-            .clock = .{ .shared_pt_clock = {} },
-        }};
+    inline for (outputs, 0..) |out, bit| {
+        var mc = chip.mc(out.mc());
+        mc.func = .{ .d_ff = .{ .clock = .shared_pt_clock }};
         mc.output.oe = .output_only;
-        mc.logic = .{ .sum = switch (bit) {
-            0 => &[_]Chip.PT {
-                all(.{ dir_signal, outputs[bit + 1] }),
-                all(.{ dir_signal, none_signal }),
-                all(.{ not(dir_signal), outputs[0],
-                    not(outputs[3]), not(outputs[6]), not(outputs[9]), not(outputs[12]), not(outputs[15]),
-                    not(outputs[16]), not(outputs[19]), not(outputs[22]), not(outputs[25]), not(outputs[28]), not(outputs[31]),
-                }),
+        mc.logic = comptime .{ .sum = switch (bit) {
+            0 => &.{
+                dir_signal.when_high().pt().and_factor(outputs[bit + 1].when_high()),
+                dir_signal.when_high().pt().and_factor(none_signal.when_high()),
+                dir_signal.when_low().pt()
+                    .and_factor(outputs[0].when_high())
+                    .and_factor(outputs[3].when_low())
+                    .and_factor(outputs[6].when_low())
+                    .and_factor(outputs[9].when_low())
+                    .and_factor(outputs[12].when_low())
+                    .and_factor(outputs[15].when_low())
+                    .and_factor(outputs[16].when_low())
+                    .and_factor(outputs[19].when_low())
+                    .and_factor(outputs[22].when_low())
+                    .and_factor(outputs[25].when_low())
+                    .and_factor(outputs[28].when_low())
+                    .and_factor(outputs[31].when_low())
             },
-            31 => &[_]Chip.PT {
-                all(.{ not(dir_signal), outputs[bit - 1] }),
-                all(.{ not(dir_signal), none_signal }),
-                all(.{ dir_signal, outputs[31],
-                    not(outputs[0]), not(outputs[3]), not(outputs[6]), not(outputs[9]), not(outputs[12]), not(outputs[15]),
-                    not(outputs[16]), not(outputs[19]), not(outputs[22]), not(outputs[25]), not(outputs[28]),
-                }),
+            31 => &.{
+                dir_signal.when_low().pt().and_factor(outputs[bit - 1].when_high()),
+                dir_signal.when_low().pt().and_factor(none_signal.when_high()),
+                dir_signal.when_high().pt()
+                    .and_factor(outputs[0].when_low())
+                    .and_factor(outputs[3].when_low())
+                    .and_factor(outputs[6].when_low())
+                    .and_factor(outputs[9].when_low())
+                    .and_factor(outputs[12].when_low())
+                    .and_factor(outputs[15].when_low())
+                    .and_factor(outputs[16].when_low())
+                    .and_factor(outputs[19].when_low())
+                    .and_factor(outputs[22].when_low())
+                    .and_factor(outputs[25].when_low())
+                    .and_factor(outputs[28].when_low())
+                    .and_factor(outputs[31].when_high())
             },
-            else => &[_]Chip.PT {
-                all(.{ not(dir_signal), outputs[bit - 1] }),
-                all(.{     dir_signal,  outputs[bit + 1] }),
+            else => &.{
+                dir_signal.when_low().pt().and_factor(outputs[bit - 1].when_high()),
+                dir_signal.when_high().pt().and_factor(outputs[bit + 1].when_high()),
             },
         }};
     }
@@ -90,15 +101,15 @@ pub fn main() !void {
 
     const results = try chip.assemble(arena.allocator());
 
-    var jed_file = try std.fs.cwd().createFile("examples/larson_scanner.jed", .{});
+    var jed_file = try std.fs.cwd().createFile("larson_scanner.jed", .{});
     defer jed_file.close();
     try Chip.write_jed(arena.allocator(), results.jedec, jed_file.writer(), .{});
 
-    var svf_file = try std.fs.cwd().createFile("examples/larson_scanner.svf", .{});
+    var svf_file = try std.fs.cwd().createFile("larson_scanner.svf", .{});
     defer svf_file.close();
     try Chip.write_svf(results.jedec, svf_file.writer(), .{});
 
-    var report_file = try std.fs.cwd().createFile("examples/larson_scanner.html", .{});
+    var report_file = try std.fs.cwd().createFile("larson_scanner.html", .{});
     defer report_file.close();
     try Chip.write_report(results.jedec, report_file.writer(), .{
         .assembly_errors = results.errors.items,

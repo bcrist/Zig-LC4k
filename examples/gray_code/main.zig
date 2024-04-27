@@ -4,10 +4,9 @@
 const std = @import("std");
 const lc4k = @import("lc4k");
 
-pub fn main() !void {
-    const Chip = lc4k.LC4064ZC_TQFP100;
-    const PTs = Chip.PTs;
+const Chip = lc4k.LC4064ZC_TQFP100;
 
+pub fn main() !void {
     var chip = Chip {};
 
     @setEvalBranchQuota(5000);
@@ -26,38 +25,38 @@ pub fn main() !void {
         .io_A3, .io_A2, .io_A1, .io_A0,
     };
 
-    chip.glb[0].shared_pt_clock = .{ .positive = PTs.of(Chip.pins._12) };
-    chip.glb[1].shared_pt_clock = .{ .positive = PTs.of(Chip.pins._12) };
-    chip.glb[2].shared_pt_clock = .{ .positive = PTs.of(Chip.pins._12) };
+    chip.glb[0].shared_pt_clock = comptime .{ .positive = Chip.pins._12.when_high().pt() };
+    chip.glb[1].shared_pt_clock = comptime .{ .positive = Chip.pins._12.when_high().pt() };
+    chip.glb[2].shared_pt_clock = comptime .{ .positive = Chip.pins._12.when_high().pt() };
 
-    inline for (counter_bits) |out, bit| {
-        var mc = chip.mc(out);
+    inline for (counter_bits, 0..) |out, bit| {
+        var mc = chip.mc(out.mc());
         mc.func = .{ .t_ff = .{
-            .clock = .{ .shared_pt_clock = {} },
+            .clock = .shared_pt_clock,
         }};
         mc.output.oe = .output_only;
 
-        mc.logic = .{ .sum = &[_]Chip.PT { comptime blk: {
+        mc.logic = comptime .{ .sum = &.{ blk: {
             // Each bit of the counter should toggle when every lower bit is a 1
-            var all_ones = PTs.always();
+            var pt = Chip.PT.always();
             var n = 0;
             while (n < bit) : (n += 1) {
-                all_ones = PTs.all(.{ all_ones, counter_bits[n] });
+                pt = pt.and_factor(counter_bits[n].when_high());
             }
-            break :blk all_ones;
+            break :blk pt;
         }}};
     }
 
-    inline for (gray_code_bits) |out, bit| {
-        var mc = chip.mc(out);
+    inline for (gray_code_bits, 0..) |out, bit| {
+        var mc = chip.mc(out.mc());
         mc.output.oe = .output_only;
         if (bit < gray_code_bits.len - 1) {
-            mc.logic = .{ .sum_xor_pt0 = .{
-                .sum = &.{ PTs.of(counter_bits[bit]) },
-                .pt0 = PTs.of(counter_bits[bit + 1]),
+            mc.logic = comptime .{ .sum_xor_pt0 = .{
+                .sum = &.{ counter_bits[bit].when_high().pt() },
+                .pt0 = counter_bits[bit + 1].when_high().pt(),
             }};
         } else {
-            mc.logic = .{ .sum = &[_]Chip.PT { PTs.of(counter_bits[bit]) }};
+            mc.logic = comptime .{ .sum = &.{ counter_bits[bit].when_high().pt() }};
         }
     }
 
@@ -66,15 +65,15 @@ pub fn main() !void {
 
     const results = try chip.assemble(arena.allocator());
 
-    var jed_file = try std.fs.cwd().createFile("examples/gray_code.jed", .{});
+    var jed_file = try std.fs.cwd().createFile("gray_code.jed", .{});
     defer jed_file.close();
     try Chip.write_jed(arena.allocator(), results.jedec, jed_file.writer(), .{});
 
-    var svf_file = try std.fs.cwd().createFile("examples/gray_code.svf", .{});
+    var svf_file = try std.fs.cwd().createFile("gray_code.svf", .{});
     defer svf_file.close();
     try Chip.write_svf(results.jedec, svf_file.writer(), .{});
 
-    var report_file = try std.fs.cwd().createFile("examples/gray_code.html", .{});
+    var report_file = try std.fs.cwd().createFile("gray_code.html", .{});
     defer report_file.close();
     try Chip.write_report(results.jedec, report_file.writer(), .{
         .assembly_errors = results.errors.items,

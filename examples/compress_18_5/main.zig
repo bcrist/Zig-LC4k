@@ -45,7 +45,6 @@ const std = @import("std");
 const lc4k = @import("lc4k");
 
 const Chip = lc4k.LC4032ZE_TQFP48;
-const PTs = Chip.PTs;
 
 pub fn main() !void {
 
@@ -114,7 +113,7 @@ pub fn main() !void {
     const layer4_i2_o2 = Chip.GRP.mc_B7;
     const layer4_i2_o3 = Chip.GRP.mc_B6;
 
-    inline for (layer1_i0_o0) |_, n| {
+    inline for (layer1_i0_o0, 0..) |_, n| {
         const base = n * 3;
         full_adder(&chip, inputs[base],    inputs[base+1],  inputs[base+2],  layer1_i0_o0[n], layer1_i0_o1[n]);
     }
@@ -130,24 +129,22 @@ pub fn main() !void {
     full_adder(&chip,     layer3_i0_o1,    layer2_i0_o1_1, layer3_i1_o1,     outputs[1],      layer4_i1_o2);
     full_adder(&chip,     layer3_i1_o2,    layer2_i1_o2_0, layer2_i1_o2_1,   layer4_i2_o2,    layer4_i2_o3);
 
-    chip.mc(outputs[2]).logic = .{ .sum_xor_pt0 = .{
-        .sum = &[_]Chip.PT { PTs.of(layer4_i1_o2) },
-        .pt0 = PTs.of(layer4_i2_o2),
+    chip.mc(outputs[2].mc()).logic = comptime .{ .sum_xor_pt0 = .{
+        .sum = &.{ layer4_i1_o2.when_high().pt() },
+        .pt0 = layer4_i2_o2.when_high().pt(),
     }};
 
-    chip.mc(outputs[3]).logic = .{ .sum_xor_pt0 = .{
-        .sum = &[_]Chip.PT {
-            PTs.all(.{ layer4_i2_o2, layer4_i1_o2 }),
-        },
-        .pt0 = PTs.of(layer4_i2_o3),
+    chip.mc(outputs[3].mc()).logic = comptime .{ .sum_xor_pt0 = .{
+        .sum = &.{ layer4_i2_o2.when_high().pt().and_factor(layer4_i1_o2.when_high()) },
+        .pt0 = layer4_i2_o3.when_high().pt(),
     }};
 
-    chip.mc(outputs[4]).logic = .{ .sum = &.{
-        PTs.all(.{ layer4_i1_o2, layer4_i2_o2, layer4_i2_o3 }),
+    chip.mc(outputs[4].mc()).logic = comptime .{ .sum = &.{
+        layer4_i1_o2.when_high().pt().and_factor(layer4_i2_o2.when_high()).and_factor(layer4_i2_o3.when_high()),
     }};
 
     inline for (outputs) |out| {
-        chip.mc(out).output.oe = .output_only;
+        chip.mc(out.mc()).output.oe = .output_only;
     }
 
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -155,15 +152,15 @@ pub fn main() !void {
 
     const results = try chip.assemble(arena.allocator());
 
-    var jed_file = try std.fs.cwd().createFile("examples/compress_18_5.jed", .{});
+    var jed_file = try std.fs.cwd().createFile("compress_18_5.jed", .{});
     defer jed_file.close();
     try Chip.write_jed(arena.allocator(), results.jedec, jed_file.writer(), .{});
 
-    var svf_file = try std.fs.cwd().createFile("examples/compress_18_5.svf", .{});
+    var svf_file = try std.fs.cwd().createFile("compress_18_5.svf", .{});
     defer svf_file.close();
     try Chip.write_svf(results.jedec, svf_file.writer(), .{});
 
-    var report_file = try std.fs.cwd().createFile("examples/compress_18_5.html", .{});
+    var report_file = try std.fs.cwd().createFile("compress_18_5.html", .{});
     defer report_file.close();
     try Chip.write_report(results.jedec, report_file.writer(), .{
         .assembly_errors = results.errors.items,
@@ -171,25 +168,25 @@ pub fn main() !void {
 }
 
 fn full_adder(chip: *Chip,
-    comptime in0: anytype,
-    comptime in1: anytype,
-    comptime in2: anytype,
-    comptime out0: anytype,
-    comptime out1: anytype,
+    comptime in0: Chip.GRP,
+    comptime in1: Chip.GRP,
+    comptime in2: Chip.GRP,
+    comptime out0: Chip.GRP,
+    comptime out1: Chip.GRP,
 ) void {
-    chip.mc(out0).logic = .{ .sum_xor_pt0 = .{
-        .sum = comptime &[_]Chip.PT {
-            PTs.all(.{ in0, PTs.not(in1) }),
-            PTs.all(.{ in1, PTs.not(in0) }),
+    chip.mc(out0.mc()).logic = comptime .{ .sum_xor_pt0 = .{
+        .sum = &.{
+            in0.when_high().pt().and_factor(in1.when_low()),
+            in1.when_high().pt().and_factor(in0.when_low()),
         },
-        .pt0 = PTs.of(in2),
+        .pt0 = in2.when_high().pt(),
     }};
 
-    chip.mc(out1).logic = .{ .sum = comptime &[_]Chip.PT {
-        PTs.all(.{ in0, in1 }),
-        PTs.all(.{ in0, in2 }),
-        PTs.all(.{ in1, in2 }),
-        PTs.all(.{ in0, in1, in2 }),
+    chip.mc(out1.mc()).logic = comptime .{ .sum = &.{
+        in0.when_high().pt().and_factor(in1.when_high()),
+        in0.when_high().pt().and_factor(in2.when_high()),
+        in1.when_high().pt().and_factor(in2.when_high()),
+        in0.when_high().pt().and_factor(in1.when_high()).and_factor(in2.when_high()),
     }};
 }
 
@@ -199,12 +196,12 @@ fn half_adder(chip: *Chip,
     comptime out0: anytype,
     comptime out1: anytype,
 ) void {
-    chip.mc(out0).logic = .{ .sum_xor_pt0 = .{
-        .sum = comptime &[_]Chip.PT { PTs.of(in0) },
-        .pt0 = PTs.of(in1),
+    chip.mc(out0.mc()).logic = comptime .{ .sum_xor_pt0 = .{
+        .sum = &.{ in0.when_high().pt() },
+        .pt0 = in1.when_high().pt(),
     }};
 
-    chip.mc(out1).logic = .{ .sum = comptime &[_]Chip.PT {
-        PTs.all(.{ in0, in1 }),
+    chip.mc(out1.mc()).logic = comptime .{ .sum = &.{
+        in0.when_high().pt().and_factor(in1.when_high()),
     }};
 }

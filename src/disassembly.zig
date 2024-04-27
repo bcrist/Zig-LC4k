@@ -4,7 +4,7 @@ const jedec = @import("jedec.zig");
 const fuses = @import("fuses.zig");
 const internal = @import("internal.zig");
 const routing = @import("routing.zig");
-const PT = lc4k.Product_Term;
+const Product_Term = lc4k.Product_Term;
 const Factor = lc4k.Factor;
 const assert = std.debug.assert;
 
@@ -20,7 +20,7 @@ pub const DisassemblyError = struct {
 
 pub fn Disassembly_Results(comptime Device: type) type {
     return struct {
-        config: lc4k.LC4k(Device.device_type),
+        config: lc4k.Chip_Config(Device.device_type),
         gi_routing: [Device.num_glbs][Device.num_gis_per_glb]?Device.GRP,
         sum_routing: [Device.num_glbs]routing.RoutingData,
         errors: std.ArrayList(DisassemblyError),
@@ -98,9 +98,9 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
     }
 
     // Program clock/input fuses
-    for (results.config.clock, 0..) |*clock_config, clock_pin_index| {
-        const pin_info = Device.clock_pins[clock_pin_index];
-        const grp: Device.GRP = @enumFromInt(pin_info.grp_ordinal.?);
+    for (&results.config.clock, 0..) |*clock_config, clock_pin_index| {
+        const pin = Device.clock_pins[clock_pin_index];
+        const grp: Device.GRP = pin.signal();
 
         const threshold_range = jedec.FuseRange.fromFuse(Device.getInput_ThresholdFuse(grp));
         clock_config.threshold = readField(file.data, lc4k.Input_Threshold, threshold_range);
@@ -114,9 +114,9 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
         }
     }
 
-    for (results.config.input, 0..) |*input_config, input_pin_index| {
-        const pin_info = Device.input_pins[input_pin_index];
-        const grp: Device.GRP = @enumFromInt(pin_info.grp_ordinal.?);
+    for (&results.config.input, 0..) |*input_config, input_pin_index| {
+        const pin = Device.input_pins[input_pin_index];
+        const grp: Device.GRP = pin.signal();
 
         const threshold_range = jedec.FuseRange.fromFuse(Device.getInput_ThresholdFuse(grp));
         input_config.threshold = readField(file.data, lc4k.Input_Threshold, threshold_range);
@@ -135,7 +135,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
         results.config.security = security != 0;
     }
 
-    for (results.config.glb, 0..) |*glb_config, glb| {
+    for (&results.config.glb, 0..) |*glb_config, glb| {
         // Parse GI routing fuses
         for (Device.gi_options, 0..) |options, gi| {
             const gi_fuses = Device.getGiRange(glb, gi);
@@ -202,7 +202,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
             1 => .clk3_pos,
         };
 
-        for (glb_config.mc, 0..) |*mc_config, mc| {
+        for (&glb_config.mc, 0..) |*mc_config, mc| {
             const mcref = lc4k.MC_Ref.init(glb, mc);
 
             const cluster_routing = readField(file.data, lc4k.Cluster_Routing, fuses.getCluster_RoutingRange(Device, mcref));
@@ -213,7 +213,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
             results.sum_routing[glb].wide[mc] = wide_routing;
 
             mc_config.func = switch (readField(file.data, lc4k.Macrocell_Function, fuses.getMcFuncRange(Device, mcref))) {
-                .combinational => .{ .combinational = {} },
+                .combinational => .combinational,
                 .latch => .{ .latch = .{} },
                 .t_ff => .{ .t_ff = .{} },
                 .d_ff => .{ .d_ff = .{} },
@@ -230,7 +230,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
                 const invert = file.data.isSet(invert_fuse);
 
                 if (!file.data.isSet(input_bypass_fuse)) {
-                    mc_config.logic = .{ .input_buffer = {} };
+                    mc_config.logic = .input_buffer;
                     if (mc_config.func == .combinational) {
                         try results.errors.append(.{
                             .err = error.InvalidLogicConfig,
@@ -350,7 +350,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
             if (fuses.getOESourceRange(Device, mcref)) |range| {
                 mc_config.output.oe = readField(file.data, lc4k.Output_Enable_Mode, range);
             }
-            if (unmap_orm(Device, mcref)) |source_mcref| {
+            if (unmap_orm(Device, file.data, mcref)) |source_mcref| {
                 if (@TypeOf(mc_config.output) == lc4k.Output_Config_ZE) {
                     mc_config.output.routing = .{ .absolute = source_mcref.mc };
                 } else {
@@ -388,24 +388,24 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
         }
 
         // after all MC fuses have been parsed, collect all routed logic PTs
-        for (glb_config.mc, 0..) |*mc_config, mc| {
+        for (&glb_config.mc, 0..) |*mc_config, mc| {
             const mcref = lc4k.MC_Ref.init(glb, mc);
 
             if (Device.family != .zero_power_enhanced) {
                 switch (mc_config.output.routing) {
                     .same_as_oe, .self => {},
                     .five_pt_fast_bypass, .five_pt_fast_bypass_inverted => {
-                        var pts = try allocator.alloc(PT(Device.GRP), 5);
+                        var pts = try allocator.alloc(Product_Term(Device.GRP), 5);
                         var pt_index: usize = 0;
                         var num_pts: usize = 0;
                         var sum_is_always = false;
                         while (pt_index < 5) : (pt_index += 1) {
                             if (internal.getSpecialPT(Device, mc_config.*, pt_index)) |_| continue;
                             const pt = try parsePTFuses(Device, allocator, glb, mc * 5 + pt_index, gi_routing, file.data, &results);
-                            if (!internal.isNever(pt) and !(sum_is_always and internal.isAlways(pt))) {
+                            if (!pt.is_never() and !(sum_is_always and pt.is_always())) {
                                 pts[num_pts] = pt;
                                 num_pts += 1;
-                                if (internal.isAlways(pt)) {
+                                if (pt.is_always()) {
                                     sum_is_always = true;
                                 }
                             }
@@ -446,16 +446,16 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
                 if (sum_is_always) num_pts += 1;
 
                 const pts = if (num_pts > 0) blk: {
-                    var pts = try allocator.alloc(PT(Device.GRP), num_pts);
+                    var pts = try allocator.alloc(Product_Term(Device.GRP), num_pts);
                     var next_pt_index: usize = 0;
                     sum_is_always = false;
                     pt_iter = results.sum_routing[glb].iterator(Device, glb_config, mc);
                     while (pt_iter.next()) |glb_pt_offset| {
                         const pt = try parsePTFuses(Device, allocator, glb, glb_pt_offset, gi_routing, file.data, &results);
-                        if (!internal.isNever(pt) and !(sum_is_always and internal.isAlways(pt))) {
+                        if (!pt.is_never() and !(sum_is_always and pt.is_always())) {
                             pts[next_pt_index] = pt;
                             next_pt_index += 1;
-                            if (internal.isAlways(pt)) {
+                            if (pt.is_always()) {
                                 sum_is_always = true;
                             }
                         }
@@ -473,39 +473,25 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
                         });
                     }
                     break :blk pts;
-                } else &[_]PT(Device.GRP) {};
+                } else &[_]Product_Term(Device.GRP) {};
 
-                mc_config.logic = switch (mc_config.logic) {
-                    .sum => .{ .sum = pts },
-                    .sum_inverted => .{ .sum_inverted = pts },
-                    .input_buffer => blk: {
-                        if (pts.len > 0) {
-                            try results.errors.append(.{
-                                .err = error.TooManySumPTs,
-                                .details = "Macrocell is configured for input bypass, but there are sum PTs",
-                                .glb = mcref.glb,
-                                .mc = mcref.mc,
-                            });
-                        }
-                        break :blk .{ .input_buffer = {} };
+                switch (mc_config.logic) {
+                    .sum, .sum_inverted, .sum_xor_input_buffer => |*sum| {
+                        sum.* = pts;
                     },
-                    .pt0 => |pt0| .{ .sum_xor_pt0 = .{
-                        .pt0 = pt0,
-                        .sum = pts,
-                    }},
-                    .pt0_inverted => |pt0| .{ .sum_xor_pt0_inverted = .{
-                        .pt0 = pt0,
-                        .sum = pts,
-                    }},
-                    .sum_xor_pt0 => |logic| .{ .sum_xor_pt0 = .{
-                        .pt0 = logic.pt0,
-                        .sum = pts,
-                    }},
-                    .sum_xor_pt0_inverted => |logic| .{ .sum_xor_pt0_inverted = .{
-                        .pt0 = logic.pt0,
-                        .sum = pts,
-                    }},
-                };
+                    .sum_xor_pt0, .sum_xor_pt0_inverted => |*logic| {
+                        logic.sum = pts;
+                    },
+                    .input_buffer => if (pts.len > 0) {
+                        mc_config.logic = .{ .sum_xor_input_buffer = pts };
+                    },
+                    .pt0 => |pt0| {
+                        mc_config.logic = .{ .sum_xor_pt0 = .{ .pt0 = pt0, .sum = pts }};
+                    },
+                    .pt0_inverted => |pt0| {
+                        mc_config.logic = .{ .sum_xor_pt0_inverted = .{ .pt0 = pt0, .sum = pts }};
+                    },
+                }
             }
         }
     }
@@ -556,7 +542,7 @@ pub fn parsePTFuses(
     gi_signals: *const [Device.num_gis_per_glb]?Device.GRP,
     jed: jedec.JedecData,
     maybe_results: ?*Disassembly_Results(Device),
-) !PT(Device.GRP) {
+) !Product_Term(Device.GRP) {
     const GRP = Device.GRP;
     const range = fuses.getPTRange(Device, glb, glb_pt_offset);
     assert(range.count() == gi_signals.len * 2);
@@ -572,13 +558,13 @@ pub fn parsePTFuses(
         const when_low = !jed.isSet(active_low_fuse);
 
         if (when_high and when_low) {
-            return &[_]Factor(GRP) { .{ .never = {} } };
+            return Product_Term(GRP).never();
         } else if (when_high or when_low) {
             num_factors += 1;
         }
     }
 
-    var pt: []Factor(GRP) = try allocator.alloc(Factor(GRP), num_factors);
+    var factors: []Factor(GRP) = try allocator.alloc(Factor(GRP), num_factors);
 
     var factor_index: usize = 0;
     fuse_iter = range.iterator();
@@ -592,9 +578,9 @@ pub fn parsePTFuses(
         if (when_high != when_low) {
             if (maybe_grp) |grp| {
                 if (when_high) {
-                    pt[factor_index] = .{ .when_high = grp };
+                    factors[factor_index] = .{ .when_high = grp };
                 } else {
-                    pt[factor_index] = .{ .when_low = grp };
+                    factors[factor_index] = .{ .when_low = grp };
                 }
             } else if (maybe_results) |results| {
                 try results.errors.append(.{
@@ -608,13 +594,13 @@ pub fn parsePTFuses(
         }
     }
 
-    return pt;
+    return .{ .factors = factors };
 }
 
 fn readGoeConfig(comptime Device: type, data: jedec.JedecData, goe_config: anytype, goe_index: usize, results: *Disassembly_Results(Device)) !void {
     switch (@TypeOf(goe_config.*)) {
         lc4k.GOE_Config_Bus_Or_Pin => switch (data.get(Device.getGOESourceFuse(goe_index))) {
-            0 => goe_config.source = .{ .input = {} },
+            0 => goe_config.source = .input,
             1 => try readGoeSourceBus(Device, data, goe_config, goe_index, results),
         },
         lc4k.GOE_Config_Bus => try readGoeSourceBus(Device, data, goe_config, goe_index, results),
@@ -628,7 +614,7 @@ fn readGoeConfig(comptime Device: type, data: jedec.JedecData, goe_config: anyty
 }
 
 fn readGoeSourceBus(comptime Device: type, data: jedec.JedecData, goe_config: anytype, goe_index: usize, results: *Disassembly_Results(Device)) !void {
-    goe_config.source = .{ .constant_high = {}};
+    goe_config.source = .constant_high;
     var glb: lc4k.GLB_Index = 0;
     var already_reported_goe_collision = false;
     while (glb < Device.num_glbs) : (glb += 1) {

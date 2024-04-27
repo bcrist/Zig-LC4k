@@ -4,9 +4,6 @@ const std = @import("std");
 const lc4k = @import("lc4k");
 
 const Chip = lc4k.LC4032ZE_TQFP48;
-const PTs = Chip.PTs;
-const not = PTs.not;
-const all = PTs.all;
 
 pub fn main() !void {
 
@@ -39,56 +36,58 @@ pub fn main() !void {
         .io_B8,
     };
 
-    chip.mc(outputs[0]).logic = .{ .sum = &[_]Chip.PT {
-        all(.{ inputs[1],  not(inputs[0]) }),
-        all(.{ inputs[3],  not(inputs[0]), not(inputs[1]), not(inputs[2]) }),
-        all(.{ inputs[5],  not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]) }),
-        all(.{ inputs[7],  not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]), not(inputs[6]) }),
-        all(.{ inputs[9],  not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]), not(inputs[6]), not(inputs[7]), not(inputs[8]) }),
-        all(.{ inputs[11], not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]), not(inputs[6]), not(inputs[7]), not(inputs[8]), not(inputs[9]), not(inputs[10]) }),
-        all(.{ inputs[13], not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]), not(inputs[6]), not(inputs[7]), not(inputs[8]), not(inputs[9]), not(inputs[10]), not(inputs[11]), not(inputs[12]) }),
-        all(.{ inputs[15], not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]), not(inputs[6]), not(inputs[7]), not(inputs[8]), not(inputs[9]), not(inputs[10]), not(inputs[11]), not(inputs[12]), not(inputs[13]), not(inputs[14]) }),
+    @setEvalBranchQuota(10000);
+
+    chip.mc(outputs[0].mc()).logic = comptime .{ .sum = &.{
+        inputs[1].when_high().pt()  .and_factor(inputs[0].when_low()),
+        inputs[3].when_high().pt()  .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()),
+        inputs[5].when_high().pt()  .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()),
+        inputs[7].when_high().pt()  .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()).and_factor(inputs[6].when_low()),
+        inputs[9].when_high().pt()  .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()).and_factor(inputs[6].when_low()).and_factor(inputs[7].when_low()).and_factor(inputs[8].when_low()),
+        inputs[11].when_high().pt() .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()).and_factor(inputs[6].when_low()).and_factor(inputs[7].when_low()).and_factor(inputs[8].when_low()).and_factor(inputs[9].when_low()).and_factor(inputs[10].when_low()),
+        inputs[13].when_high().pt() .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()).and_factor(inputs[6].when_low()).and_factor(inputs[7].when_low()).and_factor(inputs[8].when_low()).and_factor(inputs[9].when_low()).and_factor(inputs[10].when_low()).and_factor(inputs[11].when_low()).and_factor(inputs[12].when_low()),
+        inputs[15].when_high().pt() .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()).and_factor(inputs[6].when_low()).and_factor(inputs[7].when_low()).and_factor(inputs[8].when_low()).and_factor(inputs[9].when_low()).and_factor(inputs[10].when_low()).and_factor(inputs[11].when_low()).and_factor(inputs[12].when_low()).and_factor(inputs[13].when_low()).and_factor(inputs[14].when_low()),
     }};
 
-    chip.mc(outputs[1]).logic = .{ .sum = &[_]Chip.PT {
-        all(.{ inputs[2],  not(inputs[0]), not(inputs[1]) }),
-        all(.{ inputs[3],  not(inputs[0]), not(inputs[1]), not(inputs[2]) }),
-        all(.{ inputs[6],  not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]) }),
-        all(.{ inputs[7],  not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]), not(inputs[6]) }),
-        all(.{ inputs[10], not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]), not(inputs[6]), not(inputs[7]), not(inputs[8]), not(inputs[9]) }),
-        all(.{ inputs[11], not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]), not(inputs[6]), not(inputs[7]), not(inputs[8]), not(inputs[9]), not(inputs[10]) }),
-        all(.{ inputs[14], not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]), not(inputs[6]), not(inputs[7]), not(inputs[8]), not(inputs[9]), not(inputs[10]), not(inputs[11]), not(inputs[12]), not(inputs[13]) }),
-        all(.{ inputs[15], not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]), not(inputs[6]), not(inputs[7]), not(inputs[8]), not(inputs[9]), not(inputs[10]), not(inputs[11]), not(inputs[12]), not(inputs[13]), not(inputs[14]) }),
+    chip.mc(outputs[1].mc()).logic = comptime .{ .sum = &.{
+        inputs[2].when_high().pt()  .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()),
+        inputs[3].when_high().pt()  .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()),
+        inputs[6].when_high().pt()  .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()),
+        inputs[7].when_high().pt()  .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()).and_factor(inputs[6].when_low()),
+        inputs[10].when_high().pt() .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()).and_factor(inputs[6].when_low()).and_factor(inputs[7].when_low()).and_factor(inputs[8].when_low()).and_factor(inputs[9].when_low()),
+        inputs[11].when_high().pt() .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()).and_factor(inputs[6].when_low()).and_factor(inputs[7].when_low()).and_factor(inputs[8].when_low()).and_factor(inputs[9].when_low()).and_factor(inputs[10].when_low()),
+        inputs[14].when_high().pt() .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()).and_factor(inputs[6].when_low()).and_factor(inputs[7].when_low()).and_factor(inputs[8].when_low()).and_factor(inputs[9].when_low()).and_factor(inputs[10].when_low()).and_factor(inputs[11].when_low()).and_factor(inputs[12].when_low()).and_factor(inputs[13].when_low()),
+        inputs[15].when_high().pt() .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()).and_factor(inputs[6].when_low()).and_factor(inputs[7].when_low()).and_factor(inputs[8].when_low()).and_factor(inputs[9].when_low()).and_factor(inputs[10].when_low()).and_factor(inputs[11].when_low()).and_factor(inputs[12].when_low()).and_factor(inputs[13].when_low()).and_factor(inputs[14].when_low()),
     }};
 
-    chip.mc(outputs[2]).logic = .{ .sum = &[_]Chip.PT {
-        all(.{ inputs[4],  not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]) }),
-        all(.{ inputs[5],  not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]) }),
-        all(.{ inputs[6],  not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]) }),
-        all(.{ inputs[7],  not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]), not(inputs[6]) }),
-        all(.{ inputs[12], not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]), not(inputs[6]), not(inputs[7]), not(inputs[8]), not(inputs[9]), not(inputs[10]), not(inputs[11]) }),
-        all(.{ inputs[13], not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]), not(inputs[6]), not(inputs[7]), not(inputs[8]), not(inputs[9]), not(inputs[10]), not(inputs[11]), not(inputs[12]) }),
-        all(.{ inputs[14], not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]), not(inputs[6]), not(inputs[7]), not(inputs[8]), not(inputs[9]), not(inputs[10]), not(inputs[11]), not(inputs[12]), not(inputs[13]) }),
-        all(.{ inputs[15], not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]), not(inputs[6]), not(inputs[7]), not(inputs[8]), not(inputs[9]), not(inputs[10]), not(inputs[11]), not(inputs[12]), not(inputs[13]), not(inputs[14]) }),
+    chip.mc(outputs[2].mc()).logic = comptime .{ .sum = &.{
+        inputs[4].when_high().pt()  .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()),
+        inputs[5].when_high().pt()  .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()),
+        inputs[6].when_high().pt()  .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()),
+        inputs[7].when_high().pt()  .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()).and_factor(inputs[6].when_low()),
+        inputs[12].when_high().pt() .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()).and_factor(inputs[6].when_low()).and_factor(inputs[7].when_low()).and_factor(inputs[8].when_low()).and_factor(inputs[9].when_low()).and_factor(inputs[10].when_low()).and_factor(inputs[11].when_low()),
+        inputs[13].when_high().pt() .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()).and_factor(inputs[6].when_low()).and_factor(inputs[7].when_low()).and_factor(inputs[8].when_low()).and_factor(inputs[9].when_low()).and_factor(inputs[10].when_low()).and_factor(inputs[11].when_low()).and_factor(inputs[12].when_low()),
+        inputs[14].when_high().pt() .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()).and_factor(inputs[6].when_low()).and_factor(inputs[7].when_low()).and_factor(inputs[8].when_low()).and_factor(inputs[9].when_low()).and_factor(inputs[10].when_low()).and_factor(inputs[11].when_low()).and_factor(inputs[12].when_low()).and_factor(inputs[13].when_low()),
+        inputs[15].when_high().pt() .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()).and_factor(inputs[6].when_low()).and_factor(inputs[7].when_low()).and_factor(inputs[8].when_low()).and_factor(inputs[9].when_low()).and_factor(inputs[10].when_low()).and_factor(inputs[11].when_low()).and_factor(inputs[12].when_low()).and_factor(inputs[13].when_low()).and_factor(inputs[14].when_low()),
     }};
 
-    chip.mc(outputs[3]).logic = .{ .sum = &[_]Chip.PT {
-        all(.{ inputs[8],  not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]), not(inputs[6]), not(inputs[7]) }),
-        all(.{ inputs[9],  not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]), not(inputs[6]), not(inputs[7]), not(inputs[8]) }),
-        all(.{ inputs[10], not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]), not(inputs[6]), not(inputs[7]), not(inputs[8]), not(inputs[9]) }),
-        all(.{ inputs[11], not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]), not(inputs[6]), not(inputs[7]), not(inputs[8]), not(inputs[9]), not(inputs[10]) }),
-        all(.{ inputs[12], not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]), not(inputs[6]), not(inputs[7]), not(inputs[8]), not(inputs[9]), not(inputs[10]), not(inputs[11]) }),
-        all(.{ inputs[13], not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]), not(inputs[6]), not(inputs[7]), not(inputs[8]), not(inputs[9]), not(inputs[10]), not(inputs[11]), not(inputs[12]) }),
-        all(.{ inputs[14], not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]), not(inputs[6]), not(inputs[7]), not(inputs[8]), not(inputs[9]), not(inputs[10]), not(inputs[11]), not(inputs[12]), not(inputs[13]) }),
-        all(.{ inputs[15], not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]), not(inputs[6]), not(inputs[7]), not(inputs[8]), not(inputs[9]), not(inputs[10]), not(inputs[11]), not(inputs[12]), not(inputs[13]), not(inputs[14]) }),
+    chip.mc(outputs[3].mc()).logic = comptime .{ .sum = &.{
+        inputs[8].when_high().pt()  .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()).and_factor(inputs[6].when_low()).and_factor(inputs[7].when_low()),
+        inputs[9].when_high().pt()  .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()).and_factor(inputs[6].when_low()).and_factor(inputs[7].when_low()).and_factor(inputs[8].when_low()),
+        inputs[10].when_high().pt() .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()).and_factor(inputs[6].when_low()).and_factor(inputs[7].when_low()).and_factor(inputs[8].when_low()).and_factor(inputs[9].when_low()),
+        inputs[11].when_high().pt() .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()).and_factor(inputs[6].when_low()).and_factor(inputs[7].when_low()).and_factor(inputs[8].when_low()).and_factor(inputs[9].when_low()).and_factor(inputs[10].when_low()),
+        inputs[12].when_high().pt() .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()).and_factor(inputs[6].when_low()).and_factor(inputs[7].when_low()).and_factor(inputs[8].when_low()).and_factor(inputs[9].when_low()).and_factor(inputs[10].when_low()).and_factor(inputs[11].when_low()),
+        inputs[13].when_high().pt() .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()).and_factor(inputs[6].when_low()).and_factor(inputs[7].when_low()).and_factor(inputs[8].when_low()).and_factor(inputs[9].when_low()).and_factor(inputs[10].when_low()).and_factor(inputs[11].when_low()).and_factor(inputs[12].when_low()),
+        inputs[14].when_high().pt() .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()).and_factor(inputs[6].when_low()).and_factor(inputs[7].when_low()).and_factor(inputs[8].when_low()).and_factor(inputs[9].when_low()).and_factor(inputs[10].when_low()).and_factor(inputs[11].when_low()).and_factor(inputs[12].when_low()).and_factor(inputs[13].when_low()),
+        inputs[15].when_high().pt() .and_factor(inputs[0].when_low()).and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()).and_factor(inputs[6].when_low()).and_factor(inputs[7].when_low()).and_factor(inputs[8].when_low()).and_factor(inputs[9].when_low()).and_factor(inputs[10].when_low()).and_factor(inputs[11].when_low()).and_factor(inputs[12].when_low()).and_factor(inputs[13].when_low()).and_factor(inputs[14].when_low()),
     }};
 
-    chip.mc(outputs[4]).logic = .{ .sum = &[_]Chip.PT {
-        all(.{ not(inputs[0]), not(inputs[1]), not(inputs[2]), not(inputs[3]), not(inputs[4]), not(inputs[5]), not(inputs[6]), not(inputs[7]), not(inputs[8]), not(inputs[9]), not(inputs[10]), not(inputs[11]), not(inputs[12]), not(inputs[13]), not(inputs[14]), not(inputs[15]) }),
+    chip.mc(outputs[4].mc()).logic = comptime .{ .sum = &.{
+        inputs[0].when_low().pt().and_factor(inputs[1].when_low()).and_factor(inputs[2].when_low()).and_factor(inputs[3].when_low()).and_factor(inputs[4].when_low()).and_factor(inputs[5].when_low()).and_factor(inputs[6].when_low()).and_factor(inputs[7].when_low()).and_factor(inputs[8].when_low()).and_factor(inputs[9].when_low()).and_factor(inputs[10].when_low()).and_factor(inputs[11].when_low()).and_factor(inputs[12].when_low()).and_factor(inputs[13].when_low()).and_factor(inputs[14].when_low()).and_factor(inputs[15].when_low()),
     }};
 
     inline for (outputs) |out| {
-        chip.mc(out).output.oe = .output_only;
+        chip.mc(out.mc()).output.oe = .output_only;
     }
 
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -96,56 +95,17 @@ pub fn main() !void {
 
     const results = try chip.assemble(arena.allocator());
 
-    var jed_file = try std.fs.cwd().createFile("examples/priority_encoder.jed", .{});
+    var jed_file = try std.fs.cwd().createFile("priority_encoder.jed", .{});
     defer jed_file.close();
     try Chip.write_jed(arena.allocator(), results.jedec, jed_file.writer(), .{});
 
-    var svf_file = try std.fs.cwd().createFile("examples/priority_encoder.svf", .{});
+    var svf_file = try std.fs.cwd().createFile("priority_encoder.svf", .{});
     defer svf_file.close();
     try Chip.write_svf(results.jedec, svf_file.writer(), .{});
 
-    var report_file = try std.fs.cwd().createFile("examples/priority_encoder.html", .{});
+    var report_file = try std.fs.cwd().createFile("priority_encoder.html", .{});
     defer report_file.close();
     try Chip.write_report(results.jedec, report_file.writer(), .{
         .assembly_errors = results.errors.items,
     });
-}
-
-fn full_adder(chip: *Chip,
-    comptime in0: anytype,
-    comptime in1: anytype,
-    comptime in2: anytype,
-    comptime out0: anytype,
-    comptime out1: anytype,
-) void {
-    chip.mc(out0).logic = .{ .sum_xor_pt0 = .{
-        .sum = comptime &[_]Chip.PT {
-            PTs.all(.{ in0, PTs.not(in1) }),
-            PTs.all(.{ in1, PTs.not(in0) }),
-        },
-        .pt0 = PTs.of(in2),
-    }};
-
-    chip.mc(out1).logic = .{ .sum = comptime &[_]Chip.PT {
-        PTs.all(.{ in0, in1 }),
-        PTs.all(.{ in0, in2 }),
-        PTs.all(.{ in1, in2 }),
-        PTs.all(.{ in0, in1, in2 }),
-    }};
-}
-
-fn half_adder(chip: *Chip,
-    comptime in0: anytype,
-    comptime in1: anytype,
-    comptime out0: anytype,
-    comptime out1: anytype,
-) void {
-    chip.mc(out0).logic = .{ .sum_xor_pt0 = .{
-        .sum = comptime &[_]Chip.PT { PTs.of(in0) },
-        .pt0 = PTs.of(in1),
-    }};
-
-    chip.mc(out1).logic = .{ .sum = comptime &[_]Chip.PT {
-        PTs.all(.{ in0, in1 }),
-    }};
 }

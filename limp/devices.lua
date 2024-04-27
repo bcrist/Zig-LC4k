@@ -120,15 +120,18 @@ local zerohold = load_zerohold_fuse(which)
 
 compute_grp_names(info.pins_by_type, pin_to_threshold_fuse)
 
+info.grp_pins = info.pins;
+info.grp_pins_by_type = info.pins_by_type;
+
 if grp_device then
-    local grp_pins, grp_pins_by_type = load_pins(grp_device)
+    info.grp_pins, info.grp_pins_by_type = load_pins(grp_device)
     local grp_pin_to_threshold_fuse, grp_threshold_fuse_to_pin = load_input_threshold_fuses(grp_device)
-    compute_grp_names(grp_pins_by_type, grp_pin_to_threshold_fuse)
+    compute_grp_names(info.grp_pins_by_type, grp_pin_to_threshold_fuse)
 
     for _, pin in pairs(info.pins_by_type.input) do
         local threshold_fuse = pin_to_threshold_fuse[pin.id]
         local grp_pin_id = grp_threshold_fuse_to_pin[threshold_fuse[1]..'_'..threshold_fuse[2]]
-        pin.grp_name = grp_pins[grp_pin_id].grp_name
+        pin.grp_name = info.grp_pins[grp_pin_id].grp_name
     end
 end
 
@@ -143,7 +146,6 @@ end
 template([[
 const std = @import("std");
 const lc4k = @import("../lc4k.zig");
-const internal = @import("../internal.zig");
 const jedec = @import("../jedec.zig");
 
 pub const device_type = lc4k.Device_Type.`device`;
@@ -160,6 +162,9 @@ pub const oe_bus_size = `oe_bus_size`;
 
 pub const jedec_dimensions = jedec.FuseRange.init(`jedec_width`, `jedec_height`);
 
+pub const F = lc4k.Factor(GRP);
+pub const PT = lc4k.Product_Term(GRP);
+pub const Pin = lc4k.Pin(GRP);
 ]])(info)
 
 if info.family == 'zero_power_enhanced' then
@@ -174,51 +179,130 @@ pub const osctimer = struct {
 ]])(info)
 end
 
-if grp_device then write([[
-const grp_device = @import("]], grp_device, [[.zig");
-
-pub const GRP = grp_device.GRP;
-pub const mc_signals = grp_device.mc_signals;
-pub const mc_output_signals = grp_device.mc_output_signals;
-pub const gi_options = grp_device.gi_options;
-pub const gi_options_by_grp = grp_device.gi_options_by_grp;
-pub const getGlbRange = grp_device.getGlbRange;
-pub const getGiRange = grp_device.getGiRange;
-pub const getBClockRange = grp_device.getBClockRange;
-
-]]) else
-    local grp_names = {}
-    for _, pin in pairs(info.pins) do
-        if pin.grp_name and pin.grp_name ~= '' then
-            grp_names[pin.grp_name] = true
-        end
+local grp_names = {}
+for _, pin in pairs(info.grp_pins) do
+    if pin.grp_name and pin.grp_name ~= '' then
+        grp_names[pin.grp_name] = pin
     end
-    for glb = 1, info.num_glbs do
-        for mc = 0, 15 do
-            grp_names['mc_'..string.char(64 + glb)..mc] = true
-        end
+end
+for glb = 1, info.num_glbs do
+    for mc = 0, 15 do
+        grp_names['mc_'..string.char(64 + glb)..mc] = {
+            glb = glb,
+            mc = mc,
+        }
     end
-    write([[
-pub const GRP = enum {]], indent)
+end
+write(nl, [[pub const GRP = enum {]], indent)
+for grp_name in spairs(grp_names, natural_cmp) do
+    write(nl, grp_name, ',')
+end
+write [[
+
+
+    pub inline fn kind(self: GRP) lc4k.GRP_Kind {
+        return switch (@intFromEnum(self)) {]]
+do
+    indent(2)
+    local last_kind = nil
+    local first_grp_name = nil
+    local last_grp_name = nil
     for grp_name in spairs(grp_names, natural_cmp) do
-        write(nl, grp_name, ',')
-    end
-    write(unindent, nl, [[
-};
+        local kind = grp_name:sub(1,2)
+        if kind == 'cl' then kind = 'clk' end
+        if kind ~= last_kind then
+            if last_kind ~= nil then
+                write(nl, '@intFromEnum(GRP.', first_grp_name, ')...@intFromEnum(GRP.', last_grp_name, ') => .', last_kind, ',')
+            end
 
-pub const mc_signals = [num_glbs][num_mcs_per_glb]GRP {]])
-    indent()
-    for glb = 1, info.num_glbs do
-        write(nl, '.{')
-        for mc = 0, 15 do
-            write(' .mc_', string.char(64 + glb), mc, ',')
+            last_kind = kind
+            first_grp_name = grp_name
+            last_grp_name = grp_name
+        else
+            last_grp_name = grp_name
         end
-        write(' },')
     end
-    write(unindent, nl, [[
+    if last_kind ~= nil then
+        write(nl, '@intFromEnum(GRP.', first_grp_name, ')...@intFromEnum(GRP.', last_grp_name, ') => .', last_kind, ',')
+    end
+    unindent(2)
+end
+write [[
+
+        };
+    }
+
+    pub inline fn maybe_mc(self: GRP) ?lc4k.MC_Ref {
+        return switch (@intFromEnum(self)) {]]
+indent(2)
+for glb = 1, info.num_glbs do
+    local glb_prefix = string.char(64 + glb)
+    write(nl, '@intFromEnum(GRP.io_', glb_prefix, '0)...@intFromEnum(GRP.io_', glb_prefix, '15) => .{ .glb = ', glb - 1, ', .mc = @intFromEnum(self) - @intFromEnum(GRP.io_', glb_prefix, '0) },')
+    write(nl, '@intFromEnum(GRP.mc_', glb_prefix, '0)...@intFromEnum(GRP.mc_', glb_prefix, '15) => .{ .glb = ', glb - 1, ', .mc = @intFromEnum(self) - @intFromEnum(GRP.mc_', glb_prefix, '0) },')
+end
+unindent(2)
+write [[
+
+            else => null,
+        };
+    }
+    pub inline fn mc(self: GRP) lc4k.MC_Ref {
+        return self.maybe_mc() orelse unreachable;
+    }
+
+    pub inline fn maybe_pin(self: GRP) ?Pin {
+        return switch (self) {]]
+indent(2)
+for grp_name, info in spairs(grp_names, natural_cmp) do
+    if info.safe_id then
+        write(nl, '.', grp_name, ' => pins.', info.safe_id, ',')
+    end
+end
+unindent(2)
+unindent()
+write [[
+
+            else => null,
+        };
+    }
+    pub inline fn pin(self: GRP) Pin {
+        return self.maybe_pin() orelse unreachable;
+    }
+
+    pub inline fn when_high(self: GRP) F {
+        return .{ .when_high = self };
+    }
+
+    pub inline fn when_low(self: GRP) F {
+        return .{ .when_low = self };
+    }
+
+    pub inline fn mc_fb(mcref: lc4k.MC_Ref) GRP {
+        return mc_feedback_signals[mcref.glb][mcref.mc];
+    }
+
+    pub inline fn maybe_mc_pad(mcref: lc4k.MC_Ref) ?GRP {
+        return mc_io_signals[mcref.glb][mcref.mc];
+    }
+
+    pub inline fn mc_pad(mcref: lc4k.MC_Ref) GRP {
+        return mc_io_signals[mcref.glb][mcref.mc].?;
+    }
 };
 
-pub const mc_output_signals = [num_glbs][num_mcs_per_glb]?GRP {]])
+pub const mc_feedback_signals = [num_glbs][num_mcs_per_glb]GRP {]]
+indent()
+for glb = 1, info.num_glbs do
+    write(nl, '.{')
+    for mc = 0, 15 do
+        write(' .mc_', string.char(64 + glb), mc, ',')
+    end
+    write(' },')
+end
+write(unindent, nl, [[
+};
+
+pub const mc_io_signals = [num_glbs][num_mcs_per_glb]?GRP {]])
     indent()
     for glb = 1, info.num_glbs do
         write(nl, '.{')
@@ -232,14 +316,16 @@ pub const mc_output_signals = [num_glbs][num_mcs_per_glb]?GRP {]])
         end
         write(' },')
     end
-    write(unindent, nl, [[
+    unindent()
+    write [[
+
 };
 
-pub const gi_options = [num_gis_per_glb][gi_mux_size]GRP {]])
+pub const gi_options = [num_gis_per_glb][gi_mux_size]GRP {]]
 
     indent()
     include 'grp'
-    gi_to_grp = load_gi_options(which, info.pins)
+    gi_to_grp = load_gi_options(grp_device or which, info.grp_pins)
     for gi = 0,35 do
         local options = gi_to_grp[gi]
         write(nl, '.{')
@@ -254,8 +340,20 @@ pub const gi_options = [num_gis_per_glb][gi_mux_size]GRP {]])
 
 };
 
-pub const gi_options_by_grp = internal.invertGIMapping(GRP, gi_mux_size, &gi_options);
+pub const gi_options_by_grp = lc4k.invert_gi_mapping(GRP, gi_mux_size, &gi_options);
 
+]]
+
+if grp_device then
+    write([[
+const base = @import("]], grp_device, [[.zig");
+pub const getGlbRange = base.getGlbRange;
+pub const getGiRange = base.getGiRange;
+pub const getBClockRange = base.getBClockRange;
+]])
+else
+    
+    write [[
 pub fn getGlbRange(glb: usize) jedec.FuseRange {
     std.debug.assert(glb < num_glbs);
     ]]
@@ -269,6 +367,7 @@ pub fn getGlbRange(glb: usize) jedec.FuseRange {
         writeln('return jedec_dimensions.subColumns(', 83 + gi_cols, ' * index + ', gi_cols, ', 83);', unindent)
     end
     write [[
+
 }
 
 pub fn getGiRange(glb: usize, gi: usize) jedec.FuseRange {
@@ -458,62 +557,30 @@ pub fn getInput_ThresholdFuse(input: GRP) jedec.Fuse {
     };
 }
 
-pub fn getMC_Ref(comptime which: anytype) lc4k.MC_Ref {
-    return internal.getMC_Ref(GRP, which);
-}
-
-pub fn getGLB_Index(comptime which: anytype) lc4k.GLB_Index {
-    return internal.getGLB_Index(@This(), which);
-}
-
-pub fn getGrp(comptime which: anytype) GRP {
-    return internal.getGrp(GRP, which);
-}
-
-pub fn getGrpInput(comptime which: anytype) GRP {
-    return internal.getGrpInput(GRP, which);
-}
-
-pub fn getGrpFeedback(comptime which: anytype) GRP {
-    return internal.getGrpFeedback(GRP, which);
-}
-
-pub fn getPin(comptime which: anytype) lc4k.Pin_Info {
-    return internal.getPin(@This(), which);
-}
-
 pub const pins = struct {]]
 
 local write_pin = template [[
 
-pub const `safe_id` = lc4k.Pin_Info {
-    .id = "`id`",
-`...`};]]
+pub const `safe_id` = Pin.init_`init_suffix`("`id`", `...`);]]
 
 indent()
 for _, pin in spairs(info.pins, natural_cmp) do
-    local t = {}
-
-    t[1] = '    .func = .{ .'..pin.func
-    if pin.func == 'io' or pin.func == 'io_oe0' or pin.func == 'io_oe1' then
-        t[#t+1] = ' = '..pin.mc
+    local t
+    if pin.func == 'io' then
+        pin.init_suffix = 'io'
+        t = { '.', pin.grp_name }
+    elseif pin.func == 'io_oe0' or pin.func == 'io_oe1' then
+        pin.init_suffix = 'oe'
+        t = { '.', pin.grp_name, ', ', pin.func:sub(6) }
     elseif pin.func == 'clock' then
-        t[#t+1] = ' = '..pin.clk
+        pin.init_suffix = 'clk'
+        t = { '.', pin.grp_name, ', ', pin.clk, ', ', pin.glb }
+    elseif pin.func == 'input' then
+        pin.init_suffix = 'input'
+        t = { '.', pin.grp_name, ', ', pin.glb }
     else
-        t[#t+1] = ' = {}'
-    end
-
-    t[#t+1] = ' },'
-    t[#t+1] = nl
-
-    if pin.glb ~= '' then
-        t[#t+1] = '    .glb = '..pin.glb..','
-        t[#t+1] = nl
-    end
-
-    if pin.grp_name ~= '' then
-        t[#t+1] = '    .grp_ordinal = @intFromEnum(GRP.'..pin.grp_name..'),'
-        t[#t+1] = nl
+        pin.init_suffix = 'misc'
+        t = { '.', pin.func }
     end
 
     write_pin(pin, table.unpack(t))
@@ -524,7 +591,7 @@ write([[
 
 };
 
-pub const clock_pins = [_]lc4k.Pin_Info {]])
+pub const clock_pins = [_]Pin {]])
 
 local function clock_cmp (a, b)
     local pa = info.pins_by_type.clock[a]
@@ -542,7 +609,7 @@ write([[
 
 };
 
-pub const oe_pins = [_]lc4k.Pin_Info {]])
+pub const oe_pins = [_]Pin {]])
 
 local function oe_cmp (a, b)
     local pa = info.pins[a]
@@ -563,7 +630,7 @@ write([[
 
 };
 
-pub const input_pins = [_]lc4k.Pin_Info {]])
+pub const input_pins = [_]Pin {]])
 
 local function input_cmp (a, b)
     local pa = info.pins_by_type.input[a]
@@ -581,7 +648,7 @@ write([[
 
 };
 
-pub const all_pins = [_]lc4k.Pin_Info {]])
+pub const all_pins = [_]Pin {]])
 
 indent()
 for _, pin in spairs(info.pins, natural_cmp) do

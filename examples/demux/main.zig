@@ -5,21 +5,20 @@ const lc4k = @import("lc4k");
 
 pub fn main() !void {
     const Chip = lc4k.LC4032ZE_TQFP48;
-    const PTs = Chip.PTs;
 
     var chip = Chip {};
 
-    chip.glb[0].shared_pt_enable = PTs.of(Chip.pins._19);
+    chip.glb[0].shared_pt_enable = comptime Chip.pins._19.when_high().pt();
     chip.goe0.source = .{ .glb_shared_pt_enable = 0 };
     chip.goe0.polarity = .active_high;
 
-    const input_pins = [_]lc4k.Pin_Info {
+    const input_pins = [_]Chip.Pin {
         Chip.pins._22,
         Chip.pins._21,
         Chip.pins._20,
     };
 
-    const output_pins = [_]lc4k.Pin_Info {
+    const output_pins = [_]Chip.Pin {
         Chip.pins._23,
         Chip.pins._24,
         Chip.pins._26,
@@ -30,11 +29,15 @@ pub fn main() !void {
         Chip.pins._33,
     };
 
-    inline for (output_pins) |out, bit| {
-        var mc = chip.mc(out);
+    inline for (output_pins, 0..) |out, bit| {
+        var mc = chip.mc(out.mc());
         mc.output.oe = .goe0;
-        mc.logic = .{ .sum_inverted = &[_]Chip.PT {
-            PTs.eql(input_pins, bit),
+        mc.logic = comptime .{ .sum_inverted = &.{
+            Chip.PT.when_eql(&.{
+                input_pins[0].signal(),
+                input_pins[1].signal(),
+                input_pins[2].signal(),
+            }, bit),
         }};
     }
 
@@ -43,15 +46,15 @@ pub fn main() !void {
 
     const results = try chip.assemble(arena.allocator());
 
-    var jed_file = try std.fs.cwd().createFile("examples/demux.jed", .{});
+    var jed_file = try std.fs.cwd().createFile("demux.jed", .{});
     defer jed_file.close();
     try Chip.write_jed(arena.allocator(), results.jedec, jed_file.writer(), .{});
 
-    var svf_file = try std.fs.cwd().createFile("examples/demux.svf", .{});
+    var svf_file = try std.fs.cwd().createFile("demux.svf", .{});
     defer svf_file.close();
     try Chip.write_svf(results.jedec, svf_file.writer(), .{});
 
-    var report_file = try std.fs.cwd().createFile("examples/demux.html", .{});
+    var report_file = try std.fs.cwd().createFile("demux.html", .{});
     defer report_file.close();
     try Chip.write_report(results.jedec, report_file.writer(), .{
         .assembly_errors = results.errors.items,

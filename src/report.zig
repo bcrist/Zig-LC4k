@@ -26,7 +26,7 @@ pub fn Write_Options(comptime Device: type) type {
 pub fn defaultMacrocellNameMapper(comptime Device: type) fn(lc4k.MC_Ref) []const u8 {
     return struct {
         pub fn func(mcref: lc4k.MC_Ref) []const u8 {
-            return @tagName(Device.mc_signals[mcref.glb][mcref.mc])[3..];
+            return @tagName(Device.GRP.mc_fb(mcref))[3..];
         }
     }.func;
 }
@@ -61,7 +61,7 @@ fn ReportData(comptime Device: type) type {
 
         gi_routing: [Device.num_gis_per_glb]?GRP,
         sum_routing: routing.RoutingData,
-        pts: [num_pts]lc4k.PT(GRP),
+        pts: [num_pts]lc4k.Product_Term(GRP),
         pt_usage: [num_pts]PTUsage,
         uses_bie: bool,
     };
@@ -72,10 +72,8 @@ fn ReportData(comptime Device: type) type {
 
     return struct {
         jed: JedecData,
-        config: lc4k.LC4k(Device.device_type),
+        config: lc4k.Chip_Config(Device.device_type),
         disassembly_errors: std.ArrayList(disassembly.DisassemblyError),
-
-        mc_pin_info: std.AutoHashMap(lc4k.MC_Ref, lc4k.Pin_Info),
 
         glb: [Device.num_glbs]GlbReportData = undefined,
 
@@ -101,17 +99,7 @@ fn ReportData(comptime Device: type) type {
                 .jed = file.data,
                 .config = dis.config,
                 .disassembly_errors = dis.errors,
-                .mc_pin_info = std.AutoHashMap(lc4k.MC_Ref, lc4k.Pin_Info).init(alloc),
             };
-
-            for (Device.all_pins) |pin_info| {
-                switch (pin_info.func) {
-                    .io, .io_oe0, .io_oe1 => |mc| {
-                        try self.mc_pin_info.put(lc4k.MC_Ref.init(pin_info.glb.?, mc), pin_info);
-                    },
-                    else => {},
-                }
-            }
 
             var mcs_used = std.EnumSet(GRP) {};
             var ios_used = std.EnumSet(GRP) {};
@@ -171,11 +159,11 @@ fn ReportData(comptime Device: type) type {
 
                     if (mc_config.func != .combinational) {
                         self.num_registers_used += 1;
-                        mcs_used.insert(Device.mc_signals[mcref.glb][mcref.mc]);
+                        mcs_used.insert(Device.GRP.mc_fb(mcref));
                     }
 
                     if (mc_config.output.oe != .input_only) {
-                        if (Device.mc_output_signals[mcref.glb][mcref.mc]) |grp| {
+                        if (Device.GRP.maybe_mc_pad(mcref)) |grp| {
                             ios_used.insert(grp);
                         }
 
@@ -185,11 +173,11 @@ fn ReportData(comptime Device: type) type {
                             mc_config.output.oe_routing;
 
                         const src_mcref = lc4k.MC_Ref.init(glb, output_routing.absolute);
-                        mcs_used.insert(Device.mc_signals[src_mcref.glb][src_mcref.mc]);
+                        mcs_used.insert(Device.GRP.mc_fb(src_mcref));
                     }
 
                     switch (mc_config.logic) {
-                        .sum, .sum_inverted, .input_buffer => {},
+                        .sum, .sum_inverted, .input_buffer, .sum_xor_input_buffer => {},
                         .pt0, .pt0_inverted, .sum_xor_pt0, .sum_xor_pt0_inverted => {
                             glb_data.pt_usage[mc * 5] = .xor;
                         },
@@ -199,7 +187,7 @@ fn ReportData(comptime Device: type) type {
                         .combinational => {},
                         .latch, .t_ff, .d_ff => |reg_config| {
                             switch (reg_config.clock) {
-                                .none, .bclock => {},
+                                .none, .bclock0, .bclock1, .bclock2, .bclock3 => {},
                                 .shared_pt_clock => {
                                     glb_data.pt_usage[shared_clock_pt] = switch (glb_data.pt_usage[shared_clock_pt]) {
                                         .ce => .clock_and_ce,
@@ -271,8 +259,8 @@ fn ReportData(comptime Device: type) type {
                         switch (glb_data.pt_usage[glb_pt_offset]) {
                             .none => {},
                             .sum => {
-                                if (!internal.isAlways(glb_data.pts[glb_pt_offset]) and
-                                    !internal.isNever(glb_data.pts[glb_pt_offset])
+                                if (!glb_data.pts[glb_pt_offset].is_always() and
+                                    !glb_data.pts[glb_pt_offset].is_never()
                                 ) {
                                     self.num_pts_used += 1;
                                     cluster_used = true;
@@ -302,8 +290,8 @@ fn ReportData(comptime Device: type) type {
                 self.glb[glb] = glb_data;
             }
 
-            for (Device.all_pins) |pin_info| {
-                switch (pin_info.func) {
+            for (Device.all_pins) |pin| {
+                switch (pin.info.func) {
                     .io, .io_oe0, .io_oe1, .input, .clock
                         => self.num_ios += 1,
                     .no_connect, .gnd, .vcc_core, .vcco, .tck, .tms, .tdi, .tdo
@@ -594,13 +582,13 @@ fn writeUnusedGOEEquation(writer: anytype, polarity: lc4k.GOE_Polarity) !void {
     });
 }
 
-fn writePinGOEEquation(writer: anytype, comptime Device: type, polarity: lc4k.GOE_Polarity, pin_info: lc4k.Pin_Info, options: Write_Options(Device)) !void {
+fn writePinGOEEquation(writer: anytype, comptime Device: type, polarity: lc4k.GOE_Polarity, pin: Device.Pin, options: Write_Options(Device)) !void {
     try writer.writeAll(switch (polarity) {
         .active_high => "<abbr>",
         .active_low => "<abbr><u>",
     });
 
-    try writer.writeAll(options.signalNameMapper(@enumFromInt(pin_info.grp_ordinal.?)));
+    try writer.writeAll(options.signalNameMapper(pin.signal()));
 
     try writer.writeAll(switch (polarity) {
         .active_high => "</abbr>",
@@ -621,21 +609,21 @@ fn writeInputs(writer: anytype, comptime Device: type, data: ReportData(Device),
     }
 
     var n: usize = 0;
-    for (Device.clock_pins, 0..) |pin_info, i| {
+    for (Device.clock_pins, 0..) |pin, i| {
         const config = data.config.clock[i];
         switch (@TypeOf(config)) {
-            lc4k.Input_Config => try writeInputPin(writer, (n & 1) == 1, Device, pin_info, config.threshold.?, data.config.default_bus_maintenance, null, options),
-            lc4k.Input_Config_ZE => try writeInputPin(writer, (n & 1) == 1, Device, pin_info, config.threshold.?, config.bus_maintenance.?, config.power_guard.?, options),
+            lc4k.Input_Config => try writeInputPin(writer, (n & 1) == 1, Device, pin, config.threshold.?, data.config.default_bus_maintenance, null, options),
+            lc4k.Input_Config_ZE => try writeInputPin(writer, (n & 1) == 1, Device, pin, config.threshold.?, config.bus_maintenance.?, config.power_guard.?, options),
             else => unreachable,
         }
         n += 1;
     }
 
-    for (Device.input_pins, 0..) |pin_info, i| {
+    for (Device.input_pins, 0..) |pin, i| {
         const config = data.config.input[i];
         switch (@TypeOf(config)) {
-            lc4k.Input_Config => try writeInputPin(writer, (n & 1) == 1, Device, pin_info, config.threshold.?, data.config.default_bus_maintenance, null, options),
-            lc4k.Input_Config_ZE => try writeInputPin(writer, (n & 1) == 1, Device, pin_info, config.threshold.?, config.bus_maintenance.?, config.power_guard.?, options),
+            lc4k.Input_Config => try writeInputPin(writer, (n & 1) == 1, Device, pin, config.threshold.?, data.config.default_bus_maintenance, null, options),
+            lc4k.Input_Config_ZE => try writeInputPin(writer, (n & 1) == 1, Device, pin, config.threshold.?, config.bus_maintenance.?, config.power_guard.?, options),
             else => unreachable,
         }
         n += 1;
@@ -670,7 +658,7 @@ fn writeBlockClock(writer: anytype, comptime Device: type, highlight: bool, bclk
     try endCell(writer);
 
     try beginCell(writer, .{ .class = "left" });
-    const name = comptime @tagName(value);
+    const name = @tagName(value);
     const grp: Device.GRP = switch (name[3]) {
         '0' => .clk0,
         '1' => .clk1,
@@ -688,7 +676,7 @@ fn writeBlockClock(writer: anytype, comptime Device: type, highlight: bool, bclk
     try endRow(writer);
 }
 
-fn writeInputPin(writer: anytype, highlight: bool, comptime Device: type, pin_info: lc4k.Pin_Info,
+fn writeInputPin(writer: anytype, highlight: bool, comptime Device: type, pin: Device.Pin,
     threshold: lc4k.Input_Threshold,
     bus_maintenance: lc4k.Bus_Maintenance,
     power_guard: ?lc4k.Power_Guard,
@@ -699,11 +687,11 @@ fn writeInputPin(writer: anytype, highlight: bool, comptime Device: type, pin_in
     });
 
     try beginCell(writer, .{});
-    try writer.writeAll(pin_info.id);
+    try writer.writeAll(pin.id());
     try endCell(writer);
 
     try beginCell(writer, .{});
-    if (pin_info.grp_ordinal) |grp_ordinal| {
+    if (pin.info.grp_ordinal) |grp_ordinal| {
         try writer.writeAll(options.signalNameMapper(@enumFromInt(grp_ordinal)));
     }
     try endCell(writer);
@@ -842,11 +830,11 @@ fn writePTUsage(writer: anytype, usage: PTUsage) !void {
     });
 }
 
-fn writePTEquation(writer: anytype, comptime Device: type, pt: lc4k.PT(Device.GRP), options: Write_Options(Device)) !void {
+fn writePTEquation(writer: anytype, comptime Device: type, pt: lc4k.Product_Term(Device.GRP), options: Write_Options(Device)) !void {
     try writer.writeAll("<td class=\"left\">");
 
     var first = true;
-    for (pt) |factor| {
+    for (pt.factors) |factor| {
         if (first) {
             first = false;
         } else {
@@ -1019,11 +1007,11 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
 
             var sum_pts: usize = 0;
             switch (mc_config.logic) {
-                .sum, .sum_inverted => |sum| for (sum) |pt| {
-                    if (!internal.isAlways(pt)) sum_pts += 1;
+                .sum, .sum_inverted, .sum_xor_input_buffer => |sum| for (sum) |pt| {
+                    if (!pt.is_always()) sum_pts += 1;
                 },
                 .sum_xor_pt0, .sum_xor_pt0_inverted => |logic| for (logic.sum) |pt| {
-                    if (!internal.isAlways(pt)) sum_pts += 1;
+                    if (!pt.is_always()) sum_pts += 1;
                 },
                 .input_buffer, .pt0, .pt0_inverted => {},
             }
@@ -1032,7 +1020,7 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
                 switch (mc_config.output.routing) {
                     .five_pt_fast_bypass, .five_pt_fast_bypass_inverted => |pts| {
                         for (pts) |pt| {
-                            if (!internal.isAlways(pt)) sum_pts += 1;
+                            if (!pt.is_always()) sum_pts += 1;
                         }
                     },
                     .same_as_oe, .self => {},
@@ -1051,6 +1039,7 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
                 .pt0_inverted => "<kbd class=\"logic pt\">PT</kbd> <kbd class=\"logic invert\">Invert</kbd>",
                 .sum_xor_pt0  => "<kbd class=\"logic sum\">Sum</kbd> <kbd class=\"logic xor-pt\">XOR PT</kbd>",
                 .sum_xor_pt0_inverted => "<kbd class=\"logic sum\">Sum</kbd> <kbd class=\"logic xor-pt\">XOR PT</kbd> <kbd class=\"logic invert\">Invert</kbd>",
+                .sum_xor_input_buffer => "<kbd class=\"logic sum\">Sum</kbd> <kbd class=\"logic xor-input\">XOR Input</kbd>",
             });
             try endCell(writer);
 
@@ -1083,8 +1072,20 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
                         try writer.writeAll("<kbd class=\"clk pt\">PT</kbd>");
                         break :blk true;
                     },
-                    .bclock => |bclk| blk: {
-                        try writer.print("<kbd class=\"clk bclk{}\">BCLK {}</kbd>", .{ bclk, bclk });
+                    .bclock0 => blk: {
+                        try writer.writeAll("<kbd class=\"clk bclk0\">BCLK 0</kbd>");
+                        break :blk false;
+                    },
+                    .bclock1 => blk: {
+                        try writer.writeAll("<kbd class=\"clk bclk1\">BCLK 1</kbd>");
+                        break :blk false;
+                    },
+                    .bclock2 => blk: {
+                        try writer.writeAll("<kbd class=\"clk bclk2\">BCLK 2</kbd>");
+                        break :blk false;
+                    },
+                    .bclock3 => blk: {
+                        try writer.writeAll("<kbd class=\"clk bclk3\">BCLK 3</kbd>");
                         break :blk false;
                     },
                 },
@@ -1138,9 +1139,9 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
             });
             try endCell(writer);
 
-            if (data.mc_pin_info.get(mcref)) |pin_info| {
+            if (Device.GRP.maybe_mc_pad(mcref)) |pad| {
                 try beginCell(writer, cell_options);
-                try writer.writeAll(pin_info.id);
+                try writer.writeAll(pad.pin().id());
             } else {
                 try beginCell(writer, .{});
             }

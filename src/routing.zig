@@ -6,11 +6,11 @@ const assembly = @import("assembly.zig");
 const Cluster_Routing = lc4k.Cluster_Routing;
 const Wide_Routing = lc4k.Wide_Routing;
 
-pub fn addSignalsFromPT(comptime Device: type, gi_signals: *[Device.num_gis_per_glb]?Device.GRP, pt: lc4k.PT(Device.GRP)) !void {
-    for (pt) |factor| switch (factor) {
+pub fn addSignalsFromPT(comptime Device: type, gi_signals: *[Device.num_gis_per_glb]?Device.GRP, pt: lc4k.Product_Term(Device.GRP)) !void {
+    for (pt.factors) |factor| switch (factor) {
         .always, .never => {},
         .when_high, .when_low => |grp| {
-            for (gi_signals.*) |*existing_grp| {
+            for (gi_signals) |*existing_grp| {
                 if (existing_grp.* == null) {
                     existing_grp.* = grp;
                     break;
@@ -110,6 +110,11 @@ pub const ClusterRouter = struct {
                 .sum_xor_pt0, .sum_xor_pt0_inverted => |logic| {
                     if (!internal.isSumAlways(logic.sum)) {
                         self.sum_size[mc] = @intCast(logic.sum.len);
+                    }
+                },
+                .sum_xor_input_buffer => |sum| {
+                    if (!internal.isSumAlways(sum)) {
+                        self.sum_size[mc] = @intCast(sum.len);
                     }
                 },
                 .input_buffer, .pt0, .pt0_inverted => {},
@@ -270,7 +275,8 @@ pub const ClusterRouter = struct {
     }
 
     fn getNextCA(ca: usize) usize {
-        const maybe_oob_ca: i32 = @intCast(ca - 4);
+        var maybe_oob_ca: i32 = @intCast(ca);
+        maybe_oob_ca -= 4;
         return @intCast(@mod(maybe_oob_ca, 16));
     }
 

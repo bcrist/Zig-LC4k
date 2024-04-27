@@ -14,15 +14,14 @@ pub fn main() !void {
     @setEvalBranchQuota(5000);
 
     const Chip = lc4k.LC4032ZE_TQFP48;
-    const PTs = Chip.PTs;
 
     var chip = Chip {};
 
-    chip.glb[0].shared_pt_enable = PTs.of(Chip.pins._20);
+    chip.glb[0].shared_pt_enable = comptime Chip.pins._20.when_high().pt();
     chip.goe0.source = .{ .glb_shared_pt_enable = 0 };
     chip.goe0.polarity = .active_high;
 
-    const output_pins = [_]lc4k.Pin_Info {
+    const output_pins = [_]Chip.Pin {
         Chip.pins._23,
         Chip.pins._24,
         Chip.pins._26,
@@ -33,14 +32,12 @@ pub fn main() !void {
         Chip.pins._33,
     };
 
-    inline for (output_pins) |out, bit| {
-        var mc = chip.mc(out);
-        mc.func = .{ .d_ff = .{
-            .clock = .{ .bclock = 2 },
-        }};
+    inline for (output_pins, 0..) |out, bit| {
+        var mc = chip.mc(out.mc());
+        mc.func = .{ .d_ff = .{ .clock = .bclock2 }};
         mc.output.oe = .goe0;
 
-        mc.logic = .{ .sum = comptime blk: {
+        mc.logic = comptime .{ .sum = blk: {
             // Each bit of the counter will be set on the next clock cycle when:
             //      a) it is currently 0 and every lower bit is a 1
             //      b) it is currently 1 but at least one lower bit is not 1
@@ -48,20 +45,15 @@ pub fn main() !void {
             // Implementing a) requires only one product term for counters up to ~36 bits.
             // Implementing b) requires N product terms, where N is the bit index.
             var sum: []const Chip.PT = &.{};
-            var all_ones = PTs.always();
+            var pt = Chip.PT.always();
             var n = bit;
             while (n > 0) : (n -= 1) {
                 const out_n = output_pins[n - 1];
-                all_ones = PTs.all(.{ all_ones, out_n });
-                sum = sum ++ &[_]Chip.PT {
-                    PTs.all(.{
-                        out,
-                        PTs.not(out_n),
-                    }),
-                };
+                pt = pt.and_factor(out_n.when_high());
+                sum = sum ++ [_]Chip.PT{ out.when_high().pt().and_factor(out_n.when_low()) };
             }
-            all_ones = PTs.all(.{ all_ones, PTs.not(out) });
-            break :blk sum ++ &[_]Chip.PT { all_ones };
+            pt = pt.and_factor(out.when_low());
+            break :blk sum ++ [_]Chip.PT{ pt };
         }};
     }
 
@@ -70,15 +62,15 @@ pub fn main() !void {
 
     const results = try chip.assemble(arena.allocator());
 
-    var jed_file = try std.fs.cwd().createFile("examples/counter2.jed", .{});
+    var jed_file = try std.fs.cwd().createFile("counter2.jed", .{});
     defer jed_file.close();
     try Chip.write_jed(arena.allocator(), results.jedec, jed_file.writer(), .{});
 
-    var svf_file = try std.fs.cwd().createFile("examples/counter2.svf", .{});
+    var svf_file = try std.fs.cwd().createFile("counter2.svf", .{});
     defer svf_file.close();
     try Chip.write_svf(results.jedec, svf_file.writer(), .{});
 
-    var report_file = try std.fs.cwd().createFile("examples/counter2.html", .{});
+    var report_file = try std.fs.cwd().createFile("counter2.html", .{});
     defer report_file.close();
     try Chip.write_report(results.jedec, report_file.writer(), .{
         .assembly_errors = results.errors.items,

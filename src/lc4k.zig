@@ -89,9 +89,17 @@ pub fn Chip_Config(comptime device: Device_Type) type {
 
         ext: Ext = .{},
 
-        pub usingnamespace D;
-        pub const PT = Product_Term(D.GRP);
-        pub const PTs = Product_Term_Builder(D);
+        pub const Device = D;
+        pub const PT = D.PT;
+        pub const F = D.F;
+        pub const Pin = D.Pin;
+        pub const GRP = D.GRP;
+
+        pub const pins = D.pins;
+        pub const all_pins = D.all_pins;
+        pub const oe_pins = D.oe_pins;
+        pub const clock_pins = D.clock_pins;
+        pub const input_pins = D.input_pins;
 
         const Self = @This();
 
@@ -154,9 +162,9 @@ pub fn GLB_Config(comptime D: type) type {
         pub fn init_unused() Self {
             var self = Self {
                 .mc = undefined,
-                .shared_pt_init = .{ .active_low = Product_Term_Builder(D).always() },
-                .shared_pt_clock = .{ .positive = Product_Term_Builder(D).always() },
-                .shared_pt_enable = Product_Term_Builder(D).always(),
+                .shared_pt_init = .{ .active_low = Product_Term(D.GRP).always() },
+                .shared_pt_clock = .{ .positive = Product_Term(D.GRP).always() },
+                .shared_pt_enable = Product_Term(D.GRP).always(),
                 .bclock0 = .clk0_pos,
                 .bclock1 = .clk1_pos,
                 .bclock2 = .clk2_pos,
@@ -168,7 +176,7 @@ pub fn GLB_Config(comptime D: type) type {
                 self.bclock3 = .clk2_neg;
             }
 
-            for (self.mc) |*mc| {
+            for (&self.mc) |*mc| {
                 mc.* = Macrocell_Config(D.family, D.GRP).init_unused();
             }
 
@@ -214,8 +222,8 @@ pub fn Macrocell_Config(comptime family: Device_Family, comptime GRP: type) type
 
         pub fn init_unused() Self {
             return .{
-                .logic = .{ .sum = &[_]Product_Term(GRP) { &.{} } },
-                .func = .{ .combinational = {} },
+                .logic = .{ .sum = &.{ Product_Term(GRP).always() } },
+                .func = .combinational,
                 .output = .{ .oe = .input_only },
             };
         }
@@ -242,7 +250,7 @@ pub fn Output_Config(comptime GRP: type) type {
             self,
             five_pt_fast_bypass: []const Product_Term(GRP),
             five_pt_fast_bypass_inverted: []const Product_Term(GRP),
-        } = .{ .same_as_oe = {} },
+        } = .same_as_oe,
     };
 }
 pub const Output_Config_ZE = struct {
@@ -271,7 +279,7 @@ pub const GOE_Config_Bus = struct {
     source: union(enum) {
         constant_high: void,
         glb_shared_pt_enable: GLB_Index,
-    } = .{ .constant_high = {} },
+    } = .constant_high,
 };
 
 pub const GOE_Config_Bus_Or_Pin = struct {
@@ -280,7 +288,7 @@ pub const GOE_Config_Bus_Or_Pin = struct {
         constant_high: void,
         input: void,
         glb_shared_pt_enable: GLB_Index,
-    } = .{ .constant_high = {} },
+    } = .constant_high,
 };
 
 pub fn Oscillator_Timer_Config(comptime Device: type) type {
@@ -310,184 +318,162 @@ pub fn Register_Config(comptime GRP: type) type {
             bclock1,
             bclock2,
             bclock3,
-        } = .{ .none = {} },
+        } = .none,
         ce: union(Clock_Enable_Source) {
             pt2_active_high: Product_Term(GRP),
             pt2_active_low: Product_Term(GRP),
             shared_pt_clock,
             always_active,
-        } = .{ .always_active = {} },
+        } = .always_active,
         init_state: u1 = 0,
         init_source: union(Init_Source) {
             pt3_active_high: Product_Term(GRP),
             shared_pt_init,
-        } = .{ .shared_pt_init = {} },
+        } = .shared_pt_init,
         async_source: union(Async_Trigger_Source) {
             pt2_active_high: Product_Term(GRP),
             none,
-        } = .{ .none = {} },
+        } = .none,
     };
 }
 
-pub fn Product_Term(comptime GRP: type) type {
-    return []const Factor(GRP);
+pub fn Product_Term(comptime Device_GRP: type) type {
+    return struct {
+        factors: []const Factor(GRP),
+
+        pub const GRP = Device_GRP;
+        const Self = @This();
+
+        pub inline fn always() Self {
+            return comptime .{
+                .factors = &.{},
+            };
+        }
+        pub inline fn is_always(self: Self) bool {
+            for (self.factors) |factor| {
+                if (factor != .always) return false;
+            }
+            return true;
+        }
+
+        pub inline fn never() Self {
+            return comptime .{
+                .factors = &.{ .never },
+            };
+        }
+        pub inline fn is_never(self: Self) bool {
+            for (self.factors) |factor| {
+                if (factor == .never) return true;
+            }
+            return false;
+        }
+
+        pub inline fn negate(comptime self: Self) Self {
+            return comptime switch (self.factors.len) {
+                0 => never(),
+                1 => self.factors[0].negate().pt(),
+                else => unreachable,
+            };
+        }
+        pub fn negate_alloc(self: Self, alloc: std.mem.Allocator) Self {
+            return switch (self.factors.len) {
+                0 => never(),
+                1 => self.factors[0].negate().pt_alloc(alloc),
+                else => unreachable,
+            };
+        }
+
+        pub inline fn and_factor(comptime self: Self, comptime factor: Factor(GRP)) Self {
+            switch (factor) {
+                .always => return self,
+                .never => return never(),
+                .when_high => |new_signal| {
+                    inline for (self.factors) |existing_factor| switch (existing_factor) {
+                        .always => return factor.pt(),
+                        .never => return never(),
+                        .when_high => |old_signal| if (new_signal == old_signal) return self,
+                        .when_low => |old_signal| if (new_signal == old_signal) return never(),
+                    };
+                },
+                .when_low => |new_signal| {
+                    inline for (self.factors) |existing_factor| switch (existing_factor) {
+                        .always => return factor.pt(),
+                        .never => return never(),
+                        .when_high => |old_signal| if (new_signal == old_signal) return never(),
+                        .when_low => |old_signal| if (new_signal == old_signal) return self,
+                    };
+                },
+            }
+            return comptime .{
+                .factors = self.factors ++ .{ factor },
+            };
+        }
+
+        pub inline fn and_pt(comptime self: Self, comptime other: Self) Self {
+            comptime var pt = self;
+            inline for (other.factors) |factor| {
+                pt = pt.and_factor(factor);
+            }
+            return pt;
+        }
+
+        pub fn when_eql(comptime signals: []const GRP, comptime value: usize) Self {
+            comptime var pt: Self = always();
+            comptime var bit_value: usize = 1;
+            inline for (signals) |signal| {
+                const factor = comptime signal.when_high();
+                const final_factor = comptime if ((value & bit_value) == 0) factor.negate() else factor;
+                pt = pt.and_factor(final_factor);
+                bit_value <<= 1;
+            }
+            return pt;
+        }
+        pub fn when_eql_alloc(allocator: std.mem.Allocator, signals: []const GRP, value: usize) Self {
+            var pt: Self = .{
+                .factors = try allocator.alloc(Factor(GRP), signals.len),
+            };
+            var bit_value: usize = 1;
+            for (signals, &pt.factors) |signal, *factor| {
+                factor.* = if ((value & bit_value) == 0) signal.when_low() else signal.when_high();
+                bit_value <<= 1;
+            }
+            return pt;
+        }
+    };
 }
 
-pub fn Factor(comptime GRP: type) type {
+pub fn Factor(comptime Device_GRP: type) type {
     return union(enum) {
         // "always" can normally just be represented by an empty PT,
-        // but sometimes necessary to represent it in a Factor instead.
+        // but sometimes necessary to represent it in a Factor instead:
         always,
         never,
         when_high: GRP,
         when_low: GRP,
+
+        const GRP = Device_GRP;
+        const Self = @This();
+
+        pub fn negate(self: Self) Self {
+            return switch(self) {
+                .always => .never,
+                .never => .always,
+                .when_high => |grp| .{ .when_low = grp },
+                .when_low => |grp| .{ .when_high = grp },
+            };
+        }
+
+        pub fn pt(comptime self: Self) Product_Term(GRP) {
+            return comptime .{ .factors = &.{ self } };
+        }
+        pub fn pt_indirect(self: *Self) Product_Term(GRP) {
+            return .{ .factors = self[0..1] };
+        }
+        pub fn pt_alloc(self: Self, allocator: std.mem.Allocator) !Product_Term(GRP) {
+            return .{ .factors = try allocator.dupe(Self, self.pt_indirect().factors) };
+        }
     };
 }
-
-pub fn Product_Term_Builder(comptime Device: type) type {
-    const GRP = Device.GRP;
-    return struct {
-
-        pub fn always() Product_Term(GRP) { comptime {
-            return &.{};
-        }}
-
-        pub fn never() Product_Term(GRP) { comptime {
-            return &.{ .{ .never = {} } };
-        }}
-
-        pub fn of(comptime what: anytype) Product_Term(GRP) { comptime {
-            return switch (@TypeOf(what)) {
-                Product_Term(GRP) => what,
-                Factor(GRP) => &.{ what },
-                GRP => &.{ .{ .when_high = what } },
-                Pin_Info => &.{ .{ .when_high = @enumFromInt(what.grp_ordinal.?) } },
-                else => &.{ .{ .when_high = Device.getGrp(what) } },
-            };
-        }}
-
-        pub fn not(comptime what: anytype) Product_Term(GRP) { comptime {
-            return switch (@TypeOf(what)) {
-                Product_Term(GRP) => switch (what.len) {
-                    0 => never(),
-                    1 => not(what[0]),
-                    else => unreachable,
-                },
-                Factor(GRP) => switch(what) {
-                    .always => never(),
-                    .never => always(),
-                    .when_high => |grp| &.{ Factor(GRP) { .when_low = grp } },
-                    .when_low => |grp| &.{ Factor(GRP) { .when_high = grp } },
-                },
-                GRP => &.{ Factor(GRP) { .when_low = what } },
-                Pin_Info => &.{ Factor(GRP) { .when_low = @enumFromInt(what.grp_ordinal.?) } },
-                else => &.{ Factor(GRP) { .when_low = Device.getGrp(what) } },
-            };
-        }}
-
-        pub fn all(comptime which: anytype) Product_Term(GRP) { comptime {
-            var pt: Product_Term(GRP) = &.{};
-            switch (@typeInfo(@TypeOf(which))) {
-                .Struct => |info| {
-                    std.debug.assert(info.is_tuple);
-                    for (info.fields) |field| {
-                        pt = and_pt(pt, of(@field(which, field.name)));
-                    }
-                },
-                .Array => {
-                    for (which) |signal| {
-                        pt = and_pt(pt, of(signal));
-                    }
-                },
-                .Pointer => |info| {
-                    std.debug.assert(info.size == .Slice);
-                    for (which) |signal| {
-                        pt = and_pt(pt, of(signal));
-                    }
-                },
-                else => unreachable,
-            }
-            return pt;
-        }}
-
-        pub fn eql(comptime which: anytype, comptime value: usize) Product_Term(GRP) { comptime {
-            var pt: Product_Term(GRP) = &.{};
-            switch (@typeInfo(@TypeOf(which))) {
-                .Struct => |info| {
-                    std.debug.assert(info.is_tuple);
-                    var bit_value: usize = 1;
-                    for (info.fields) |field| {
-                        var factor = of(@field(which, field.name));
-                        if ((value & bit_value) == 0) {
-                            factor = not(factor);
-                        }
-                        pt = and_pt(pt, factor);
-                        bit_value <<= 1;
-                    }
-                },
-                .Array => {
-                    var bit_value: usize = 1;
-                    for (which) |signal| {
-                        var factor = of(signal);
-                        if ((value & bit_value) == 0) {
-                            factor = not(factor);
-                        }
-                        pt = and_pt(pt, factor);
-                        bit_value <<= 1;
-                    }
-                },
-                .Pointer => |info| {
-                    std.debug.assert(info.size == .Slice);
-                    var bit_value: usize = 1;
-                    for (which) |signal| {
-                        var factor = of(signal);
-                        if ((value & bit_value) == 0) {
-                            factor = not(factor);
-                        }
-                        pt = and_pt(pt, factor);
-                        bit_value <<= 1;
-                    }
-                },
-                else => unreachable,
-            }
-            return pt;
-        }}
-
-        fn and_pt(comptime base: Product_Term(GRP), comptime extra: Product_Term(GRP)) Product_Term(GRP) { comptime {
-            var pt = base;
-            for (extra) |factor| {
-                pt = and_factor(pt, factor);
-            }
-            return pt;
-        }}
-
-        fn and_factor(comptime base: Product_Term(GRP), comptime factor: Factor(GRP)) Product_Term(GRP) { comptime {
-            switch (factor) {
-                .always => return base,
-                .never => return &.{ factor },
-                .when_high => |new_signal| {
-                    for (base) |existing_factor| switch (existing_factor) {
-                        .always => return &.{ factor },
-                        .never => return base,
-                        .when_high => |old_signal| if (new_signal == old_signal) return base,
-                        .when_low => |old_signal| if (new_signal == old_signal) return &.{ .{ .never = {} } },
-                    };
-                },
-                .when_low => |new_signal| {
-                    for (base) |existing_factor| switch (existing_factor) {
-                        .always => return &.{ factor },
-                        .never => return base,
-                        .when_high => |old_signal| if (new_signal == old_signal) return &.{ .{ .never = {} } },
-                        .when_low => |old_signal| if (new_signal == old_signal) return base,
-                    };
-                },
-            }
-            return base ++ [_]Factor(GRP) {  factor };
-        }}
-
-    };
-}
-
 
 pub const GI_Index = u8;
 pub const GLB_Index = u8;
@@ -520,6 +506,13 @@ pub const PT_Ref = struct {
     }
 };
 
+pub const GRP_Kind = enum {
+    io,
+    fb,
+    in,
+    clk,
+};
+
 pub const Pin_Function = union(enum) {
     io: MC_Index,
     io_oe0: MC_Index,
@@ -536,15 +529,96 @@ pub const Pin_Function = union(enum) {
     tdo,
 };
 
+pub fn Pin(comptime GRP: type) type {
+    return struct {
+        info: Pin_Info,
+
+        const Self = @This();
+
+        pub fn init_io(pin_id: []const u8, grp: GRP) Self {
+            const mcref = grp.mc();
+            return .{ .info = .{
+                .id = pin_id,
+                .func = .{ .io = mcref.mc },
+                .glb = mcref.glb,
+                .grp_ordinal = @intFromEnum(grp),
+            }};
+        }
+
+        pub fn init_oe(pin_id: []const u8, grp: GRP, comptime oe_index: comptime_int) Self {
+            const mcref = grp.mc();
+            return .{ .info = .{
+                .id = pin_id,
+                .func = switch (oe_index) {
+                    0 => .{ .io_oe0 = mcref.mc },
+                    1 => .{ .io_oe1 = mcref.mc },
+                    else => @compileError("Invalid OE index"),
+                },
+                .glb = mcref.glb,
+                .grp_ordinal = @intFromEnum(grp),
+            }};
+        }
+
+        pub fn init_clk(pin_id: []const u8, grp: GRP, clock_index: Clock_Index, glb: GLB_Index) Self {
+            return .{ .info = .{
+                .id = pin_id,
+                .func = .{ .clock = clock_index },
+                .glb = glb,
+                .grp_ordinal = @intFromEnum(grp),
+            }};
+        }
+
+        pub fn init_input(pin_id: []const u8, grp: GRP, glb: GLB_Index) Self {
+            return .{ .info = .{
+                .id = pin_id,
+                .func = .input,
+                .glb = glb,
+                .grp_ordinal = @intFromEnum(grp),
+            }};
+        }
+
+        pub fn init_misc(pin_id: []const u8, function: Pin_Function) Self {
+            return .{ .info = .{
+                .id = pin_id,
+                .func = function,
+            }};
+        }
+
+        pub fn id(self: Self) []const u8 {
+            return self.info.id;
+        }
+
+        pub fn func(self: Self) Pin_Function {
+            return self.info.func;
+        }
+
+        pub fn mc(self: Self) MC_Ref {
+            return self.info.mc().?;
+        }
+
+        pub fn signal(self: Self) GRP {
+            return @enumFromInt(self.info.grp_ordinal.?);
+        }
+
+        pub fn when_high(self: Self) Factor(GRP) {
+            return self.signal().when_high();
+        }
+
+        pub fn when_low(self: Self) Factor(GRP) {
+            return self.signal().when_low();
+        }
+    };
+}
+
 pub const Pin_Info = struct {
     id: []const u8, // pin number or ball location
     func: Pin_Function,
     glb: ?GLB_Index = null, // only meaningful when func is io, io_oe0, io_oe1, input, or clock
     grp_ordinal: ?u16 = null, // use with @intToEnum(GRP, grp_ordinal)
 
-    pub fn mc_ref(self: Pin_Info) ?MC_Ref {
+    pub fn mc(self: Pin_Info) ?MC_Ref {
         return if (self.glb) |glb| switch (self.func) {
-            .io, .io_oe0, .io_oe1 => |mc| MC_Ref { .glb = glb, .mc = mc },
+            .io, .io_oe0, .io_oe1 => |mc_index| MC_Ref.init(glb, mc_index),
             else => null,
         } else null;
     }
@@ -775,6 +849,19 @@ pub const Device_Type = enum {
         return null;
     }
 };
+
+pub inline fn invert_gi_mapping(comptime GRP: type, comptime gi_mux_size: comptime_int, comptime mapping: []const[gi_mux_size]GRP) std.EnumMap(GRP, []const u8) {
+    return comptime blk: {
+        @setEvalBranchQuota(10_000);
+        var results: std.EnumMap(GRP, []const u8) = .{};
+        for (mapping, 0..) |options, gi| {
+            for (options) |grp| {
+                results.put(grp, (results.get(grp) orelse &[_]u8 {}) ++ [_]u8 { gi });
+            }
+        }
+        break :blk results;
+    };
+}
 
 pub const jedec = @import("jedec.zig");
 pub const jed_file = @import("jed_file.zig");
