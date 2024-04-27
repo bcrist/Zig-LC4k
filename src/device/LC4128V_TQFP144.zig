@@ -316,21 +316,21 @@ pub const gi_options_by_grp = internal.invertGIMapping(GRP, gi_mux_size, &gi_opt
 pub fn getGlbRange(glb: usize) jedec.FuseRange {
     std.debug.assert(glb < num_glbs);
     var index = num_glbs - glb - 1;
-    index ^= @as(u1, @truncate(index >> 1));
+    index ^= @truncate(u1, index >> 1);
     return jedec_dimensions.subColumns(83 * index + gi_mux_size * (index / 2 + 1), 83);
 }
 
 pub fn getGiRange(glb: usize, gi: usize) jedec.FuseRange {
     std.debug.assert(gi < num_gis_per_glb);
     var left_glb = glb | 1;
-    left_glb ^= @as(u1, @truncate(left_glb >> 1)) ^ 1;
-    const row = gi * 2 + @as(u1, @truncate(glb ^ (glb >> 1)));
+    left_glb ^= @truncate(u1, left_glb >> 1) ^ 1;
+    const row = gi * 2 + @truncate(u1, glb ^ (glb >> 1));
     return getGlbRange(left_glb).expandColumns(-19).subColumns(0, 19).subRows(row, 1);
 }
 
 pub fn getBClockRange(glb: usize) jedec.FuseRange {
     var index = num_glbs - glb - 1;
-    index = @as(u1, @truncate((index >> 1) ^ index));
+    index = @truncate(u1, (index >> 1) ^ index);
     return getGlbRange(glb).subRows(79, 4).subColumns(82 * index, 1);
 }
 

@@ -1,5 +1,5 @@
 function load_power_guard_fuses (device_name)
-    local path = fs.compose_path('..', '..', '..', device_name:sub(1,6), device_name, 'power_guard.sx')
+    local path = fs.compose_path(re4k, device_name:sub(1,6), device_name, 'power_guard.sx')
     local id_to_fuse = {}
     local parser = sx.parser(get_file_contents(path))
 

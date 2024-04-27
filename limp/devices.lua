@@ -142,14 +142,14 @@ end
 
 template([[
 const std = @import("std");
-const common = @import("../common.zig");
+const lc4k = @import("../lc4k.zig");
 const internal = @import("../internal.zig");
 const jedec = @import("../jedec.zig");
 
-pub const device_type = common.DeviceType.`device`;
+pub const device_type = lc4k.DeviceType.`device`;
 
-pub const family = common.DeviceFamily.`family`;
-pub const package = common.DevicePackage.`package`;
+pub const family = lc4k.DeviceFamily.`family`;
+pub const package = lc4k.DevicePackage.`package`;
 
 pub const num_glbs = `num_glbs`;
 pub const num_mcs = `num_glbs * 16`;
@@ -458,11 +458,11 @@ pub fn getInputThresholdFuse(input: GRP) jedec.Fuse {
     };
 }
 
-pub fn getMacrocellRef(comptime which: anytype) common.MacrocellRef {
+pub fn getMacrocellRef(comptime which: anytype) lc4k.MacrocellRef {
     return internal.getMacrocellRef(GRP, which);
 }
 
-pub fn getGlbIndex(comptime which: anytype) common.GlbIndex {
+pub fn getGlbIndex(comptime which: anytype) lc4k.GlbIndex {
     return internal.getGlbIndex(@This(), which);
 }
 
@@ -478,7 +478,7 @@ pub fn getGrpFeedback(comptime which: anytype) GRP {
     return internal.getGrpFeedback(GRP, which);
 }
 
-pub fn getPin(comptime which: anytype) common.PinInfo {
+pub fn getPin(comptime which: anytype) lc4k.PinInfo {
     return internal.getPin(@This(), which);
 }
 
@@ -486,7 +486,7 @@ pub const pins = struct {]]
 
 local write_pin = template [[
 
-pub const `safe_id` = common.PinInfo {
+pub const `safe_id` = lc4k.PinInfo {
     .id = "`id`",
 `...`};]]
 
@@ -524,7 +524,7 @@ write([[
 
 };
 
-pub const clock_pins = [_]common.PinInfo {]])
+pub const clock_pins = [_]lc4k.PinInfo {]])
 
 local function clock_cmp (a, b)
     local pa = info.pins_by_type.clock[a]
@@ -542,7 +542,7 @@ write([[
 
 };
 
-pub const oe_pins = [_]common.PinInfo {]])
+pub const oe_pins = [_]lc4k.PinInfo {]])
 
 local function oe_cmp (a, b)
     local pa = info.pins[a]
@@ -563,7 +563,7 @@ write([[
 
 };
 
-pub const input_pins = [_]common.PinInfo {]])
+pub const input_pins = [_]lc4k.PinInfo {]])
 
 local function input_cmp (a, b)
     local pa = info.pins_by_type.input[a]
@@ -581,7 +581,7 @@ write([[
 
 };
 
-pub const all_pins = [_]common.PinInfo {]])
+pub const all_pins = [_]lc4k.PinInfo {]])
 
 indent()
 for _, pin in spairs(info.pins, natural_cmp) do

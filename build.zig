@@ -15,11 +15,11 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test", "Run all tests");
     test_step.dependOn(&run_tests.step);
 
-    // const limp = b.dependency("limp", .{}).artifact("limp");
-    // const run_limp = b.addRunArtifact(limp);
-    // run_limp.addDirectoryArg(.{ .path = "src/device" });
-    // run_limp.addArgs(&.{ "--set", "re4k" });
-    // run_limp.addDirectoryArg(b.dependency("re4k", .{}).path("."));
-    // const limp_step = b.step("codegen", "Run LIMP codegen");
-    // limp_step.dependOn(&run_limp.step);
+    const limp = b.dependency("limp", .{ .optimize = std.builtin.OptimizeMode.ReleaseSafe }).artifact("limp");
+    const run_limp = b.addRunArtifact(limp);
+    run_limp.addArgs(&.{ "-R", "--set", "re4k" });
+    run_limp.addDirectoryArg(b.dependency("re4k", .{}).path(""));
+    run_limp.addDirectoryArg(.{ .path = "src" });
+    const limp_step = b.step("codegen", "Run LIMP codegen");
+    limp_step.dependOn(&run_limp.step);
 }

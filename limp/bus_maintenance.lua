@@ -1,5 +1,5 @@
 function load_bus_maintenance_fuses (device_name)
-    local path = fs.compose_path('..', '..', '..', device_name:sub(1,6), device_name, 'bus_maintenance.sx')
+    local path = fs.compose_path(re4k, device_name:sub(1,6), device_name, 'bus_maintenance.sx')
     local id_to_fuse1 = {}
     local id_to_fuse2 = {}
     local parser = sx.parser(get_file_contents(path))

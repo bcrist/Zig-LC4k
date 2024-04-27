@@ -27,7 +27,7 @@ pub const DeviceType = enum {
     // writeln(nl, 'pub fn get(comptime self: DeviceType) type {', indent)
     // write('return switch(self) {', indent)
     // for device in spairs(devices) do
-    //     write(nl, '.', device, ' => @import("', device, '.zig"),')
+    //     write(nl, '.', device, ' => @import("device/', device, '.zig"),')
     // end
     // writeln(unindent, nl, '};', unindent, nl, '}')
     //!! 63 ]]
@@ -285,20 +285,6 @@ pub const Macrocell_Output_Enable_Source = enum(u1) {
 pub fn getGlbName(glb: usize) []const u8 {
     return "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[glb..glb+1];
 }
-
-
-
-pub const jedec = @import("jedec.zig");
-const assembly = @import("assembly.zig");
-const disassembly = @import("disassembly.zig");
-const routing = @import("routing.zig");
-const jed_file = @import("jed_file.zig");
-const svf_file = @import("svf_file.zig");
-const report = @import("report.zig");
-
-pub usingnamespace jedec;
-
-const std = @import("std");
 
 pub const LC4032V_TQFP44 = LC4k(.LC4032x_TQFP44);
 pub const LC4032B_TQFP44 = LC4k(.LC4032x_TQFP44);
@@ -789,3 +775,12 @@ pub fn PTBuilder(comptime Device: type) type {
 
     };
 }
+
+pub const jedec = @import("jedec.zig");
+pub const jed_file = @import("jed_file.zig");
+pub const svf_file = @import("svf_file.zig");
+const assembly = @import("assembly.zig");
+const disassembly = @import("disassembly.zig");
+const routing = @import("routing.zig");
+const report = @import("report.zig");
+const std = @import("std");

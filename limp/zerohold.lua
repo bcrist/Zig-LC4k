@@ -1,5 +1,5 @@
 function load_zerohold_fuse (device_name)
-    local path = fs.compose_path('..', '..', '..', device_name:sub(1,6), device_name, 'zerohold.sx')
+    local path = fs.compose_path(re4k, device_name:sub(1,6), device_name, 'zerohold.sx')
     local parser = sx.parser(get_file_contents(path))
 
     parser:require_expression(device_name)

@@ -8,13 +8,13 @@
         "build.zig.zon",
     },
     .dependencies = .{
-        // .re4k = .{
-        //     .url = "git+https://github.com/bcrist/re4k#b3aa344e4f4aad7da48b5ee4b7edf1efff279a8e",
-        //     .hash = "1220406fa98e939f60a9bf7fa4672f2ef5cf51e31d7c52fc35b18ee7ce903c5cae80",
-        // },
-        // .limp = .{
-        //     .url = "git+https://github.com/bcrist/limp#87c594ae89a563c3ebfc11083ef99958c18c9427",
-        //     .hash = "1220cbd621c2d8d9b96a9e93d3cf726bb853aaec711a9cf176aab29186c310ae5a1d",
-        // },
+        .re4k = .{
+            .url = "git+https://github.com/bcrist/re4k#44d216f8f0fbf0cf87afb2d64d9a20ec631bd17b",
+            .hash = "1220688abe8f4892e3255fe72f4546de3d1eaeb4bea8f62d5bfc6cdb5c4297961d4c",
+        },
+        .limp = .{
+            .url = "git+https://github.com/bcrist/limp#87c594ae89a563c3ebfc11083ef99958c18c9427",
+            .hash = "1220cbd621c2d8d9b96a9e93d3cf726bb853aaec711a9cf176aab29186c310ae5a1d",
+        },
     },
 }

@@ -1,5 +1,5 @@
 function load_gi_options (device_name, pins)
-    local path = fs.compose_path('..', '..', '..', device_name:sub(1,6), device_name, 'grp.sx')
+    local path = fs.compose_path(re4k, device_name:sub(1,6), device_name, 'grp.sx')
     local gi_to_grp = {}
     local parser = sx.parser(get_file_contents(path))
 

@@ -1,5 +1,5 @@
 function load_goe_fuses (device_name)
-    local path = fs.compose_path('..', '..', '..', device_name:sub(1,6), device_name, 'goes.sx')
+    local path = fs.compose_path(re4k, device_name:sub(1,6), device_name, 'goes.sx')
     local results = {}
     local parser = sx.parser(get_file_contents(path))
 
