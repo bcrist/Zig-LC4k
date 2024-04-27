@@ -1,11 +1,7 @@
-const std = @import("std");
-const jedec = @import("jedec.zig");
-const lc4k = @import("lc4k.zig");
-
-const Fuse = jedec.Fuse;
-const FuseRange = jedec.FuseRange;
-const JedecData = jedec.JedecData;
-const Jedec_File = jedec.Jedec_File;
+data: JEDEC_Data,
+usercode: ?u32 = null,
+security: ?u1 = null,
+pin_count: ?usize = null,
 
 const JedecCommand = enum {
     qty_pins,
@@ -61,7 +57,7 @@ const JedecFieldIterator = struct {
 };
 
 
-pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: []const u8) !Jedec_File {
+pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: []const u8) !JEDEC_File {
     var pin_count: ?usize = null;
     var usercode: ?u32 = null;
     var security: ?u1 = null;
@@ -69,9 +65,9 @@ pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: [
     var fuse_checksum: ?u16 = null;
     var actual_height: ?usize = height;
 
-    var data: ?JedecData = null;
+    var data: ?JEDEC_Data = null;
 
-    const start_of_fields = 1 + (std.mem.indexOf(u8, text, "*") orelse return error.MalformedJedec_File);
+    const start_of_fields = 1 + (std.mem.indexOf(u8, text, "*") orelse return error.MalformedJEDEC_File);
 
     var iter = JedecFieldIterator {
         .remaining = text[start_of_fields..],
@@ -80,7 +76,7 @@ pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: [
     while (try iter.next()) |field| {
         switch (field.cmd) {
             .qty_fuses => {
-                const qf = std.fmt.parseUnsigned(u32, field.extra, 10) catch return error.MalformedJedec_File;
+                const qf = std.fmt.parseUnsigned(u32, field.extra, 10) catch return error.MalformedJEDEC_File;
                 if (actual_height) |h| {
                     const expected = h * width;
                     if (qf != expected) {
@@ -97,29 +93,29 @@ pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: [
                 }
             },
             .qty_pins => if (pin_count) |_| {
-                return error.MalformedJedec_File;
+                return error.MalformedJEDEC_File;
             } else {
-                pin_count = std.fmt.parseUnsigned(u16, field.extra, 10) catch return error.MalformedJedec_File;
+                pin_count = std.fmt.parseUnsigned(u16, field.extra, 10) catch return error.MalformedJEDEC_File;
             },
             .checksum => if (fuse_checksum) |_| {
-                return error.MalformedJedec_File;
+                return error.MalformedJEDEC_File;
             } else {
-                fuse_checksum = std.fmt.parseUnsigned(u16, field.extra, 16) catch return error.MalformedJedec_File;
+                fuse_checksum = std.fmt.parseUnsigned(u16, field.extra, 16) catch return error.MalformedJEDEC_File;
             },
             .security => if (security) |_| {
-                return error.MalformedJedec_File;
+                return error.MalformedJEDEC_File;
             } else {
-                security = std.fmt.parseUnsigned(u1, field.extra, 10) catch return error.MalformedJedec_File;
+                security = std.fmt.parseUnsigned(u1, field.extra, 10) catch return error.MalformedJEDEC_File;
             },
             .default => if (default) |_| {
-                return error.MalformedJedec_File;
+                return error.MalformedJEDEC_File;
             } else {
-                default = std.fmt.parseUnsigned(u1, field.extra, 10) catch return error.MalformedJedec_File;
+                default = std.fmt.parseUnsigned(u1, field.extra, 10) catch return error.MalformedJEDEC_File;
             },
             .usercode => if (usercode) |_| {
-                return error.MalformedJedec_File;
+                return error.MalformedJEDEC_File;
             } else {
-                usercode = std.fmt.parseUnsigned(u32, field.extra, 2) catch return error.MalformedJedec_File;
+                usercode = std.fmt.parseUnsigned(u32, field.extra, 2) catch return error.MalformedJEDEC_File;
             },
             .location, .hex => {
                 var end_of_digits: usize = 0;
@@ -130,13 +126,13 @@ pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: [
 
                 const location_str = field.extra[0..end_of_digits];
                 const data_str = field.extra[end_of_digits..];
-                const starting_fuse = std.fmt.parseUnsigned(u32, location_str, 10) catch return error.MalformedJedec_File;
+                const starting_fuse = std.fmt.parseUnsigned(u32, location_str, 10) catch return error.MalformedJEDEC_File;
                 if (data == null) {
                     if (actual_height) |h| {
-                        data = try JedecData.init(allocator, FuseRange.init(width, h), default orelse 1);
+                        data = try JEDEC_Data.init(allocator, Fuse_Range.init(width, h), default orelse 1);
                     } else {
                         try std.io.getStdErr().writer().writeAll("Expected QF command before L or K command\n");
-                        return error.MalformedJedec_File;
+                        return error.MalformedJEDEC_File;
                     }
                 }
                 switch (field.cmd) {
@@ -151,7 +147,7 @@ pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: [
 
     if (iter.remaining[0] == 3 and iter.remaining.len >= 5) {
         // check final file checksum
-        const found_checksum = std.fmt.parseUnsigned(u16, iter.remaining[1..5], 16) catch return error.MalformedJedec_File;
+        const found_checksum = std.fmt.parseUnsigned(u16, iter.remaining[1..5], 16) catch return error.MalformedJEDEC_File;
         var computed_checksum: u16 = 0;
         for (text[0..text.len-iter.remaining.len]) |byte| {
             computed_checksum += byte;
@@ -159,16 +155,16 @@ pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: [
 
         if (found_checksum != computed_checksum) {
             try std.io.getStdErr().writer().print("File checksum mismatch; file specifies {X:0>4} but computed {X:0>4}\n", .{ found_checksum, computed_checksum });
-            return error.CorruptedJedec_File;
+            return error.CorruptedJEDEC_File;
         }
     }
 
     if (data) |s| {
         if (fuse_checksum) |found_checksum| {
-            const computed_checksum = checksum(s);
+            const computed_checksum = s.checksum();
             if (found_checksum != computed_checksum) {
                 try std.io.getStdErr().writer().print("Fuse checksum mismatch; file specifies {X:0>4} but computed {X:0>4}\n", .{ found_checksum, computed_checksum });
-                return error.CorruptedJedec_File;
+                return error.CorruptedJEDEC_File;
             }
         }
 
@@ -180,11 +176,12 @@ pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: [
         };
     } else {
         try std.io.getStdErr().writer().writeAll("Expected at least one L or K command\n");
-        return error.MalformedJedec_File;
+        return error.MalformedJEDEC_File;
     }
 }
 
-fn parseBinaryString(data: *JedecData, starting_fuse: usize, text: []const u8) !void {
+
+fn parseBinaryString(data: *JEDEC_Data, starting_fuse: usize, text: []const u8) !void {
     const len = data.extents.count();
     var i: usize = starting_fuse;
     for (text) |c| {
@@ -204,7 +201,7 @@ fn parseBinaryString(data: *JedecData, starting_fuse: usize, text: []const u8) !
     }
 }
 
-fn parseHexString(data: *JedecData, starting_fuse: usize, text: []const u8) !void {
+fn parseHexString(data: *JEDEC_Data, starting_fuse: usize, text: []const u8) !void {
     const len = data.extents.count();
     var i: usize = starting_fuse;
     for (text) |c| {
@@ -228,6 +225,7 @@ fn parseHexString(data: *JedecData, starting_fuse: usize, text: []const u8) !voi
     }
 }
 
+
 pub const Write_Options = struct {
     compact: bool = false,
     zero_char: u8 = '0',
@@ -236,7 +234,7 @@ pub const Write_Options = struct {
     notes: []const u8 = "",
 };
 
-pub fn write(device_type: lc4k.Device_Type, allocator: std.mem.Allocator, f: Jedec_File, writer: anytype, options: Write_Options) !void {
+pub fn write(self: JEDEC_File, allocator: std.mem.Allocator, device_type: device.Type, writer: std.io.AnyWriter, options: Write_Options) !void {
     var w = @import("checksum_writer.zig").checksumWriter(u16, allocator, writer);
 
     try w.writeByte(0x2); // STX
@@ -253,19 +251,19 @@ pub fn write(device_type: lc4k.Device_Type, allocator: std.mem.Allocator, f: Jed
         }
     }
 
-    if (f.pin_count) |qp| {
+    if (self.pin_count) |qp| {
         try w.print("QP{}*{s}", .{ qp, options.line_ending });
     }
 
-    try w.print("QF{}*{s}", .{ f.data.extents.count(), options.line_ending });
+    try w.print("QF{}*{s}", .{ self.data.extents.count(), options.line_ending });
 
-    if (f.security) |g| {
+    if (self.security) |g| {
         try w.print("G{}*{s}", .{ g, options.line_ending });
     }
 
     if (options.compact) {
-        const len = f.data.extents.count();
-        const num_set = f.data.raw.count();
+        const len = self.data.extents.count();
+        const num_set = self.data.raw.count();
         var default: u1 = undefined;
         var default_hex: u8 = undefined;
         if (num_set * 2 < len) {
@@ -281,10 +279,10 @@ pub fn write(device_type: lc4k.Device_Type, allocator: std.mem.Allocator, f: Jed
         var unwritten_defaults: usize = 8888;
         var fuse: usize = 0;
         while (fuse < len) : (fuse += 4) {
-            const b0: u4 = @intFromBool(f.data.raw.isSet(fuse + 0));
-            const b1: u4 = if (fuse + 1 < len) @intFromBool(f.data.raw.isSet(fuse + 1)) else default;
-            const b2: u4 = if (fuse + 2 < len) @intFromBool(f.data.raw.isSet(fuse + 2)) else default;
-            const b3: u4 = if (fuse + 3 < len) @intFromBool(f.data.raw.isSet(fuse + 3)) else default;
+            const b0: u4 = @intFromBool(self.data.raw.isSet(fuse + 0));
+            const b1: u4 = if (fuse + 1 < len) @intFromBool(self.data.raw.isSet(fuse + 1)) else default;
+            const b2: u4 = if (fuse + 2 < len) @intFromBool(self.data.raw.isSet(fuse + 2)) else default;
+            const b3: u4 = if (fuse + 3 < len) @intFromBool(self.data.raw.isSet(fuse + 3)) else default;
 
             const val: u8 = 8*b0 + 4*b1 + 2*b2 + b3;
             const hex = if (val < 0xA) '0' + val else 'A' + val - 0xA;
@@ -307,12 +305,12 @@ pub fn write(device_type: lc4k.Device_Type, allocator: std.mem.Allocator, f: Jed
         try w.print("F0*{s}L0{s}", .{ options.line_ending, options.line_ending });
         var fuse: usize = 0;
         var row: u16 = 0;
-        const width = f.data.extents.width();
-        const height = f.data.extents.height();
+        const width = self.data.extents.width();
+        const height = self.data.extents.height();
         while (row < height) : (row += 1) {
             var col: u16 = 0;
             while (col < width) : (col += 1) {
-                if (f.data.raw.isSet(fuse)) {
+                if (self.data.raw.isSet(fuse)) {
                     try w.writeByte(options.one_char);
                 } else {
                     try w.writeByte(options.zero_char);
@@ -324,10 +322,10 @@ pub fn write(device_type: lc4k.Device_Type, allocator: std.mem.Allocator, f: Jed
     }
     try w.print("*{s}", .{options.line_ending});
 
-    const fuse_checksum = checksum(f.data);
+    const fuse_checksum = self.data.checksum();
     try w.print("C{X:0>4}*{s}", .{ fuse_checksum, options.line_ending });
 
-    if (f.usercode) |u| {
+    if (self.usercode) |u| {
         try w.print("U{b:0>32}*{s}", .{ u, options.line_ending });
     }
 
@@ -335,22 +333,9 @@ pub fn write(device_type: lc4k.Device_Type, allocator: std.mem.Allocator, f: Jed
     try writer.print("{X:0>4}{s}", .{ w.checksum, options.line_ending });
 }
 
-pub fn checksum(data: JedecData) u16 {
-    var sum: u16 = 0;
+const JEDEC_File = @This();
 
-    const MaskInt = std.DynamicBitSetUnmanaged.MaskInt;
-    var masks: []MaskInt = undefined;
-    masks.ptr = data.raw.masks;
-    masks.len = (data.raw.bit_length + (@bitSizeOf(MaskInt) - 1)) / @bitSizeOf(MaskInt);
-
-    for (masks) |mask| {
-        var x = mask;
-        comptime var i = 0;
-        inline while (i < @sizeOf(MaskInt)) : (i += 1) {
-            sum +%= @as(u8, @truncate(x));
-            x = x >> 8;
-        }
-    }
-
-    return sum;
-}
+const JEDEC_Data = @import("JEDEC_Data.zig");
+const Fuse_Range = @import("Fuse_Range.zig");
+const device = @import("device.zig");
+const std = @import("std");

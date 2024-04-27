@@ -1,10 +1,8 @@
 const std = @import("std");
 const lc4k = @import("lc4k.zig");
-const jedec = @import("jedec.zig");
-
-const Fuse = jedec.Fuse;
-const JedecData = jedec.JedecData;
-const Jedec_File = jedec.Jedec_File;
+const Fuse = @import("Fuse.zig");
+const JEDEC_Data = @import("JEDEC_Data.zig");
+const JEDEC_File = @import("JEDEC_File.zig");
 
 const NoData = void;
 
@@ -101,7 +99,7 @@ pub const Write_Options = struct {
     notes: []const u8 = "",
 };
 
-pub fn write(comptime Device: type, file: Jedec_File, writer: anytype, options: Write_Options) !void {
+pub fn write(comptime Device: type, file: JEDEC_File, writer: std.io.AnyWriter, options: Write_Options) !void {
     const nl = options.line_ending;
 
     std.debug.assert(file.data.extents.eql(Device.jedec_dimensions));
@@ -209,7 +207,7 @@ pub fn write(comptime Device: type, file: Jedec_File, writer: anytype, options: 
     try writeState("RESET", writer, nl);
 }
 
-fn writeRowHex(data: jedec.JedecData, row: u16, writer: anytype) !void {
+fn writeRowHex(data: JEDEC_Data, row: u16, writer: anytype) !void {
     const chars: u16 = @intCast((data.extents.width() + 3) / 4);
     var col: i32 = chars * 4;
     while (col >= 4) : (col -= 4) {

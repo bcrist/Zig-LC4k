@@ -146,7 +146,8 @@ end
 template([[
 const std = @import("std");
 const lc4k = @import("../lc4k.zig");
-const jedec = @import("../jedec.zig");
+const Fuse_Range = @import("../Fuse_Range.zig");
+const Fuse = @import("../Fuse.zig");
 
 pub const device_type = lc4k.Device_Type.`device`;
 
@@ -160,7 +161,7 @@ pub const num_gis_per_glb = 36;
 pub const gi_mux_size = `gi_mux_size`;
 pub const oe_bus_size = `oe_bus_size`;
 
-pub const jedec_dimensions = jedec.FuseRange.init(`jedec_width`, `jedec_height`);
+pub const jedec_dimensions = Fuse_Range.init_from_dimensions(`jedec_width`, `jedec_height`);
 
 pub const F = lc4k.Factor(GRP);
 pub const PT = lc4k.Product_Term(GRP);
@@ -354,7 +355,7 @@ pub const get_bclock_range = base.get_bclock_range;
 else
     
     write [[
-pub fn get_glb_range(glb: usize) jedec.FuseRange {
+pub fn get_glb_range(glb: usize) Fuse_Range {
     std.debug.assert(glb < num_glbs);
     ]]
     if info.gi_mux_size == 19 then
@@ -370,7 +371,7 @@ pub fn get_glb_range(glb: usize) jedec.FuseRange {
 
 }
 
-pub fn get_gi_range(glb: usize, gi: usize) jedec.FuseRange {
+pub fn get_gi_range(glb: usize, gi: usize) Fuse_Range {
     std.debug.assert(gi < num_gis_per_glb);
     ]]
     if info.gi_mux_size == 19 then
@@ -385,7 +386,7 @@ pub fn get_gi_range(glb: usize, gi: usize) jedec.FuseRange {
     write [[
 }
 
-pub fn get_bclock_range(glb: usize) jedec.FuseRange {
+pub fn get_bclock_range(glb: usize) Fuse_Range {
     ]]
     if info.gi_mux_size == 19 then
         writeln('var index = num_glbs - glb - 1;', indent)
@@ -401,14 +402,14 @@ end
 nl()
 
 write [[
-pub fn get_goe_polarity_fuse(goe: usize) jedec.Fuse {
+pub fn get_goe_polarity_fuse(goe: usize) Fuse {
     return switch (goe) {]]
 
     indent(2)
     for goe = 0,3 do
         local polarity = goes['goe'..goe..'_polarity']
         if polarity then
-            write(nl, goe, ' => jedec.Fuse.init(', polarity[1], ', ', polarity[2], '),')
+            write(nl, goe, ' => Fuse.init(', polarity[1], ', ', polarity[2], '),')
         end
     end
     unindent(2)
@@ -419,14 +420,14 @@ pub fn get_goe_polarity_fuse(goe: usize) jedec.Fuse {
     };
 }
 
-pub fn get_goe_source_fuse(goe: usize) jedec.Fuse {
+pub fn get_goe_source_fuse(goe: usize) Fuse {
     return switch (goe) {]]
 
     indent(2)
     for goe = 0,3 do
         local polarity = goes['goe'..goe..'_source']
         if polarity then
-            write(nl, goe, ' => jedec.Fuse.init(', polarity[1], ', ', polarity[2], '),')
+            write(nl, goe, ' => Fuse.init(', polarity[1], ', ', polarity[2], '),')
         end
     end
     unindent(2)
@@ -437,8 +438,8 @@ pub fn get_goe_source_fuse(goe: usize) jedec.Fuse {
     };
 }
 
-pub fn get_zero_hold_time_fuse() jedec.Fuse {
-    return jedec.Fuse.init(]],zerohold[1],', ',zerohold[2],[[);
+pub fn get_zero_hold_time_fuse() Fuse {
+    return Fuse.init(]],zerohold[1],', ',zerohold[2],[[);
 }
 
 ]])
@@ -461,37 +462,34 @@ if info.family == 'zero_power_enhanced' then
     end
 
     write([[
-pub fn getOscTimerEnableRange() jedec.FuseRange {
-    return jedec.FuseRange.between(
-        jedec.Fuse.init(]],min[1],', ',min[2],[[),
-        jedec.Fuse.init(]],max[1],', ',max[2],[[),
+pub fn getOscTimerEnableRange() Fuse_Range {
+    return Fuse_Range.between(
+        Fuse.init(]],min[1],', ',min[2],[[),
+        Fuse.init(]],max[1],', ',max[2],[[),
     );
 }
 
-pub fn getOscOutFuse() jedec.Fuse {
-    return jedec.Fuse.init(]],osctimer.osc_out[1],', ',osctimer.osc_out[2],[[);
+pub fn getOscOutFuse() Fuse {
+    return Fuse.init(]],osctimer.osc_out[1],', ',osctimer.osc_out[2],[[);
 }
 
-pub fn getTimerOutFuse() jedec.Fuse {
-    return jedec.Fuse.init(]],osctimer.timer_out[1],', ',osctimer.timer_out[2],[[);
+pub fn getTimerOutFuse() Fuse {
+    return Fuse.init(]],osctimer.timer_out[1],', ',osctimer.timer_out[2],[[);
 }
 
-pub fn getTimerDivRange() jedec.FuseRange {
-    return jedec.FuseRange.fromFuse(
-        jedec.Fuse.init(]], osctimer.timer_div[1][1], ', ', osctimer.timer_div[1][2], [[)
-    ).expandToContain(
-        jedec.Fuse.init(]], osctimer.timer_div[2][1], ', ', osctimer.timer_div[2][2], [[)
-    );
+pub fn getTimerDivRange() Fuse_Range {
+    return Fuse.init(]], osctimer.timer_div[1][1], ', ', osctimer.timer_div[1][2], [[)
+        .range().expandToContain(Fuse.init(]], osctimer.timer_div[2][1], ', ', osctimer.timer_div[2][2], [[));
 }
 
-pub fn getInputPower_GuardFuse(input: GRP) jedec.Fuse {
+pub fn getInputPower_GuardFuse(input: GRP) Fuse {
     return switch (input) {]])
     include 'power_guard'
     local power_guard_fuses = load_power_guard_fuses(which)
     indent(2)
     for _, pin in spairs(dedicated_inputs, natural_cmp) do
         local fuse = power_guard_fuses[pin.id]
-        write(nl, '.', pin.grp_name, ' => jedec.Fuse.init(', fuse[1], ', ', fuse[2], '),')
+        write(nl, '.', pin.grp_name, ' => Fuse.init(', fuse[1], ', ', fuse[2], '),')
     end
     unindent(2)
     write [[
@@ -500,14 +498,14 @@ pub fn getInputPower_GuardFuse(input: GRP) jedec.Fuse {
     };
 }
 
-pub fn getInputBus_MaintenanceRange(input: GRP) jedec.FuseRange {
+pub fn getInputBus_MaintenanceRange(input: GRP) Fuse_Range {
     return switch (input) {]]
     include 'bus_maintenance'
     local fuse1, fuse2 = load_bus_maintenance_fuses(which)
     indent(2)
     for _, pin in spairs(dedicated_inputs, natural_cmp) do
-        write(nl, '.', pin.grp_name, ' => jedec.FuseRange.between(jedec.Fuse.init(', fuse1[pin.id][1], ', ', fuse1[pin.id][2],
-                                                              '), jedec.Fuse.init(', fuse2[pin.id][1], ', ', fuse2[pin.id][2], ')),')
+        write(nl, '.', pin.grp_name, ' => Fuse_Range.between(Fuse.init(', fuse1[pin.id][1], ', ', fuse1[pin.id][2],
+                                                         '), Fuse.init(', fuse2[pin.id][1], ', ', fuse2[pin.id][2], ')),')
     end
     unindent(2)
     write [[
@@ -521,18 +519,14 @@ else
     local f0, f1, extra = load_global_bus_maintenance_fuses(which)
     write([[
 
-pub fn get_global_bus_maintenance_range() jedec.FuseRange {
-    return jedec.FuseRange.fromFuse(
-        jedec.Fuse.init(]], f0[1], ', ', f0[2], [[)
-    ).expandToContain(
-        jedec.Fuse.init(]], f1[1], ', ', f1[2], [[)
-    );
+pub fn get_global_bus_maintenance_range() Fuse_Range {
+    return Fuse.init(]], f0[1], ', ', f0[2], [[).range().expandToContain(Fuse.init(]], f1[1], ', ', f1[2], [[));
 }
-pub fn get_extra_float_input_fuses() []const jedec.Fuse {
+pub fn get_extra_float_input_fuses() []const Fuse {
     return &.{]])
     indent(2)
     for _, f in ipairs(extra) do
-        write(nl, 'jedec.Fuse.init(', f[1], ', ', f[2], '),')
+        write(nl, 'Fuse.init(', f[1], ', ', f[2], '),')
     end
     unindent(2)
     write [[
@@ -543,12 +537,12 @@ pub fn get_extra_float_input_fuses() []const jedec.Fuse {
 end
 write [[
 
-pub fn get_input_threshold_fuse(input: GRP) jedec.Fuse {
+pub fn get_input_threshold_fuse(input: GRP) Fuse {
     return switch (input) {]]
     indent(2)
     for _, pin in spairs(dedicated_inputs, natural_cmp) do
         local fuse = pin_to_threshold_fuse[pin.id]
-        write(nl, '.', pin.grp_name, ' => jedec.Fuse.init(', fuse[1], ', ', fuse[2], '),')
+        write(nl, '.', pin.grp_name, ' => Fuse.init(', fuse[1], ', ', fuse[2], '),')
     end
     unindent(2)
     write [[

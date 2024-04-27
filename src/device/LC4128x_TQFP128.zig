@@ -1,8 +1,9 @@
-//[[!! include('devices', 'LC4128x_TQFP128') !! 812 ]]
+//[[!! include('devices', 'LC4128x_TQFP128') !! 809 ]]
 //[[ ################# !! GENERATED CODE -- DO NOT MODIFY !! ################# ]]
 const std = @import("std");
 const lc4k = @import("../lc4k.zig");
-const jedec = @import("../jedec.zig");
+const Fuse_Range = @import("../Fuse_Range.zig");
+const Fuse = @import("../Fuse.zig");
 
 pub const device_type = lc4k.Device_Type.LC4128x_TQFP128;
 
@@ -16,7 +17,7 @@ pub const num_gis_per_glb = 36;
 pub const gi_mux_size = 19;
 pub const oe_bus_size = 4;
 
-pub const jedec_dimensions = jedec.FuseRange.init(740, 100);
+pub const jedec_dimensions = Fuse_Range.init_from_dimensions(740, 100);
 
 pub const F = lc4k.Factor(GRP);
 pub const PT = lc4k.Product_Term(GRP);
@@ -483,51 +484,47 @@ pub const get_glb_range = base.get_glb_range;
 pub const get_gi_range = base.get_gi_range;
 pub const get_bclock_range = base.get_bclock_range;
 
-pub fn get_goe_polarity_fuse(goe: usize) jedec.Fuse {
+pub fn get_goe_polarity_fuse(goe: usize) Fuse {
     return switch (goe) {
-        0 => jedec.Fuse.init(90, 101),
-        1 => jedec.Fuse.init(91, 101),
-        2 => jedec.Fuse.init(92, 101),
-        3 => jedec.Fuse.init(93, 101),
+        0 => Fuse.init(90, 101),
+        1 => Fuse.init(91, 101),
+        2 => Fuse.init(92, 101),
+        3 => Fuse.init(93, 101),
         else => unreachable,
     };
 }
 
-pub fn get_goe_source_fuse(goe: usize) jedec.Fuse {
+pub fn get_goe_source_fuse(goe: usize) Fuse {
     return switch (goe) {
-        0 => jedec.Fuse.init(88, 101),
-        1 => jedec.Fuse.init(89, 101),
+        0 => Fuse.init(88, 101),
+        1 => Fuse.init(89, 101),
         else => unreachable,
     };
 }
 
-pub fn get_zero_hold_time_fuse() jedec.Fuse {
-    return jedec.Fuse.init(87, 101);
+pub fn get_zero_hold_time_fuse() Fuse {
+    return Fuse.init(87, 101);
 }
 
 
-pub fn get_global_bus_maintenance_range() jedec.FuseRange {
-    return jedec.FuseRange.fromFuse(
-        jedec.Fuse.init(85, 101)
-    ).expandToContain(
-        jedec.Fuse.init(86, 101)
-    );
+pub fn get_global_bus_maintenance_range() Fuse_Range {
+    return Fuse.init(85, 101).range().expandToContain(Fuse.init(86, 101));
 }
-pub fn get_extra_float_input_fuses() []const jedec.Fuse {
+pub fn get_extra_float_input_fuses() []const Fuse {
     return &.{
-        jedec.Fuse.init(92, 107),
-        jedec.Fuse.init(92, 269),
-        jedec.Fuse.init(92, 477),
-        jedec.Fuse.init(92, 639),
+        Fuse.init(92, 107),
+        Fuse.init(92, 269),
+        Fuse.init(92, 477),
+        Fuse.init(92, 639),
     };
 }
 
-pub fn get_input_threshold_fuse(input: GRP) jedec.Fuse {
+pub fn get_input_threshold_fuse(input: GRP) Fuse {
     return switch (input) {
-        .clk0 => jedec.Fuse.init(94, 98),
-        .clk1 => jedec.Fuse.init(94, 99),
-        .clk2 => jedec.Fuse.init(94, 100),
-        .clk3 => jedec.Fuse.init(94, 101),
+        .clk0 => Fuse.init(94, 98),
+        .clk1 => Fuse.init(94, 99),
+        .clk2 => Fuse.init(94, 100),
+        .clk3 => Fuse.init(94, 101),
         else => unreachable,
     };
 }

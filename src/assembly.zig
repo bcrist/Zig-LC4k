@@ -1,13 +1,3 @@
-const std = @import("std");
-const lc4k = @import("lc4k.zig");
-const jedec = @import("jedec.zig");
-const routing = @import("routing.zig");
-const fuses = @import("fuses.zig");
-
-const Chip_Config = lc4k.Chip_Config;
-const Factor = lc4k.Factor;
-const Product_Term = lc4k.Product_Term;
-
 pub const AssemblyError = struct {
     err: anyerror,
     details: []const u8,
@@ -18,14 +8,14 @@ pub const AssemblyError = struct {
 };
 
 pub const Assembly_Results = struct {
-    jedec: jedec.Jedec_File,
+    jedec: JEDEC_File,
     errors: std.ArrayList(AssemblyError),
 };
 
 pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), allocator: std.mem.Allocator) !Assembly_Results {
     var results = Assembly_Results {
-        .jedec = jedec.Jedec_File {
-            .data = try jedec.JedecData.initFull(allocator, Device.jedec_dimensions),
+        .jedec = JEDEC_File {
+            .data = try JEDEC_Data.init_full(allocator, Device.jedec_dimensions),
         },
         .errors = std.ArrayList(AssemblyError).init(allocator),
     };
@@ -416,7 +406,7 @@ pub fn getSpecialPT(
     };
 }
 
-fn writeGoeFuses(comptime Device: type, data: *jedec.JedecData, goe_config: anytype, goe_index: usize) void {
+fn writeGoeFuses(comptime Device: type, data: *JEDEC_Data, goe_config: anytype, goe_index: usize) void {
     switch (@TypeOf(goe_config)) {
         lc4k.GOE_Config_Bus_Or_Pin => switch (goe_config.source) {
             .input => {
@@ -441,18 +431,18 @@ fn writeGoeFuses(comptime Device: type, data: *jedec.JedecData, goe_config: anyt
     data.put(Device.get_goe_polarity_fuse(goe_index), @intFromBool(goe_config.polarity == .active_high));
 }
 
-fn writeDedicatedInputFuses(comptime Device: type, data: *jedec.JedecData, pin_info: lc4k.Pin_Info, config: *const Chip_Config(Device.device_type), input_config: anytype) void {
+fn writeDedicatedInputFuses(comptime Device: type, data: *JEDEC_Data, pin_info: lc4k.Pin_Info, config: *const Chip_Config(Device.device_type), input_config: anytype) void {
     const grp: Device.GRP = @enumFromInt(pin_info.grp_ordinal.?);
 
     const threshold = input_config.threshold orelse config.default_input_threshold;
-    writeField(data, lc4k.Input_Threshold, threshold, jedec.FuseRange.fromFuse(Device.get_input_threshold_fuse(grp)));
+    writeField(data, lc4k.Input_Threshold, threshold, Device.get_input_threshold_fuse(grp).range());
 
     if (@TypeOf(input_config) == lc4k.Input_Config_ZE) {
         const maintenance = input_config.bus_maintenance orelse config.default_bus_maintenance;
         writeField(data, lc4k.Bus_Maintenance, maintenance, Device.getInputBus_MaintenanceRange(grp));
 
         const pgdf = input_config.power_guard orelse config.ext.default_power_guard;
-        writeField(data, lc4k.Power_Guard, pgdf, jedec.FuseRange.fromFuse(Device.getInputPower_GuardFuse(grp)));
+        writeField(data, lc4k.Power_Guard, pgdf, Device.getInputPower_GuardFuse(grp).range());
     }
 }
 
@@ -491,7 +481,7 @@ fn writePTFuses(comptime Device: type, results: *Assembly_Results, glb: usize, g
     }
 }
 
-fn writeField(data: *jedec.JedecData, comptime T: type, value: T, range: jedec.FuseRange) void {
+fn writeField(data: *JEDEC_Data, comptime T: type, value: T, range: Fuse_Range) void {
     std.debug.assert(@bitSizeOf(T) == range.count());
     const v = if (@typeInfo(T) == .Enum) @intFromEnum(value) else value;
     const IntT = std.meta.Int(.unsigned, @bitSizeOf(T));
@@ -502,3 +492,14 @@ fn writeField(data: *jedec.JedecData, comptime T: type, value: T, range: jedec.F
         int_value = int_value >> 1;
     }
 }
+
+const Chip_Config = lc4k.Chip_Config;
+const Factor = lc4k.Factor;
+const Product_Term = lc4k.Product_Term;
+const Fuse_Range = @import("Fuse_Range.zig");
+const JEDEC_File = @import("JEDEC_File.zig");
+const JEDEC_Data = @import("JEDEC_Data.zig");
+const routing = @import("routing.zig");
+const fuses = @import("fuses.zig");
+const lc4k = @import("lc4k.zig");
+const std = @import("std");

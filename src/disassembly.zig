@@ -1,17 +1,7 @@
-const std = @import("std");
-const lc4k = @import("lc4k.zig");
-const jedec = @import("jedec.zig");
-const fuses = @import("fuses.zig");
-const routing = @import("routing.zig");
-const assembly = @import("assembly.zig");
-const Product_Term = lc4k.Product_Term;
-const Factor = lc4k.Factor;
-const assert = std.debug.assert;
-
 pub const DisassemblyError = struct {
     err: anyerror,
     details: []const u8,
-    fuse: ?jedec.Fuse = null,
+    fuse: ?Fuse = null,
     gi: ?lc4k.GI_Index = null,
     glb: ?lc4k.GLB_Index = null,
     mc: ?lc4k.MC_Index = null,
@@ -27,7 +17,7 @@ pub fn Disassembly_Results(comptime Device: type) type {
     };
 }
 
-pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: jedec.Jedec_File) !Disassembly_Results(Device) {
+pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JEDEC_File) !Disassembly_Results(Device) {
     var results = Disassembly_Results(Device) {
         .config = .{},
         .gi_routing = .{ .{ null } ** Device.num_gis_per_glb } ** Device.num_glbs,
@@ -37,7 +27,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
 
     if (!file.data.extents.eql(Device.jedec_dimensions)) {
         try results.errors.append(.{
-            .err = error.MalformedJedec_File,
+            .err = error.MalformedJEDEC_File,
             .details = "JEDEC file fuse range does not match expected dimensions for this device!",
         });
         return results;
@@ -102,14 +92,14 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
         const pin = Device.clock_pins[clock_pin_index];
         const grp: Device.GRP = pin.signal();
 
-        const threshold_range = jedec.FuseRange.fromFuse(Device.get_input_threshold_fuse(grp));
+        const threshold_range = Device.get_input_threshold_fuse(grp).range();
         clock_config.threshold = readField(file.data, lc4k.Input_Threshold, threshold_range);
 
         if (@TypeOf(clock_config) == *lc4k.Input_Config_ZE) {
             const maintenance_range = Device.getInputBus_MaintenanceRange(grp);
             clock_config.bus_maintenance = readField(file.data, lc4k.Bus_Maintenance, maintenance_range);
 
-            const pgdf_range = jedec.FuseRange.fromFuse(Device.getInputPower_GuardFuse(grp));
+            const pgdf_range = Device.getInputPower_GuardFuse(grp).range();
             clock_config.power_guard = readField(file.data, lc4k.Power_Guard, pgdf_range);
         }
     }
@@ -118,14 +108,14 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
         const pin = Device.input_pins[input_pin_index];
         const grp: Device.GRP = pin.signal();
 
-        const threshold_range = jedec.FuseRange.fromFuse(Device.get_input_threshold_fuse(grp));
+        const threshold_range = Device.get_input_threshold_fuse(grp).range();
         input_config.threshold = readField(file.data, lc4k.Input_Threshold, threshold_range);
 
         if (@TypeOf(input_config) == *lc4k.Input_Config_ZE) {
             const maintenance_range = Device.getInputBus_MaintenanceRange(grp);
             input_config.bus_maintenance = readField(file.data, lc4k.Bus_Maintenance, maintenance_range);
 
-            const pgdf_range = jedec.FuseRange.fromFuse(Device.getInputPower_GuardFuse(grp));
+            const pgdf_range = Device.getInputPower_GuardFuse(grp).range();
             input_config.power_guard = readField(file.data, lc4k.Power_Guard, pgdf_range);
         }
     }
@@ -139,7 +129,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
         // Parse GI routing fuses
         for (Device.gi_options, 0..) |options, gi| {
             const gi_fuses = Device.get_gi_range(glb, gi);
-            assert(options.len == gi_fuses.count());
+            std.debug.assert(options.len == gi_fuses.count());
             var fuse_iter = gi_fuses.iterator();
             for (options) |grp| {
                 const fuse = fuse_iter.next().?;
@@ -460,7 +450,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: je
                             }
                         }
                     }
-                    assert(next_pt_index == num_pts);
+                    std.debug.assert(next_pt_index == num_pts);
                     if (num_pts > 1 and sum_is_always) {
                         const details = try std.fmt.allocPrint(allocator, "Logic sum needlessly uses {} PTs (constant high requires only one)", .{
                             num_pts
@@ -509,10 +499,10 @@ fn getPTTypeFromFuses(
     glb: usize,
     glb_pt_offset: usize,
     gi_signals: *[Device.num_gis_per_glb]?Device.GRP,
-    jed: jedec.JedecData,
+    jed: JEDEC_Data,
 ) PTType {
     const range = fuses.getPTRange(Device, glb, glb_pt_offset);
-    assert(range.count() == gi_signals.len * 2);
+    std.debug.assert(range.count() == gi_signals.len * 2);
 
     var pt_type = PTType.always;
 
@@ -540,12 +530,12 @@ pub fn parsePTFuses(
     glb: usize,
     glb_pt_offset: usize,
     gi_signals: *const [Device.num_gis_per_glb]?Device.GRP,
-    jed: jedec.JedecData,
+    jed: JEDEC_Data,
     maybe_results: ?*Disassembly_Results(Device),
 ) !Product_Term(Device.GRP) {
     const GRP = Device.GRP;
     const range = fuses.getPTRange(Device, glb, glb_pt_offset);
-    assert(range.count() == gi_signals.len * 2);
+    std.debug.assert(range.count() == gi_signals.len * 2);
 
     var num_factors: usize = 0;
 
@@ -597,7 +587,7 @@ pub fn parsePTFuses(
     return .{ .factors = factors };
 }
 
-fn readGoeConfig(comptime Device: type, data: jedec.JedecData, goe_config: anytype, goe_index: usize, results: *Disassembly_Results(Device)) !void {
+fn readGoeConfig(comptime Device: type, data: JEDEC_Data, goe_config: anytype, goe_index: usize, results: *Disassembly_Results(Device)) !void {
     switch (@TypeOf(goe_config.*)) {
         lc4k.GOE_Config_Bus_Or_Pin => switch (data.get(Device.get_goe_source_fuse(goe_index))) {
             0 => goe_config.source = .input,
@@ -613,7 +603,7 @@ fn readGoeConfig(comptime Device: type, data: jedec.JedecData, goe_config: anyty
     };
 }
 
-fn readGoeSourceBus(comptime Device: type, data: jedec.JedecData, goe_config: anytype, goe_index: usize, results: *Disassembly_Results(Device)) !void {
+fn readGoeSourceBus(comptime Device: type, data: JEDEC_Data, goe_config: anytype, goe_index: usize, results: *Disassembly_Results(Device)) !void {
     goe_config.source = .constant_high;
     var glb: lc4k.GLB_Index = 0;
     var already_reported_goe_collision = false;
@@ -644,23 +634,23 @@ fn readGoeSourceBus(comptime Device: type, data: jedec.JedecData, goe_config: an
     }
 }
 
-pub fn read_pt4_oe_source(comptime Device: type, data: jedec.JedecData, mcref: lc4k.MC_Ref) lc4k.Macrocell_Output_Enable_Source {
+pub fn read_pt4_oe_source(comptime Device: type, data: JEDEC_Data, mcref: lc4k.MC_Ref) lc4k.Macrocell_Output_Enable_Source {
     return readField(data, lc4k.Macrocell_Output_Enable_Source, fuses.getPT4OERange(Device, mcref));
 }
 
-pub fn read_ce_source(comptime Device: type, data: jedec.JedecData, mcref: lc4k.MC_Ref) lc4k.Clock_Enable_Source {
+pub fn read_ce_source(comptime Device: type, data: JEDEC_Data, mcref: lc4k.MC_Ref) lc4k.Clock_Enable_Source {
     return readField(data, lc4k.Clock_Enable_Source, fuses.getCERange(Device, mcref));
 }
 
-pub fn read_init_source(comptime Device: type, data: jedec.JedecData, mcref: lc4k.MC_Ref) lc4k.Init_Source {
+pub fn read_init_source(comptime Device: type, data: JEDEC_Data, mcref: lc4k.MC_Ref) lc4k.Init_Source {
     return readField(data, lc4k.Init_Source, fuses.getInitSourceRange(Device, mcref));
 }
 
-pub fn read_async_source(comptime Device: type, data: jedec.JedecData, mcref: lc4k.MC_Ref) lc4k.Async_Trigger_Source {
+pub fn read_async_source(comptime Device: type, data: JEDEC_Data, mcref: lc4k.MC_Ref) lc4k.Async_Trigger_Source {
     return readField(data, lc4k.Async_Trigger_Source, fuses.getAsyncSourceRange(Device, mcref));
 }
 
-pub fn read_clock_source(comptime Device: type, data: jedec.JedecData, mcref: lc4k.MC_Ref) lc4k.Clock_Source {
+pub fn read_clock_source(comptime Device: type, data: JEDEC_Data, mcref: lc4k.MC_Ref) lc4k.Clock_Source {
     const low_range = fuses.getClockSourceLowRange(Device, mcref);
     const high_fuse = fuses.getClockSourceHighRange(Device, mcref).min;
 
@@ -683,7 +673,7 @@ pub fn read_clock_source(comptime Device: type, data: jedec.JedecData, mcref: lc
     }
 }
 
-pub fn unmap_orm(comptime Device: type, data: jedec.JedecData, mcref: lc4k.MC_Ref) ?lc4k.MC_Ref {
+pub fn unmap_orm(comptime Device: type, data: JEDEC_Data, mcref: lc4k.MC_Ref) ?lc4k.MC_Ref {
     if (fuses.getOutput_RoutingRange(Device, mcref)) |range| {
         const relative = readField(data, u3, range);
         const absolute: lc4k.MC_Index = @intCast((@as(u32, mcref.mc) + relative) % Device.num_mcs_per_glb);
@@ -692,8 +682,8 @@ pub fn unmap_orm(comptime Device: type, data: jedec.JedecData, mcref: lc4k.MC_Re
     return null;
 }
 
-pub fn readField(data: jedec.JedecData, comptime T: type, range: jedec.FuseRange) T {
-    assert(@bitSizeOf(T) == range.count());
+pub fn readField(data: JEDEC_Data, comptime T: type, range: Fuse_Range) T {
+    std.debug.assert(@bitSizeOf(T) == range.count());
     var int_value: u64 = 0;
     var bit_value: u64 = 1;
     var iter = range.iterator();
@@ -706,3 +696,15 @@ pub fn readField(data: jedec.JedecData, comptime T: type, range: jedec.FuseRange
 
     return if (@typeInfo(T) == .Enum) @enumFromInt(int_value) else @intCast(int_value);
 }
+
+const Product_Term = lc4k.Product_Term;
+const Factor = lc4k.Factor;
+const JEDEC_Data = @import("JEDEC_Data.zig");
+const JEDEC_File = @import("JEDEC_File.zig");
+const Fuse = @import("Fuse.zig");
+const Fuse_Range = @import("Fuse_Range.zig");
+const assembly = @import("assembly.zig");
+const fuses = @import("fuses.zig");
+const routing = @import("routing.zig");
+const lc4k = @import("lc4k.zig");
+const std = @import("std");

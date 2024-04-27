@@ -570,7 +570,7 @@ fn PTIterator(comptime Device: type) type {
 
         const Self = @This();
 
-        // returns the column offset of a PT (0-79), relative to the GLB FuseRange
+        // returns the column offset of a PT (0-79), relative to the GLB Fuse_Range
         // only visits PTs from clusters that are routed to `self.mc`, and aren't
         // reallocated for special usage by a MC/OE/etc.  Wide-routed clusters will
         // be visited after directly routed clusters, such that the PTs will be

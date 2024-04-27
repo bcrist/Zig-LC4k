@@ -1,16 +1,3 @@
-const std = @import("std");
-const lc4k = @import("lc4k.zig");
-const jedec = @import("jedec.zig");
-const fuses = @import("fuses.zig");
-const assembly = @import("assembly.zig");
-const routing = @import("routing.zig");
-const disassembly = @import("disassembly.zig");
-
-const Jedec_File = jedec.Jedec_File;
-const JedecData = jedec.JedecData;
-const MC_Ref = lc4k.MC_Ref;
-const get_glb_name = lc4k.get_glb_name;
-
 pub fn Write_Options(comptime Device: type) type {
     return struct {
         design_name: []const u8 = "",
@@ -70,7 +57,7 @@ fn ReportData(comptime Device: type) type {
     const shared_enable_pt = Device.num_mcs_per_glb * 5 + 2;
 
     return struct {
-        jed: JedecData,
+        jed: JEDEC_Data,
         config: lc4k.Chip_Config(Device.device_type),
         disassembly_errors: std.ArrayList(disassembly.DisassemblyError),
 
@@ -89,7 +76,7 @@ fn ReportData(comptime Device: type) type {
 
         const Self = @This();
 
-        pub fn init(alloc: std.mem.Allocator, file: Jedec_File) !Self {
+        pub fn init(alloc: std.mem.Allocator, file: JEDEC_File) !Self {
             std.debug.assert(file.data.extents.eql(Device.jedec_dimensions));
 
             const dis = try disassembly.disassemble(Device, alloc, file);
@@ -326,7 +313,7 @@ fn ReportData(comptime Device: type) type {
     };
 }
 
-pub fn write(comptime Device: type, file: Jedec_File, writer: anytype, options: Write_Options(Device)) !void {
+pub fn write(comptime Device: type, file: JEDEC_File, writer: std.io.AnyWriter, options: Write_Options(Device)) !void {
     var temp = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer temp.deinit();
     const alloc = temp.allocator();
@@ -896,7 +883,7 @@ fn writeGlbRouting(writer: anytype, comptime Device: type, data: ReportData(Devi
                 const pt_range = Device.get_glb_range(glb).subRows(gi * 2, 2);
                 var col: usize = 0;
                 while (col < pt_range.width()) : (col += 1) {
-                    if (data.jed.countUnsetInRange(pt_range.subColumns(col, 1)) == 1) {
+                    if (data.jed.count_unset_in_range(pt_range.subColumns(col, 1)) == 1) {
                         fanout += 1;
                     }
                 }
@@ -1420,3 +1407,13 @@ fn endCell(writer: anytype) !void {
 fn endTable(writer: anytype) !void {
     try writer.writeAll("</table>\n");
 }
+
+const MC_Ref = lc4k.MC_Ref;
+const JEDEC_File = @import("JEDEC_File.zig");
+const JEDEC_Data = @import("JEDEC_Data.zig");
+const assembly = @import("assembly.zig");
+const disassembly = @import("disassembly.zig");
+const routing = @import("routing.zig");
+const fuses = @import("fuses.zig");
+const lc4k = @import("lc4k.zig");
+const std = @import("std");

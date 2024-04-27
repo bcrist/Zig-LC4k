@@ -85,8 +85,8 @@ pub const Path = struct {
     };
 };
 
-pub fn Analyzer(comptime device: Device_Type, comptime speed_grade: comptime_int) type {
-    const D = device.get();
+pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptime_int) type {
+    const D = device_type.get();
 
     const Timing = switch (D.family) {
         .low_power => switch (speed_grade) {
@@ -127,12 +127,12 @@ pub fn Analyzer(comptime device: Device_Type, comptime speed_grade: comptime_int
     return struct {
         arena: std.mem.Allocator,
         gpa: std.mem.Allocator,
-        jedec: JedecData,
+        jedec: JEDEC_Data,
         cache: std.AutoHashMapUnmanaged(Segment, Path) = .{},
 
         const Self = @This();
 
-        pub fn init(jedec_data: JedecData, arena: std.mem.Allocator, gpa: std.mem.Allocator) Self {
+        pub fn init(jedec_data: JEDEC_Data, arena: std.mem.Allocator, gpa: std.mem.Allocator) Self {
             return .{
                 .arena = arena,
                 .gpa = gpa,
@@ -833,7 +833,7 @@ pub fn Analyzer(comptime device: Device_Type, comptime speed_grade: comptime_int
             //         return Timing.tIOI_high;
             //     }
             // }
-            //const threshold_range = jedec.FuseRange.fromFuse(D.get_input_threshold_fuse(grp));
+            //const threshold_range = jedec.Fuse_Range.fromFuse(D.get_input_threshold_fuse(grp));
             return Timing.tIOI_low;
         }
 
@@ -862,10 +862,9 @@ pub fn Analyzer(comptime device: Device_Type, comptime speed_grade: comptime_int
     };
 }
 
+const JEDEC_Data = @import("JEDEC_Data.zig");
 const disassembly = @import("disassembly.zig");
 const fuses = @import("fuses.zig");
-const JedecData = jedec.JedecData;
-const jedec = @import("jedec.zig");
-const Device_Type = lc4k.Device_Type;
+const device = @import("device.zig");
 const lc4k = @import("lc4k.zig");
 const std = @import("std");
