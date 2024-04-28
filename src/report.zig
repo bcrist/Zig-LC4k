@@ -3,7 +3,7 @@ pub fn Write_Options(comptime Device: type) type {
         design_name: []const u8 = "",
         design_version: []const u8 = "",
         notes: []const u8 = "",
-        assembly_errors: []const assembly.AssemblyError = &[_]assembly.AssemblyError{},
+        assembly_errors: []const assembly.Assembly_Error = &[_]assembly.Assembly_Error{},
         macrocellNameMapper: *const fn(lc4k.MC_Ref) []const u8 = defaultMacrocellNameMapper(Device),
         signalNameMapper: *const fn(Device.GRP) []const u8 = defaultSignalNameMapper(Device.GRP),
     };

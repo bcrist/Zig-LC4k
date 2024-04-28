@@ -390,7 +390,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                         var num_pts: usize = 0;
                         var sum_is_always = false;
                         while (pt_index < 5) : (pt_index += 1) {
-                            if (assembly.getSpecialPT(Device, mc_config.*, pt_index)) |_| continue;
+                            if (assembly.get_special_pt(Device, mc_config.*, pt_index)) |_| continue;
                             const pt = try parsePTFuses(Device, allocator, glb, mc * 5 + pt_index, gi_routing, file.data, &results);
                             if (!pt.is_never() and !(sum_is_always and pt.is_always())) {
                                 pts[num_pts] = pt;

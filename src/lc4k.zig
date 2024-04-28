@@ -119,9 +119,9 @@ pub fn Chip_Config(comptime device_type: Device_Type) type {
             return JEDEC_File.parse(allocator, D.jedec_dimensions.width(), D.jedec_dimensions.height(), text);
         }
 
-        pub fn write_jed(allocator: std.mem.Allocator, file: JEDEC_File, writer: anytype, options: JEDEC_File.Write_Options) !void {
+        pub fn write_jed(file: JEDEC_File, writer: anytype, options: JEDEC_File.Write_Options) !void {
             const any_writer = if (@hasDecl(@TypeOf(writer), "any")) writer.any() else writer;
-            return file.write(allocator, D.device_type, any_writer, options);
+            return file.write(D.device_type, any_writer, options);
         }
         pub fn write_svf(file: JEDEC_File, writer: anytype, options: svf.Write_Options) !void {
             const any_writer = if (@hasDecl(@TypeOf(writer), "any")) writer.any() else writer;

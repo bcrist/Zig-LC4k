@@ -154,7 +154,7 @@ pub fn main() !void {
 
     var jed_file = try std.fs.cwd().createFile("compress_18_5.jed", .{});
     defer jed_file.close();
-    try Chip.write_jed(arena.allocator(), results.jedec, jed_file.writer(), .{});
+    try Chip.write_jed(results.jedec, jed_file.writer(), .{});
 
     var svf_file = try std.fs.cwd().createFile("compress_18_5.svf", .{});
     defer svf_file.close();

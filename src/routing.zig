@@ -5,7 +5,7 @@ const assembly = @import("assembly.zig");
 const Cluster_Routing = lc4k.Cluster_Routing;
 const Wide_Routing = lc4k.Wide_Routing;
 
-pub fn addSignalsFromPT(comptime Device: type, gi_signals: *[Device.num_gis_per_glb]?Device.GRP, pt: lc4k.Product_Term(Device.GRP)) !void {
+pub fn add_signals_from_pt(comptime Device: type, gi_signals: *[Device.num_gis_per_glb]?Device.GRP, pt: lc4k.Product_Term(Device.GRP)) !void {
     for (pt.factors) |factor| switch (factor) {
         .always, .never => {},
         .when_high, .when_low => |grp| {
@@ -85,7 +85,7 @@ pub const ClusterRouter = struct {
             var available: u8 = 0;
             var special_pt: u8 = 0;
             while (special_pt < 5) : (special_pt += 1) {
-                if (assembly.getSpecialPT(Device, mc_config, special_pt) == null) {
+                if (assembly.get_special_pt(Device, mc_config, special_pt) == null) {
                     available += 1;
                 }
             }
@@ -610,7 +610,7 @@ fn PTIterator(comptime Device: type) type {
                             .five_pt_fast_bypass, .five_pt_fast_bypass_inverted => continue,
                         }
                     }
-                    if (assembly.getSpecialPT(Device, mc_config.*, pt) == null) {
+                    if (assembly.get_special_pt(Device, mc_config.*, pt) == null) {
                         return self.cluster * 5 + pt;
                     }
                 }
