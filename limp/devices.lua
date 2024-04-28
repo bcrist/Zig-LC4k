@@ -36,6 +36,8 @@ local function device (name)
 
     local jedec_width = math.tointeger((gi_mux_size + 166) * (num_glbs / 2))
 
+    local name_buf_len = num_glbs * 4096;
+
     devices[name] = {
         device = name,
         base = base_device,
@@ -46,6 +48,7 @@ local function device (name)
         oe_bus_size = oe_bus_size,
         jedec_width = jedec_width,
         jedec_height = jedec_height,
+        name_buf_len = name_buf_len,
     }
 end
 
@@ -148,6 +151,7 @@ const std = @import("std");
 const lc4k = @import("../lc4k.zig");
 const Fuse_Range = @import("../Fuse_Range.zig");
 const Fuse = @import("../Fuse.zig");
+const naming = @import("../naming.zig");
 
 pub const device_type = lc4k.Device_Type.`device`;
 
@@ -166,6 +170,18 @@ pub const jedec_dimensions = Fuse_Range.init_from_dimensions(`jedec_width`, `jed
 pub const F = lc4k.Factor(GRP);
 pub const PT = lc4k.Product_Term(GRP);
 pub const Pin = lc4k.Pin(GRP);
+pub const Names = naming.Names(GRP);
+
+var name_buf: [`name_buf_len`]u8 = undefined;
+var default_names: ?Names = null;
+
+pub fn get_names() *const Names {
+    if (default_names) |*names| return names;
+    var fba = std.heap.FixedBufferAllocator.init(&name_buf);
+    default_names = Names.init_defaults(fba.allocator(), @This());
+    return &default_names.?;
+}
+
 ]])(info)
 
 if info.family == 'zero_power_enhanced' then
@@ -176,7 +192,6 @@ pub const osctimer = struct {
     pub const timer_out = GRP.mc_`({[2]='B', [4]='D', [8]='G', [16]='F'})[num_glbs]`15;
     pub const timer_reset = timer_out;
 };
-
 ]])(info)
 end
 
@@ -194,9 +209,13 @@ for glb = 1, info.num_glbs do
         }
     end
 end
-write(nl, [[pub const GRP = enum {]], indent)
-for grp_name in spairs(grp_names, natural_cmp) do
-    write(nl, grp_name, ',')
+write(nl, [[pub const GRP = enum (u16) {]], indent)
+do
+    local counter = 0
+    for grp_name in spairs(grp_names, natural_cmp) do
+        write(nl, grp_name, ' = ', counter, ',')
+        counter = counter + 1
+    end
 end
 write [[
 
@@ -230,6 +249,7 @@ do
 end
 write [[
 
+            else => unreachable,
         };
     }
 
@@ -238,7 +258,15 @@ write [[
 indent(2)
 for glb = 1, info.num_glbs do
     local glb_prefix = string.char(64 + glb)
-    write(nl, '@intFromEnum(GRP.io_', glb_prefix, '0)...@intFromEnum(GRP.io_', glb_prefix, '15) => .{ .glb = ', glb - 1, ', .mc = @intFromEnum(self) - @intFromEnum(GRP.io_', glb_prefix, '0) },')
+
+    local max_mc = 16
+    local max_mc_name
+    repeat
+        max_mc = max_mc - 1
+        max_mc_name = 'io_'..glb_prefix..max_mc
+    until grp_names[max_mc_name]
+
+    write(nl, '@intFromEnum(GRP.io_', glb_prefix, '0)...@intFromEnum(GRP.io_', glb_prefix, max_mc, ') => .{ .glb = ', glb - 1, ', .mc = @intFromEnum(self) - @intFromEnum(GRP.io_', glb_prefix, '0) },')
     write(nl, '@intFromEnum(GRP.mc_', glb_prefix, '0)...@intFromEnum(GRP.mc_', glb_prefix, '15) => .{ .glb = ', glb - 1, ', .mc = @intFromEnum(self) - @intFromEnum(GRP.mc_', glb_prefix, '0) },')
 end
 unindent(2)
@@ -253,13 +281,22 @@ write [[
 
     pub inline fn maybe_pin(self: GRP) ?Pin {
         return switch (self) {]]
-indent(2)
-for grp_name, info in spairs(grp_names, natural_cmp) do
-    if info.safe_id then
-        write(nl, '.', grp_name, ' => pins.', info.safe_id, ',')
+do
+    indent(2)
+    local my_grp_names = {}
+    for _, pin in pairs(info.pins) do
+        if pin.grp_name and pin.grp_name ~= '' then
+            my_grp_names[pin.grp_name] = pin
+        end
     end
+    for grp_name, pin in spairs(my_grp_names, natural_cmp) do
+        if pin.safe_id then
+            write(nl, '.', grp_name, ' => pins.', pin.safe_id, ',')
+        end
+    end
+
+    unindent(2)
 end
-unindent(2)
 unindent()
 write [[
 

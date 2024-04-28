@@ -127,9 +127,9 @@ pub fn Chip_Config(comptime device_type: Device_Type) type {
             const any_writer = if (@hasDecl(@TypeOf(writer), "any")) writer.any() else writer;
             return svf.write(D, file, any_writer, options);
         }
-        pub fn write_report(file: JEDEC_File, writer: anytype, options: report.Write_Options(D)) !void {
+        pub fn write_report(speed_grade: comptime_int, file: JEDEC_File, writer: anytype, options: report.Write_Options(D)) !void {
             const any_writer = if (@hasDecl(@TypeOf(writer), "any")) writer.any() else writer;
-            return report.write(D, file, any_writer, options);
+            return report.write(D, speed_grade, file, any_writer, options);
         }
     };
 }
@@ -511,7 +511,7 @@ pub const PT_Ref = struct {
 
 pub const GRP_Kind = enum {
     io,
-    fb,
+    mc,
     in,
     clk,
 };
@@ -744,9 +744,7 @@ pub const Macrocell_Output_Enable_Source = enum(u1) {
     always_low = 1,
 };
 
-pub fn get_glb_name(glb: usize) []const u8 {
-    return "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[glb..glb+1];
-}
+
 
 pub inline fn invert_gi_mapping(comptime GRP: type, comptime gi_mux_size: comptime_int, comptime mapping: []const[gi_mux_size]GRP) std.EnumMap(GRP, []const u8) {
     return comptime blk: {

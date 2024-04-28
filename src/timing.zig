@@ -57,6 +57,42 @@ pub const Node = union (enum) {
     out_oe: lc4k.MC_Ref,
     out_en: lc4k.MC_Ref,
     out_dis: lc4k.MC_Ref,
+
+    pub fn write_name(self: Node, writer: std.io.AnyWriter, comptime GRP: type, names: *const naming.Names(GRP)) !void {
+        switch (self) {
+            .pad, .in, .grp => |grp_index| {
+                const grp: GRP = @enumFromInt(grp_index);
+                try writer.writeAll(@tagName(self));
+                try writer.writeByte(' ');
+                try writer.writeAll(names.get_signal_name(grp));
+            },
+            .oe_in => |oe_index| {
+                try writer.print("oe_in {d}", .{ oe_index });
+            },
+            .gclk => |clock_index| {
+                try writer.print("gclk {d}", .{ clock_index });
+            },
+            .bclock0, .bclock1, .bclock2, .bclock3, .sptoe, .sptclk, .sptinit => |glb| {
+                try writer.print("GLB {s} {s}", .{ names.get_glb_name(glb), @tagName(self) });
+            },
+            .pt => |ptref| {
+                try writer.print("{s} PT{}", .{ names.get_mc_name(ptref.mcref), ptref.pt });
+            },
+            .igoe0, .igoe1, .igoe2, .igoe3, .goe0, .goe1, .goe2, .goe3 => {
+                try writer.writeAll(@tagName(self));
+            },
+            .mc_cluster, .mc_cluster_group,
+            .mcd, .mcd_setup,
+            .mc_clk, .mc_clk_d_hold, .mc_clk_ce_hold,
+            .mc_ce, .mc_ce_setup,
+            .mc_init, .mc_async,
+            .mc_oe, .mcq, .routed_mcq,
+            .fb, .out, .out_oe, .out_en, .out_dis
+            => |mcref| {
+                try writer.print("{s} {s}", .{ names.get_mc_name(mcref), @tagName(self) });
+            },
+        }
+    }
 };
 
 pub const Segment = struct {
@@ -85,9 +121,7 @@ pub const Path = struct {
     };
 };
 
-pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptime_int) type {
-    const D = device_type.get();
-
+pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
     const Timing = switch (D.family) {
         .low_power => switch (speed_grade) {
             25 => @import("timing/VBC-25.zig"),
@@ -117,12 +151,17 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
                 else => @compileError("Invalid speed grade"),
             },
             58, 5, 6 => @import("timing/ZE-5.zig"),
-            75, 7, 8 => @import("timing/ZE-7.zig"),
+            75, 7, 8 => @import("timing/ZE-75.zig"),
             else => @compileError("Invalid speed grade"),
         },
     };
 
-    const Node_Set = std.AutoHashMapUnmanaged(Node, void);
+    const Node_Set = std.AutoHashMap(Node, void);
+
+    const Error = error {
+        InvalidPath,
+        OutOfMemory,
+    };
 
     return struct {
         arena: std.mem.Allocator,
@@ -162,10 +201,10 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
             return &.{};
         }
 
-        pub fn get_critical_path(self: *Self, segment: Segment) !Path {
+        pub fn get_critical_path(self: *Self, segment: Segment) Error!Path {
             if (std.meta.eql(segment.source, segment.dest)) return Path.nil;
             if (self.cache.get(segment)) |cached| {
-                if (cached.critical_path.len == 0 and cached.delay != 0) return error.InvalidSegment;
+                if (cached.critical_path.len == 0 and cached.delay != 0) return error.InvalidPath;
                 return cached;
             }
 
@@ -175,29 +214,29 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
             return try self.compute_and_cache_critical_path(segment.source, segment.dest, &visited);
         }
         
-        fn maybe_find_critical_path(self: *Self, source: Node, dest: Node, visited: *Node_Set) !?Path {
+        fn maybe_find_critical_path(self: *Self, source: Node, dest: Node, visited: *Node_Set) Error!?Path {
             return self.find_critical_path(source, dest, visited) catch |err| switch (err) {
-                error.InvalidSegment => null,
+                error.InvalidPath => null,
                 else => err,
             };
         }
 
-        fn find_critical_path(self: *Self, source: Node, dest: Node, visited: *Node_Set) !Path {
+        fn find_critical_path(self: *Self, source: Node, dest: Node, visited: *Node_Set) Error!Path {
             if (std.meta.eql(source, dest)) return Path.nil;
             if (self.cache.get(.{
                 .source = source,
                 .dest = dest,
             })) |cached| {
-                if (cached.critical_path.len == 0 and cached.delay != 0) return error.InvalidSegment;
+                if (cached.critical_path.len == 0 and cached.delay != 0) return error.InvalidPath;
                 return cached;
             }
 
             return try self.compute_and_cache_critical_path(source, dest, visited);
         }
 
-        fn compute_and_cache_critical_path(self: *Self, source: Node, dest: Node, visited: *Node_Set) !Path {
+        fn compute_and_cache_critical_path(self: *Self, source: Node, dest: Node, visited: *Node_Set) Error!Path {
             const val = self.compute_critical_path(source, dest, visited) catch |err| switch (err) {
-                .InvalidSegment => Path.invalid_segment_placeholder,
+                error.InvalidPath => Path.invalid_segment_placeholder,
                 else => return err,
             };
 
@@ -207,16 +246,16 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
             }, val);
 
             if (val.critical_path.len == 0 and val.delay != 0) {
-                return error.InvalidSegment;
+                return error.InvalidPath;
             } else {
                 return val;
             }
         }
 
-        fn compute_critical_path(self: *Self, source: Node, dest: Node, visited: *Node_Set) !Path {
-            const gop = try visited.getOrPut(self.gpa, dest);
+        fn compute_critical_path(self: *Self, source: Node, dest: Node, visited: *Node_Set) Error!Path {
+            const gop = try visited.getOrPut(dest);
             if (gop.found_existing) {
-                return error.InvalidSegment;
+                return error.InvalidPath;
             } else {
                 gop.key_ptr.* = dest;
             }
@@ -239,13 +278,13 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
                             .goe2 => return try self.clone_with_new_dest(source, .goe2, dest, visited),
                             .goe3 => return try self.clone_with_new_dest(source, .goe3, dest, visited),
                             .from_orm_active_high, .from_orm_active_low => {
-                                const source_mcref = disassembly.unmap_orm(D, mcref) orelse mcref;
+                                const source_mcref = disassembly.unmap_orm(D, self.jedec, mcref) orelse mcref;
                                 return try self.clone_with_new_dest(source, .{ .mc_oe = source_mcref }, dest, visited);
                             },
                             .output_only, .input_only => {},
                         }
                     }
-                    return error.InvalidSegment;
+                    return error.InvalidPath;
                 },
 
                 .routed_mcq => |mcref| {
@@ -260,7 +299,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
                             }
                         }
                     }
-                    const source_mcref = disassembly.unmap_orm(D, mcref) orelse mcref;
+                    const source_mcref = disassembly.unmap_orm(D, self.jedec, mcref) orelse mcref;
                     return try self.append_to_parent(source, .{ .mcq = source_mcref }, dest, "tORP", visited, Timing.tORP);
                 },
 
@@ -324,13 +363,13 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
                 .mc_oe => |mcref| {
                     return switch (disassembly.read_pt4_output_enable_source(D, self.jedec, mcref)) {
                         .pt4_active_high => try self.append_to_parent(source, .{ .pt = .{ .mcref = mcref, .pt = 4 } }, dest, "tPTOE", visited, Timing.tPTOE),
-                        .always_low => error.InvalidSegment,
+                        .always_low => error.InvalidPath,
                     };
                 },
 
                 .mc_async => |mcref| {
                     return switch (disassembly.read_async_trigger_source(D, self.jedec, mcref)) {
-                        .none => error.InvalidSegment,
+                        .none => error.InvalidPath,
                         .pt2_active_high => try self.append_to_parent(source, .{ .pt = .{ .mcref = mcref, .pt = 2 } }, dest, "tPTSR", visited, Timing.tPTSR),
                     };
                 },
@@ -348,7 +387,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
 
                 .mc_ce => |mcref| {
                     switch (disassembly.read_clock_enable_source(D, self.jedec, mcref)) {
-                        .always_active => return error.InvalidSegment,
+                        .always_active => return error.InvalidPath,
                         .shared_pt_clock => {
                             return try self.append_to_parent(source, .{ .sptclk = mcref.glb }, dest, "tBCLK", visited, Timing.tBCLK);
                         },
@@ -365,7 +404,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
                 .mc_clk_d_hold => |mcref| {
                     const range = fuses.get_macrocell_function_range(D, mcref);
                     switch (disassembly.read_field(self.jedec, lc4k.Macrocell_Function, range)) {
-                        .combinational => return error.InvalidSegment,
+                        .combinational => return error.InvalidPath,
                         .latch => {
                             return try self.append_to_parent(source, .{ .mc_clk = mcref }, dest, "tHL", visited, Timing.tHL);
                         },
@@ -393,17 +432,17 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
 
                 .mc_clk => |mcref| {
                     switch (disassembly.read_clock_source(D, self.jedec, mcref)) {
-                        .none => return error.InvalidSegment,
+                        .none => return error.InvalidPath,
                         .shared_pt_clock => {
                             return try self.append_to_parent(source, .{ .sptclk = mcref.glb }, dest, "tBCLK", visited, Timing.tBCLK);
                         },
                         .pt1_positive, .pt1_negative => {
                             return try self.append_to_parent(source, .{ .pt = .{ .mcref = mcref, .pt = 1 } }, dest, "tPTCLK", visited, Timing.tPTCLK);
                         },
-                        .bclock0 => return try self.clone_with_new_dest(source, .bclock0, dest, visited),
-                        .bclock1 => return try self.clone_with_new_dest(source, .bclock1, dest, visited),
-                        .bclock2 => return try self.clone_with_new_dest(source, .bclock2, dest, visited),
-                        .bclock3 => return try self.clone_with_new_dest(source, .bclock3, dest, visited),
+                        .bclock0 => return try self.clone_with_new_dest(source, .{ .bclock0 = mcref.glb }, dest, visited),
+                        .bclock1 => return try self.clone_with_new_dest(source, .{ .bclock1 = mcref.glb }, dest, visited),
+                        .bclock2 => return try self.clone_with_new_dest(source, .{ .bclock2 = mcref.glb }, dest, visited),
+                        .bclock3 => return try self.clone_with_new_dest(source, .{ .bclock3 = mcref.glb }, dest, visited),
                     }
                 },
 
@@ -414,7 +453,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
                     };
                     const range = fuses.get_macrocell_function_range(D, mcref);
                     switch (disassembly.read_field(self.jedec, lc4k.Macrocell_Function, range)) {
-                        .combinational => return error.InvalidSegment,
+                        .combinational => return error.InvalidPath,
                         .latch => {
                             if (is_ptclk) {
                                 return try self.append_to_parent(source, .{ .mcd = mcref }, dest, "tSL_PT", visited, Timing.tSL_PT);
@@ -454,7 +493,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
 
                     if (!self.jedec.is_set(fuses.get_input_bypass_range(D, mcref).min)) {
                         const delay = Timing.tINREG + self.tINDIO();
-                        if (try self.maybe_append_to_parent(source, .{ .mc_in = mcref }, dest, "tINREG", visited, delay)) |path| {
+                        if (try self.maybe_append_to_parent(source, .{ .in = @intFromEnum(D.GRP.mc_pad(mcref)) }, dest, "tINREG", visited, delay)) |path| {
                             options.appendAssumeCapacity(path);
                         }
                     } else if (!self.jedec.is_set(fuses.get_pt0_xor_range(D, mcref).min)) {
@@ -595,11 +634,11 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
                             }
                         }
                     }
-                    if (total_gis == 0) return error.InvalidSegment;
+                    if (total_gis == 0) return error.InvalidPath;
 
                     // TODO handle feedback GRPs
 
-                    const delay = Timing.tROUTE + Timing.tBLA * (total_gis - 1);
+                    const delay: i32 = @intCast(Timing.tROUTE + Timing.tBLA * (total_gis - 1));
                     return try self.append_to_parent(source, .{ .in = grp_index }, dest, "tROUTE", visited, delay);
                 },
 
@@ -610,8 +649,8 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
 
                 .gclk => |index| {
                     // TODO tPGRT
-                    const pin_info = D.clock_pins[index];
-                    const grp_ordinal = pin_info.grp_ordinal.?;
+                    const pin = D.clock_pins[index];
+                    const grp_ordinal = pin.info.grp_ordinal.?;
                     const grp: D.GRP = @enumFromInt(grp_ordinal);
                     const delay = Timing.tGCLK_IN + self.tIOI(grp);
                     return try self.append_to_parent(source, .{ .pad = grp_ordinal }, dest, "tGCLK_IN", visited, delay);
@@ -619,8 +658,8 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
 
                 .oe_in => |index| {
                     // TODO tPGRT
-                    const pin_info = D.oe_pins[index];
-                    const grp_ordinal = pin_info.grp_ordinal.?;
+                    const pin = D.oe_pins[index];
+                    const grp_ordinal = pin.info.grp_ordinal.?;
                     const grp: D.GRP = @enumFromInt(grp_ordinal);
                     const delay = Timing.tGOE + self.tIOI(grp);
                     return try self.append_to_parent(source, .{ .pad = grp_ordinal }, dest, "tGOE", visited, delay);
@@ -634,12 +673,12 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
                 },
 
                 .pad => {
-                    return error.InvalidSegment;
+                    return error.InvalidPath;
                 }
             }
         }
 
-        fn compute_goe_critical_path(self: *Self, source: Node, dest: Node, goe: lc4k.GOE_Index, visited: *Node_Set) !Path {
+        fn compute_goe_critical_path(self: *Self, source: Node, dest: Node, goe: lc4k.GOE_Index, visited: *Node_Set) Error!Path {
             if (D.num_glbs == 2) {
                 return switch (goe) {
                     0 => self.append_to_parent(source, .igoe0, dest, "tGPTOE", visited, Timing.tGPTOE),
@@ -668,8 +707,8 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
             }
         }
 
-        fn compute_igoe_critical_path(self: *Self, source: Node, dest: Node, n: usize, visited: *Node_Set) !Path {
-            if (n >= D.oe_bus_size) return error.InvalidSegment;
+        fn compute_igoe_critical_path(self: *Self, source: Node, dest: Node, n: usize, visited: *Node_Set) Error!Path {
+            if (n >= D.oe_bus_size) return error.InvalidPath;
 
             var buf: [D.num_glbs]Path = undefined;
             var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
@@ -679,9 +718,9 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
                 for (0..n) |_| {
                     _ = fuse_iter.next();
                 }
-                const fuse = fuse_iter.next();
+                const fuse = fuse_iter.next().?;
                 if (!self.jedec.is_set(fuse)) {
-                    if (try self.maybe_find_critical_path(source, .{ .sptoe = glb }, visited)) |path| {
+                    if (try self.maybe_find_critical_path(source, .{ .sptoe = @intCast(glb) }, visited)) |path| {
                         options.appendAssumeCapacity(path);
                     }
                 }
@@ -690,21 +729,21 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
             return try self.choose_critical_path_and_clone_with_new_dest(options.items, dest);
         }
 
-        fn compute_bclock_critical_path(self: *Self, source: Node, dest: Node, n: lc4k.Clock_Index, glb: lc4k.GLB_Index, visited: *Node_Set) !Path {
-            const fuse_iter = D.get_bclock_range(glb).iterator();
+        fn compute_bclock_critical_path(self: *Self, source: Node, dest: Node, n: lc4k.Clock_Index, glb: lc4k.GLB_Index, visited: *Node_Set) Error!Path {
+            var fuse_iter = D.get_bclock_range(glb).iterator();
             for (0..n) |_| {
                 _ = fuse_iter.next();
             }
-            const fuse = fuse_iter.next();
+            const fuse = fuse_iter.next().?;
 
             var src_clk = n;
             if (!self.jedec.is_set(fuse)) src_clk ^= 1;
-            src_clk %= D.clock_pins.len;
+            src_clk %= @intCast(D.clock_pins.len);
 
             return try self.clone_with_new_dest(source, .{ .gclk = src_clk }, dest, visited);
         }
 
-        fn compute_pt_critical_path(self: *Self, source: Node, dest: Node, glb: lc4k.GLB_Index, pt_offset: usize, visited: *Node_Set) !Path {
+        fn compute_pt_critical_path(self: *Self, source: Node, dest: Node, glb: lc4k.GLB_Index, pt_offset: usize, visited: *Node_Set) Error!Path {
             var buf: [D.num_gis_per_glb]Path = undefined;
             var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
 
@@ -732,7 +771,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
                 if (when_high == when_low) continue;
 
                 if (maybe_signal) |signal| {
-                    if (try self.maybe_find_critical_path(source, .{ .grp = signal }, visited)) |path| {
+                    if (try self.maybe_find_critical_path(source, .{ .grp = @intFromEnum(signal) }, visited)) |path| {
                         options.appendAssumeCapacity(path);
                     }
                 }
@@ -741,7 +780,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
             return try self.choose_critical_path_and_clone_with_new_dest(options.items, dest);
         }
 
-        fn choose_critical_path(options: []const Path) !Path {
+        fn choose_critical_path(options: []const Path) Error!Path {
             if (options.len == 0) {
                 return error.InvalidPath;
             }
@@ -757,59 +796,48 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
             return critical;
         }
 
-        fn choose_critical_path_and_clone_with_new_dest(self: *Self, options: []const Path, new_dest: Node) !Path {
+        fn choose_critical_path_and_clone_with_new_dest(self: *Self, options: []const Path, new_dest: Node) Error!Path {
             const critical = try choose_critical_path(options);
             if (critical.critical_path.len == 0) return Path.nil;                    
-            if (std.meta.eql(new_dest, critical.critical_path[critical.critical_path.len - 1])) return critical;
+            if (std.meta.eql(new_dest, critical.critical_path[critical.critical_path.len - 1].segment.dest)) return critical;
 
-            var result: Path = .{
-                .critical_path = self.arena.dupe(Delay, critical.critical_path),
+            const critical_path = try self.arena.dupe(Delay, critical.critical_path);
+            critical_path[critical.critical_path.len - 1].segment.dest = new_dest;
+
+            return .{
+                .critical_path = critical_path,
                 .delay = critical.delay,
             };
-
-            result.critical_path[critical.len - 1].segment.dest = new_dest;
-            return result;
         }
 
-        fn clone_with_new_dest(self: *Self, source: Node, dest: Node, new_dest: Node, visited: *Node_Set) !Path {
-            const parent_path = try self.find_critical_path(.{
-                .source = source,
-                .dest = dest,
-            }, visited);
+        fn clone_with_new_dest(self: *Self, source: Node, dest: Node, new_dest: Node, visited: *Node_Set) Error!Path {
+            const parent_path = try self.find_critical_path(source, dest, visited);
             const parent_len = parent_path.critical_path.len;
             if (parent_len == 0) return Path.nil;
             if (std.meta.eql(dest, new_dest)) return parent_path;
 
-            var result: Path = .{
-                .critical_path = self.arena.dupe(Delay, parent_path.critical_path),
+            var critical_path = try self.arena.dupe(Delay, parent_path.critical_path);
+            critical_path[parent_len - 1].segment.dest = new_dest;
+            return .{
+                .critical_path = critical_path,
                 .delay = parent_path.delay,
             };
-
-            result.critical_path[parent_len - 1].segment.dest = new_dest;
-            return result;
         }
 
-        fn maybe_append_to_parent(self: *Self, source: Node, parent_node: Node, dest: Node, name: []const u8, visited: *Node_Set, delay: lc4k.Picosecond_Range) !?Path {
+        fn maybe_append_to_parent(self: *Self, source: Node, parent_node: Node, dest: Node, name: []const u8, visited: *Node_Set, delay: Picoseconds) Error!?Path {
             return self.append_to_parent(source, parent_node, dest, name, visited, delay) catch |err| switch (err) {
-                error.InvalidSegment => null,
+                error.InvalidPath => null,
                 else => err,
             };
         }
 
-        fn append_to_parent(self: *Self, source: Node, parent_node: Node, dest: Node, name: []const u8, visited: *Node_Set, delay: lc4k.Picosecond_Range) !Path {
-            const parent_path = try self.find_critical_path(.{
-                .source = source,
-                .dest = parent_node,
-            }, visited);
+        fn append_to_parent(self: *Self, source: Node, parent_node: Node, dest: Node, name: []const u8, visited: *Node_Set, delay: Picoseconds) Error!Path {
+            const parent_path = try self.find_critical_path(source, parent_node, visited);
             const parent_len = parent_path.critical_path.len;
 
-            var result: Path = .{
-                .critical_path = self.arena.alloc(Delay, parent_len + 1),
-                .delay = parent_path.delay + delay,
-            };
-
-            @memcpy(result.critical_path.data, parent_path.critical_path);
-            result.critical_path[parent_len] = .{
+            var critical_path = try self.arena.alloc(Delay, parent_len + 1);
+            @memcpy(critical_path.ptr, parent_path.critical_path);
+            critical_path[parent_len] = .{
                 .name = name,
                 .segment = .{
                     .source = parent_node,
@@ -818,7 +846,10 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
                 .delay = delay,
             };
 
-            return result;
+            return .{
+                .critical_path = critical_path,
+                .delay = parent_path.delay + delay,
+            };
         }
 
         fn tIOI(self: *Self, grp: D.GRP) Picoseconds {
@@ -854,7 +885,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
             return 0;
         }
 
-        fn tINDIO(self: *Self) lc4k.Picosecond_Range {
+        fn tINDIO(self: *Self) Picoseconds {
             const zero_hold_time = !self.jedec.is_set(D.get_zero_hold_time_fuse());
             return if (zero_hold_time) Timing.tINDIO else 0;
         }
@@ -864,7 +895,7 @@ pub fn Analyzer(comptime device_type: device.Type, comptime speed_grade: comptim
 
 const JEDEC_Data = @import("JEDEC_Data.zig");
 const disassembly = @import("disassembly.zig");
+const naming = @import("naming.zig");
 const fuses = @import("fuses.zig");
-const device = @import("device.zig");
 const lc4k = @import("lc4k.zig");
 const std = @import("std");

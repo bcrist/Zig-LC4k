@@ -115,11 +115,17 @@ kbd.power-guard.disabled {
     display: none;
 }
 
-
-
 .hover-highlight.hover-highlight {
     background: #333;
 }
 .ca-depth-1.hover-highlight { background: #433; }
 .ca-depth-2.hover-highlight { background: #533; }
 .ca-depth-3.hover-highlight { background: #633; }
+
+.details {
+    display: none;
+}
+
+.details-root.show-details.details, .details-root.show-details .details {
+    display: block;
+}

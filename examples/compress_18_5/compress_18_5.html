@@ -119,14 +119,21 @@ kbd.power-guard.disabled {
     display: none;
 }
 
-
-
 .hover-highlight.hover-highlight {
     background: #333;
 }
 .ca-depth-1.hover-highlight { background: #433; }
 .ca-depth-2.hover-highlight { background: #533; }
-.ca-depth-3.hover-highlight { background: #633; }</style>
+.ca-depth-3.hover-highlight { background: #633; }
+
+.details {
+    display: none;
+}
+
+.details-root.show-details.details, .details-root.show-details .details {
+    display: block;
+}
+</style>
 </head>
 <body>
 <section>
@@ -827,6 +834,747 @@ kbd.power-guard.disabled {
 </section>
 </div>
 </section>
+<section>
+<h1>Timing</h1>
+<div>
+<section class="inline">
+<h3>GLB 0 (A)</h3>
+<div>
+<table>
+<tr class="header"><th>Source</th><th>Target</th><th>Delay</th></tr>
+<tr class="details-root">
+<td>pad io_A0<div class="details">pad io_A0</div>
+<div class="details">in io_A0</div>
+<div class="details">A0 mc_cluster_group</div>
+<div class="details">A0 mcd</div>
+<div class="details">A0 mcq</div>
+<div class="details">A0 routed_mcq</div>
+</td><td>A0 out<div class="details">in io_A0</div>
+<div class="details">A0 mc_cluster_group</div>
+<div class="details">A0 mcd</div>
+<div class="details">A0 mcq</div>
+<div class="details">A0 routed_mcq</div>
+<div class="details">A0 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="highlight details-root">
+<td>pad io_A1<div class="details">pad io_A1</div>
+<div class="details">in io_A1</div>
+<div class="details">A0 mc_cluster_group</div>
+<div class="details">A0 mcd</div>
+<div class="details">A0 mcq</div>
+<div class="details">A0 routed_mcq</div>
+</td><td>A0 out<div class="details">in io_A1</div>
+<div class="details">A0 mc_cluster_group</div>
+<div class="details">A0 mcd</div>
+<div class="details">A0 mcq</div>
+<div class="details">A0 routed_mcq</div>
+<div class="details">A0 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="details-root">
+<td>pad io_A2<div class="details">pad io_A2</div>
+<div class="details">in io_A2</div>
+<div class="details">A0 PT0</div>
+<div class="details">A0 mcd</div>
+<div class="details">A0 mcq</div>
+<div class="details">A0 routed_mcq</div>
+</td><td>A0 out<div class="details">in io_A2</div>
+<div class="details">A0 PT0</div>
+<div class="details">A0 mcd</div>
+<div class="details">A0 mcq</div>
+<div class="details">A0 routed_mcq</div>
+<div class="details">A0 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="highlight details-root">
+<td>pad io_A3<div class="details">pad io_A3</div>
+<div class="details">in io_A3</div>
+<div class="details">A1 mc_cluster_group</div>
+<div class="details">A1 mcd</div>
+<div class="details">A1 mcq</div>
+<div class="details">A1 routed_mcq</div>
+</td><td>A1 out<div class="details">in io_A3</div>
+<div class="details">A1 mc_cluster_group</div>
+<div class="details">A1 mcd</div>
+<div class="details">A1 mcq</div>
+<div class="details">A1 routed_mcq</div>
+<div class="details">A1 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="details-root">
+<td>pad io_A4<div class="details">pad io_A4</div>
+<div class="details">in io_A4</div>
+<div class="details">A1 mc_cluster_group</div>
+<div class="details">A1 mcd</div>
+<div class="details">A1 mcq</div>
+<div class="details">A1 routed_mcq</div>
+</td><td>A1 out<div class="details">in io_A4</div>
+<div class="details">A1 mc_cluster_group</div>
+<div class="details">A1 mcd</div>
+<div class="details">A1 mcq</div>
+<div class="details">A1 routed_mcq</div>
+<div class="details">A1 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="highlight details-root">
+<td>pad io_A5<div class="details">pad io_A5</div>
+<div class="details">in io_A5</div>
+<div class="details">A1 PT0</div>
+<div class="details">A1 mcd</div>
+<div class="details">A1 mcq</div>
+<div class="details">A1 routed_mcq</div>
+</td><td>A1 out<div class="details">in io_A5</div>
+<div class="details">A1 PT0</div>
+<div class="details">A1 mcd</div>
+<div class="details">A1 mcq</div>
+<div class="details">A1 routed_mcq</div>
+<div class="details">A1 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="details-root">
+<td>pad io_A6<div class="details">pad io_A6</div>
+<div class="details">in io_A6</div>
+<div class="details">A2 mc_cluster_group</div>
+<div class="details">A2 mcd</div>
+<div class="details">A2 mcq</div>
+<div class="details">A2 routed_mcq</div>
+</td><td>A2 out<div class="details">in io_A6</div>
+<div class="details">A2 mc_cluster_group</div>
+<div class="details">A2 mcd</div>
+<div class="details">A2 mcq</div>
+<div class="details">A2 routed_mcq</div>
+<div class="details">A2 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="highlight details-root">
+<td>pad io_A7<div class="details">pad io_A7</div>
+<div class="details">in io_A7</div>
+<div class="details">A2 mc_cluster_group</div>
+<div class="details">A2 mcd</div>
+<div class="details">A2 mcq</div>
+<div class="details">A2 routed_mcq</div>
+</td><td>A2 out<div class="details">in io_A7</div>
+<div class="details">A2 mc_cluster_group</div>
+<div class="details">A2 mcd</div>
+<div class="details">A2 mcq</div>
+<div class="details">A2 routed_mcq</div>
+<div class="details">A2 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="details-root">
+<td>pad io_A8<div class="details">pad io_A8</div>
+<div class="details">in io_A8</div>
+<div class="details">A2 PT0</div>
+<div class="details">A2 mcd</div>
+<div class="details">A2 mcq</div>
+<div class="details">A2 routed_mcq</div>
+</td><td>A2 out<div class="details">in io_A8</div>
+<div class="details">A2 PT0</div>
+<div class="details">A2 mcd</div>
+<div class="details">A2 mcq</div>
+<div class="details">A2 routed_mcq</div>
+<div class="details">A2 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="highlight details-root">
+<td>pad io_A9<div class="details">pad io_A9</div>
+<div class="details">in io_A9</div>
+<div class="details">A3 mc_cluster_group</div>
+<div class="details">A3 mcd</div>
+<div class="details">A3 mcq</div>
+<div class="details">A3 routed_mcq</div>
+</td><td>A3 out<div class="details">in io_A9</div>
+<div class="details">A3 mc_cluster_group</div>
+<div class="details">A3 mcd</div>
+<div class="details">A3 mcq</div>
+<div class="details">A3 routed_mcq</div>
+<div class="details">A3 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="details-root">
+<td>pad io_A10<div class="details">pad io_A10</div>
+<div class="details">in io_A10</div>
+<div class="details">A3 mc_cluster_group</div>
+<div class="details">A3 mcd</div>
+<div class="details">A3 mcq</div>
+<div class="details">A3 routed_mcq</div>
+</td><td>A3 out<div class="details">in io_A10</div>
+<div class="details">A3 mc_cluster_group</div>
+<div class="details">A3 mcd</div>
+<div class="details">A3 mcq</div>
+<div class="details">A3 routed_mcq</div>
+<div class="details">A3 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="highlight details-root">
+<td>pad io_A11<div class="details">pad io_A11</div>
+<div class="details">in io_A11</div>
+<div class="details">A3 PT0</div>
+<div class="details">A3 mcd</div>
+<div class="details">A3 mcq</div>
+<div class="details">A3 routed_mcq</div>
+</td><td>A3 out<div class="details">in io_A11</div>
+<div class="details">A3 PT0</div>
+<div class="details">A3 mcd</div>
+<div class="details">A3 mcq</div>
+<div class="details">A3 routed_mcq</div>
+<div class="details">A3 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="details-root">
+<td>pad io_A12<div class="details">pad io_A12</div>
+<div class="details">in io_A12</div>
+<div class="details">A4 mc_cluster_group</div>
+<div class="details">A4 mcd</div>
+<div class="details">A4 mcq</div>
+<div class="details">A4 routed_mcq</div>
+</td><td>A4 out<div class="details">in io_A12</div>
+<div class="details">A4 mc_cluster_group</div>
+<div class="details">A4 mcd</div>
+<div class="details">A4 mcq</div>
+<div class="details">A4 routed_mcq</div>
+<div class="details">A4 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="highlight details-root">
+<td>pad io_A13<div class="details">pad io_A13</div>
+<div class="details">in io_A13</div>
+<div class="details">A4 mc_cluster_group</div>
+<div class="details">A4 mcd</div>
+<div class="details">A4 mcq</div>
+<div class="details">A4 routed_mcq</div>
+</td><td>A4 out<div class="details">in io_A13</div>
+<div class="details">A4 mc_cluster_group</div>
+<div class="details">A4 mcd</div>
+<div class="details">A4 mcq</div>
+<div class="details">A4 routed_mcq</div>
+<div class="details">A4 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="details-root">
+<td>pad io_A14<div class="details">pad io_A14</div>
+<div class="details">in io_A14</div>
+<div class="details">A4 PT0</div>
+<div class="details">A4 mcd</div>
+<div class="details">A4 mcq</div>
+<div class="details">A4 routed_mcq</div>
+</td><td>A4 out<div class="details">in io_A14</div>
+<div class="details">A4 PT0</div>
+<div class="details">A4 mcd</div>
+<div class="details">A4 mcq</div>
+<div class="details">A4 routed_mcq</div>
+<div class="details">A4 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="highlight details-root">
+<td>pad io_A15<div class="details">pad io_A15</div>
+<div class="details">in io_A15</div>
+<div class="details">A5 mc_cluster_group</div>
+<div class="details">A5 mcd</div>
+<div class="details">A5 mcq</div>
+<div class="details">A5 routed_mcq</div>
+</td><td>A5 out<div class="details">in io_A15</div>
+<div class="details">A5 mc_cluster_group</div>
+<div class="details">A5 mcd</div>
+<div class="details">A5 mcq</div>
+<div class="details">A5 routed_mcq</div>
+<div class="details">A5 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="details-root">
+<td>pad io_B14<div class="details">pad io_B14</div>
+<div class="details">in io_B14</div>
+<div class="details">A5 PT0</div>
+<div class="details">A5 mcd</div>
+<div class="details">A5 mcq</div>
+<div class="details">A5 routed_mcq</div>
+</td><td>A5 out<div class="details">in io_B14</div>
+<div class="details">A5 PT0</div>
+<div class="details">A5 mcd</div>
+<div class="details">A5 mcq</div>
+<div class="details">A5 routed_mcq</div>
+<div class="details">A5 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="highlight details-root">
+<td>pad io_B15<div class="details">pad io_B15</div>
+<div class="details">in io_B15</div>
+<div class="details">A5 mc_cluster_group</div>
+<div class="details">A5 mcd</div>
+<div class="details">A5 mcq</div>
+<div class="details">A5 routed_mcq</div>
+</td><td>A5 out<div class="details">in io_B15</div>
+<div class="details">A5 mc_cluster_group</div>
+<div class="details">A5 mcd</div>
+<div class="details">A5 mcq</div>
+<div class="details">A5 routed_mcq</div>
+<div class="details">A5 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="details-root">
+<td>pad io_A0<div class="details">pad io_A0</div>
+<div class="details">in io_A0</div>
+<div class="details">A6 mc_cluster_group</div>
+<div class="details">A6 mcd</div>
+<div class="details">A6 mcq</div>
+<div class="details">A6 routed_mcq</div>
+</td><td>A6 out<div class="details">in io_A0</div>
+<div class="details">A6 mc_cluster_group</div>
+<div class="details">A6 mcd</div>
+<div class="details">A6 mcq</div>
+<div class="details">A6 routed_mcq</div>
+<div class="details">A6 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="highlight details-root">
+<td>pad io_A1<div class="details">pad io_A1</div>
+<div class="details">in io_A1</div>
+<div class="details">A6 mc_cluster_group</div>
+<div class="details">A6 mcd</div>
+<div class="details">A6 mcq</div>
+<div class="details">A6 routed_mcq</div>
+</td><td>A6 out<div class="details">in io_A1</div>
+<div class="details">A6 mc_cluster_group</div>
+<div class="details">A6 mcd</div>
+<div class="details">A6 mcq</div>
+<div class="details">A6 routed_mcq</div>
+<div class="details">A6 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="details-root">
+<td>pad io_A2<div class="details">pad io_A2</div>
+<div class="details">in io_A2</div>
+<div class="details">A6 mc_cluster_group</div>
+<div class="details">A6 mcd</div>
+<div class="details">A6 mcq</div>
+<div class="details">A6 routed_mcq</div>
+</td><td>A6 out<div class="details">in io_A2</div>
+<div class="details">A6 mc_cluster_group</div>
+<div class="details">A6 mcd</div>
+<div class="details">A6 mcq</div>
+<div class="details">A6 routed_mcq</div>
+<div class="details">A6 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="highlight details-root">
+<td>pad io_A3<div class="details">pad io_A3</div>
+<div class="details">in io_A3</div>
+<div class="details">A7 mc_cluster_group</div>
+<div class="details">A7 mcd</div>
+<div class="details">A7 mcq</div>
+<div class="details">A7 routed_mcq</div>
+</td><td>A7 out<div class="details">in io_A3</div>
+<div class="details">A7 mc_cluster_group</div>
+<div class="details">A7 mcd</div>
+<div class="details">A7 mcq</div>
+<div class="details">A7 routed_mcq</div>
+<div class="details">A7 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="details-root">
+<td>pad io_A4<div class="details">pad io_A4</div>
+<div class="details">in io_A4</div>
+<div class="details">A7 mc_cluster_group</div>
+<div class="details">A7 mcd</div>
+<div class="details">A7 mcq</div>
+<div class="details">A7 routed_mcq</div>
+</td><td>A7 out<div class="details">in io_A4</div>
+<div class="details">A7 mc_cluster_group</div>
+<div class="details">A7 mcd</div>
+<div class="details">A7 mcq</div>
+<div class="details">A7 routed_mcq</div>
+<div class="details">A7 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="highlight details-root">
+<td>pad io_A5<div class="details">pad io_A5</div>
+<div class="details">in io_A5</div>
+<div class="details">A7 mc_cluster_group</div>
+<div class="details">A7 mcd</div>
+<div class="details">A7 mcq</div>
+<div class="details">A7 routed_mcq</div>
+</td><td>A7 out<div class="details">in io_A5</div>
+<div class="details">A7 mc_cluster_group</div>
+<div class="details">A7 mcd</div>
+<div class="details">A7 mcq</div>
+<div class="details">A7 routed_mcq</div>
+<div class="details">A7 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="details-root">
+<td>pad io_A6<div class="details">pad io_A6</div>
+<div class="details">in io_A6</div>
+<div class="details">A8 mc_cluster_group</div>
+<div class="details">A8 mcd</div>
+<div class="details">A8 mcq</div>
+<div class="details">A8 routed_mcq</div>
+</td><td>A8 out<div class="details">in io_A6</div>
+<div class="details">A8 mc_cluster_group</div>
+<div class="details">A8 mcd</div>
+<div class="details">A8 mcq</div>
+<div class="details">A8 routed_mcq</div>
+<div class="details">A8 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="highlight details-root">
+<td>pad io_A7<div class="details">pad io_A7</div>
+<div class="details">in io_A7</div>
+<div class="details">A8 mc_cluster_group</div>
+<div class="details">A8 mcd</div>
+<div class="details">A8 mcq</div>
+<div class="details">A8 routed_mcq</div>
+</td><td>A8 out<div class="details">in io_A7</div>
+<div class="details">A8 mc_cluster_group</div>
+<div class="details">A8 mcd</div>
+<div class="details">A8 mcq</div>
+<div class="details">A8 routed_mcq</div>
+<div class="details">A8 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="details-root">
+<td>pad io_A8<div class="details">pad io_A8</div>
+<div class="details">in io_A8</div>
+<div class="details">A8 mc_cluster_group</div>
+<div class="details">A8 mcd</div>
+<div class="details">A8 mcq</div>
+<div class="details">A8 routed_mcq</div>
+</td><td>A8 out<div class="details">in io_A8</div>
+<div class="details">A8 mc_cluster_group</div>
+<div class="details">A8 mcd</div>
+<div class="details">A8 mcq</div>
+<div class="details">A8 routed_mcq</div>
+<div class="details">A8 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="highlight details-root">
+<td>pad io_A9<div class="details">pad io_A9</div>
+<div class="details">in io_A9</div>
+<div class="details">A9 mc_cluster_group</div>
+<div class="details">A9 mcd</div>
+<div class="details">A9 mcq</div>
+<div class="details">A9 routed_mcq</div>
+</td><td>A9 out<div class="details">in io_A9</div>
+<div class="details">A9 mc_cluster_group</div>
+<div class="details">A9 mcd</div>
+<div class="details">A9 mcq</div>
+<div class="details">A9 routed_mcq</div>
+<div class="details">A9 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="details-root">
+<td>pad io_A10<div class="details">pad io_A10</div>
+<div class="details">in io_A10</div>
+<div class="details">A9 mc_cluster_group</div>
+<div class="details">A9 mcd</div>
+<div class="details">A9 mcq</div>
+<div class="details">A9 routed_mcq</div>
+</td><td>A9 out<div class="details">in io_A10</div>
+<div class="details">A9 mc_cluster_group</div>
+<div class="details">A9 mcd</div>
+<div class="details">A9 mcq</div>
+<div class="details">A9 routed_mcq</div>
+<div class="details">A9 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="highlight details-root">
+<td>pad io_A11<div class="details">pad io_A11</div>
+<div class="details">in io_A11</div>
+<div class="details">A9 mc_cluster_group</div>
+<div class="details">A9 mcd</div>
+<div class="details">A9 mcq</div>
+<div class="details">A9 routed_mcq</div>
+</td><td>A9 out<div class="details">in io_A11</div>
+<div class="details">A9 mc_cluster_group</div>
+<div class="details">A9 mcd</div>
+<div class="details">A9 mcq</div>
+<div class="details">A9 routed_mcq</div>
+<div class="details">A9 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="details-root">
+<td>pad io_A12<div class="details">pad io_A12</div>
+<div class="details">in io_A12</div>
+<div class="details">A10 mc_cluster_group</div>
+<div class="details">A10 mcd</div>
+<div class="details">A10 mcq</div>
+<div class="details">A10 routed_mcq</div>
+</td><td>A10 out<div class="details">in io_A12</div>
+<div class="details">A10 mc_cluster_group</div>
+<div class="details">A10 mcd</div>
+<div class="details">A10 mcq</div>
+<div class="details">A10 routed_mcq</div>
+<div class="details">A10 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="highlight details-root">
+<td>pad io_A13<div class="details">pad io_A13</div>
+<div class="details">in io_A13</div>
+<div class="details">A10 mc_cluster_group</div>
+<div class="details">A10 mcd</div>
+<div class="details">A10 mcq</div>
+<div class="details">A10 routed_mcq</div>
+</td><td>A10 out<div class="details">in io_A13</div>
+<div class="details">A10 mc_cluster_group</div>
+<div class="details">A10 mcd</div>
+<div class="details">A10 mcq</div>
+<div class="details">A10 routed_mcq</div>
+<div class="details">A10 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="details-root">
+<td>pad io_A14<div class="details">pad io_A14</div>
+<div class="details">in io_A14</div>
+<div class="details">A10 mc_cluster_group</div>
+<div class="details">A10 mcd</div>
+<div class="details">A10 mcq</div>
+<div class="details">A10 routed_mcq</div>
+</td><td>A10 out<div class="details">in io_A14</div>
+<div class="details">A10 mc_cluster_group</div>
+<div class="details">A10 mcd</div>
+<div class="details">A10 mcq</div>
+<div class="details">A10 routed_mcq</div>
+<div class="details">A10 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="highlight details-root">
+<td>pad io_A15<div class="details">pad io_A15</div>
+<div class="details">in io_A15</div>
+<div class="details">A11 mc_cluster_group</div>
+<div class="details">A11 mcd</div>
+<div class="details">A11 mcq</div>
+<div class="details">A11 routed_mcq</div>
+</td><td>A11 out<div class="details">in io_A15</div>
+<div class="details">A11 mc_cluster_group</div>
+<div class="details">A11 mcd</div>
+<div class="details">A11 mcq</div>
+<div class="details">A11 routed_mcq</div>
+<div class="details">A11 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="details-root">
+<td>pad io_B14<div class="details">pad io_B14</div>
+<div class="details">in io_B14</div>
+<div class="details">A11 mc_cluster_group</div>
+<div class="details">A11 mcd</div>
+<div class="details">A11 mcq</div>
+<div class="details">A11 routed_mcq</div>
+</td><td>A11 out<div class="details">in io_B14</div>
+<div class="details">A11 mc_cluster_group</div>
+<div class="details">A11 mcd</div>
+<div class="details">A11 mcq</div>
+<div class="details">A11 routed_mcq</div>
+<div class="details">A11 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+<tr class="highlight details-root">
+<td>pad io_B15<div class="details">pad io_B15</div>
+<div class="details">in io_B15</div>
+<div class="details">A11 mc_cluster_group</div>
+<div class="details">A11 mcd</div>
+<div class="details">A11 mcq</div>
+<div class="details">A11 routed_mcq</div>
+</td><td>A11 out<div class="details">in io_B15</div>
+<div class="details">A11 mc_cluster_group</div>
+<div class="details">A11 mcd</div>
+<div class="details">A11 mcq</div>
+<div class="details">A11 routed_mcq</div>
+<div class="details">A11 out</div>
+</td><td>8.9 ns<div class="details">2.1 ns (tIN)</div>
+<div class="details">2.5 ns (tROUTE)</div>
+<div class="details">1 ns (tMCELL)</div>
+<div class="details">0.5 ns (tPDi)</div>
+<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.5 ns (tBUF)</div>
+</td></tr>
+</table>
+</div>
+</section>
+<section class="inline">
+<h3>GLB 1 (B)</h3>
+<div>
+<table>
+<tr class="header"><th>Source</th><th>Target</th><th>Delay</th></tr>
+</table>
+</div>
+</section>
+</div>
+</section>
 <footer>
 Generated by <a href="https://github.com/bcrist/Zig-LC4k">Zig-LC4k</a>
 </footer>
@@ -861,14 +1609,14 @@ function addHoverHandlers (root) {
         if (selector !== null) {
             select(selector);
         }
-    }, true)
+    }, true);
 
     root.addEventListener('mouseleave', (ev) => {
         let selector = ev.target.getAttribute('data-hover');
         if (selector !== null && currentSelector === selector) {
             select(null);
         }
-    }, true)
+    }, true);
 
     document.addEventListener('click', (ev) => {
         var selector = null;
@@ -876,12 +1624,16 @@ function addHoverHandlers (root) {
             selector = ev.target.getAttribute('data-hover');
         }
         select(selector);
-    }, true)
+    }, true);
 }
 
 for (el of document.querySelectorAll('.hover-root')) {
     addHoverHandlers(el);
 }
+
+document.addEventListener('click', (ev) => {
+    ev.target.closest('.details-root').classList.toggle('show-details');
+}, true);
 //--></script>
 </body>
 </html>

@@ -2,7 +2,7 @@ const std = @import("std");
 
 pub fn build(b: *std.Build) void {
     const exe = b.addExecutable(.{
-        .name = "basic_test",
+        .name = "basic_test_128",
         .root_source_file = .{ .path = "main.zig" },
         .target = b.standardTargetOptions(.{}),
         .optimize = b.standardOptimizeOption(.{}),

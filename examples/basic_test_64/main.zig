@@ -1,8 +1,9 @@
 const std = @import("std");
 const lc4k = @import("lc4k");
 
+const Chip = lc4k.LC4064ZC_csBGA132;
+
 pub fn main() !void {
-    const Chip = lc4k.LC4032ZE_TQFP48;
     const PT = Chip.PT;
 
     var chip = Chip {};
@@ -10,11 +11,11 @@ pub fn main() !void {
     chip.usercode = 0x123456;
     chip.security = true;
 
-    var mc1 = chip.mc(Chip.pins._23.mc());
+    var mc1 = chip.mc(Chip.GRP.mc_A0.mc());
     mc1.output.oe = .output_only;
     mc1.logic = .{ .sum = &.{ PT.always() } };
 
-    var mc2 = chip.mc(Chip.pins._24.mc());
+    var mc2 = chip.mc(Chip.GRP.mc_B3.mc());
     mc2.output.oe = .output_only;
     mc2.logic = .{ .sum = &.{ PT.never() } };
 
@@ -23,17 +24,17 @@ pub fn main() !void {
 
     const results = try chip.assemble(arena.allocator());
 
-    var jed_file = try std.fs.cwd().createFile("basic_test.jed", .{});
+    var jed_file = try std.fs.cwd().createFile("basic_test_64.jed", .{});
     defer jed_file.close();
     try Chip.write_jed(results.jedec, jed_file.writer(), .{});
 
-    var svf_file = try std.fs.cwd().createFile("basic_test.svf", .{});
+    var svf_file = try std.fs.cwd().createFile("basic_test_64.svf", .{});
     defer svf_file.close();
     try Chip.write_svf(results.jedec, svf_file.writer(), .{});
 
-    var report_file = try std.fs.cwd().createFile("basic_test.html", .{});
+    var report_file = try std.fs.cwd().createFile("basic_test_64.html", .{});
     defer report_file.close();
-    try Chip.write_report(results.jedec, report_file.writer(), .{
+    try Chip.write_report(5, results.jedec, report_file.writer(), .{
         .assembly_errors = results.errors.items,
     });
 }

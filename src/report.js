@@ -27,14 +27,14 @@ function addHoverHandlers (root) {
         if (selector !== null) {
             select(selector);
         }
-    }, true)
+    }, true);
 
     root.addEventListener('mouseleave', (ev) => {
         let selector = ev.target.getAttribute('data-hover');
         if (selector !== null && currentSelector === selector) {
             select(null);
         }
-    }, true)
+    }, true);
 
     document.addEventListener('click', (ev) => {
         var selector = null;
@@ -42,9 +42,13 @@ function addHoverHandlers (root) {
             selector = ev.target.getAttribute('data-hover');
         }
         select(selector);
-    }, true)
+    }, true);
 }
 
 for (el of document.querySelectorAll('.hover-root')) {
     addHoverHandlers(el);
 }
+
+document.addEventListener('click', (ev) => {
+    ev.target.closest('.details-root').classList.toggle('show-details');
+}, true);
