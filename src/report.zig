@@ -4,12 +4,12 @@ pub fn Write_Options(comptime Device: type) type {
         design_version: []const u8 = "",
         notes: []const u8 = "",
         assembly_errors: []const assembly.Assembly_Error = &[_]assembly.Assembly_Error{},
-        macrocellNameMapper: *const fn(lc4k.MC_Ref) []const u8 = defaultMacrocellNameMapper(Device),
-        signalNameMapper: *const fn(Device.GRP) []const u8 = defaultSignalNameMapper(Device.GRP),
+        macrocellNameMapper: *const fn(lc4k.MC_Ref) []const u8 = default_macrocell_name_mapper(Device),
+        signalNameMapper: *const fn(Device.GRP) []const u8 = default_signal_name_mapper(Device.GRP),
     };
 }
 
-pub fn defaultMacrocellNameMapper(comptime Device: type) fn(lc4k.MC_Ref) []const u8 {
+pub fn default_macrocell_name_mapper(comptime Device: type) fn(lc4k.MC_Ref) []const u8 {
     return struct {
         pub fn func(mcref: lc4k.MC_Ref) []const u8 {
             return @tagName(Device.GRP.mc_fb(mcref))[3..];
@@ -18,7 +18,7 @@ pub fn defaultMacrocellNameMapper(comptime Device: type) fn(lc4k.MC_Ref) []const
 }
 
 // TODO move this to lc4k.Device, call it getSignalName, and have it take a context type which it will search for decls
-pub fn defaultSignalNameMapper(comptime GRP: type) fn(GRP) []const u8 {
+pub fn default_signal_name_mapper(comptime GRP: type) fn(GRP) []const u8 {
     return struct {
         pub fn func(grp: GRP) []const u8 {
             return @tagName(grp);
@@ -26,7 +26,7 @@ pub fn defaultSignalNameMapper(comptime GRP: type) fn(GRP) []const u8 {
     }.func;
 }
 
-const PTUsage = enum {
+const PT_Usage = enum {
     none,
     sum,
     xor,
@@ -39,16 +39,16 @@ const PTUsage = enum {
     oe,
 };
 
-fn ReportData(comptime Device: type) type {
+fn Report_Data(comptime Device: type) type {
     const GRP = Device.GRP;
 
-    const GlbReportData = struct {
+    const GLB_Report_Data = struct {
         const num_pts = Device.num_mcs_per_glb * 5 + 3;
 
         gi_routing: [Device.num_gis_per_glb]?GRP,
-        sum_routing: routing.RoutingData,
+        sum_routing: routing.Routing_Data,
         pts: [num_pts]lc4k.Product_Term(GRP),
-        pt_usage: [num_pts]PTUsage,
+        pt_usage: [num_pts]PT_Usage,
         uses_bie: bool,
     };
 
@@ -59,9 +59,9 @@ fn ReportData(comptime Device: type) type {
     return struct {
         jed: JEDEC_Data,
         config: lc4k.Chip_Config(Device.device_type),
-        disassembly_errors: std.ArrayList(disassembly.DisassemblyError),
+        disassembly_errors: std.ArrayList(disassembly.Disassembly_Error),
 
-        glb: [Device.num_glbs]GlbReportData = undefined,
+        glb: [Device.num_glbs]GLB_Report_Data = undefined,
 
         num_gis_used: u16 = 0,
         num_pts_used: u16 = 0,
@@ -92,7 +92,7 @@ fn ReportData(comptime Device: type) type {
             var inputs_used = std.EnumSet(GRP) {};
             var clocks_used = std.EnumSet(GRP) {};
             inline for (dis.config.glb, 0..) |glb_config, glb| {
-                var glb_data = GlbReportData {
+                var glb_data = GLB_Report_Data {
                     .gi_routing = dis.gi_routing[glb],
                     .sum_routing = dis.sum_routing[glb],
                     .pts = undefined,
@@ -115,9 +115,9 @@ fn ReportData(comptime Device: type) type {
                     }
                 }
 
-                glb_data.pts[shared_init_pt] = try disassembly.parsePTFuses(Device, alloc, glb, shared_init_pt, &glb_data.gi_routing, self.jed, null);
-                glb_data.pts[shared_clock_pt] = try disassembly.parsePTFuses(Device, alloc, glb, shared_clock_pt, &glb_data.gi_routing, self.jed, null);
-                glb_data.pts[shared_enable_pt] = try disassembly.parsePTFuses(Device, alloc, glb, shared_enable_pt, &glb_data.gi_routing, self.jed, null);
+                glb_data.pts[shared_init_pt] = try disassembly.read_pt_fuses(Device, alloc, glb, shared_init_pt, &glb_data.gi_routing, self.jed, null);
+                glb_data.pts[shared_clock_pt] = try disassembly.read_pt_fuses(Device, alloc, glb, shared_clock_pt, &glb_data.gi_routing, self.jed, null);
+                glb_data.pts[shared_enable_pt] = try disassembly.read_pt_fuses(Device, alloc, glb, shared_enable_pt, &glb_data.gi_routing, self.jed, null);
 
                 glb_data.pt_usage[shared_init_pt] = .none;
                 glb_data.pt_usage[shared_clock_pt] = .none;
@@ -130,7 +130,7 @@ fn ReportData(comptime Device: type) type {
                     var pt_offset: usize = 0;
                     while (pt_offset < 5) : (pt_offset += 1) {
                         const glb_pt_offset = glb_pt_base + pt_offset;
-                        const pt = try disassembly.parsePTFuses(Device, alloc, glb, glb_pt_offset, &glb_data.gi_routing, self.jed, null);
+                        const pt = try disassembly.read_pt_fuses(Device, alloc, glb, glb_pt_offset, &glb_data.gi_routing, self.jed, null);
                         glb_data.pts[glb_pt_offset] = pt;
                         glb_data.pt_usage[glb_pt_offset] = .sum;
                         if (@TypeOf(mc_config.output) == lc4k.Output_Config(Device.GRP)) {
@@ -231,10 +231,10 @@ fn ReportData(comptime Device: type) type {
                     }
                 }
 
-                parseGoePtUsage(dis.config.goe0, glb, &glb_data);
-                parseGoePtUsage(dis.config.goe1, glb, &glb_data);
-                parseGoePtUsage(dis.config.goe2, glb, &glb_data);
-                parseGoePtUsage(dis.config.goe3, glb, &glb_data);
+                parse_goe_pt_usage(dis.config.goe0, glb, &glb_data);
+                parse_goe_pt_usage(dis.config.goe1, glb, &glb_data);
+                parse_goe_pt_usage(dis.config.goe2, glb, &glb_data);
+                parse_goe_pt_usage(dis.config.goe3, glb, &glb_data);
 
                 inline for (glb_config.mc, 0..) |_, mc| {
                     const glb_pt_base = mc * 5;
@@ -292,7 +292,7 @@ fn ReportData(comptime Device: type) type {
             return self;
         }
 
-        fn parseGoePtUsage(goe_config: anytype, glb: usize, glb_data: *GlbReportData) void {
+        fn parse_goe_pt_usage(goe_config: anytype, glb: usize, glb_data: *GLB_Report_Data) void {
             switch (@TypeOf(goe_config)) {
                 lc4k.GOE_Config_Bus_Or_Pin => switch (goe_config.source) {
                     .input, .constant_high => {},
@@ -318,7 +318,7 @@ pub fn write(comptime Device: type, file: JEDEC_File, writer: std.io.AnyWriter, 
     defer temp.deinit();
     const alloc = temp.allocator();
 
-    const data = try ReportData(Device).init(alloc, file);
+    const data = try Report_Data(Device).init(alloc, file);
 
     try writer.writeAll("<html>\n");
     try writer.writeAll("<head>\n");
@@ -333,7 +333,7 @@ pub fn write(comptime Device: type, file: JEDEC_File, writer: std.io.AnyWriter, 
     try writer.writeAll("</head>\n");
     try writer.writeAll("<body>\n");
 
-    try beginSection(writer, "Design Summary", .{}, .{});
+    try begin_section(writer, "Design Summary", .{}, .{});
     try writer.writeAll("<table>\n");
 
     if (options.design_name.len > 0) {
@@ -367,24 +367,24 @@ pub fn write(comptime Device: type, file: JEDEC_File, writer: std.io.AnyWriter, 
         try writer.writeAll("</tr>\n");
     }
 
-    try writeSummaryLine(writer, "I/Os Used", data.num_ios_used, data.num_ios);
+    try write_summary_line(writer, "I/Os Used", data.num_ios_used, data.num_ios);
     if (Device.input_pins.len > 0) {
-        try writeSummaryLine(writer, "Inputs Used", data.num_inputs_used, Device.input_pins.len);
+        try write_summary_line(writer, "Inputs Used", data.num_inputs_used, Device.input_pins.len);
     }
-    try writeSummaryLine(writer, "Clocks Used", data.num_clocks_used, 4);
-    try writeSummaryLine(writer, "GIs Used", data.num_gis_used, Device.num_glbs * Device.num_gis_per_glb);
-    try writeSummaryLine(writer, "PTs Used", data.num_pts_used, Device.num_glbs * (Device.num_mcs_per_glb * 5 + 3));
-    try writeSummaryLine(writer, "PT Clusters Used", data.num_clusters_used, Device.num_glbs * Device.num_mcs_per_glb);
-    try writeSummaryLine(writer, "Macrocells Used", data.num_mcs_used, Device.num_glbs * Device.num_mcs_per_glb);
-    try writeSummaryLine(writer, "Registers Used", data.num_registers_used, Device.num_glbs * Device.num_mcs_per_glb);
+    try write_summary_line(writer, "Clocks Used", data.num_clocks_used, 4);
+    try write_summary_line(writer, "GIs Used", data.num_gis_used, Device.num_glbs * Device.num_gis_per_glb);
+    try write_summary_line(writer, "PTs Used", data.num_pts_used, Device.num_glbs * (Device.num_mcs_per_glb * 5 + 3));
+    try write_summary_line(writer, "PT Clusters Used", data.num_clusters_used, Device.num_glbs * Device.num_mcs_per_glb);
+    try write_summary_line(writer, "Macrocells Used", data.num_mcs_used, Device.num_glbs * Device.num_mcs_per_glb);
+    try write_summary_line(writer, "Registers Used", data.num_registers_used, Device.num_glbs * Device.num_mcs_per_glb);
 
     try writer.writeAll("</table>\n");
-    try endSection(writer);
+    try end_section(writer);
 
     if (options.assembly_errors.len > 0) {
-        try beginSection(writer, "Assembly Errors", .{}, .{});
-        try beginTable(writer);
-        try tableHeader(writer, .{ "Error", "Details", "Context" });
+        try begin_section(writer, "Assembly Errors", .{}, .{});
+        try begin_table(writer);
+        try table_header(writer, .{ "Error", "Details", "Context" });
         for (options.assembly_errors) |err| {
             try writer.print("<tr><td>{s}</td><td>{s}</td><td>", .{ @errorName(err.err), err.details });
             if (err.glb) |glb| {
@@ -403,14 +403,14 @@ pub fn write(comptime Device: type, file: JEDEC_File, writer: std.io.AnyWriter, 
             // }
             try writer.writeAll("</td></tr>\n");
         }
-        try endTable(writer);
-        try endSection(writer);
+        try end_table(writer);
+        try end_section(writer);
     }
 
     if (data.disassembly_errors.items.len > 0) {
-        try beginSection(writer, "Disassembly Errors", .{}, .{});
-        try beginTable(writer);
-        try tableHeader(writer, .{ "Error", "Details", "Context" });
+        try begin_section(writer, "Disassembly Errors", .{}, .{});
+        try begin_table(writer);
+        try table_header(writer, .{ "Error", "Details", "Context" });
         for (data.disassembly_errors.items) |err| {
             try writer.print("<tr><td>{s}</td><td>{s}</td><td>", .{ @errorName(err.err), err.details });
             if (err.glb) |glb| {
@@ -429,15 +429,15 @@ pub fn write(comptime Device: type, file: JEDEC_File, writer: std.io.AnyWriter, 
             }
             try writer.writeAll("</td></tr>\n");
         }
-        try endTable(writer);
-        try endSection(writer);
+        try end_table(writer);
+        try end_section(writer);
     }
 
-    try writeGlobals(writer, Device, data, options);
-    try writeInputs(writer, Device, data, options);
-    try writeMacrocells(writer, Device, data, options);
-    try writePTs(writer, Device, data, options);
-    try writeGlbRouting(writer, Device, data, options);
+    try write_globals(writer, Device, data, options);
+    try write_inputs(writer, Device, data, options);
+    try write_macrocells(writer, Device, data, options);
+    try write_product_terms(writer, Device, data, options);
+    try write_glb_routing(writer, Device, data, options);
 
     try writer.writeAll("<footer>\n");
     try writer.writeAll("Generated by <a href=\"https://github.com/bcrist/Zig-LC4k\">Zig-LC4k</a>\n");
@@ -449,26 +449,26 @@ pub fn write(comptime Device: type, file: JEDEC_File, writer: std.io.AnyWriter, 
     try writer.writeAll("</html>\n");
 }
 
-fn writeGlobals(writer: anytype, comptime Device: type, data: ReportData(Device), options: Write_Options(Device)) !void {
-    try beginSection(writer, "Global Resources", .{}, .{});
+fn write_globals(writer: anytype, comptime Device: type, data: Report_Data(Device), options: Write_Options(Device)) !void {
+    try begin_section(writer, "Global Resources", .{}, .{});
 
-    try beginSection(writer, "Global Output Enables", .{}, .{ .tier = 3, .class = "inline" });
-    try beginTable(writer);
+    try begin_section(writer, "Global Output Enables", .{}, .{ .tier = 3, .class = "inline" });
+    try begin_table(writer);
 
-    try tableHeader(writer, .{ "GOE", "Equation" });
+    try table_header(writer, .{ "GOE", "Equation" });
 
-    try writeGOE(writer, Device, false, 0, data.config.goe0, options);
-    try writeGOE(writer, Device, true,  1, data.config.goe1, options);
-    try writeGOE(writer, Device, false, 2, data.config.goe2, options);
-    try writeGOE(writer, Device, true,  3, data.config.goe3, options);
+    try write_goe(writer, Device, false, 0, data.config.goe0, options);
+    try write_goe(writer, Device, true,  1, data.config.goe1, options);
+    try write_goe(writer, Device, false, 2, data.config.goe2, options);
+    try write_goe(writer, Device, true,  3, data.config.goe3, options);
 
-    try endTable(writer);
-    try endSection(writer);
+    try end_table(writer);
+    try end_section(writer);
 
     if (Device.family == .zero_power_enhanced) {
         if (data.config.ext.osctimer) |config| {
-            try beginSection(writer, "Oscillator/Timer", .{}, .{ .tier = 3, .class = "inline" });
-            try beginTable(writer);
+            try begin_section(writer, "Oscillator/Timer", .{}, .{ .tier = 3, .class = "inline" });
+            try begin_table(writer);
 
             const osc_frequency = 5_000_000;
 
@@ -507,47 +507,47 @@ fn writeGlobals(writer: anytype, comptime Device: type, data: ReportData(Device)
                 try writer.writeAll("</tr>\n");
             }
 
-            try endTable(writer);
-            try endSection(writer);
+            try end_table(writer);
+            try end_section(writer);
         }
     }
 
-    try endSection(writer);
+    try end_section(writer);
 }
 
-fn writeGOE(writer: anytype, comptime Device: type, highlight: bool, goe_index: usize, goe_config: anytype, options: Write_Options(Device)) !void {
-    try beginRow(writer, .{ .highlight = highlight });
+fn write_goe(writer: anytype, comptime Device: type, highlight: bool, goe_index: usize, goe_config: anytype, options: Write_Options(Device)) !void {
+    try begin_row(writer, .{ .highlight = highlight });
 
-    try beginCell(writer, .{});
+    try begin_cell(writer, .{});
     try writer.print("<kbd class=\"oe goe-{}\">GOE {}</kbd>", .{ goe_index, goe_index });
-    try endCell(writer);
+    try end_cell(writer);
 
-    try beginCell(writer, .{ .class = "left" });
+    try begin_cell(writer, .{ .class = "left" });
     switch (@TypeOf(goe_config)) {
         lc4k.GOE_Config_Bus_Or_Pin => switch (goe_config.source) {
-            .constant_high => try writeUnusedGOEEquation(writer, goe_config.polarity),
-            .input => try writePinGOEEquation(writer, Device, goe_config.polarity, Device.oe_pins[goe_index], options),
-            .glb_shared_pt_enable => |glb| try writeBusGOEEquation(writer, goe_config.polarity, glb),
+            .constant_high => try write_unused_goe_equation(writer, goe_config.polarity),
+            .input => try write_pin_goe_equation(writer, Device, goe_config.polarity, Device.oe_pins[goe_index], options),
+            .glb_shared_pt_enable => |glb| try write_bus_goe_equation(writer, goe_config.polarity, glb),
         },
         lc4k.GOE_Config_Bus => switch (goe_config.source) {
-            .constant_high => try writeUnusedGOEEquation(writer, goe_config.polarity),
-            .glb_shared_pt_enable => |glb| try writeBusGOEEquation(writer, goe_config.polarity, glb),
+            .constant_high => try write_unused_goe_equation(writer, goe_config.polarity),
+            .glb_shared_pt_enable => |glb| try write_bus_goe_equation(writer, goe_config.polarity, glb),
         },
         lc4k.GOE_Config_Pin => {
             var oe_bus_index = goe_index;
             if (goe_index >= Device.oe_bus_size) {
                 oe_bus_index -= 2;
             }
-            try writePinGOEEquation(writer, Device, goe_config.polarity, Device.oe_pins[oe_bus_index], options);
+            try write_pin_goe_equation(writer, Device, goe_config.polarity, Device.oe_pins[oe_bus_index], options);
         },
         else => unreachable,
     }
-    try endCell(writer);
+    try end_cell(writer);
 
-    try endRow(writer);
+    try end_row(writer);
 }
 
-fn writeBusGOEEquation(writer: anytype, polarity: lc4k.GOE_Polarity, glb: usize) !void {
+fn write_bus_goe_equation(writer: anytype, polarity: lc4k.GOE_Polarity, glb: usize) !void {
     try writer.writeAll(switch (polarity) {
         .active_high => "<abbr>",
         .active_low => "<abbr><u>",
@@ -561,14 +561,14 @@ fn writeBusGOEEquation(writer: anytype, polarity: lc4k.GOE_Polarity, glb: usize)
     });
 }
 
-fn writeUnusedGOEEquation(writer: anytype, polarity: lc4k.GOE_Polarity) !void {
+fn write_unused_goe_equation(writer: anytype, polarity: lc4k.GOE_Polarity) !void {
     try writer.writeAll(switch (polarity) {
         .active_high => "<abbr>true</abbr>",
         .active_low => "<abbr>false</abbr>",
     });
 }
 
-fn writePinGOEEquation(writer: anytype, comptime Device: type, polarity: lc4k.GOE_Polarity, pin: Device.Pin, options: Write_Options(Device)) !void {
+fn write_pin_goe_equation(writer: anytype, comptime Device: type, polarity: lc4k.GOE_Polarity, pin: Device.Pin, options: Write_Options(Device)) !void {
     try writer.writeAll(switch (polarity) {
         .active_high => "<abbr>",
         .active_low => "<abbr><u>",
@@ -582,24 +582,24 @@ fn writePinGOEEquation(writer: anytype, comptime Device: type, polarity: lc4k.GO
     });
 }
 
-fn writeInputs(writer: anytype, comptime Device: type, data: ReportData(Device), options: Write_Options(Device)) !void {
-    try beginSection(writer, "Clocks &amp; Dedicated Inputs", .{}, .{});
+fn write_inputs(writer: anytype, comptime Device: type, data: Report_Data(Device), options: Write_Options(Device)) !void {
+    try begin_section(writer, "Clocks &amp; Dedicated Inputs", .{}, .{});
 
-    try beginSection(writer, "Clock &amp; Input Pins", .{}, .{ .tier = 3, .class = "inline" });
-    try beginTable(writer);
+    try begin_section(writer, "Clock &amp; Input Pins", .{}, .{ .tier = 3, .class = "inline" });
+    try begin_table(writer);
 
     if (Device.family == .zero_power_enhanced) {
-        try tableHeader(writer, .{ "Pin", "Signal", "Threshold", "Term", "PG" });
+        try table_header(writer, .{ "Pin", "Signal", "Threshold", "Term", "PG" });
     } else {
-        try tableHeader(writer, .{ "Pin", "Signal", "Threshold", "Term" });
+        try table_header(writer, .{ "Pin", "Signal", "Threshold", "Term" });
     }
 
     var n: usize = 0;
     for (Device.clock_pins, 0..) |pin, i| {
         const config = data.config.clock[i];
         switch (@TypeOf(config)) {
-            lc4k.Input_Config => try writeInputPin(writer, (n & 1) == 1, Device, pin, config.threshold.?, data.config.default_bus_maintenance, null, options),
-            lc4k.Input_Config_ZE => try writeInputPin(writer, (n & 1) == 1, Device, pin, config.threshold.?, config.bus_maintenance.?, config.power_guard.?, options),
+            lc4k.Input_Config => try write_input_pin(writer, (n & 1) == 1, Device, pin, config.threshold.?, data.config.default_bus_maintenance, null, options),
+            lc4k.Input_Config_ZE => try write_input_pin(writer, (n & 1) == 1, Device, pin, config.threshold.?, config.bus_maintenance.?, config.power_guard.?, options),
             else => unreachable,
         }
         n += 1;
@@ -608,42 +608,42 @@ fn writeInputs(writer: anytype, comptime Device: type, data: ReportData(Device),
     for (Device.input_pins, 0..) |pin, i| {
         const config = data.config.input[i];
         switch (@TypeOf(config)) {
-            lc4k.Input_Config => try writeInputPin(writer, (n & 1) == 1, Device, pin, config.threshold.?, data.config.default_bus_maintenance, null, options),
-            lc4k.Input_Config_ZE => try writeInputPin(writer, (n & 1) == 1, Device, pin, config.threshold.?, config.bus_maintenance.?, config.power_guard.?, options),
+            lc4k.Input_Config => try write_input_pin(writer, (n & 1) == 1, Device, pin, config.threshold.?, data.config.default_bus_maintenance, null, options),
+            lc4k.Input_Config_ZE => try write_input_pin(writer, (n & 1) == 1, Device, pin, config.threshold.?, config.bus_maintenance.?, config.power_guard.?, options),
             else => unreachable,
         }
         n += 1;
     }
 
-    try endTable(writer);
-    try endSection(writer);
+    try end_table(writer);
+    try end_section(writer);
 
     for (data.config.glb, 0..) |glb_config, glb| {
-        try beginGlbSection(writer, glb);
-        try beginTable(writer);
+        try begin_glb_section(writer, glb);
+        try begin_table(writer);
 
-        try tableHeader(writer, .{ "Block Clock", "Equation" });
+        try table_header(writer, .{ "Block Clock", "Equation" });
 
-        try writeBlockClock(writer, Device, false, 0, glb_config.bclock0, options);
-        try writeBlockClock(writer, Device, true,  1, glb_config.bclock1, options);
-        try writeBlockClock(writer, Device, false, 2, glb_config.bclock2, options);
-        try writeBlockClock(writer, Device, true,  3, glb_config.bclock3, options);
+        try write_block_clock(writer, Device, false, 0, glb_config.bclock0, options);
+        try write_block_clock(writer, Device, true,  1, glb_config.bclock1, options);
+        try write_block_clock(writer, Device, false, 2, glb_config.bclock2, options);
+        try write_block_clock(writer, Device, true,  3, glb_config.bclock3, options);
 
-        try endTable(writer);
-        try endSection(writer);
+        try end_table(writer);
+        try end_section(writer);
     }
 
-    try endSection(writer);
+    try end_section(writer);
 }
 
-fn writeBlockClock(writer: anytype, comptime Device: type, highlight: bool, bclk_index: usize, value: anytype, options: Write_Options(Device)) !void {
-    try beginRow(writer, .{ .highlight = highlight });
+fn write_block_clock(writer: anytype, comptime Device: type, highlight: bool, bclk_index: usize, value: anytype, options: Write_Options(Device)) !void {
+    try begin_row(writer, .{ .highlight = highlight });
 
-    try beginCell(writer, .{});
+    try begin_cell(writer, .{});
     try writer.print("<kbd class=\"clk bclk{}\">BCLK {}</kbd>", .{ bclk_index, bclk_index });
-    try endCell(writer);
+    try end_cell(writer);
 
-    try beginCell(writer, .{ .class = "left" });
+    try begin_cell(writer, .{ .class = "left" });
     const name = @tagName(value);
     const grp: Device.GRP = switch (name[3]) {
         '0' => .clk0,
@@ -657,51 +657,51 @@ fn writeBlockClock(writer: anytype, comptime Device: type, highlight: bool, bclk
     } else {
         try writer.print("<abbr>{s}</abbr>", .{ options.signalNameMapper(grp) });
     }
-    try endCell(writer);
+    try end_cell(writer);
 
-    try endRow(writer);
+    try end_row(writer);
 }
 
-fn writeInputPin(writer: anytype, highlight: bool, comptime Device: type, pin: Device.Pin,
+fn write_input_pin(writer: anytype, highlight: bool, comptime Device: type, pin: Device.Pin,
     threshold: lc4k.Input_Threshold,
     bus_maintenance: lc4k.Bus_Maintenance,
     power_guard: ?lc4k.Power_Guard,
     options: Write_Options(Device),
 ) !void {
-    try beginRow(writer, .{
+    try begin_row(writer, .{
         .highlight = highlight,
     });
 
-    try beginCell(writer, .{});
+    try begin_cell(writer, .{});
     try writer.writeAll(pin.id());
-    try endCell(writer);
+    try end_cell(writer);
 
-    try beginCell(writer, .{});
+    try begin_cell(writer, .{});
     if (pin.info.grp_ordinal) |grp_ordinal| {
         try writer.writeAll(options.signalNameMapper(@enumFromInt(grp_ordinal)));
     }
-    try endCell(writer);
+    try end_cell(writer);
 
-    try beginCell(writer, .{});
-    try writeInput_Threshold(writer, Device, threshold);
-    try endCell(writer);
+    try begin_cell(writer, .{});
+    try write_input_threshold(writer, Device, threshold);
+    try end_cell(writer);
 
-    try beginCell(writer, .{});
-    try writeBus_Maintenance(writer, bus_maintenance);
-    try endCell(writer);
+    try begin_cell(writer, .{});
+    try write_bus_maintenance(writer, bus_maintenance);
+    try end_cell(writer);
 
     if (Device.family == .zero_power_enhanced) {
-        try beginCell(writer, .{});
+        try begin_cell(writer, .{});
         if (power_guard) |pg| {
-            try writePower_Guard(writer, pg);
+            try write_power_guard(writer, pg);
         }
-        try endCell(writer);
+        try end_cell(writer);
     }
 
-    try endRow(writer);
+    try end_row(writer);
 }
 
-fn writeInput_Threshold(writer: anytype, comptime Device: type, threshold: lc4k.Input_Threshold) !void {
+fn write_input_threshold(writer: anytype, comptime Device: type, threshold: lc4k.Input_Threshold) !void {
     switch (Device.family) {
         .zero_power_enhanced => {
             try writer.writeAll(switch (threshold) {
@@ -724,7 +724,7 @@ fn writeInput_Threshold(writer: anytype, comptime Device: type, threshold: lc4k.
     }
 }
 
-fn writeBus_Maintenance(writer: anytype, maint: lc4k.Bus_Maintenance) !void {
+fn write_bus_maintenance(writer: anytype, maint: lc4k.Bus_Maintenance) !void {
     try writer.writeAll(switch (maint) {
         .pulldown => "<kbd class=\"maintenance pulldown\">Pulldown</kbd>",
         .float => "<kbd class=\"maintenance float\">Float</kbd>",
@@ -733,19 +733,19 @@ fn writeBus_Maintenance(writer: anytype, maint: lc4k.Bus_Maintenance) !void {
     });
 }
 
-fn writePower_Guard(writer: anytype, pg: lc4k.Power_Guard) !void {
+fn write_power_guard(writer: anytype, pg: lc4k.Power_Guard) !void {
     try writer.writeAll(switch (pg) {
         .from_bie => "<kbd class=\"power-guard enabled\">Enabled</kbd>",
         .disabled => "<kbd class=\"power-guard disabled\">Disabled</kbd>",
     });
 }
 
-fn writePTs(writer: anytype, comptime Device: type, data: ReportData(Device), options: Write_Options(Device)) !void {
-    try beginSection(writer, "Product Terms", .{}, .{});
+fn write_product_terms(writer: anytype, comptime Device: type, data: Report_Data(Device), options: Write_Options(Device)) !void {
+    try begin_section(writer, "Product Terms", .{}, .{});
     for (data.glb, 0..) |glb_data, glb| {
-        try beginGlbSection(writer, glb);
-        try beginTable(writer);
-        try tableHeader(writer, .{ "MC", "PT", "Usage", "Equation" });
+        try begin_glb_section(writer, glb);
+        try begin_table(writer);
+        try table_header(writer, .{ "MC", "PT", "Usage", "Equation" });
 
         var mc: usize = 0;
         while (mc < Device.num_mcs_per_glb) : (mc += 1) {
@@ -753,7 +753,7 @@ fn writePTs(writer: anytype, comptime Device: type, data: ReportData(Device), op
 
             var pt_index: usize = 0;
             while (pt_index < 5) : (pt_index += 1) {
-                try beginRow(writer, .{ .highlight = (mc & 1) == 1 });
+                try begin_row(writer, .{ .highlight = (mc & 1) == 1 });
 
                 if (pt_index == 0) {
                     try writer.print("<td rowspan=\"5\">{s}</td>", .{ options.macrocellNameMapper(mcref) });
@@ -763,45 +763,45 @@ fn writePTs(writer: anytype, comptime Device: type, data: ReportData(Device), op
                 const glb_pt_offset = mc * 5 + pt_index;
 
                 try writer.writeAll("<td>");
-                try writePTUsage(writer, glb_data.pt_usage[glb_pt_offset]);
+                try write_pt_usage(writer, glb_data.pt_usage[glb_pt_offset]);
                 try writer.writeAll("</td>");
 
-                try writePTEquation(writer, Device, glb_data.pts[glb_pt_offset], options);
-                try endRow(writer);
+                try write_pt_equation(writer, Device, glb_data.pts[glb_pt_offset], options);
+                try end_row(writer);
             }
         }
 
-        try beginRow(writer, .{});
+        try begin_row(writer, .{});
         try writer.print("<td></td><td>{}</td><td>", .{ mc * 5 });
-        try writePTUsage(writer, glb_data.pt_usage[mc * 5]);
+        try write_pt_usage(writer, glb_data.pt_usage[mc * 5]);
         try writer.writeAll("</td>");
-        try writePTEquation(writer, Device, glb_data.pts[mc * 5], options);
-        try endRow(writer);
+        try write_pt_equation(writer, Device, glb_data.pts[mc * 5], options);
+        try end_row(writer);
 
-        try beginRow(writer, .{ .highlight = true });
+        try begin_row(writer, .{ .highlight = true });
         try writer.print("<td></td><td>{}</td><td>", .{ mc * 5 + 1 });
-        try writePTUsage(writer, glb_data.pt_usage[mc * 5 + 1]);
+        try write_pt_usage(writer, glb_data.pt_usage[mc * 5 + 1]);
         try writer.writeAll("</td>");
-        try writePTEquation(writer, Device, glb_data.pts[mc * 5 + 1], options);
-        try endRow(writer);
+        try write_pt_equation(writer, Device, glb_data.pts[mc * 5 + 1], options);
+        try end_row(writer);
 
-        try beginRow(writer, .{});
+        try begin_row(writer, .{});
         try writer.print("<td></td><td>{}</td><td>", .{ mc * 5 + 2 });
         if (glb_data.uses_bie) {
             try writer.writeAll("<kbd class=\"pt-usage bie\">BIE</kbd> ");
         }
-        try writePTUsage(writer, glb_data.pt_usage[mc * 5 + 2]);
+        try write_pt_usage(writer, glb_data.pt_usage[mc * 5 + 2]);
         try writer.writeAll("</td>");
-        try writePTEquation(writer, Device, glb_data.pts[mc * 5 + 2], options);
-        try endRow(writer);
+        try write_pt_equation(writer, Device, glb_data.pts[mc * 5 + 2], options);
+        try end_row(writer);
 
-        try endTable(writer);
-        try endSection(writer);
+        try end_table(writer);
+        try end_section(writer);
     }
-    try endSection(writer);
+    try end_section(writer);
 }
 
-fn writePTUsage(writer: anytype, usage: PTUsage) !void {
+fn write_pt_usage(writer: anytype, usage: PT_Usage) !void {
     try writer.writeAll(switch (usage) {
         .none     => return,
         .sum      => "<kbd class=\"pt-usage sum\">Sum</kbd>",
@@ -816,7 +816,7 @@ fn writePTUsage(writer: anytype, usage: PTUsage) !void {
     });
 }
 
-fn writePTEquation(writer: anytype, comptime Device: type, pt: lc4k.Product_Term(Device.GRP), options: Write_Options(Device)) !void {
+fn write_pt_equation(writer: anytype, comptime Device: type, pt: lc4k.Product_Term(Device.GRP), options: Write_Options(Device)) !void {
     try writer.writeAll("<td class=\"left\">");
 
     var first = true;
@@ -849,12 +849,12 @@ fn writePTEquation(writer: anytype, comptime Device: type, pt: lc4k.Product_Term
     try writer.writeAll("</td>");
 }
 
-fn writeGlbRouting(writer: anytype, comptime Device: type, data: ReportData(Device), options: Write_Options(Device)) !void {
-    try beginSection(writer, "GI Routing", .{}, .{});
+fn write_glb_routing(writer: anytype, comptime Device: type, data: Report_Data(Device), options: Write_Options(Device)) !void {
+    try begin_section(writer, "GI Routing", .{}, .{});
     for (data.config.glb, 0..) |_, glb| {
-        try beginGlbSection(writer, glb);
-        try beginTable(writer);
-        try tableHeader(writer, .{
+        try begin_glb_section(writer, glb);
+        try begin_table(writer);
+        try table_header(writer, .{
             .GI = 1,
             .Fuses = Device.gi_mux_size,
             .Signal = 1,
@@ -865,7 +865,7 @@ fn writeGlbRouting(writer: anytype, comptime Device: type, data: ReportData(Devi
             const fuse_range = Device.get_gi_range(glb, gi);
             var fuse_iter = fuse_range.iterator();
             var active: ?Device.GRP = null;
-            try beginRow(writer, .{ .highlight = (gi & 1) == 1 });
+            try begin_row(writer, .{ .highlight = (gi & 1) == 1 });
 
             try writer.print("<td>{}</td>", .{ gi });
             for (gi_options) |grp| {
@@ -892,24 +892,24 @@ fn writeGlbRouting(writer: anytype, comptime Device: type, data: ReportData(Devi
                 try writer.writeAll("<td></td><td></td>");
             }
 
-            try endRow(writer);
+            try end_row(writer);
         }
 
-        try endTable(writer);
-        try endSection(writer);
+        try end_table(writer);
+        try end_section(writer);
     }
-    try endSection(writer);
+    try end_section(writer);
 }
 
-fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Device), options: Write_Options(Device)) !void {
-    try beginSection(writer, "Macrocells", .{}, .{});
+fn write_macrocells(writer: anytype, comptime Device: type, data: Report_Data(Device), options: Write_Options(Device)) !void {
+    try begin_section(writer, "Macrocells", .{}, .{});
 
     for (data.config.glb, 0..) |glb_config, glb| {
-        try beginGlbSection(writer, glb);
+        try begin_glb_section(writer, glb);
         try writer.writeAll("<div class=\"hover-root\">\n");
-        try beginTable(writer);
+        try begin_table(writer);
         if (Device.family == .zero_power_enhanced) {
-            try tableHeader(writer, .{
+            try table_header(writer, .{
                 .@"&nbsp;" = 1,
                 .Target = 1,
                 .Sum = 1,
@@ -918,7 +918,7 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
                 .Output = 4,
                 .Input = 3,
             });
-            try tableHeader(writer, .{
+            try table_header(writer, .{
                 "MC", "Cluster", "PTs",
                 "Logic", "Type", "Clock", "CE", "Init", "Async",
                 "Pin",
@@ -927,7 +927,7 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
                 "PG", 
             });
         } else {
-            try tableHeader(writer, .{
+            try table_header(writer, .{
                 .@"&nbsp;" = 1,
                 .Target = 1,
                 .Sum = 1,
@@ -936,7 +936,7 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
                 .Output = 4,
                 .Input = 2,
             });
-            try tableHeader(writer, .{
+            try table_header(writer, .{
                 "MC", "Cluster", "PTs",
                 "Logic", "Type", "Clock", "CE", "Init", "Async",
                 "Pin",
@@ -950,46 +950,46 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
 
             var ca_jumps: usize = 0;
             var dest: ?usize = null;
-            if (routing.getCAForCluster(mc, data.glb[glb].sum_routing.cluster[mc])) |initial_ca| {
-                var ca = routing.getCADestination(initial_ca, data.glb[glb].sum_routing.wide[initial_ca]);
+            if (routing.get_ca_for_cluster(mc, data.glb[glb].sum_routing.cluster[mc])) |initial_ca| {
+                var ca = routing.get_ca_destination(initial_ca, data.glb[glb].sum_routing.wide[initial_ca]);
                 while (ca != initial_ca) {
                     ca_jumps += 1;
-                    const dest_ca = routing.getCADestination(ca, data.glb[glb].sum_routing.wide[ca]);
+                    const dest_ca = routing.get_ca_destination(ca, data.glb[glb].sum_routing.wide[ca]);
                     if (dest_ca == ca) break;
                     ca = dest_ca;
                 }
                 dest = ca;
             }
 
-            try beginRow(writer, .{
+            try begin_row(writer, .{
                 .highlight = (mc & 1) == 1,
             });
 
             var temp_buf: [64]u8 = undefined;
             const mc_class = try std.fmt.bufPrint(&temp_buf, ".mc-{}", .{ mc });
-            const cell_options = CellOptions {
+            const cell_options = Cell_Options {
                 .class = mc_class[1..],
                 .hover_selector = mc_class,
             };
 
-            try beginCell(writer, cell_options);
+            try begin_cell(writer, cell_options);
             try writer.writeAll(options.macrocellNameMapper(mcref));
-            try endCell(writer);
+            try end_cell(writer);
 
             if (dest) |ca| {
                 var temp_buf_2: [64]u8 = undefined;
                 var temp_buf_3: [64]u8 = undefined;
                 const ca_selector = try std.fmt.bufPrint(&temp_buf_2, ".mc-{}", .{ ca });
                 const ca_class = try std.fmt.bufPrint(&temp_buf_3, "ca-depth-{} mc-{}", .{ ca_jumps, ca });
-                try beginCell(writer, .{
+                try begin_cell(writer, .{
                     .class = ca_class,
                     .hover_selector = ca_selector,
                 });
                 try writer.writeAll(options.macrocellNameMapper(lc4k.MC_Ref.init(glb, ca)));
             } else {
-                try beginCell(writer, .{});
+                try begin_cell(writer, .{});
             }
-            try endCell(writer);
+            try end_cell(writer);
 
             var sum_pts: usize = 0;
             switch (mc_config.logic) {
@@ -1012,11 +1012,11 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
                     .same_as_oe, .self => {},
                 }
             }
-            try beginCell(writer, cell_options);
+            try begin_cell(writer, cell_options);
             try writer.print("{}", .{ sum_pts });
-            try endCell(writer);
+            try end_cell(writer);
 
-            try beginCell(writer, cell_options);
+            try begin_cell(writer, cell_options);
             try writer.writeAll(switch (mc_config.logic) {
                 .sum          => "<kbd class=\"logic sum\">Sum</kbd>",
                 .sum_inverted => "<kbd class=\"logic sum\">Sum</kbd> <kbd class=\"logic invert\">Invert</kbd>",
@@ -1027,18 +1027,18 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
                 .sum_xor_pt0_inverted => "<kbd class=\"logic sum\">Sum</kbd> <kbd class=\"logic xor-pt\">XOR PT</kbd> <kbd class=\"logic invert\">Invert</kbd>",
                 .sum_xor_input_buffer => "<kbd class=\"logic sum\">Sum</kbd> <kbd class=\"logic xor-input\">XOR Input</kbd>",
             });
-            try endCell(writer);
+            try end_cell(writer);
 
-            try beginCell(writer, cell_options);
+            try begin_cell(writer, cell_options);
             try writer.writeAll(switch (mc_config.func) {
                 .combinational => "<kbd class=\"func comb\">Comb</kbd>",
                 .latch => "<kbd class=\"func latch\">Latch</kbd>",
                 .t_ff => "<kbd class=\"func tff\">T FF</kbd>",
                 .d_ff => "<kbd class=\"func dff\">D FF</kbd>",
             });
-            try endCell(writer);
+            try end_cell(writer);
 
-            try beginCell(writer, cell_options);
+            try begin_cell(writer, cell_options);
             const clock_invert: ?bool = switch (mc_config.func) {
                 .combinational => null,
                 .latch, .t_ff, .d_ff => |reg_config| switch (reg_config.clock) {
@@ -1082,9 +1082,9 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
                     else => if (invert) " <kbd class=\"clk neg\">Falling Edge</kbd>" else " <kbd class=\"clk pos\">Rising Edge</kbd>",
                 });
             }
-            try endCell(writer);
+            try end_cell(writer);
 
-            try beginCell(writer, cell_options);
+            try begin_cell(writer, cell_options);
             try writer.writeAll(switch (mc_config.func) {
                 .combinational => "",
                 .latch, .t_ff, .d_ff => |reg_config| switch (reg_config.ce) {
@@ -1097,9 +1097,9 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
                     .always_active => "",
                 },
             });
-            try endCell(writer);
+            try end_cell(writer);
 
-            try beginCell(writer, cell_options);
+            try begin_cell(writer, cell_options);
             switch (mc_config.func) {
                 .combinational => {},
                 .latch, .t_ff, .d_ff => |reg_config| {
@@ -1113,9 +1113,9 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
                     });
                 },
             }
-            try endCell(writer);
+            try end_cell(writer);
 
-            try beginCell(writer, cell_options);
+            try begin_cell(writer, cell_options);
             try writer.writeAll(switch (mc_config.func) {
                 .combinational => "",
                 .latch, .t_ff, .d_ff => |reg_config| switch (reg_config.async_source) {
@@ -1123,15 +1123,15 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
                     .pt2_active_high => "<kbd class=\"async pt\">PT</kbd> <kbd class=\"async pos\">Active High</kbd>",
                 },
             });
-            try endCell(writer);
+            try end_cell(writer);
 
             if (Device.GRP.maybe_mc_pad(mcref)) |pad| {
-                try beginCell(writer, cell_options);
+                try begin_cell(writer, cell_options);
                 try writer.writeAll(pad.pin().id());
             } else {
-                try beginCell(writer, .{});
+                try begin_cell(writer, .{});
             }
-            try endCell(writer);
+            try end_cell(writer);
 
 
             var out_mcref = mcref;
@@ -1155,7 +1155,7 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
                 ;
 
                 const out_mc_class = try std.fmt.bufPrint(&temp_out_buf, ".mc-{}", .{ abs_output_mc });
-                out_options = CellOptions {
+                out_options = Cell_Options {
                     .class = out_mc_class[1..],
                     .hover_selector = out_mc_class,
                 };
@@ -1176,7 +1176,7 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
                 ;
 
                 const oe_mc_class = try std.fmt.bufPrint(&temp_oe_buf, ".mc-{}", .{ abs_oe_mc });
-                oe_options = CellOptions {
+                oe_options = Cell_Options {
                     .class = oe_mc_class[1..],
                     .hover_selector = oe_mc_class,
                 };
@@ -1203,7 +1203,7 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
                 oe_options = .{};
             }
 
-            try beginCell(writer, out_options);
+            try begin_cell(writer, out_options);
             if (mc_config.output.oe != .input_only) {
                 if (out_mc_delta != 0) {
                     try writer.print("<kbd class=\"out routing\">+{}</kbd> ", .{ out_mc_delta });
@@ -1211,9 +1211,9 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
                 try writer.writeAll(options.macrocellNameMapper(out_mcref));
             }
             try writer.writeAll(out_from_extra);
-            try endCell(writer);
+            try end_cell(writer);
 
-            try beginCell(writer, oe_options);
+            try begin_cell(writer, oe_options);
             switch (mc_config.output.oe) {
                 .goe0 => try writer.writeAll("<kbd class=\"oe goe0\">GOE 0</kbd> <kbd class=\"oe pos\">Active High</kbd>"),
                 .goe1 => try writer.writeAll("<kbd class=\"oe goe1\">GOE 1</kbd> <kbd class=\"oe pos\">Active High</kbd>"),
@@ -1236,70 +1236,70 @@ fn writeMacrocells(writer: anytype, comptime Device: type, data: ReportData(Devi
                 .output_only => try writer.writeAll("<kbd class=\"oe output-only\">Output</kbd>"),
                 .input_only => try writer.writeAll("<kbd class=\"oe input-only\">Input</kbd>"),
             }
-            try endCell(writer);
+            try end_cell(writer);
 
-            try beginCell(writer, out_options);
+            try begin_cell(writer, out_options);
             if (mc_config.output.oe != .input_only) {
                 try writer.writeAll(switch (mc_config.output.slew_rate.?) {
                     .slow => "<kbd class=\"slew slow\">Slow</kbd>",
                     .fast => "<kbd class=\"slew fast\">Fast</kbd>",
                 });
             }
-            try endCell(writer);
+            try end_cell(writer);
 
-            try beginCell(writer, out_options);
+            try begin_cell(writer, out_options);
             if (mc_config.output.oe != .input_only) {
                 try writer.writeAll(switch (mc_config.output.drive_type.?) {
                     .push_pull => "<kbd class=\"drive push-pull\">TP</kbd>",
                     .open_drain => "<kbd class=\"drive open-drain\">OD</kbd>",
                 });
             }
-            try endCell(writer);
+            try end_cell(writer);
 
-            try beginCell(writer, cell_options);
+            try begin_cell(writer, cell_options);
             if (mc_config.output.oe != .output_only) {
-                try writeInput_Threshold(writer, Device, mc_config.input.threshold.?);
+                try write_input_threshold(writer, Device, mc_config.input.threshold.?);
             }
-            try endCell(writer);
+            try end_cell(writer);
 
             if (@TypeOf(mc_config.input) == lc4k.Input_Config_ZE) {
-                try beginCell(writer, cell_options);
+                try begin_cell(writer, cell_options);
                 if (mc_config.output.oe != .output_only) {
-                    try writeBus_Maintenance(writer, mc_config.input.bus_maintenance.?);
+                    try write_bus_maintenance(writer, mc_config.input.bus_maintenance.?);
                 }
-                try endCell(writer);
+                try end_cell(writer);
 
-                try beginCell(writer, cell_options);
-                try writePower_Guard(writer, mc_config.input.power_guard.?);
-                try endCell(writer);
+                try begin_cell(writer, cell_options);
+                try write_power_guard(writer, mc_config.input.power_guard.?);
+                try end_cell(writer);
             } else {
-                try beginCell(writer, cell_options);
+                try begin_cell(writer, cell_options);
                 if (mc_config.output.oe != .output_only) {
-                    try writeBus_Maintenance(writer, data.config.default_bus_maintenance);
+                    try write_bus_maintenance(writer, data.config.default_bus_maintenance);
                 }
-                try endCell(writer);
+                try end_cell(writer);
             }
 
-            try endRow(writer);
+            try end_row(writer);
         }
 
-        try endTable(writer);
+        try end_table(writer);
         try writer.writeAll("</div>\n");
-        try endSection(writer);
+        try end_section(writer);
     }
-    try endSection(writer);
+    try end_section(writer);
 }
 
 
 
 ////////////////////////////////////////////////////
 
-const SectionOptions = struct {
+const Section_Options = struct {
     tier: usize = 1,
     class: []const u8 = "",
 };
 
-fn beginSection(writer: anytype, comptime fmt: []const u8, args: anytype, options: SectionOptions) !void {
+fn begin_section(writer: anytype, comptime fmt: []const u8, args: anytype, options: Section_Options) !void {
     if (options.class.len > 0) {
         try writer.print("<section class=\"{s}\">\n", .{ options.class });
     } else {
@@ -1310,15 +1310,15 @@ fn beginSection(writer: anytype, comptime fmt: []const u8, args: anytype, option
     try writer.print("</h{}>\n<div>\n", .{ options.tier });
 }
 
-fn beginGlbSection(writer: anytype, glb: usize) !void {
-    try beginSection(writer, "GLB {} ({s})", .{ glb, lc4k.get_glb_name(glb) }, .{ .tier = 3, .class = "inline" });
+fn begin_glb_section(writer: anytype, glb: usize) !void {
+    try begin_section(writer, "GLB {} ({s})", .{ glb, lc4k.get_glb_name(glb) }, .{ .tier = 3, .class = "inline" });
 }
 
-fn endSection(writer: anytype) !void {
+fn end_section(writer: anytype) !void {
     try writer.writeAll("</div>\n</section>\n");
 }
 
-fn writeSummaryLine(writer: anytype, label: []const u8, numerator: usize, denominator: usize) !void {
+fn write_summary_line(writer: anytype, label: []const u8, numerator: usize, denominator: usize) !void {
     try writer.writeAll("<tr>");
     try writer.print("<th>{s}</th>", .{ label });
     try writer.print("<td>{} / {}</td>", .{ numerator, denominator });
@@ -1326,11 +1326,11 @@ fn writeSummaryLine(writer: anytype, label: []const u8, numerator: usize, denomi
 }
 
 
-fn beginTable(writer: anytype) !void {
+fn begin_table(writer: anytype) !void {
     try writer.writeAll("<table>\n");
 }
 
-fn tableHeader(writer: anytype, columns: anytype) !void {
+fn table_header(writer: anytype, columns: anytype) !void {
     const ColumnsType = @TypeOf(columns);
     const columns_info = @typeInfo(ColumnsType).Struct;
 
@@ -1354,13 +1354,13 @@ fn tableHeader(writer: anytype, columns: anytype) !void {
     try writer.writeAll("</tr>\n");
 }
 
-const RowOptions = struct {
+const Row_Options = struct {
     highlight: bool = false,
     class: []const u8 = "",
     hover_selector: []const u8 = "",
 };
 
-fn beginRow(writer: anytype, options: RowOptions) !void {
+fn begin_row(writer: anytype, options: Row_Options) !void {
     try writer.writeAll("<tr");
     if (options.highlight or options.class.len > 0) {
         try writer.writeAll(" class=\"");
@@ -1380,16 +1380,16 @@ fn beginRow(writer: anytype, options: RowOptions) !void {
     try writer.writeAll(">\n");
 }
 
-fn endRow(writer: anytype) !void {
+fn end_row(writer: anytype) !void {
     try writer.writeAll("</tr>\n");
 }
 
-const CellOptions = struct {
+const Cell_Options = struct {
     class: []const u8 = "",
     hover_selector: []const u8 = "",
 };
 
-fn beginCell(writer: anytype, options: CellOptions) !void {
+fn begin_cell(writer: anytype, options: Cell_Options) !void {
     try writer.writeAll("<td");
     if (options.class.len > 0) {
         try writer.print(" class=\"{s}\"", .{ options.class });
@@ -1400,11 +1400,11 @@ fn beginCell(writer: anytype, options: CellOptions) !void {
     try writer.writeAll(">");
 }
 
-fn endCell(writer: anytype) !void {
+fn end_cell(writer: anytype) !void {
     try writer.writeAll("</td>");
 }
 
-fn endTable(writer: anytype) !void {
+fn end_table(writer: anytype) !void {
     try writer.writeAll("</table>\n");
 }
 

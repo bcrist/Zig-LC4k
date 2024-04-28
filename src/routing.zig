@@ -1,10 +1,3 @@
-const std = @import("std");
-const lc4k = @import("lc4k.zig");
-const assembly = @import("assembly.zig");
-
-const Cluster_Routing = lc4k.Cluster_Routing;
-const Wide_Routing = lc4k.Wide_Routing;
-
 pub fn add_signals_from_pt(comptime Device: type, gi_signals: *[Device.num_gis_per_glb]?Device.GRP, pt: lc4k.Product_Term(Device.GRP)) !void {
     for (pt.factors) |factor| switch (factor) {
         .always, .never => {},
@@ -23,7 +16,7 @@ pub fn add_signals_from_pt(comptime Device: type, gi_signals: *[Device.num_gis_p
     };
 }
 
-pub fn routeGIs(comptime Device: type, gi_signals: *[Device.num_gis_per_glb]?Device.GRP, rnd: std.rand.Random) !void {
+pub fn route_generic_inputs(comptime Device: type, gi_signals: *[Device.num_gis_per_glb]?Device.GRP, rnd: std.rand.Random) !void {
     var routed = [_]?Device.GRP { null } ** Device.num_gis_per_glb;
 
     @setEvalBranchQuota(2000);
@@ -57,20 +50,20 @@ pub fn routeGIs(comptime Device: type, gi_signals: *[Device.num_gis_per_glb]?Dev
     gi_signals.* = routed;
 }
 
-pub const ClusterRouter = struct {
+pub const Cluster_Router = struct {
     cluster_size: [16]u8,
     sum_size: [16]u8,
     forced_cluster_routing: [16]?Cluster_Routing,
     forced_wide_routing: [16]?Wide_Routing,
 
-    open_heap: std.PriorityQueue(CompactRoutingData, *ClusterRouter, comparePriority),
+    open_heap: std.PriorityQueue(Compact_Routing_Data, *Cluster_Router, compare_priority),
     open_set: std.AutoHashMap(u48, void),
     closed_set: std.AutoHashMap(u48, void),
 
-    pub fn init(allocator: std.mem.Allocator, comptime Device: type, glb_config: lc4k.GLB_Config(Device)) ClusterRouter {
+    pub fn init(allocator: std.mem.Allocator, comptime Device: type, glb_config: lc4k.GLB_Config(Device)) Cluster_Router {
         std.debug.assert(Device.num_mcs_per_glb == 16);
 
-        var self = ClusterRouter {
+        var self = Cluster_Router {
             .cluster_size = [_]u8 { 0 } ** 16,
             .sum_size = [_]u8 { 0 } ** 16,
             .forced_cluster_routing = [_]?Cluster_Routing { null } ** 16,
@@ -79,7 +72,7 @@ pub const ClusterRouter = struct {
             .open_set = std.AutoHashMap(u48, void).init(allocator),
             .closed_set = std.AutoHashMap(u48, void).init(allocator),
         };
-        self.open_heap = std.PriorityQueue(CompactRoutingData, *ClusterRouter, comparePriority).init(allocator, &self);
+        self.open_heap = std.PriorityQueue(Compact_Routing_Data, *Cluster_Router, compare_priority).init(allocator, &self);
 
         for (glb_config.mc, 0..) |mc_config, mc| {
             var available: u8 = 0;
@@ -123,42 +116,42 @@ pub const ClusterRouter = struct {
         return self;
     }
 
-    pub fn deinit(self: *ClusterRouter) void {
+    pub fn deinit(self: *Cluster_Router) void {
         self.open_heap.deinit();
         self.open_set.deinit();
         self.closed_set.deinit();
     }
 
-    fn comparePriority(self: *ClusterRouter, a: CompactRoutingData, b: CompactRoutingData) std.math.Order {
-        const a_score = a.computeScore(self.cluster_size, self.sum_size).weighted;
-        const b_score = b.computeScore(self.cluster_size, self.sum_size).weighted;
+    fn compare_priority(self: *Cluster_Router, a: Compact_Routing_Data, b: Compact_Routing_Data) std.math.Order {
+        const a_score = a.compute_score(self.cluster_size, self.sum_size).weighted;
+        const b_score = b.compute_score(self.cluster_size, self.sum_size).weighted;
         return std.math.order(a_score, b_score); // min heap
     }
 
-    pub fn route(self: *ClusterRouter, results: *assembly.Assembly_Results) !RoutingData {
+    pub fn route(self: *Cluster_Router, results: *assembly.Assembly_Results) !Routing_Data {
         _ = results; // TODO use to record errors
 
         for (self.sum_size, 0..) |sum_size, mc| if (sum_size > 0) {
-            try self.markForcedWide_Routing(mc, .self);
+            try self.mark_forced_wide_routing(mc, .self);
         };
         for (self.sum_size, 0..) |sum_size, mc| if (sum_size > 0) {
-            var max_pts = self.computeMaxPTsWithoutWide_Routing(mc);
-            var next_ca = getNextCA(mc);
-            while (max_pts < sum_size) : (next_ca = getNextCA(next_ca)) {
+            var max_pts = self.compute_max_pts_without_wide_routing(mc);
+            var next_ca = get_next_ca(mc);
+            while (max_pts < sum_size) : (next_ca = get_next_ca(next_ca)) {
                 if (next_ca == mc) {
                     return error.TooManyPTs;
                 }
-                try self.markForcedWide_Routing(next_ca, .self_plus_four);
-                max_pts += self.computeMaxPTsWithoutWide_Routing(next_ca);
+                try self.mark_forced_wide_routing(next_ca, .self_plus_four);
+                max_pts += self.compute_max_pts_without_wide_routing(next_ca);
             }
         };
 
-        var initial_routing: CompactRoutingData = undefined;
+        var initial_routing: Compact_Routing_Data = undefined;
         for (self.forced_cluster_routing, 0..) |r, cluster| {
-            initial_routing.setCluster_Routing(cluster, r orelse .self);
+            initial_routing.set_cluster_routing(cluster, r orelse .self);
         }
         for (self.forced_wide_routing, 0..) |r, ca| {
-            initial_routing.setWide_Routing(ca, r orelse .self);
+            initial_routing.set_wide_routing(ca, r orelse .self);
         }
 
         const ordered_cluster_routings = [_]Cluster_Routing {
@@ -169,17 +162,17 @@ pub const ClusterRouter = struct {
         };
 
         loop: while (true) {
-            const available_pts = initial_routing.getAvailablePTs(self.cluster_size);
+            const available_pts = initial_routing.get_available_pts(self.cluster_size);
 
             for (self.forced_cluster_routing, 0..) |forced_routing, cluster| if (forced_routing == null) {
-                const target_mc = initial_routing.getCATarget(getCAForCluster(cluster, initial_routing.getCluster_Routing(cluster)).?);
+                const target_mc = initial_routing.get_ca_target(get_ca_for_cluster(cluster, initial_routing.get_cluster_routing(cluster)).?);
                 const sum_size = self.sum_size[target_mc];
                 if (sum_size + self.cluster_size[cluster] <= available_pts[target_mc]) {
                     // We can donate this cluster to another MC without hurting our target MC
                     // After donating it, it may free up another cluster to be eligible for donation,
                     // so we should continue checking all the MCs until none can be donated.
                     inline for (ordered_cluster_routings) |routing| {
-                        if (initial_routing.tryDonateCluster(cluster, self.sum_size, self.cluster_size, routing, false)) {
+                        if (initial_routing.try_donate_cluster(cluster, self.sum_size, self.cluster_size, routing, false)) {
                             continue :loop;
                         }
                     }
@@ -189,7 +182,7 @@ pub const ClusterRouter = struct {
                         // anyway.  This may free up another cluster in an area where there's lots of
                         // contention.
                         inline for (ordered_cluster_routings) |routing| {
-                            if (initial_routing.tryDonateCluster(cluster, self.sum_size, self.cluster_size, routing, true)) {
+                            if (initial_routing.try_donate_cluster(cluster, self.sum_size, self.cluster_size, routing, true)) {
                                 continue :loop;
                             }
                         }
@@ -199,7 +192,7 @@ pub const ClusterRouter = struct {
 
 
             for (self.forced_wide_routing, 0..) |forced_routing, ca| {
-                if (forced_routing == null and initial_routing.tryDonateCA(ca, self.sum_size, self.cluster_size)) {
+                if (forced_routing == null and initial_routing.try_donate_ca(ca, self.sum_size, self.cluster_size)) {
                     continue :loop;
                 }
             }
@@ -207,16 +200,16 @@ pub const ClusterRouter = struct {
             break;
         }
 
-        var available_pts = initial_routing.getAvailablePTs(self.cluster_size);
+        var available_pts = initial_routing.get_available_pts(self.cluster_size);
         // un-donate any superfluous clusters
         for (self.forced_cluster_routing, 0..) |forced_routing, cluster| {
-            if (forced_routing == null and initial_routing.getCluster_Routing(cluster) != .self and initial_routing.getWide_Routing(cluster) == .self and self.sum_size[cluster] == 0) {
+            if (forced_routing == null and initial_routing.get_cluster_routing(cluster) != .self and initial_routing.get_wide_routing(cluster) == .self and self.sum_size[cluster] == 0) {
                 const cluster_size = self.cluster_size[cluster];
-                const target_mc = initial_routing.getCATarget(getCAForCluster(cluster, initial_routing.getCluster_Routing(cluster)).?);
+                const target_mc = initial_routing.get_ca_target(get_ca_for_cluster(cluster, initial_routing.get_cluster_routing(cluster)).?);
                 const sum_size = self.sum_size[target_mc];
                 if (sum_size + cluster_size <= available_pts[target_mc]) {
                     available_pts[target_mc] -= cluster_size;
-                    initial_routing.setCluster_Routing(cluster, .self);
+                    initial_routing.set_cluster_routing(cluster, .self);
                     available_pts[cluster] += cluster_size;
                 }
             }
@@ -226,20 +219,20 @@ pub const ClusterRouter = struct {
         try self.open_heap.add(initial_routing);
 
         while (self.open_heap.removeOrNull()) |routing| {
-            const score = routing.computeScore(self.cluster_size, self.sum_size);
+            const score = routing.compute_score(self.cluster_size, self.sum_size);
             if (score.success == 0) {
-                return RoutingData.init(routing);
+                return Routing_Data.init(routing);
             }
 
             for (self.forced_cluster_routing, 0..) |forced_routing, cluster| if (forced_routing == null) {
                 inline for (comptime std.enums.values(Cluster_Routing)) |cluster_routing| {
-                    if (cluster_routing != routing.getCluster_Routing(cluster)) {
-                        if (getCAForCluster(cluster, cluster_routing)) |ca| {
-                            const target_mc = routing.getCATarget(ca);
+                    if (cluster_routing != routing.get_cluster_routing(cluster)) {
+                        if (get_ca_for_cluster(cluster, cluster_routing)) |ca| {
+                            const target_mc = routing.get_ca_target(ca);
                             if (self.sum_size[target_mc] > 0) {
                                 var new_routing = routing;
-                                new_routing.setCluster_Routing(cluster, cluster_routing);
-                                const new_score = new_routing.computeScore(self.cluster_size, self.sum_size);
+                                new_routing.set_cluster_routing(cluster, cluster_routing);
+                                const new_score = new_routing.compute_score(self.cluster_size, self.sum_size);
                                 if (new_score.success <= score.success and !self.closed_set.contains(@bitCast(new_routing))) {
                                     try self.open_set.put(@bitCast(new_routing), {});
                                     try self.open_heap.add(new_routing);
@@ -251,12 +244,12 @@ pub const ClusterRouter = struct {
             };
             for (self.forced_wide_routing, 0..) |forced_routing, ca| if (forced_routing == null) {
                 inline for (comptime std.enums.values(Wide_Routing)) |wide_routing| {
-                    if (wide_routing != routing.getWide_Routing(ca)) {
-                        const target_mc = routing.getCATarget(getCADestination(ca, wide_routing));
+                    if (wide_routing != routing.get_wide_routing(ca)) {
+                        const target_mc = routing.get_ca_target(get_ca_destination(ca, wide_routing));
                         if (self.sum_size[target_mc] > 0) {
                             var new_routing = routing;
-                            new_routing.setWide_Routing(ca, wide_routing);
-                            const new_score = new_routing.computeScore(self.cluster_size, self.sum_size);
+                            new_routing.set_wide_routing(ca, wide_routing);
+                            const new_score = new_routing.compute_score(self.cluster_size, self.sum_size);
                             if (new_score.success <= score.success and !self.closed_set.contains(@bitCast(new_routing))) {
                                 try self.open_set.put(@bitCast(new_routing), {});
                                 try self.open_heap.add(new_routing);
@@ -273,13 +266,13 @@ pub const ClusterRouter = struct {
         return error.Cluster_RoutingFailed;
     }
 
-    fn getNextCA(ca: usize) usize {
+    fn get_next_ca(ca: usize) usize {
         var maybe_oob_ca: i32 = @intCast(ca);
         maybe_oob_ca -= 4;
         return @intCast(@mod(maybe_oob_ca, 16));
     }
 
-    fn markForcedWide_Routing(self: *ClusterRouter, mc: usize, routing: Wide_Routing) !void {
+    fn mark_forced_wide_routing(self: *Cluster_Router, mc: usize, routing: Wide_Routing) !void {
         if (self.forced_wide_routing[mc]) |existing_routing| {
             if (existing_routing != routing) {
                 return error.InvalidWide_Routing;
@@ -288,7 +281,7 @@ pub const ClusterRouter = struct {
         self.forced_wide_routing[mc] = routing;
     }
 
-    fn computeMaxPTsWithoutWide_Routing(self: ClusterRouter, mc: usize) usize {
+    fn compute_max_pts_without_wide_routing(self: Cluster_Router, mc: usize) usize {
         var num_pts: usize = self.cluster_size[mc];
         if (mc > 0) {
             num_pts += self.cluster_size[mc - 1];
@@ -305,12 +298,12 @@ pub const ClusterRouter = struct {
 };
 
 
-const RoutingScore = struct {
+const Routing_Score = struct {
     success: usize,
     weighted: usize,
 };
 
-const CompactRoutingData = packed struct (u48) {
+const Compact_Routing_Data = packed struct (u48) {
     c0: Cluster_Routing,
     c1: Cluster_Routing,
     c2: Cluster_Routing,
@@ -345,7 +338,7 @@ const CompactRoutingData = packed struct (u48) {
     w15: Wide_Routing,
 
 
-    pub fn getCluster_Routing(self: CompactRoutingData, cluster: usize) Cluster_Routing {
+    pub fn get_cluster_routing(self: Compact_Routing_Data, cluster: usize) Cluster_Routing {
         return switch (cluster) {
             0 => self.c0,
             1 => self.c1,
@@ -366,7 +359,7 @@ const CompactRoutingData = packed struct (u48) {
             else => unreachable,
         };
     }
-    pub fn setCluster_Routing(self: *CompactRoutingData, cluster: usize, routing: Cluster_Routing) void {
+    pub fn set_cluster_routing(self: *Compact_Routing_Data, cluster: usize, routing: Cluster_Routing) void {
         switch (cluster) {
             0 => self.c0 = routing,
             1 => self.c1 = routing,
@@ -388,7 +381,7 @@ const CompactRoutingData = packed struct (u48) {
         }
     }
 
-    pub fn getWide_Routing(self: CompactRoutingData, ca: usize) Wide_Routing {
+    pub fn get_wide_routing(self: Compact_Routing_Data, ca: usize) Wide_Routing {
         return switch (ca) {
             0 => self.w0,
             1 => self.w1,
@@ -410,7 +403,7 @@ const CompactRoutingData = packed struct (u48) {
         };
     }
 
-    pub fn setWide_Routing(self: *CompactRoutingData, ca: usize, routing: Wide_Routing) void {
+    pub fn set_wide_routing(self: *Compact_Routing_Data, ca: usize, routing: Wide_Routing) void {
         switch (ca) {
             0 => self.w0 = routing,
             1 => self.w1 = routing,
@@ -432,13 +425,13 @@ const CompactRoutingData = packed struct (u48) {
         }
     }
 
-    pub fn getAvailablePTs(self: CompactRoutingData, cluster_size: [16]u8) [16]u16 {
+    pub fn get_available_pts(self: Compact_Routing_Data, cluster_size: [16]u8) [16]u16 {
         var available_pts = [_]u16 { 0 } ** 16;
         for (cluster_size, 0..) |size, cluster| {
-            available_pts[getCAForCluster(cluster, self.getCluster_Routing(cluster)).?] += size;
+            available_pts[get_ca_for_cluster(cluster, self.get_cluster_routing(cluster)).?] += size;
         }
         for (available_pts, 0..) |available, ca| {
-            const target = self.getCATarget(ca);
+            const target = self.get_ca_target(ca);
             if (target != ca) {
                 available_pts[target] += available;
                 available_pts[ca] = 0;
@@ -447,20 +440,20 @@ const CompactRoutingData = packed struct (u48) {
         return available_pts;
     }
 
-    pub fn computeScore(self: CompactRoutingData, cluster_size: [16]u8, sum_size: [16]u8) RoutingScore {
-        var score = RoutingScore { .success = 0, .weighted = 0 };
+    pub fn compute_score(self: Compact_Routing_Data, cluster_size: [16]u8, sum_size: [16]u8) Routing_Score {
+        var score = Routing_Score { .success = 0, .weighted = 0 };
         var available_pts = [_]u16 { 0 } ** 16;
         for (cluster_size, 0..) |size, cluster| {
-            const routing = self.getCluster_Routing(cluster);
-            available_pts[getCAForCluster(cluster, routing).?] += size;
+            const routing = self.get_cluster_routing(cluster);
+            available_pts[get_ca_for_cluster(cluster, routing).?] += size;
             if (routing != .self) {
                 score.weighted += 1;
             }
         }
         for (available_pts, 0..) |available, ca| {
-            const routing = self.getWide_Routing(ca);
+            const routing = self.get_wide_routing(ca);
             if (routing != .self) {
-                available_pts[getCADestination(ca, routing)] += available;
+                available_pts[get_ca_destination(ca, routing)] += available;
                 available_pts[ca] = 0;
                 score.weighted += 800;
             }
@@ -475,34 +468,34 @@ const CompactRoutingData = packed struct (u48) {
         return score;
     }
 
-    pub fn tryDonateCluster(self: *CompactRoutingData, cluster: usize, sum_size: [16]u8, cluster_size: [16]u8, donation_routing: Cluster_Routing, relaxed: bool) bool {
-        if (self.getCluster_Routing(cluster) == donation_routing) return false;
-        const donee = getCAForCluster(cluster, donation_routing) orelse return false;
-        const new_target_mc = self.getCATarget(donee);
-        if (relaxed and sum_size[new_target_mc] > 0 or sum_size[new_target_mc] > self.getAvailablePTs(cluster_size)[new_target_mc]) {
-            self.setCluster_Routing(cluster, donation_routing);
+    pub fn try_donate_cluster(self: *Compact_Routing_Data, cluster: usize, sum_size: [16]u8, cluster_size: [16]u8, donation_routing: Cluster_Routing, relaxed: bool) bool {
+        if (self.get_cluster_routing(cluster) == donation_routing) return false;
+        const donee = get_ca_for_cluster(cluster, donation_routing) orelse return false;
+        const new_target_mc = self.get_ca_target(donee);
+        if (relaxed and sum_size[new_target_mc] > 0 or sum_size[new_target_mc] > self.get_available_pts(cluster_size)[new_target_mc]) {
+            self.set_cluster_routing(cluster, donation_routing);
             return true;
         } else {
             return false;
         }
     }
 
-    pub fn tryDonateCA(self: *CompactRoutingData, ca: usize, sum_size: [16]u8, cluster_size: [16]u8) bool {
-        if (self.getWide_Routing(ca) != .self) return false;
-        const donee = getCADestination(ca, .self_plus_four);
-        const target_mc = self.getCATarget(donee);
-        if (sum_size[target_mc] > self.getAvailablePTs(cluster_size)[target_mc]) {
-            self.setWide_Routing(ca, .self_plus_four);
+    pub fn try_donate_ca(self: *Compact_Routing_Data, ca: usize, sum_size: [16]u8, cluster_size: [16]u8) bool {
+        if (self.get_wide_routing(ca) != .self) return false;
+        const donee = get_ca_destination(ca, .self_plus_four);
+        const target_mc = self.get_ca_target(donee);
+        if (sum_size[target_mc] > self.get_available_pts(cluster_size)[target_mc]) {
+            self.set_wide_routing(ca, .self_plus_four);
             return true;
         } else {
             return false;
         }
     }
 
-    pub fn getCATarget(self: CompactRoutingData, initial_ca: usize) usize {
+    pub fn get_ca_target(self: Compact_Routing_Data, initial_ca: usize) usize {
         var ca = initial_ca;
         while (true) {
-            const new_ca = getCADestination(ca, self.getWide_Routing(ca));
+            const new_ca = get_ca_destination(ca, self.get_wide_routing(ca));
             if (new_ca == ca) return ca;
             std.debug.assert(new_ca != initial_ca);
             ca = new_ca;
@@ -511,30 +504,30 @@ const CompactRoutingData = packed struct (u48) {
 
 };
 
-pub const RoutingData = struct {
+pub const Routing_Data = struct {
     cluster: [16]Cluster_Routing = .{ .self } ** 16,
     wide: [16]Wide_Routing = .{ .self } ** 16,
 
-    fn init(compact: CompactRoutingData) RoutingData {
-        var self: RoutingData = undefined;
+    fn init(compact: Compact_Routing_Data) Routing_Data {
+        var self: Routing_Data = undefined;
         comptime var i = 0;
         inline while (i < 16) : (i += 1) {
-            self.cluster[i] = compact.getCluster_Routing(i);
-            self.wide[i] = compact.getWide_Routing(i);
+            self.cluster[i] = compact.get_cluster_routing(i);
+            self.wide[i] = compact.get_wide_routing(i);
         }
         return self;
     }
 
-    const GetCATargetResult = struct {
+    const Get_CA_Target_Result = struct {
         macrocell: usize,
         hops: usize,
     };
 
-    fn getCATargetLimited(self: RoutingData, initial_ca: usize, max_hops: usize) ?GetCATargetResult {
+    fn get_ca_target_limited(self: Routing_Data, initial_ca: usize, max_hops: usize) ?Get_CA_Target_Result {
         var ca = initial_ca;
         var hop: usize = 0;
         while (hop <= max_hops) : (hop += 1) {
-            const new_ca = getCADestination(ca, self.wide[ca]);
+            const new_ca = get_ca_destination(ca, self.wide[ca]);
             if (new_ca == ca) return .{
                 .macrocell = ca,
                 .hops = hop,
@@ -545,7 +538,7 @@ pub const RoutingData = struct {
         return null;
     }
 
-    pub fn iterator(self: RoutingData, comptime Device: type, glb_config: *const lc4k.GLB_Config(Device), mc: usize) PTIterator(Device) {
+    pub fn iterator(self: Routing_Data, comptime Device: type, glb_config: *const lc4k.GLB_Config(Device), mc: usize) PT_Iterator(Device) {
         return .{
             .glb_config = glb_config,
             .data = self,
@@ -558,10 +551,10 @@ pub const RoutingData = struct {
     }
 };
 
-fn PTIterator(comptime Device: type) type {
+fn PT_Iterator(comptime Device: type) type {
     return struct {
         glb_config: *const lc4k.GLB_Config(Device),
-        data: RoutingData,
+        data: Routing_Data,
         mc: u8,
         cluster: u8,
         next_pt: u8,
@@ -589,9 +582,9 @@ fn PTIterator(comptime Device: type) type {
                         }
                     }
                     self.cluster = next_cluster;
-                    if (getCAForCluster(next_cluster, self.data.cluster[next_cluster])) |ca| {
+                    if (get_ca_for_cluster(next_cluster, self.data.cluster[next_cluster])) |ca| {
                         const max_hops = self.hops;
-                        if (self.data.getCATargetLimited(ca, @intCast(max_hops))) |result| {
+                        if (self.data.get_ca_target_limited(ca, @intCast(max_hops))) |result| {
                             if (result.macrocell != self.mc or result.hops < max_hops) continue;
                         } else {
                             self.has_more_hops = true;
@@ -619,7 +612,7 @@ fn PTIterator(comptime Device: type) type {
     };
 }
 
-pub fn getCAForCluster(source_cluster: usize, routing: Cluster_Routing) ?usize {
+pub fn get_ca_for_cluster(source_cluster: usize, routing: Cluster_Routing) ?usize {
     return switch (routing) {
         .self_minus_two => if (source_cluster >= 2) source_cluster - 2 else null,
         .self_minus_one => if (source_cluster >= 1) source_cluster - 1 else null,
@@ -628,10 +621,16 @@ pub fn getCAForCluster(source_cluster: usize, routing: Cluster_Routing) ?usize {
     };
 }
 
-pub fn getCADestination(source_ca: usize, routing: Wide_Routing) usize {
+pub fn get_ca_destination(source_ca: usize, routing: Wide_Routing) usize {
     const maybe_oob_ca = switch (routing) {
         .self => source_ca,
         .self_plus_four => source_ca + 4,
     };
     return @mod(maybe_oob_ca, 16);
 }
+
+const Cluster_Routing = lc4k.Cluster_Routing;
+const Wide_Routing = lc4k.Wide_Routing;
+const assembly = @import("assembly.zig");
+const lc4k = @import("lc4k.zig");
+const std = @import("std");

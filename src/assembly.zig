@@ -74,7 +74,7 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
         }
 
         // Route GRP signals to specific GI fuses:
-        try routing.routeGIs(Device, &gi_routing, rnd);
+        try routing.route_generic_inputs(Device, &gi_routing, rnd);
         for (gi_routing, 0..) |maybe_signal, gi| if (maybe_signal) |signal| {
             const option_index = std.mem.indexOfScalar(Device.GRP, &Device.gi_options[gi], signal).?;
             const range = Device.get_gi_range(glb, gi);
@@ -84,7 +84,7 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
         };
 
         // Assign sum PTs to clusters to MCs and program routing fuses
-        var router = routing.ClusterRouter.init(allocator, Device, glb_config);
+        var router = routing.Cluster_Router.init(allocator, Device, glb_config);
         defer router.deinit();
         var cluster_routing = try router.route(&results);
 

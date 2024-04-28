@@ -1,4 +1,4 @@
-pub const DisassemblyError = struct {
+pub const Disassembly_Error = struct {
     err: anyerror,
     details: []const u8,
     fuse: ?Fuse = null,
@@ -12,8 +12,8 @@ pub fn Disassembly_Results(comptime Device: type) type {
     return struct {
         config: lc4k.Chip_Config(Device.device_type),
         gi_routing: [Device.num_glbs][Device.num_gis_per_glb]?Device.GRP,
-        sum_routing: [Device.num_glbs]routing.RoutingData,
-        errors: std.ArrayList(DisassemblyError),
+        sum_routing: [Device.num_glbs]routing.Routing_Data,
+        errors: std.ArrayList(Disassembly_Error),
     };
 }
 
@@ -22,7 +22,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
         .config = .{},
         .gi_routing = .{ .{ null } ** Device.num_gis_per_glb } ** Device.num_glbs,
         .sum_routing = .{ .{} } ** Device.num_glbs,
-        .errors = std.ArrayList(DisassemblyError).init(allocator),
+        .errors = std.ArrayList(Disassembly_Error).init(allocator),
     };
 
     if (!file.data.extents.eql(Device.jedec_dimensions)) {
@@ -36,8 +36,8 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
     results.config.zero_hold_time = !file.data.is_set(Device.get_zero_hold_time_fuse());
 
     if (Device.family == .zero_power_enhanced) {
-        const osctimer_enable = readField(file.data, u2, Device.getOscTimerEnableRange());
-        const timer_div = readField(file.data, lc4k.Timer_Divisor, Device.getTimerDivRange());
+        const osctimer_enable = read_field(file.data, u2, Device.getOscTimerEnableRange());
+        const timer_div = read_field(file.data, lc4k.Timer_Divisor, Device.getTimerDivRange());
         const enable_osc_out_and_disable = !file.data.is_set(Device.getOscOutFuse());
         const enable_timer_out_and_reset = !file.data.is_set(Device.getTimerOutFuse());
 
@@ -73,7 +73,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
             });
         }
     } else {
-        results.config.default_bus_maintenance = readField(file.data, lc4k.Bus_Maintenance, Device.get_global_bus_maintenance_range());
+        results.config.default_bus_maintenance = read_field(file.data, lc4k.Bus_Maintenance, Device.get_global_bus_maintenance_range());
         if (results.config.default_bus_maintenance == .float) {
             for (Device.get_extra_float_input_fuses()) |fuse| {
                 if (file.data.is_set(fuse)) {
@@ -93,14 +93,14 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
         const grp: Device.GRP = pin.signal();
 
         const threshold_range = Device.get_input_threshold_fuse(grp).range();
-        clock_config.threshold = readField(file.data, lc4k.Input_Threshold, threshold_range);
+        clock_config.threshold = read_field(file.data, lc4k.Input_Threshold, threshold_range);
 
         if (@TypeOf(clock_config) == *lc4k.Input_Config_ZE) {
             const maintenance_range = Device.getInputBus_MaintenanceRange(grp);
-            clock_config.bus_maintenance = readField(file.data, lc4k.Bus_Maintenance, maintenance_range);
+            clock_config.bus_maintenance = read_field(file.data, lc4k.Bus_Maintenance, maintenance_range);
 
             const pgdf_range = Device.getInputPower_GuardFuse(grp).range();
-            clock_config.power_guard = readField(file.data, lc4k.Power_Guard, pgdf_range);
+            clock_config.power_guard = read_field(file.data, lc4k.Power_Guard, pgdf_range);
         }
     }
 
@@ -109,14 +109,14 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
         const grp: Device.GRP = pin.signal();
 
         const threshold_range = Device.get_input_threshold_fuse(grp).range();
-        input_config.threshold = readField(file.data, lc4k.Input_Threshold, threshold_range);
+        input_config.threshold = read_field(file.data, lc4k.Input_Threshold, threshold_range);
 
         if (@TypeOf(input_config) == *lc4k.Input_Config_ZE) {
             const maintenance_range = Device.getInputBus_MaintenanceRange(grp);
-            input_config.bus_maintenance = readField(file.data, lc4k.Bus_Maintenance, maintenance_range);
+            input_config.bus_maintenance = read_field(file.data, lc4k.Bus_Maintenance, maintenance_range);
 
             const pgdf_range = Device.getInputPower_GuardFuse(grp).range();
-            input_config.power_guard = readField(file.data, lc4k.Power_Guard, pgdf_range);
+            input_config.power_guard = read_field(file.data, lc4k.Power_Guard, pgdf_range);
         }
     }
 
@@ -152,7 +152,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
 
         {
             // parse shared_pt_init
-            const pt = try parsePTFuses(Device, allocator, glb, 80, gi_routing, file.data, &results);
+            const pt = try read_pt_fuses(Device, allocator, glb, 80, gi_routing, file.data, &results);
             glb_config.shared_pt_init = switch (file.data.get(fuses.get_shared_init_polarity_range(Device, glb).min)) {
                 0 => .{ .active_low = pt },
                 1 => .{ .active_high = pt },
@@ -161,33 +161,33 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
 
         {
             // parse shared_pt_clock
-            const pt = try parsePTFuses(Device, allocator, glb, 81, gi_routing, file.data, &results);
+            const pt = try read_pt_fuses(Device, allocator, glb, 81, gi_routing, file.data, &results);
             glb_config.shared_pt_clock = switch (file.data.get(fuses.get_shared_clock_polarity_range(Device, glb).min)) {
                 0 => .{ .negative = pt },
                 1 => .{ .positive = pt },
             };
         }
 
-        glb_config.shared_pt_enable = try parsePTFuses(Device, allocator, glb, 82, gi_routing, file.data, &results);
+        glb_config.shared_pt_enable = try read_pt_fuses(Device, allocator, glb, 82, gi_routing, file.data, &results);
 
-        try readGoeConfig(Device, file.data, &results.config.goe0, 0, &results);
-        try readGoeConfig(Device, file.data, &results.config.goe1, 1, &results);
-        try readGoeConfig(Device, file.data, &results.config.goe2, 2, &results);
-        try readGoeConfig(Device, file.data, &results.config.goe3, 3, &results);
+        try read_goe_config(Device, file.data, &results.config.goe0, 0, &results);
+        try read_goe_config(Device, file.data, &results.config.goe1, 1, &results);
+        try read_goe_config(Device, file.data, &results.config.goe2, 2, &results);
+        try read_goe_config(Device, file.data, &results.config.goe3, 3, &results);
 
-        glb_config.bclock0 = switch (readField(file.data, u1, Device.get_bclock_range(glb).sub_rows(0, 1))) {
+        glb_config.bclock0 = switch (read_field(file.data, u1, Device.get_bclock_range(glb).sub_rows(0, 1))) {
             0 => .clk1_neg,
             1 => .clk0_pos,
         };
-        glb_config.bclock1 = switch (readField(file.data, u1, Device.get_bclock_range(glb).sub_rows(1, 1))) {
+        glb_config.bclock1 = switch (read_field(file.data, u1, Device.get_bclock_range(glb).sub_rows(1, 1))) {
             0 => .clk0_neg,
             1 => .clk1_pos,
         };
-        glb_config.bclock2 = switch (readField(file.data, u1, Device.get_bclock_range(glb).sub_rows(2, 1))) {
+        glb_config.bclock2 = switch (read_field(file.data, u1, Device.get_bclock_range(glb).sub_rows(2, 1))) {
             0 => .clk3_neg,
             1 => .clk2_pos,
         };
-        glb_config.bclock3 = switch (readField(file.data, u1, Device.get_bclock_range(glb).sub_rows(3, 1))) {
+        glb_config.bclock3 = switch (read_field(file.data, u1, Device.get_bclock_range(glb).sub_rows(3, 1))) {
             0 => .clk2_neg,
             1 => .clk3_pos,
         };
@@ -195,14 +195,14 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
         for (&glb_config.mc, 0..) |*mc_config, mc| {
             const mcref = lc4k.MC_Ref.init(glb, mc);
 
-            const cluster_routing = readField(file.data, lc4k.Cluster_Routing, fuses.get_cluster_routing_range(Device, mcref));
-            const wide_routing = readField(file.data, lc4k.Wide_Routing, fuses.get_wide_routing_range(Device, mcref));
+            const cluster_routing = read_field(file.data, lc4k.Cluster_Routing, fuses.get_cluster_routing_range(Device, mcref));
+            const wide_routing = read_field(file.data, lc4k.Wide_Routing, fuses.get_wide_routing_range(Device, mcref));
             mc_config.sum_routing = cluster_routing;
             mc_config.wide_sum_routing = wide_routing;
             results.sum_routing[glb].cluster[mc] = cluster_routing;
             results.sum_routing[glb].wide[mc] = wide_routing;
 
-            mc_config.func = switch (readField(file.data, lc4k.Macrocell_Function, fuses.get_macrocell_function_range(Device, mcref))) {
+            mc_config.func = switch (read_field(file.data, lc4k.Macrocell_Function, fuses.get_macrocell_function_range(Device, mcref))) {
                 .combinational => .combinational,
                 .latch => .{ .latch = .{} },
                 .t_ff => .{ .t_ff = .{} },
@@ -249,7 +249,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                         });
                     }
                 } else if (pt0xor) {
-                    const pt = try parsePTFuses(Device, allocator, glb, mc * 5, gi_routing, file.data, &results);
+                    const pt = try read_pt_fuses(Device, allocator, glb, mc * 5, gi_routing, file.data, &results);
                     if (invert) {
                         mc_config.logic = .{ .pt0_inverted = pt };
                     } else {
@@ -265,25 +265,25 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
             const Register_Config = lc4k.Register_Config(Device.GRP);
 
             const clock: @TypeOf((Register_Config {}).clock) = switch (read_clock_source(Device, file.data, mcref)) {
-                .pt1_positive => .{ .pt1_positive = try parsePTFuses(Device, allocator, glb, mc * 5 + 1, gi_routing, file.data, &results) },
-                .pt1_negative => .{ .pt1_negative = try parsePTFuses(Device, allocator, glb, mc * 5 + 1, gi_routing, file.data, &results) },
+                .pt1_positive => .{ .pt1_positive = try read_pt_fuses(Device, allocator, glb, mc * 5 + 1, gi_routing, file.data, &results) },
+                .pt1_negative => .{ .pt1_negative = try read_pt_fuses(Device, allocator, glb, mc * 5 + 1, gi_routing, file.data, &results) },
                 inline else => |t| t,
             };
 
-            const ce: @TypeOf((Register_Config {}).ce) = switch (read_ce_source(Device, file.data, mcref)) {
-                .pt2_active_high => .{ .pt2_active_high = try parsePTFuses(Device, allocator, glb, mc * 5 + 2, gi_routing, file.data, &results) },
-                .pt2_active_low => .{ .pt2_active_low = try parsePTFuses(Device, allocator, glb, mc * 5 + 2, gi_routing, file.data, &results) },
+            const ce: @TypeOf((Register_Config {}).ce) = switch (read_clock_enable_source(Device, file.data, mcref)) {
+                .pt2_active_high => .{ .pt2_active_high = try read_pt_fuses(Device, allocator, glb, mc * 5 + 2, gi_routing, file.data, &results) },
+                .pt2_active_low => .{ .pt2_active_low = try read_pt_fuses(Device, allocator, glb, mc * 5 + 2, gi_routing, file.data, &results) },
                 inline else => |t| t,
             };
 
-            const init_state: u1 = 1 ^ readField(file.data, u1, fuses.get_init_state_range(Device, mcref));
+            const init_state: u1 = 1 ^ read_field(file.data, u1, fuses.get_init_state_range(Device, mcref));
             const init_source: @TypeOf((Register_Config {}).init_source) = switch (read_init_source(Device, file.data, mcref)) {
-                .pt3_active_high => .{ .pt3_active_high = try parsePTFuses(Device, allocator, glb, mc * 5 + 3, gi_routing, file.data, &results) },
+                .pt3_active_high => .{ .pt3_active_high = try read_pt_fuses(Device, allocator, glb, mc * 5 + 3, gi_routing, file.data, &results) },
                 .shared_pt_init => .shared_pt_init,
             };
 
-            const async_source: @TypeOf((Register_Config {}).async_source) = switch (read_async_source(Device, file.data, mcref)) {
-                .pt2_active_high => .{ .pt2_active_high = try parsePTFuses(Device, allocator, glb, mc * 5 + 2, gi_routing, file.data, &results) },
+            const async_source: @TypeOf((Register_Config {}).async_source) = switch (read_async_trigger_source(Device, file.data, mcref)) {
+                .pt2_active_high => .{ .pt2_active_high = try read_pt_fuses(Device, allocator, glb, mc * 5 + 2, gi_routing, file.data, &results) },
                 .none => .none,
             };
 
@@ -331,14 +331,14 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                 },
             }
 
-            switch (read_pt4_oe_source(Device, file.data, mcref)) {
+            switch (read_pt4_output_enable_source(Device, file.data, mcref)) {
                 .pt4_active_high => {
-                    mc_config.pt4_oe = try parsePTFuses(Device, allocator, glb, mc * 5 + 4, gi_routing, file.data, &results);
+                    mc_config.pt4_oe = try read_pt_fuses(Device, allocator, glb, mc * 5 + 4, gi_routing, file.data, &results);
                 },
                 else => {},
             }
             if (fuses.get_output_enable_source_range(Device, mcref)) |range| {
-                mc_config.output.oe = readField(file.data, lc4k.Output_Enable_Mode, range);
+                mc_config.output.oe = read_field(file.data, lc4k.Output_Enable_Mode, range);
             }
             if (unmap_orm(Device, file.data, mcref)) |source_mcref| {
                 if (@TypeOf(mc_config.output) == lc4k.Output_Config_ZE) {
@@ -350,7 +350,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
 
             if (@TypeOf(mc_config.output) != lc4k.Output_Config_ZE) {
                 if (fuses.get_output_routing_mode_range(Device, mcref)) |range| {
-                    mc_config.output.routing = switch (readField(file.data, lc4k.Output_Routing_Mode, range)) {
+                    mc_config.output.routing = switch (read_field(file.data, lc4k.Output_Routing_Mode, range)) {
                         .five_pt_fast_bypass => .{ .five_pt_fast_bypass = &.{} },
                         .five_pt_fast_bypass_inverted => .{ .five_pt_fast_bypass_inverted = &.{} },
                         .same_as_oe => .same_as_oe,
@@ -360,20 +360,20 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
             }
 
             if (fuses.get_slew_rate_range(Device, mcref)) |range| {
-                mc_config.output.slew_rate = readField(file.data, lc4k.Slew_Rate, range);
+                mc_config.output.slew_rate = read_field(file.data, lc4k.Slew_Rate, range);
             }
 
             if (fuses.get_drive_type_range(Device, mcref)) |range| {
-                mc_config.output.drive_type = readField(file.data, lc4k.Drive_Type, range);
+                mc_config.output.drive_type = read_field(file.data, lc4k.Drive_Type, range);
             }
 
             if (fuses.get_input_threshold_range(Device, mcref)) |range| {
-                mc_config.input.threshold = readField(file.data, lc4k.Input_Threshold, range);
+                mc_config.input.threshold = read_field(file.data, lc4k.Input_Threshold, range);
             }
 
             if (@TypeOf(mc_config.input) == lc4k.Input_Config_ZE) {
-                mc_config.input.bus_maintenance = readField(file.data, lc4k.Bus_Maintenance, fuses.get_bus_maintenance_range(Device, mcref));
-                mc_config.input.power_guard = readField(file.data, lc4k.Power_Guard, fuses.get_power_guard_range(Device, mcref));
+                mc_config.input.bus_maintenance = read_field(file.data, lc4k.Bus_Maintenance, fuses.get_bus_maintenance_range(Device, mcref));
+                mc_config.input.power_guard = read_field(file.data, lc4k.Power_Guard, fuses.get_power_guard_range(Device, mcref));
             }
         }
 
@@ -391,7 +391,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                         var sum_is_always = false;
                         while (pt_index < 5) : (pt_index += 1) {
                             if (assembly.get_special_pt(Device, mc_config.*, pt_index)) |_| continue;
-                            const pt = try parsePTFuses(Device, allocator, glb, mc * 5 + pt_index, gi_routing, file.data, &results);
+                            const pt = try read_pt_fuses(Device, allocator, glb, mc * 5 + pt_index, gi_routing, file.data, &results);
                             if (!pt.is_never() and !(sum_is_always and pt.is_always())) {
                                 pts[num_pts] = pt;
                                 num_pts += 1;
@@ -427,7 +427,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                 var pt_iter = results.sum_routing[glb].iterator(Device, glb_config, mc);
                 var sum_is_always = false;
                 while (pt_iter.next()) |glb_pt_offset| {
-                    switch (getPTTypeFromFuses(Device, glb, glb_pt_offset, gi_routing, file.data)) {
+                    switch (get_pt_type_from_fuses(Device, glb, glb_pt_offset, gi_routing, file.data)) {
                         .never => {},
                         .always => sum_is_always = true,
                         .conditional => num_pts += 1,
@@ -441,7 +441,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                     sum_is_always = false;
                     pt_iter = results.sum_routing[glb].iterator(Device, glb_config, mc);
                     while (pt_iter.next()) |glb_pt_offset| {
-                        const pt = try parsePTFuses(Device, allocator, glb, glb_pt_offset, gi_routing, file.data, &results);
+                        const pt = try read_pt_fuses(Device, allocator, glb, glb_pt_offset, gi_routing, file.data, &results);
                         if (!pt.is_never() and !(sum_is_always and pt.is_always())) {
                             pts[next_pt_index] = pt;
                             next_pt_index += 1;
@@ -489,22 +489,22 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
     return results;
 }
 
-const PTType = enum {
+const PT_Type = enum {
     always,
     never,
     conditional,
 };
-fn getPTTypeFromFuses(
+fn get_pt_type_from_fuses(
     comptime Device: type,
     glb: usize,
     glb_pt_offset: usize,
     gi_signals: *[Device.num_gis_per_glb]?Device.GRP,
     jed: JEDEC_Data,
-) PTType {
+) PT_Type {
     const range = fuses.get_pt_range(Device, glb, glb_pt_offset);
     std.debug.assert(range.count() == gi_signals.len * 2);
 
-    var pt_type = PTType.always;
+    var pt_type = PT_Type.always;
 
     var fuse_iter = range.iterator();
     for (gi_signals) |_| {
@@ -524,7 +524,7 @@ fn getPTTypeFromFuses(
     return pt_type;
 }
 
-pub fn parsePTFuses(
+pub fn read_pt_fuses(
     comptime Device: type,
     allocator: std.mem.Allocator,
     glb: usize,
@@ -587,13 +587,13 @@ pub fn parsePTFuses(
     return .{ .factors = factors };
 }
 
-fn readGoeConfig(comptime Device: type, data: JEDEC_Data, goe_config: anytype, goe_index: usize, results: *Disassembly_Results(Device)) !void {
+fn read_goe_config(comptime Device: type, data: JEDEC_Data, goe_config: anytype, goe_index: usize, results: *Disassembly_Results(Device)) !void {
     switch (@TypeOf(goe_config.*)) {
         lc4k.GOE_Config_Bus_Or_Pin => switch (data.get(Device.get_goe_source_fuse(goe_index))) {
             0 => goe_config.source = .input,
-            1 => try readGoeSourceBus(Device, data, goe_config, goe_index, results),
+            1 => try read_goe_source_bus(Device, data, goe_config, goe_index, results),
         },
-        lc4k.GOE_Config_Bus => try readGoeSourceBus(Device, data, goe_config, goe_index, results),
+        lc4k.GOE_Config_Bus => try read_goe_source_bus(Device, data, goe_config, goe_index, results),
         lc4k.GOE_Config_Pin => {},
         else => unreachable,
     }
@@ -603,12 +603,12 @@ fn readGoeConfig(comptime Device: type, data: JEDEC_Data, goe_config: anytype, g
     };
 }
 
-fn readGoeSourceBus(comptime Device: type, data: JEDEC_Data, goe_config: anytype, goe_index: usize, results: *Disassembly_Results(Device)) !void {
+fn read_goe_source_bus(comptime Device: type, data: JEDEC_Data, goe_config: anytype, goe_index: usize, results: *Disassembly_Results(Device)) !void {
     goe_config.source = .constant_high;
     var glb: lc4k.GLB_Index = 0;
     var already_reported_goe_collision = false;
     while (glb < Device.num_glbs) : (glb += 1) {
-        switch (readField(data, u1, fuses.get_shared_enable_to_oe_bus_range(Device, glb).sub_rows(goe_index, 1))) {
+        switch (read_field(data, u1, fuses.get_shared_enable_to_oe_bus_range(Device, glb).sub_rows(goe_index, 1))) {
             0 => {
                 switch (goe_config.source) {
                     .glb_shared_pt_enable => |old_glb| {
@@ -634,27 +634,27 @@ fn readGoeSourceBus(comptime Device: type, data: JEDEC_Data, goe_config: anytype
     }
 }
 
-pub fn read_pt4_oe_source(comptime Device: type, data: JEDEC_Data, mcref: lc4k.MC_Ref) lc4k.Macrocell_Output_Enable_Source {
-    return readField(data, lc4k.Macrocell_Output_Enable_Source, fuses.get_pt4_output_enable_range(Device, mcref));
+pub fn read_pt4_output_enable_source(comptime Device: type, data: JEDEC_Data, mcref: lc4k.MC_Ref) lc4k.Macrocell_Output_Enable_Source {
+    return read_field(data, lc4k.Macrocell_Output_Enable_Source, fuses.get_pt4_output_enable_range(Device, mcref));
 }
 
-pub fn read_ce_source(comptime Device: type, data: JEDEC_Data, mcref: lc4k.MC_Ref) lc4k.Clock_Enable_Source {
-    return readField(data, lc4k.Clock_Enable_Source, fuses.get_clock_enable_range(Device, mcref));
+pub fn read_clock_enable_source(comptime Device: type, data: JEDEC_Data, mcref: lc4k.MC_Ref) lc4k.Clock_Enable_Source {
+    return read_field(data, lc4k.Clock_Enable_Source, fuses.get_clock_enable_range(Device, mcref));
 }
 
 pub fn read_init_source(comptime Device: type, data: JEDEC_Data, mcref: lc4k.MC_Ref) lc4k.Init_Source {
-    return readField(data, lc4k.Init_Source, fuses.get_init_source_range(Device, mcref));
+    return read_field(data, lc4k.Init_Source, fuses.get_init_source_range(Device, mcref));
 }
 
-pub fn read_async_source(comptime Device: type, data: JEDEC_Data, mcref: lc4k.MC_Ref) lc4k.Async_Trigger_Source {
-    return readField(data, lc4k.Async_Trigger_Source, fuses.get_async_trigger_source_range(Device, mcref));
+pub fn read_async_trigger_source(comptime Device: type, data: JEDEC_Data, mcref: lc4k.MC_Ref) lc4k.Async_Trigger_Source {
+    return read_field(data, lc4k.Async_Trigger_Source, fuses.get_async_trigger_source_range(Device, mcref));
 }
 
 pub fn read_clock_source(comptime Device: type, data: JEDEC_Data, mcref: lc4k.MC_Ref) lc4k.Clock_Source {
     const low_range = fuses.get_clock_source_range_low(Device, mcref);
     const high_fuse = fuses.get_clock_source_range_high(Device, mcref).min;
 
-    const low_data = readField(data, u2, low_range);
+    const low_data = read_field(data, u2, low_range);
 
     if (data.is_set(high_fuse)) {
         return switch (low_data) {
@@ -675,14 +675,14 @@ pub fn read_clock_source(comptime Device: type, data: JEDEC_Data, mcref: lc4k.MC
 
 pub fn unmap_orm(comptime Device: type, data: JEDEC_Data, mcref: lc4k.MC_Ref) ?lc4k.MC_Ref {
     if (fuses.get_output_routing_range(Device, mcref)) |range| {
-        const relative = readField(data, u3, range);
+        const relative = read_field(data, u3, range);
         const absolute: lc4k.MC_Index = @intCast((@as(u32, mcref.mc) + relative) % Device.num_mcs_per_glb);
         return lc4k.MC_Ref.init(mcref.glb, absolute);
     }
     return null;
 }
 
-pub fn readField(data: JEDEC_Data, comptime T: type, range: Fuse_Range) T {
+pub fn read_field(data: JEDEC_Data, comptime T: type, range: Fuse_Range) T {
     std.debug.assert(@bitSizeOf(T) == range.count());
     var int_value: u64 = 0;
     var bit_value: u64 = 1;
