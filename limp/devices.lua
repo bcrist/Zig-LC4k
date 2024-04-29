@@ -266,8 +266,8 @@ for glb = 1, info.num_glbs do
         max_mc_name = 'io_'..glb_prefix..max_mc
     until grp_names[max_mc_name]
 
-    write(nl, '@intFromEnum(GRP.io_', glb_prefix, '0)...@intFromEnum(GRP.io_', glb_prefix, max_mc, ') => .{ .glb = ', glb - 1, ', .mc = @intFromEnum(self) - @intFromEnum(GRP.io_', glb_prefix, '0) },')
-    write(nl, '@intFromEnum(GRP.mc_', glb_prefix, '0)...@intFromEnum(GRP.mc_', glb_prefix, '15) => .{ .glb = ', glb - 1, ', .mc = @intFromEnum(self) - @intFromEnum(GRP.mc_', glb_prefix, '0) },')
+    write(nl, '@intFromEnum(GRP.io_', glb_prefix, '0)...@intFromEnum(GRP.io_', glb_prefix, max_mc, ') => .{ .glb = ', glb - 1, ', .mc = @intCast(@intFromEnum(self) - @intFromEnum(GRP.io_', glb_prefix, '0)) },')
+    write(nl, '@intFromEnum(GRP.mc_', glb_prefix, '0)...@intFromEnum(GRP.mc_', glb_prefix, '15) => .{ .glb = ', glb - 1, ', .mc = @intCast(@intFromEnum(self) - @intFromEnum(GRP.mc_', glb_prefix, '0)) },')
 end
 unindent(2)
 write [[

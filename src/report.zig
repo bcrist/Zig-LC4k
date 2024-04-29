@@ -350,6 +350,13 @@ pub fn write(comptime Device: type, comptime speed_grade: comptime_int, file: JE
     try writer.print("<td>{s}</td>", .{ @tagName(Device.device_type) });
     try writer.writeAll("</tr>\n");
 
+    if (speed_grade != 0) {
+        try writer.writeAll("<tr>");
+        try writer.writeAll("<th>Speed Grade</th>");
+        try writer.print("<td>{d}</td>", .{ speed_grade });
+        try writer.writeAll("</tr>\n");
+    }
+
     if (file.usercode) |usercode| {
         try writer.writeAll("<tr>");
         try writer.writeAll("<th>Usercode</th>");
@@ -1336,10 +1343,10 @@ fn write_timing(writer: std.io.AnyWriter, comptime Device: type, comptime speed:
                         try end_cell(writer);
 
                         try end_row(writer);
-                        highlight = !highlight;
                     } else |_| {}
                 }
             };
+            highlight = !highlight;
         }
 
         try end_table(writer);

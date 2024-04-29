@@ -37,7 +37,7 @@ pub const Node = union (enum) {
     goe3,
 
     mc_cluster: lc4k.MC_Ref, // combination of pts for this MC
-    mc_cluster_group: lc4k.MC_Ref, // output of (narrow) cluster routing
+    mc_ca: lc4k.MC_Ref, // output of (narrow) cluster routing
     mcd: lc4k.MC_Ref, // after tMCELL, tEXP
     mcd_setup: lc4k.MC_Ref, // mc + register setup time
     mc_clk: lc4k.MC_Ref, // after tPTCLK, tBCLK, tGCLK
@@ -49,7 +49,7 @@ pub const Node = union (enum) {
     mc_async: lc4k.MC_Ref, // after tPTSR, tBSR
     mc_oe: lc4k.MC_Ref,
     mcq: lc4k.MC_Ref,
-    routed_mcq: lc4k.MC_Ref,
+    orm: lc4k.MC_Ref,
     
     fb: lc4k.MC_Ref,
 
@@ -62,9 +62,9 @@ pub const Node = union (enum) {
         switch (self) {
             .pad, .in, .grp => |grp_index| {
                 const grp: GRP = @enumFromInt(grp_index);
-                try writer.writeAll(@tagName(self));
-                try writer.writeByte(' ');
                 try writer.writeAll(names.get_signal_name(grp));
+                try writer.writeByte(' ');
+                try writer.writeAll(@tagName(self));
             },
             .oe_in => |oe_index| {
                 try writer.print("oe_in {d}", .{ oe_index });
@@ -73,20 +73,20 @@ pub const Node = union (enum) {
                 try writer.print("gclk {d}", .{ clock_index });
             },
             .bclock0, .bclock1, .bclock2, .bclock3, .sptoe, .sptclk, .sptinit => |glb| {
-                try writer.print("GLB {s} {s}", .{ names.get_glb_name(glb), @tagName(self) });
+                try writer.print("{s} {s}", .{ names.get_glb_name(glb), @tagName(self) });
             },
             .pt => |ptref| {
-                try writer.print("{s} PT{}", .{ names.get_mc_name(ptref.mcref), ptref.pt });
+                try writer.print("{s} pt{}", .{ names.get_mc_name(ptref.mcref), ptref.pt });
             },
             .igoe0, .igoe1, .igoe2, .igoe3, .goe0, .goe1, .goe2, .goe3 => {
                 try writer.writeAll(@tagName(self));
             },
-            .mc_cluster, .mc_cluster_group,
+            .mc_cluster, .mc_ca,
             .mcd, .mcd_setup,
             .mc_clk, .mc_clk_d_hold, .mc_clk_ce_hold,
             .mc_ce, .mc_ce_setup,
             .mc_init, .mc_async,
-            .mc_oe, .mcq, .routed_mcq,
+            .mc_oe, .mcq, .orm,
             .fb, .out, .out_oe, .out_en, .out_dis
             => |mcref| {
                 try writer.print("{s} {s}", .{ names.get_mc_name(mcref), @tagName(self) });
@@ -183,24 +183,6 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
             self.cache.deinit(self.gpa);
         }
 
-        pub fn find_sources(self: *Self) []Node {
-            // TODO This will return:
-            //   - all .pad that are mapped to at least one GI or used by at least one goe or bclock
-            //   - all mcq for MCs that are registers and have fb mapped to at least one GI
-            _ = self;
-            return &.{};
-        }
-
-        pub fn find_destinations(self: *Self) []Node {
-            // TODO This will return:
-            //   - all output pins where OE is not permanently disabled
-            //   - all OEs that are not constant
-            //   - all mcd_setup for MCs that are registers
-            //   - all mc_ce_setup for MCs that are registers, and CE is not constant
-            _ = self;
-            return &.{};
-        }
-
         pub fn get_critical_path(self: *Self, segment: Segment) Error!Path {
             if (std.meta.eql(segment.source, segment.dest)) return Path.nil;
             if (self.cache.get(segment)) |cached| {
@@ -261,8 +243,15 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
             }
 
             switch (dest) {
-                .out => |mcref| return try self.append_to_parent(source, .{ .routed_mcq = mcref }, dest, "tBUF", visited,
-                    Timing.tBUF + self.tIOO(mcref) + self.tSLEW(mcref)),
+                .out => |mcref| {
+                    if (fuses.get_output_enable_source_range(D, mcref)) |range| {
+                        if (disassembly.read_field(self.jedec, lc4k.Output_Enable_Mode, range) == .input_only) {
+                            return error.InvalidPath;
+                        }
+                    }
+                    return try self.append_to_parent(source, .{ .orm = mcref }, dest, "tBUF", visited,
+                        Timing.tBUF + self.tIOO(mcref) + self.tSLEW(mcref));
+                },
 
                 .out_en => |mcref| return try self.append_to_parent(source, .{ .out_oe = mcref }, dest, "tEN", visited,
                     Timing.tEN + self.tIOO(mcref) + self.tSLEW(mcref)),
@@ -287,7 +276,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                     return error.InvalidPath;
                 },
 
-                .routed_mcq => |mcref| {
+                .orm => |mcref| {
                     if (D.family != .zero_power_enhanced) {
                         if (fuses.get_output_routing_mode_range(D, mcref)) |range| {
                             switch (disassembly.read_field(self.jedec, lc4k.Output_Routing_Mode, range)) {
@@ -503,7 +492,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                     }
 
                     if (disassembly.read_field(self.jedec, lc4k.Wide_Routing, fuses.get_wide_routing_range(D, mcref)) == .self) {
-                        if (try self.maybe_append_to_parent(source, .{ .mc_cluster_group = mcref }, dest, "tMCELL", visited, Timing.tMCELL)) |path| {
+                        if (try self.maybe_append_to_parent(source, .{ .mc_ca = mcref }, dest, "tMCELL", visited, Timing.tMCELL)) |path| {
                             options.appendAssumeCapacity(path);
                         }
                     }
@@ -511,7 +500,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                     return try choose_critical_path(options.items);
                 },
 
-                .mc_cluster_group => |mcref| {
+                .mc_ca => |mcref| {
                     var buf: [5]Path = undefined;
                     var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
 
@@ -550,11 +539,12 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
 
                     const prev_wide_cluster = lc4k.MC_Ref.init(mcref.glb, (mcref.mc + D.num_mcs_per_glb - 4) % D.num_mcs_per_glb);
                     if (disassembly.read_field(self.jedec, lc4k.Wide_Routing, fuses.get_wide_routing_range(D, prev_wide_cluster)) == .self_plus_four) {
-                        if (try self.maybe_append_to_parent(source, .{ .mc_cluster_group = prev_wide_cluster }, dest, "tEXP", visited, Timing.tEXP)) |path| {
+                        if (try self.maybe_append_to_parent(source, .{ .mc_ca = prev_wide_cluster }, dest, "tEXP", visited, Timing.tEXP)) |path| {
                             options.appendAssumeCapacity(path);
                         }
                     }
 
+                    //return try choose_critical_path(options.items);
                     return try self.choose_critical_path_and_clone_with_new_dest(options.items, dest);
                 },
 
@@ -599,6 +589,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                         },
                     }
 
+                    //return try choose_critical_path(options.items);
                     return try self.choose_critical_path_and_clone_with_new_dest(options.items, dest);
                 },
 
@@ -612,7 +603,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                 .igoe2 => return try self.compute_igoe_critical_path(source, dest, 2, visited),
                 .igoe3 => return try self.compute_igoe_critical_path(source, dest, 3, visited),
 
-                .pt => |PT_Ref| return self.compute_pt_critical_path(source, dest, PT_Ref.mcref.glb, PT_Ref.mcref.mc * 5 + PT_Ref.pt, visited),
+                .pt => |ptref| return self.compute_pt_critical_path(source, dest, ptref.mcref.glb, ptref.mcref.mc * 5 + ptref.pt, visited),
                 .sptoe => |glb| return self.compute_pt_critical_path(source, dest, glb, D.num_mcs_per_glb * 5 + 2, visited),
                 .sptclk => |glb| return self.compute_pt_critical_path(source, dest, glb, D.num_mcs_per_glb * 5 + 1, visited),
                 .sptinit => |glb| return self.compute_pt_critical_path(source, dest, glb, D.num_mcs_per_glb * 5 + 0, visited),
@@ -636,10 +627,12 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                     }
                     if (total_gis == 0) return error.InvalidPath;
 
-                    // TODO handle feedback GRPs
-
                     const delay: i32 = @intCast(Timing.tROUTE + Timing.tBLA * (total_gis - 1));
-                    return try self.append_to_parent(source, .{ .in = grp_index }, dest, "tROUTE", visited, delay);
+                    if (grp.kind() == .mc) {
+                        return try self.append_to_parent(source, .{ .fb = grp.mc() }, dest, "tROUTE", visited, delay);
+                    } else {
+                        return try self.append_to_parent(source, .{ .in = grp_index }, dest, "tROUTE", visited, delay);
+                    }
                 },
 
                 .bclock0 => |glb| return try self.compute_bclock_critical_path(source, dest, 0, glb, visited),
@@ -853,27 +846,19 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
         }
 
         fn tIOI(self: *Self, grp: D.GRP) Picoseconds {
-            // TODO support specifying Vcc_io for each bank and using a specific tIOI for each
-            // (only a 0.2ns maximum difference between different voltage thresholds; probably not worth)
-
             _ = self;
             _ = grp;
-            // TODO
-            // if (fuses.get_input_threshold_range(D, mcref)) |range| {
-            //     if (disassembly.read_field(self.jedec, lc4k.Input_Threshold, range) == .high) {
-            //         return Timing.tIOI_high;
-            //     }
-            // }
-            //const threshold_range = jedec.Fuse_Range.fromFuse(D.get_input_threshold_fuse(grp));
-            return Timing.tIOI_low;
+            // We're not including tIOO because input/output buffer delays are heavily dependent on trace length, capacitance, etc. anyway.
+            //return Timing.tIOI_low;
+            return 0;
         }
 
         fn tIOO(self: *Self, mcref: lc4k.MC_Ref) Picoseconds {
             _ = self;
             _ = mcref;
-            // TODO support specifying Vcc_io for each bank and using a specific tIOO for each
-            // (only a 0.2ns maximum difference between different voltage thresholds; probably not worth)
-            return Timing.tIOO;
+            // We're not including tIOO because input/output buffer delays are heavily dependent on trace length, capacitance, etc. anyway.
+            //return Timing.tIOO;
+            return 0;
         }
 
         fn tSLEW(self: *Self, mcref: lc4k.MC_Ref) Picoseconds {
