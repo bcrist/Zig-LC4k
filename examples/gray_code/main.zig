@@ -52,11 +52,11 @@ pub fn main() !void {
         mc.output.oe = .output_only;
         if (bit < gray_code_bits.len - 1) {
             mc.logic = comptime .{ .sum_xor_pt0 = .{
-                .sum = &.{ counter_bits[bit].when_high().pt() },
-                .pt0 = counter_bits[bit + 1].when_high().pt(),
+                .sum = &.{ Chip.GRP.mc_fb(counter_bits[bit].mc()).when_high().pt() },
+                .pt0 = Chip.GRP.mc_fb(counter_bits[bit + 1].mc()).when_high().pt(),
             }};
         } else {
-            mc.logic = comptime .{ .sum = &.{ counter_bits[bit].when_high().pt() }};
+            mc.logic = comptime .{ .sum = &.{ Chip.GRP.mc_fb(counter_bits[bit].mc()).when_high().pt() }};
         }
     }
 

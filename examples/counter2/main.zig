@@ -32,8 +32,10 @@ pub fn main() !void {
         Chip.pins._33,
     };
 
-    inline for (output_pins, 0..) |out, bit| {
-        var mc = chip.mc(out.mc());
+    inline for (output_pins, 0..) |out_pin, bit| {
+        var mc = chip.mc(out_pin.mc());
+        const out = comptime Chip.GRP.mc_fb(out_pin.mc());
+
         mc.func = .{ .d_ff = .{ .clock = .bclock2 }};
         mc.output.oe = .goe0;
 
@@ -48,7 +50,7 @@ pub fn main() !void {
             var pt = Chip.PT.always();
             var n = bit;
             while (n > 0) : (n -= 1) {
-                const out_n = output_pins[n - 1];
+                const out_n = Chip.GRP.mc_fb(output_pins[n - 1].mc());
                 pt = pt.and_factor(out_n.when_high());
                 sum = sum ++ [_]Chip.PT{ out.when_high().pt().and_factor(out_n.when_low()) };
             }

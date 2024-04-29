@@ -36,17 +36,17 @@ pub const Node = union (enum) {
     goe2,
     goe3,
 
-    mc_cluster: lc4k.MC_Ref, // combination of pts for this MC
-    mc_ca: lc4k.MC_Ref, // output of (narrow) cluster routing
-    mcd: lc4k.MC_Ref, // after tMCELL, tEXP
-    mcd_setup: lc4k.MC_Ref, // mc + register setup time
-    mc_clk: lc4k.MC_Ref, // after tPTCLK, tBCLK, tGCLK
-    mc_clk_d_hold: lc4k.MC_Ref, // mc_clk + register hold time
-    mc_clk_ce_hold: lc4k.MC_Ref, // mc_clk + ce hold time
-    mc_ce: lc4k.MC_Ref, // 
-    mc_ce_setup: lc4k.MC_Ref, // mc_ce + tCES
-    mc_init: lc4k.MC_Ref, // after tPTSR, tBSR
-    mc_async: lc4k.MC_Ref, // after tPTSR, tBSR
+    mc_cluster: lc4k.MC_Ref,
+    mc_ca: lc4k.MC_Ref,
+    mcd: lc4k.MC_Ref,
+    mcd_setup: lc4k.MC_Ref,
+    mc_clk: lc4k.MC_Ref,
+    mc_clk_d_hold: lc4k.MC_Ref,
+    mc_clk_ce_hold: lc4k.MC_Ref,
+    mc_ce: lc4k.MC_Ref,
+    mc_ce_setup: lc4k.MC_Ref,
+    mc_init: lc4k.MC_Ref,
+    mc_async: lc4k.MC_Ref,
     mc_oe: lc4k.MC_Ref,
     mcq: lc4k.MC_Ref,
     orm: lc4k.MC_Ref,
@@ -67,29 +67,35 @@ pub const Node = union (enum) {
                 try writer.writeAll(@tagName(self));
             },
             .oe_in => |oe_index| {
-                try writer.print("oe_in {d}", .{ oe_index });
+                try writer.print("OE {d}", .{ oe_index });
             },
             .gclk => |clock_index| {
-                try writer.print("gclk {d}", .{ clock_index });
+                try writer.print("GCLK {d}", .{ clock_index });
             },
             .bclock0, .bclock1, .bclock2, .bclock3, .sptoe, .sptclk, .sptinit => |glb| {
                 try writer.print("{s} {s}", .{ names.get_glb_name(glb), @tagName(self) });
             },
             .pt => |ptref| {
-                try writer.print("{s} pt{}", .{ names.get_mc_name(ptref.mcref), ptref.pt });
+                try writer.print("{s} PT{}", .{ names.get_mc_name(ptref.mcref), ptref.pt });
             },
             .igoe0, .igoe1, .igoe2, .igoe3, .goe0, .goe1, .goe2, .goe3 => {
                 try writer.writeAll(@tagName(self));
             },
-            .mc_cluster, .mc_ca,
-            .mcd, .mcd_setup,
-            .mc_clk, .mc_clk_d_hold, .mc_clk_ce_hold,
-            .mc_ce, .mc_ce_setup,
-            .mc_init, .mc_async,
-            .mc_oe, .mcq, .orm,
-            .fb, .out, .out_oe, .out_en, .out_dis
-            => |mcref| {
+            .mc_cluster, .mc_ca, .mcd, .mc_clk, .mc_ce, .mc_init, .mc_async,
+            .mc_oe, .mcq, .orm, .fb, .out, .out_oe, .out_en, .out_dis => |mcref| {
                 try writer.print("{s} {s}", .{ names.get_mc_name(mcref), @tagName(self) });
+            },
+            .mcd_setup => |mcref| {
+                try writer.print("{s} Setup", .{ names.get_mc_name(mcref) });
+            },
+            .mc_ce_setup => |mcref| {
+                try writer.print("{s} CE Setup", .{ names.get_mc_name(mcref) });
+            },
+            .mc_clk_d_hold => |mcref| {
+                try writer.print("{s} Hold", .{ names.get_mc_name(mcref) });
+            },
+            .mc_clk_ce_hold => |mcref| {
+                try writer.print("{s} CE Hold", .{ names.get_mc_name(mcref) });
             },
         }
     }
@@ -661,6 +667,16 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                 .in => |grp_ordinal| {
                     // TODO tPGRT
                     const grp: D.GRP = @enumFromInt(grp_ordinal);
+
+                    if (grp.kind() == .io) {
+                        const mcref = grp.mc();
+                        if (fuses.get_output_enable_source_range(D, mcref)) |range| {
+                            if (disassembly.read_field(self.jedec, lc4k.Output_Enable_Mode, range) == .output_only) {
+                                return error.InvalidPath;
+                            }
+                        }
+                    }
+
                     const delay = Timing.tIN + self.tIOI(grp);
                     return try self.append_to_parent(source, .{ .pad = grp_ordinal }, dest, "tIN", visited, delay);
                 },

@@ -36,19 +36,21 @@ pub fn main() !void {
 
     var none_mc = chip.mc(none_signal.mc());
     none_mc.output.oe = .output_only;
-    none_mc.logic = comptime .{ .sum = &.{ outputs[0].when_low().pt()
-        .and_factor(outputs[3].when_low())
-        .and_factor(outputs[6].when_low())
-        .and_factor(outputs[9].when_low())
-        .and_factor(outputs[12].when_low())
-        .and_factor(outputs[15].when_low())
-        .and_factor(outputs[16].when_low())
-        .and_factor(outputs[19].when_low())
-        .and_factor(outputs[22].when_low())
-        .and_factor(outputs[25].when_low())
-        .and_factor(outputs[28].when_low())
-        .and_factor(outputs[31].when_low())
+    none_mc.logic = comptime .{ .sum = &.{ Chip.GRP.mc_fb(outputs[0].mc()).when_low().pt()
+        .and_factor(Chip.GRP.mc_fb(outputs[3].mc()).when_low())
+        .and_factor(Chip.GRP.mc_fb(outputs[6].mc()).when_low())
+        .and_factor(Chip.GRP.mc_fb(outputs[9].mc()).when_low())
+        .and_factor(Chip.GRP.mc_fb(outputs[12].mc()).when_low())
+        .and_factor(Chip.GRP.mc_fb(outputs[15].mc()).when_low())
+        .and_factor(Chip.GRP.mc_fb(outputs[16].mc()).when_low())
+        .and_factor(Chip.GRP.mc_fb(outputs[19].mc()).when_low())
+        .and_factor(Chip.GRP.mc_fb(outputs[22].mc()).when_low())
+        .and_factor(Chip.GRP.mc_fb(outputs[25].mc()).when_low())
+        .and_factor(Chip.GRP.mc_fb(outputs[28].mc()).when_low())
+        .and_factor(Chip.GRP.mc_fb(outputs[31].mc()).when_low())
     }};
+
+    @setEvalBranchQuota(10000);
 
     inline for (outputs, 0..) |out, bit| {
         var mc = chip.mc(out.mc());
@@ -56,42 +58,42 @@ pub fn main() !void {
         mc.output.oe = .output_only;
         mc.logic = comptime .{ .sum = switch (bit) {
             0 => &.{
-                dir_signal.when_high().pt().and_factor(outputs[bit + 1].when_high()),
+                dir_signal.when_high().pt().and_factor(Chip.GRP.mc_fb(outputs[bit + 1].mc()).when_high()),
                 dir_signal.when_high().pt().and_factor(none_signal.when_high()),
                 dir_signal.when_low().pt()
-                    .and_factor(outputs[0].when_high())
-                    .and_factor(outputs[3].when_low())
-                    .and_factor(outputs[6].when_low())
-                    .and_factor(outputs[9].when_low())
-                    .and_factor(outputs[12].when_low())
-                    .and_factor(outputs[15].when_low())
-                    .and_factor(outputs[16].when_low())
-                    .and_factor(outputs[19].when_low())
-                    .and_factor(outputs[22].when_low())
-                    .and_factor(outputs[25].when_low())
-                    .and_factor(outputs[28].when_low())
-                    .and_factor(outputs[31].when_low())
+                    .and_factor(Chip.GRP.mc_fb(outputs[0].mc()).when_high())
+                    .and_factor(Chip.GRP.mc_fb(outputs[3].mc()).when_low())
+                    .and_factor(Chip.GRP.mc_fb(outputs[6].mc()).when_low())
+                    .and_factor(Chip.GRP.mc_fb(outputs[9].mc()).when_low())
+                    .and_factor(Chip.GRP.mc_fb(outputs[12].mc()).when_low())
+                    .and_factor(Chip.GRP.mc_fb(outputs[15].mc()).when_low())
+                    .and_factor(Chip.GRP.mc_fb(outputs[16].mc()).when_low())
+                    .and_factor(Chip.GRP.mc_fb(outputs[19].mc()).when_low())
+                    .and_factor(Chip.GRP.mc_fb(outputs[22].mc()).when_low())
+                    .and_factor(Chip.GRP.mc_fb(outputs[25].mc()).when_low())
+                    .and_factor(Chip.GRP.mc_fb(outputs[28].mc()).when_low())
+                    .and_factor(Chip.GRP.mc_fb(outputs[31].mc()).when_low())
             },
             31 => &.{
-                dir_signal.when_low().pt().and_factor(outputs[bit - 1].when_high()),
+                dir_signal.when_low().pt().and_factor(Chip.GRP.mc_fb(outputs[bit - 1].mc()).when_high()),
                 dir_signal.when_low().pt().and_factor(none_signal.when_high()),
                 dir_signal.when_high().pt()
-                    .and_factor(outputs[0].when_low())
-                    .and_factor(outputs[3].when_low())
-                    .and_factor(outputs[6].when_low())
-                    .and_factor(outputs[9].when_low())
-                    .and_factor(outputs[12].when_low())
-                    .and_factor(outputs[15].when_low())
-                    .and_factor(outputs[16].when_low())
-                    .and_factor(outputs[19].when_low())
-                    .and_factor(outputs[22].when_low())
-                    .and_factor(outputs[25].when_low())
-                    .and_factor(outputs[28].when_low())
-                    .and_factor(outputs[31].when_high())
+                    .and_factor(Chip.GRP.mc_fb(outputs[0].mc()).when_low())
+                    .and_factor(Chip.GRP.mc_fb(outputs[3].mc()).when_low())
+                    .and_factor(Chip.GRP.mc_fb(outputs[6].mc()).when_low())
+                    .and_factor(Chip.GRP.mc_fb(outputs[9].mc()).when_low())
+                    .and_factor(Chip.GRP.mc_fb(outputs[12].mc()).when_low())
+                    .and_factor(Chip.GRP.mc_fb(outputs[15].mc()).when_low())
+                    .and_factor(Chip.GRP.mc_fb(outputs[16].mc()).when_low())
+                    .and_factor(Chip.GRP.mc_fb(outputs[19].mc()).when_low())
+                    .and_factor(Chip.GRP.mc_fb(outputs[22].mc()).when_low())
+                    .and_factor(Chip.GRP.mc_fb(outputs[25].mc()).when_low())
+                    .and_factor(Chip.GRP.mc_fb(outputs[28].mc()).when_low())
+                    .and_factor(Chip.GRP.mc_fb(outputs[31].mc()).when_high())
             },
             else => &.{
-                dir_signal.when_low().pt().and_factor(outputs[bit - 1].when_high()),
-                dir_signal.when_high().pt().and_factor(outputs[bit + 1].when_high()),
+                dir_signal.when_low().pt().and_factor(Chip.GRP.mc_fb(outputs[bit - 1].mc()).when_high()),
+                dir_signal.when_high().pt().and_factor(Chip.GRP.mc_fb(outputs[bit + 1].mc()).when_high()),
             },
         }};
     }
