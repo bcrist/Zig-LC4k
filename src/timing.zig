@@ -58,10 +58,10 @@ pub const Node = union (enum) {
     out_en: lc4k.MC_Ref,
     out_dis: lc4k.MC_Ref,
 
-    pub fn write_name(self: Node, writer: std.io.AnyWriter, comptime GRP: type, names: *const naming.Names(GRP)) !void {
+    pub fn write_name(self: Node, writer: std.io.AnyWriter, comptime Device: type, names: *const naming.Names(Device)) !void {
         switch (self) {
             .pad, .in, .grp => |grp_index| {
-                const grp: GRP = @enumFromInt(grp_index);
+                const grp: Device.GRP = @enumFromInt(grp_index);
                 try writer.writeAll(names.get_signal_name(grp));
                 try writer.writeByte(' ');
                 try writer.writeAll(@tagName(self));

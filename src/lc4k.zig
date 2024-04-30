@@ -90,6 +90,7 @@ pub fn Chip_Config(comptime device_type: Device_Type) type {
         ext: Ext = .{},
 
         pub const Device = D;
+        pub const Names = D.Names;
         pub const PT = D.PT;
         pub const F = D.F;
         pub const Pin = D.Pin;

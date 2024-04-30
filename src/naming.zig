@@ -1,7 +1,9 @@
-pub fn Names(comptime GRP: type) type {
+pub fn Names(comptime Device: type) type {
+    const GRP = Device.GRP;
+
     return struct {
         gpa: std.mem.Allocator,
-        fallback: ?*Self,
+        fallback: ?*const Self,
 
         glb_names: std.AutoHashMapUnmanaged(GLB_Index, []const u8) = .{},
         glb_lookup: std.StringHashMapUnmanaged(GLB_Index) = .{},
@@ -14,40 +16,40 @@ pub fn Names(comptime GRP: type) type {
 
         const Self = @This();
 
-        pub fn init(allocator: std.mem.Allocator, device_type: device.Type) Self {
+        pub fn init(allocator: std.mem.Allocator) Self {
             return .{
                 .gpa = allocator,
-                .fallback = &device_type.get().get_names(),
+                .fallback = Device.get_names(),
             };
         }
 
-        pub fn init_defaults(allocator: std.mem.Allocator, comptime D: type) Self {
+        pub fn init_defaults(allocator: std.mem.Allocator) Self {
             var self: Self = .{
                 .gpa = allocator,
                 .fallback = null,
             };
 
-            self.glb_names.ensureTotalCapacity(self.gpa, D.num_glbs) catch unreachable;
-            self.glb_lookup.ensureTotalCapacity(self.gpa, D.num_glbs) catch unreachable;
+            self.glb_names.ensureTotalCapacity(self.gpa, Device.num_glbs) catch unreachable;
+            self.glb_lookup.ensureTotalCapacity(self.gpa, Device.num_glbs) catch unreachable;
 
-            self.macrocell_names.ensureTotalCapacity(self.gpa, D.num_mcs) catch unreachable;
-            self.macrocell_lookup.ensureTotalCapacity(self.gpa, D.num_mcs) catch unreachable;
+            self.macrocell_names.ensureTotalCapacity(self.gpa, Device.num_mcs) catch unreachable;
+            self.macrocell_lookup.ensureTotalCapacity(self.gpa, Device.num_mcs) catch unreachable;
 
-            self.signal_names.ensureTotalCapacity(self.gpa, @intCast(std.enums.values(D.GRP).len)) catch unreachable;
-            self.signal_lookup.ensureTotalCapacity(self.gpa, @intCast(std.enums.values(D.GRP).len)) catch unreachable;
+            self.signal_names.ensureTotalCapacity(self.gpa, @intCast(std.enums.values(GRP).len)) catch unreachable;
+            self.signal_lookup.ensureTotalCapacity(self.gpa, @intCast(std.enums.values(GRP).len)) catch unreachable;
 
-            inline for (0..D.num_glbs) |glb| {
-                const glb_name = @tagName(D.GRP.mc_fb(MC_Ref.init(glb, 0)))[3..4];
+            inline for (0..Device.num_glbs) |glb| {
+                const glb_name = @tagName(GRP.mc_fb(MC_Ref.init(glb, 0)))[3..4];
                 self.add_glb_name(@intCast(glb), glb_name) catch unreachable;
 
-                for (0..D.num_mcs_per_glb) |mc| {
+                for (0..Device.num_mcs_per_glb) |mc| {
                     const mcref = MC_Ref.init(glb, mc);
-                    const mc_name = @tagName(D.GRP.mc_fb(mcref))[3..];
+                    const mc_name = @tagName(GRP.mc_fb(mcref))[3..];
                     self.add_mc_name(mcref, mc_name) catch unreachable;
                 }
             }
 
-            for (std.enums.values(D.GRP)) |signal| {
+            for (std.enums.values(GRP)) |signal| {
                 self.add_signal_name(signal, @tagName(signal)) catch unreachable;
             }
 
@@ -96,7 +98,7 @@ pub fn Names(comptime GRP: type) type {
                 return fallback.get_glb_name(glb);
             }
 
-            return "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[glb..glb+1];
+            return "unused";
         }
 
         pub fn lookup_glb(self: Self, name: []const u8) ?GLB_Index {
@@ -130,7 +132,7 @@ pub fn Names(comptime GRP: type) type {
                 return fallback.get_mc_name(mc);
             }
 
-            return "Unnamed MC";
+            return "unused";
         }
 
         pub fn lookup_mc(self: Self, name: []const u8) ?MC_Ref {
@@ -160,7 +162,7 @@ pub fn Names(comptime GRP: type) type {
                 return fallback.get_signal_name(signal);
             }
 
-            return @tagName(signal);
+            return "unused";
         }
 
         pub fn lookup_signal(self: Self, name: []const u8) ?GRP {

@@ -23,7 +23,7 @@ pub const jedec_dimensions = Fuse_Range.init_from_dimensions(352, 95);
 pub const F = lc4k.Factor(GRP);
 pub const PT = lc4k.Product_Term(GRP);
 pub const Pin = lc4k.Pin(GRP);
-pub const Names = naming.Names(GRP);
+pub const Names = naming.Names(@This());
 
 var name_buf: [16384]u8 = undefined;
 var default_names: ?Names = null;
@@ -31,7 +31,7 @@ var default_names: ?Names = null;
 pub fn get_names() *const Names {
     if (default_names) |*names| return names;
     var fba = std.heap.FixedBufferAllocator.init(&name_buf);
-    default_names = Names.init_defaults(fba.allocator(), @This());
+    default_names = Names.init_defaults(fba.allocator());
     return &default_names.?;
 }
 

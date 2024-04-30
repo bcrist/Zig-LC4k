@@ -324,7 +324,7 @@ pub fn write(comptime Device: type, comptime speed_grade: comptime_int, file: JE
     try writer.writeAll("<body>\n");
 
     try begin_section(writer, "Design Summary", .{}, .{});
-    try writer.writeAll("<table>\n");
+    try writer.writeAll("<table class=\"inline\">\n");
 
     if (options.design_name.len > 0) {
         try writer.writeAll("<tr>");
@@ -336,12 +336,6 @@ pub fn write(comptime Device: type, comptime speed_grade: comptime_int, file: JE
         try writer.writeAll("<tr>");
         try writer.writeAll("<th>Design Version</th>");
         try writer.print("<td>{s}</td>", .{ options.design_version });
-        try writer.writeAll("</tr>\n");
-    }
-    if (options.notes.len > 0) {
-        try writer.writeAll("<tr>");
-        try writer.writeAll("<th>Notes</th>");
-        try writer.print("<td>{s}</td>", .{ options.notes });
         try writer.writeAll("</tr>\n");
     }
 
@@ -376,6 +370,12 @@ pub fn write(comptime Device: type, comptime speed_grade: comptime_int, file: JE
     try write_summary_line(writer, "Registers Used", data.num_registers_used, Device.num_glbs * Device.num_mcs_per_glb);
 
     try writer.writeAll("</table>\n");
+
+    if (options.notes.len > 0) {
+        try begin_section(writer, "Notes", .{}, .{ .tier = 3, .class = "inline" });
+        try writer.writeAll(options.notes);
+        try end_section(writer);
+    }
     try end_section(writer);
 
     if (options.assembly_errors.len > 0) {
@@ -430,8 +430,7 @@ pub fn write(comptime Device: type, comptime speed_grade: comptime_int, file: JE
         try end_section(writer);
     }
 
-    try write_globals(writer, Device, data, options);
-    try write_inputs(writer, Device, data, options);
+    try write_globals_and_inputs(writer, Device, data, options);
     try write_macrocells(writer, Device, data, options);
     try write_product_terms(writer, Device, data, options);
     try write_glb_routing(writer, Device, data, options);
@@ -448,7 +447,7 @@ pub fn write(comptime Device: type, comptime speed_grade: comptime_int, file: JE
     try writer.writeAll("</html>\n");
 }
 
-fn write_globals(writer: std.io.AnyWriter, comptime Device: type, data: Report_Data(Device), options: Write_Options(Device)) !void {
+fn write_globals_and_inputs(writer: std.io.AnyWriter, comptime Device: type, data: Report_Data(Device), options: Write_Options(Device)) !void {
     try begin_section(writer, "Global Resources", .{}, .{});
 
     try begin_section(writer, "Global Output Enables", .{}, .{ .tier = 3, .class = "inline" });
@@ -509,6 +508,54 @@ fn write_globals(writer: std.io.AnyWriter, comptime Device: type, data: Report_D
             try end_table(writer);
             try end_section(writer);
         }
+    }
+
+    try begin_section(writer, "Clock &amp; Input Pins", .{}, .{ .tier = 3, .class = "inline" });
+    try begin_table(writer);
+
+    if (Device.family == .zero_power_enhanced) {
+        try table_header(writer, .{ "Pin", "Signal", "Threshold", "Term", "PG" });
+    } else {
+        try table_header(writer, .{ "Pin", "Signal", "Threshold", "Term" });
+    }
+
+    var n: usize = 0;
+    for (Device.clock_pins, 0..) |pin, i| {
+        const config = data.config.clock[i];
+        switch (@TypeOf(config)) {
+            lc4k.Input_Config => try write_input_pin(writer, (n & 1) == 1, Device, pin, config.threshold.?, data.config.default_bus_maintenance, null, options),
+            lc4k.Input_Config_ZE => try write_input_pin(writer, (n & 1) == 1, Device, pin, config.threshold.?, config.bus_maintenance.?, config.power_guard.?, options),
+            else => unreachable,
+        }
+        n += 1;
+    }
+
+    for (Device.input_pins, 0..) |pin, i| {
+        const config = data.config.input[i];
+        switch (@TypeOf(config)) {
+            lc4k.Input_Config => try write_input_pin(writer, (n & 1) == 1, Device, pin, config.threshold.?, data.config.default_bus_maintenance, null, options),
+            lc4k.Input_Config_ZE => try write_input_pin(writer, (n & 1) == 1, Device, pin, config.threshold.?, config.bus_maintenance.?, config.power_guard.?, options),
+            else => unreachable,
+        }
+        n += 1;
+    }
+
+    try end_table(writer);
+    try end_section(writer);
+
+    for (data.config.glb, 0..) |glb_config, glb| {
+        try begin_glb_section(writer, glb, options.get_names().get_glb_name(@intCast(glb)));
+        try begin_table(writer);
+
+        try table_header(writer, .{ "Block Clock", "Equation" });
+
+        try write_block_clock(writer, Device, false, 0, glb_config.bclock0, options);
+        try write_block_clock(writer, Device, true,  1, glb_config.bclock1, options);
+        try write_block_clock(writer, Device, false, 2, glb_config.bclock2, options);
+        try write_block_clock(writer, Device, true,  3, glb_config.bclock3, options);
+
+        try end_table(writer);
+        try end_section(writer);
     }
 
     try end_section(writer);
@@ -579,60 +626,6 @@ fn write_pin_goe_equation(writer: std.io.AnyWriter, comptime Device: type, polar
         .active_high => "</abbr>",
         .active_low => "</u></abbr>",
     });
-}
-
-fn write_inputs(writer: std.io.AnyWriter, comptime Device: type, data: Report_Data(Device), options: Write_Options(Device)) !void {
-    try begin_section(writer, "Clocks &amp; Dedicated Inputs", .{}, .{});
-
-    try begin_section(writer, "Clock &amp; Input Pins", .{}, .{ .tier = 3, .class = "inline" });
-    try begin_table(writer);
-
-    if (Device.family == .zero_power_enhanced) {
-        try table_header(writer, .{ "Pin", "Signal", "Threshold", "Term", "PG" });
-    } else {
-        try table_header(writer, .{ "Pin", "Signal", "Threshold", "Term" });
-    }
-
-    var n: usize = 0;
-    for (Device.clock_pins, 0..) |pin, i| {
-        const config = data.config.clock[i];
-        switch (@TypeOf(config)) {
-            lc4k.Input_Config => try write_input_pin(writer, (n & 1) == 1, Device, pin, config.threshold.?, data.config.default_bus_maintenance, null, options),
-            lc4k.Input_Config_ZE => try write_input_pin(writer, (n & 1) == 1, Device, pin, config.threshold.?, config.bus_maintenance.?, config.power_guard.?, options),
-            else => unreachable,
-        }
-        n += 1;
-    }
-
-    for (Device.input_pins, 0..) |pin, i| {
-        const config = data.config.input[i];
-        switch (@TypeOf(config)) {
-            lc4k.Input_Config => try write_input_pin(writer, (n & 1) == 1, Device, pin, config.threshold.?, data.config.default_bus_maintenance, null, options),
-            lc4k.Input_Config_ZE => try write_input_pin(writer, (n & 1) == 1, Device, pin, config.threshold.?, config.bus_maintenance.?, config.power_guard.?, options),
-            else => unreachable,
-        }
-        n += 1;
-    }
-
-    try end_table(writer);
-    try end_section(writer);
-
-    for (data.config.glb, 0..) |glb_config, glb| {
-        try begin_glb_section(writer, glb, options.get_names().get_glb_name(@intCast(glb)));
-        try begin_table(writer);
-
-        try table_header(writer, .{ "Block Clock", "Equation" });
-
-        try write_block_clock(writer, Device, false, 0, glb_config.bclock0, options);
-        try write_block_clock(writer, Device, true,  1, glb_config.bclock1, options);
-        try write_block_clock(writer, Device, false, 2, glb_config.bclock2, options);
-        try write_block_clock(writer, Device, true,  3, glb_config.bclock3, options);
-
-        try end_table(writer);
-        try end_section(writer);
-    }
-
-    try end_section(writer);
 }
 
 fn write_block_clock(writer: std.io.AnyWriter, comptime Device: type, highlight: bool, bclk_index: usize, value: anytype, options: Write_Options(Device)) !void {
@@ -909,36 +902,34 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
         try begin_table(writer);
         if (Device.family == .zero_power_enhanced) {
             try table_header(writer, .{
-                .@"&nbsp;" = 1,
+                .@"&nbsp;" = 4,
                 .Target = 1,
                 .Sum = 1,
                 .Macrocell = 6,
-                .@"&nbsp; " = 1,
                 .Output = 4,
                 .Input = 3,
             });
             try table_header(writer, .{
+                "Pin", "I/O", "FB",
                 "MC", "Cluster", "PTs",
                 "Logic", "Type", "Clock", "CE", "Init", "Async",
-                "Pin",
                 "From", "OE", "Slew", "Drive",
                 "Threshold", "Term",
                 "PG", 
             });
         } else {
             try table_header(writer, .{
-                .@"&nbsp;" = 1,
+                .@"&nbsp;" = 4,
                 .Target = 1,
                 .Sum = 1,
                 .Macrocell = 6,
-                .@"&nbsp; " = 1,
                 .Output = 4,
                 .Input = 2,
             });
             try table_header(writer, .{
+                "Pin", "I/O", "FB",
                 "MC", "Cluster", "PTs",
                 "Logic", "Type", "Clock", "CE", "Init", "Async",
-                "Pin",
                 "From", "OE", "Slew", "Drive",
                 "Threshold", "Term",
             });
@@ -970,6 +961,25 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
                 .class = mc_class[1..],
                 .hover_selector = mc_class,
             };
+
+            if (Device.GRP.maybe_mc_pad(mcref)) |pad| {
+                try begin_cell(writer, cell_options);
+                try writer.writeAll(pad.pin().id());
+                try end_cell(writer);
+
+                try begin_cell(writer, cell_options);
+                try writer.writeAll(options.get_names().get_signal_name(pad));
+                try end_cell(writer);
+            } else {
+                try begin_cell(writer, .{});
+                try end_cell(writer);
+                try begin_cell(writer, .{});
+                try end_cell(writer);
+            }
+
+            try begin_cell(writer, cell_options);
+            try writer.writeAll(options.get_names().get_signal_name(Device.GRP.mc_fb(mcref)));
+            try end_cell(writer);
 
             try begin_cell(writer, cell_options);
             try writer.writeAll(options.get_names().get_mc_name(mcref));
@@ -1123,15 +1133,6 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
                 },
             });
             try end_cell(writer);
-
-            if (Device.GRP.maybe_mc_pad(mcref)) |pad| {
-                try begin_cell(writer, cell_options);
-                try writer.writeAll(pad.pin().id());
-            } else {
-                try begin_cell(writer, .{});
-            }
-            try end_cell(writer);
-
 
             var out_mcref = mcref;
             var out_options = cell_options;
@@ -1290,7 +1291,7 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
 }
 
 fn write_timing(writer: std.io.AnyWriter, comptime Device: type, comptime speed: comptime_int, data: Report_Data(Device), timing_data: *timing.Analyzer(Device, speed), options: Write_Options(Device)) !void {
-    try begin_section(writer, "Timing", .{}, .{});
+    try begin_section(writer, "Critical Path Timing", .{}, .{});
     for (data.config.glb, 0..) |glb_config, glb| {
         try begin_glb_section(writer, glb, options.get_names().get_glb_name(@intCast(glb)));
         try begin_table(writer);
@@ -1357,19 +1358,19 @@ fn write_timing_for_target(writer: std.io.AnyWriter, comptime Device: type, comp
             try begin_row(writer, .{ .highlight = highlight, .class = "details-root" });
 
             try begin_cell(writer, .{});
-            try source.write_name(writer, Device.GRP, options.get_names());
+            try source.write_name(writer, Device, options.get_names());
             for (path.critical_path) |delay| {
                 try begin_details(writer, .{});
-                try delay.segment.source.write_name(writer, Device.GRP, options.get_names());
+                try delay.segment.source.write_name(writer, Device, options.get_names());
                 try end_details(writer);
             }
             try end_cell(writer);
 
             try begin_cell(writer, .{});
-            try target.write_name(writer, Device.GRP, options.get_names());
+            try target.write_name(writer, Device, options.get_names());
             for (path.critical_path) |delay| {
                 try begin_details(writer, .{});
-                try delay.segment.dest.write_name(writer, Device.GRP, options.get_names());
+                try delay.segment.dest.write_name(writer, Device, options.get_names());
                 try end_details(writer);
             }
             try end_cell(writer);
@@ -1419,29 +1420,29 @@ fn write_setup_hold_timing(writer: std.io.AnyWriter, comptime Device: type, comp
             try begin_row(writer, .{ .highlight = highlight, .class = "details-root" });
 
             try begin_cell(writer, .{});
-            try source.write_name(writer, Device.GRP, options.get_names());
+            try source.write_name(writer, Device, options.get_names());
             for (path.critical_path) |delay| {
                 try begin_details(writer, .{});
-                try delay.segment.source.write_name(writer, Device.GRP, options.get_names());
+                try delay.segment.source.write_name(writer, Device, options.get_names());
                 try end_details(writer);
             }
             for (clk_path.critical_path) |delay| {
                 try begin_details(writer, .{});
-                try delay.segment.source.write_name(writer, Device.GRP, options.get_names());
+                try delay.segment.source.write_name(writer, Device, options.get_names());
                 try end_details(writer);
             }
             try end_cell(writer);
 
             try begin_cell(writer, .{});
-            try setup.write_name(writer, Device.GRP, options.get_names());
+            try setup.write_name(writer, Device, options.get_names());
             for (path.critical_path) |delay| {
                 try begin_details(writer, .{});
-                try delay.segment.dest.write_name(writer, Device.GRP, options.get_names());
+                try delay.segment.dest.write_name(writer, Device, options.get_names());
                 try end_details(writer);
             }
             for (clk_path.critical_path) |delay| {
                 try begin_details(writer, .{});
-                try delay.segment.dest.write_name(writer, Device.GRP, options.get_names());
+                try delay.segment.dest.write_name(writer, Device, options.get_names());
                 try end_details(writer);
             }
             try end_cell(writer);
@@ -1474,29 +1475,29 @@ fn write_setup_hold_timing(writer: std.io.AnyWriter, comptime Device: type, comp
             try begin_row(writer, .{ .highlight = highlight, .class = "details-root" });
 
             try begin_cell(writer, .{});
-            try source.write_name(writer, Device.GRP, options.get_names());
+            try source.write_name(writer, Device, options.get_names());
             for (hold_path.critical_path) |delay| {
                 try begin_details(writer, .{});
-                try delay.segment.source.write_name(writer, Device.GRP, options.get_names());
+                try delay.segment.source.write_name(writer, Device, options.get_names());
                 try end_details(writer);
             }
             for (pre_setup_path.critical_path) |delay| {
                 try begin_details(writer, .{});
-                try delay.segment.source.write_name(writer, Device.GRP, options.get_names());
+                try delay.segment.source.write_name(writer, Device, options.get_names());
                 try end_details(writer);
             }
             try end_cell(writer);
 
             try begin_cell(writer, .{});
-            try hold.write_name(writer, Device.GRP, options.get_names());
+            try hold.write_name(writer, Device, options.get_names());
             for (hold_path.critical_path) |delay| {
                 try begin_details(writer, .{});
-                try delay.segment.dest.write_name(writer, Device.GRP, options.get_names());
+                try delay.segment.dest.write_name(writer, Device, options.get_names());
                 try end_details(writer);
             }
             for (pre_setup_path.critical_path) |delay| {
                 try begin_details(writer, .{});
-                try delay.segment.dest.write_name(writer, Device.GRP, options.get_names());
+                try delay.segment.dest.write_name(writer, Device, options.get_names());
                 try end_details(writer);
             }
             try end_cell(writer);
