@@ -88,6 +88,10 @@ pub fn main() !void {
     try names.add_signal_name(result[1], "~F[1]");
     try names.add_signal_name(result[2], "~F[2]");
     try names.add_signal_name(result[3], "~F[3]");
+    try names.add_mc_name(result[0].mc(), "~F[0]");
+    try names.add_mc_name(result[1].mc(), "~F[1]");
+    try names.add_mc_name(result[2].mc(), "~F[2]");
+    try names.add_mc_name(result[3].mc(), "~F[3]");
     try names.add_signal_name(GRP.mc_fb(result[0].mc()), "~F[0] fb");
     try names.add_signal_name(GRP.mc_fb(result[1].mc()), "~F[1] fb");
     try names.add_signal_name(GRP.mc_fb(result[2].mc()), "~F[2] fb");
