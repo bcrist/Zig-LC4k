@@ -90,7 +90,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
     // Program clock/input fuses
     for (&results.config.clock, 0..) |*clock_config, clock_pin_index| {
         const pin = Device.clock_pins[clock_pin_index];
-        const grp: Device.GRP = pin.signal();
+        const grp: Device.GRP = pin.pad();
 
         const threshold_range = Device.get_input_threshold_fuse(grp).range();
         clock_config.threshold = read_field(file.data, lc4k.Input_Threshold, threshold_range);
@@ -106,7 +106,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
 
     for (&results.config.input, 0..) |*input_config, input_pin_index| {
         const pin = Device.input_pins[input_pin_index];
-        const grp: Device.GRP = pin.signal();
+        const grp: Device.GRP = pin.pad();
 
         const threshold_range = Device.get_input_threshold_fuse(grp).range();
         input_config.threshold = read_field(file.data, lc4k.Input_Threshold, threshold_range);

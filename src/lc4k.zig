@@ -496,6 +496,14 @@ pub const MC_Ref = struct {
             .mc = @intCast(mc),
         };
     }
+
+    pub fn input(self: MC_Ref, comptime GRP: type) GRP {
+        return GRP.mc_pad(self);
+    }
+
+    pub fn fb(self: MC_Ref, comptime GRP: type) GRP {
+        return GRP.mc_fb(self);
+    }
 };
 
 pub const PT_Ref = struct {
@@ -588,28 +596,32 @@ pub fn Pin(comptime GRP: type) type {
             }};
         }
 
-        pub fn id(self: Self) []const u8 {
+        pub inline fn id(self: Self) []const u8 {
             return self.info.id;
         }
 
-        pub fn func(self: Self) Pin_Function {
+        pub inline fn func(self: Self) Pin_Function {
             return self.info.func;
         }
 
-        pub fn mc(self: Self) MC_Ref {
+        pub inline fn mc(self: Self) MC_Ref {
             return self.info.mc().?;
         }
 
-        pub fn signal(self: Self) GRP {
+        pub inline fn pad(self: Self) GRP {
             return @enumFromInt(self.info.grp_ordinal.?);
         }
 
-        pub fn when_high(self: Self) Factor(GRP) {
-            return self.signal().when_high();
+        pub inline fn fb(self: Self) GRP {
+            return self.pad().fb();
         }
 
-        pub fn when_low(self: Self) Factor(GRP) {
-            return self.signal().when_low();
+        pub inline fn when_high(self: Self) Factor(GRP) {
+            return self.pad().when_high();
+        }
+
+        pub inline fn when_low(self: Self) Factor(GRP) {
+            return self.pad().when_low();
         }
     };
 }
@@ -620,7 +632,7 @@ pub const Pin_Info = struct {
     glb: ?GLB_Index = null, // only meaningful when func is io, io_oe0, io_oe1, input, or clock
     grp_ordinal: ?u16 = null, // use with @intToEnum(GRP, grp_ordinal)
 
-    pub fn mc(self: Pin_Info) ?MC_Ref {
+    pub inline fn mc(self: Pin_Info) ?MC_Ref {
         return if (self.glb) |glb| switch (self.func) {
             .io, .io_oe0, .io_oe1 => |mc_index| MC_Ref.init(glb, mc_index),
             else => null,

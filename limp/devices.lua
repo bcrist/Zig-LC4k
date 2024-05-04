@@ -315,6 +315,24 @@ write [[
         return .{ .when_low = self };
     }
 
+    pub inline fn maybe_fb(self: GRP) ?GRP {
+        const mcref = self.maybe_mc() orelse return null;
+        return mc_fb(mcref);
+    }
+
+    pub inline fn fb(self: GRP) GRP {
+        return mc_fb(self.mc());
+    }
+
+    pub inline fn maybe_pad(self: GRP) ?GRP {
+        const mcref = self.maybe_mc() orelse return null;
+        return mc_pad(mcref);
+    }
+
+    pub inline fn pad(self: GRP) GRP {
+        return mc_pad(self.mc());
+    }
+
     pub inline fn mc_fb(mcref: lc4k.MC_Ref) GRP {
         return mc_feedback_signals[mcref.glb][mcref.mc];
     }

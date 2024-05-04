@@ -620,7 +620,7 @@ fn write_pin_goe_equation(writer: std.io.AnyWriter, comptime Device: type, polar
         .active_low => "<abbr><u>",
     });
 
-    try writer.writeAll(options.get_names().get_signal_name(pin.signal()));
+    try writer.writeAll(options.get_names().get_signal_name(pin.pad()));
 
     try writer.writeAll(switch (polarity) {
         .active_high => "</abbr>",

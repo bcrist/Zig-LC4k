@@ -5,6 +5,7 @@ const lc4k = @import("lc4k");
 
 pub fn main() !void {
     const Chip = lc4k.LC4032ZE_TQFP48;
+    const GRP = Chip.GRP;
 
     var chip = Chip {};
 
@@ -12,31 +13,31 @@ pub fn main() !void {
     chip.goe0.source = .{ .glb_shared_pt_enable = 0 };
     chip.goe0.polarity = .active_high;
 
-    const input_pins = [_]Chip.Pin {
-        Chip.pins._22,
-        Chip.pins._21,
-        Chip.pins._20,
+    const inputs = [_]GRP {
+        Chip.pins._22.pad(),
+        Chip.pins._21.pad(),
+        Chip.pins._20.pad(),
     };
 
-    const output_pins = [_]Chip.Pin {
-        Chip.pins._23,
-        Chip.pins._24,
-        Chip.pins._26,
-        Chip.pins._27,
-        Chip.pins._28,
-        Chip.pins._31,
-        Chip.pins._32,
-        Chip.pins._33,
+    const outputs = [_]GRP {
+        Chip.pins._23.pad(),
+        Chip.pins._24.pad(),
+        Chip.pins._26.pad(),
+        Chip.pins._27.pad(),
+        Chip.pins._28.pad(),
+        Chip.pins._31.pad(),
+        Chip.pins._32.pad(),
+        Chip.pins._33.pad(),
     };
 
-    inline for (output_pins, 0..) |out, bit| {
+    inline for (outputs, 0..) |out, bit| {
         var mc = chip.mc(out.mc());
         mc.output.oe = .goe0;
         mc.logic = comptime .{ .sum_inverted = &.{
             Chip.PT.when_eql(&.{
-                input_pins[0].signal(),
-                input_pins[1].signal(),
-                input_pins[2].signal(),
+                inputs[0],
+                inputs[1],
+                inputs[2],
             }, bit),
         }};
     }

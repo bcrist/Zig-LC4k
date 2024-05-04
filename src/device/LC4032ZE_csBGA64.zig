@@ -1,4 +1,4 @@
-//[[!! include('devices', 'LC4032ZE_csBGA64') !! 478 ]]
+//[[!! include('devices', 'LC4032ZE_csBGA64') !! 496 ]]
 //[[ ################# !! GENERATED CODE -- DO NOT MODIFY !! ################# ]]
 const std = @import("std");
 const lc4k = @import("../lc4k.zig");
@@ -185,6 +185,24 @@ pub const GRP = enum (u16) {
 
     pub inline fn when_low(self: GRP) F {
         return .{ .when_low = self };
+    }
+
+    pub inline fn maybe_fb(self: GRP) ?GRP {
+        const mcref = self.maybe_mc() orelse return null;
+        return mc_fb(mcref);
+    }
+
+    pub inline fn fb(self: GRP) GRP {
+        return mc_fb(self.mc());
+    }
+
+    pub inline fn maybe_pad(self: GRP) ?GRP {
+        const mcref = self.maybe_mc() orelse return null;
+        return mc_pad(mcref);
+    }
+
+    pub inline fn pad(self: GRP) GRP {
+        return mc_pad(self.mc());
     }
 
     pub inline fn mc_fb(mcref: lc4k.MC_Ref) GRP {
