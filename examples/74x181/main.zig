@@ -5,252 +5,216 @@ const Chip = lc4k.LC4032ZE_TQFP48;
 pub fn main() !void {
     var chip = Chip {};
 
-    // inputs:
-    const carry_in = Chip.pins._2.pad();
+    const in = comptime .{
+        .Cin = Chip.pins._2.pad(),
+        .@"~A" = [_]Signal {
+            Chip.pins._14.pad(),
+            Chip.pins._15.pad(),
+            Chip.pins._16.pad(),
+            Chip.pins._17.pad(),
+        },
 
-    const input_a: [4]Signal = comptime .{
-        Chip.pins._14.pad(),
-        Chip.pins._15.pad(),
-        Chip.pins._16.pad(),
-        Chip.pins._17.pad(),
+        .@"~B" = [_]Signal {
+            Chip.pins._38.pad(),
+            Chip.pins._39.pad(),
+            Chip.pins._40.pad(),
+            Chip.pins._41.pad(),
+        },
+
+        .S = [_]Signal {
+            Chip.pins._20.pad(),
+            Chip.pins._21.pad(),
+            Chip.pins._22.pad(),
+            Chip.pins._23.pad(),
+        },
+
+        .M = Chip.pins._24.pad(),
     };
 
-    const input_b: [4]Signal = comptime .{
-        Chip.pins._38.pad(),
-        Chip.pins._39.pad(),
-        Chip.pins._40.pad(),
-        Chip.pins._41.pad(),
+    const out = comptime .{
+        .@"~F" = [_]Signal {
+            Chip.pins._7.pad(),
+            Chip.pins._8.pad(),
+            Chip.pins._9.pad(),
+            Chip.pins._10.pad(),
+        },
+
+        .Cout = Chip.pins._3.pad(),
+        .@"~G" = Chip.pins._47.pad(),
+        .@"~P" = Chip.pins._48.pad(),
+        .@"A=B" = Chip.pins._31.pad(),
     };
 
-    const op_sel: [4]Signal = comptime .{
-        Chip.pins._20.pad(),
-        Chip.pins._21.pad(),
-        Chip.pins._22.pad(),
-        Chip.pins._23.pad(),
-    };
-    const op_mode = Chip.pins._24.pad();
+    const buried = comptime .{
+        .TA = [_]Signal {
+            in.@"~A"[0].fb(),
+            in.@"~A"[1].fb(),
+            in.@"~A"[2].fb(),
+            in.@"~A"[3].fb(),
+        },
 
+        .TB = [_]Signal {
+            in.@"~B"[0].fb(),
+            in.@"~B"[1].fb(),
+            in.@"~B"[2].fb(),
+            in.@"~B"[3].fb(),
+        },
 
-    // outputs:
-    const result: [4]Signal = comptime .{
-        Chip.pins._7.fb(),
-        Chip.pins._8.fb(),
-        Chip.pins._9.fb(),
-        Chip.pins._10.fb(),
-    };
+        .TX = [_]Signal {
+            in.S[0].fb(),
+            in.S[1].fb(),
+            in.S[2].fb(),
+            in.S[3].fb(),
+        },
 
-    const carry_out = Chip.pins._3.fb();
-    const carry_generate = Chip.pins._47.fb();
-    const carry_propagate = Chip.pins._48.fb();
-    const equal = Chip.pins._31.fb();
-
-    // buried macrocells:
-    const input_temp_a: [4]Signal = comptime .{
-        input_a[0].fb(),
-        input_a[1].fb(),
-        input_a[2].fb(),
-        input_a[3].fb(),
-    };
-
-    const input_temp_b: [4]Signal = comptime .{
-        input_b[0].fb(),
-        input_b[1].fb(),
-        input_b[2].fb(),
-        input_b[3].fb(),
-    };
-
-    const xor_temp: [4]Signal = comptime .{
-        op_sel[0].fb(),
-        op_sel[1].fb(),
-        op_sel[2].fb(),
-        op_sel[3].fb(),
+        .@".fb" = .{
+            .@"~F" = [_]Signal {
+                out.@"~F"[0].fb(),
+                out.@"~F"[1].fb(),
+                out.@"~F"[2].fb(),
+                out.@"~F"[3].fb(),
+            },
+        },
     };
 
     var names = Chip.Names.init(gpa.allocator());
     names.fallback = null;
     try names.add_glb_name(0, "X");
     try names.add_glb_name(1, "Y");
-    try names.add_signal_name(carry_in, "Cin");
-    try names.add_signal_name(input_a[0], "~A[0]");
-    try names.add_signal_name(input_a[1], "~A[1]");
-    try names.add_signal_name(input_a[2], "~A[2]");
-    try names.add_signal_name(input_a[3], "~A[3]");
-    try names.add_signal_name(input_b[0], "~B[0]");
-    try names.add_signal_name(input_b[1], "~B[1]");
-    try names.add_signal_name(input_b[2], "~B[2]");
-    try names.add_signal_name(input_b[3], "~B[3]");
-    try names.add_signal_name(op_sel[0], "S[0]");
-    try names.add_signal_name(op_sel[1], "S[1]");
-    try names.add_signal_name(op_sel[2], "S[2]");
-    try names.add_signal_name(op_sel[3], "S[3]");
-    try names.add_signal_name(op_mode, "M");
-    try names.add_signal_name(result[0], "~F[0] fb");
-    try names.add_signal_name(result[1], "~F[1] fb");
-    try names.add_signal_name(result[2], "~F[2] fb");
-    try names.add_signal_name(result[3], "~F[3] fb");
-    try names.add_mc_name(result[0].mc(), "~F[0]");
-    try names.add_mc_name(result[1].mc(), "~F[1]");
-    try names.add_mc_name(result[2].mc(), "~F[2]");
-    try names.add_mc_name(result[3].mc(), "~F[3]");
-    try names.add_signal_name(result[0].pad(), "~F[0]");
-    try names.add_signal_name(result[1].pad(), "~F[1]");
-    try names.add_signal_name(result[2].pad(), "~F[2]");
-    try names.add_signal_name(result[3].pad(), "~F[3]");
-    try names.add_signal_name(carry_out.pad(), "Cout");
-    try names.add_signal_name(equal.pad(), "A=B");
-    try names.add_signal_name(carry_generate.pad(), "~G");
-    try names.add_signal_name(carry_propagate.pad(), "~P");
-    try names.add_signal_name(input_temp_a[0], "TA[0]");
-    try names.add_signal_name(input_temp_a[1], "TA[1]");
-    try names.add_signal_name(input_temp_a[2], "TA[2]");
-    try names.add_signal_name(input_temp_a[3], "TA[3]");
-    try names.add_signal_name(input_temp_b[0], "TB[0]");
-    try names.add_signal_name(input_temp_b[1], "TB[1]");
-    try names.add_signal_name(input_temp_b[2], "TB[2]");
-    try names.add_signal_name(input_temp_b[3], "TB[3]");
-    try names.add_signal_name(xor_temp[0], "TX[0]");
-    try names.add_signal_name(xor_temp[1], "TX[1]");
-    try names.add_signal_name(xor_temp[2], "TX[2]");
-    try names.add_signal_name(xor_temp[3], "TX[3]");
+    try names.add_names(in, .{});
+    try names.add_names(out, .{});
+    try names.add_names(buried, .{});
 
-    // configure TA macrocells
-    inline for (input_a, input_b, input_temp_a) |a, b, ta| {
+    inline for (in.@"~A", in.@"~B", buried.TA) |a, b, ta| {
         var mc = chip.mc(ta.mc());
         mc.logic = comptime .{ .sum_inverted = &.{
-            a.when_high().pt()  .and_factor(b.when_high())  .and_factor(op_sel[3].when_high()),
-            a.when_high().pt()  .and_factor(b.when_low())   .and_factor(op_sel[2].when_high()),
+            a.when_high().pt()  .and_factor(b.when_high())  .and_factor(in.S[3].when_high()),
+            a.when_high().pt()  .and_factor(b.when_low())   .and_factor(in.S[2].when_high()),
         }};
     }
 
-    // configure TB macrocells
-    inline for (input_a, input_b, input_temp_b) |a, b, tb| {
+    inline for (in.@"~A", in.@"~B", buried.TB) |a, b, tb| {
         var mc = chip.mc(tb.mc());
         mc.logic = comptime .{ .sum_inverted = &.{
-            b.when_low().pt()   .and_factor(op_sel[1].when_high()),
-            b.when_high().pt()  .and_factor(op_sel[0].when_high()),
+            b.when_low().pt()   .and_factor(in.S[1].when_high()),
+            b.when_high().pt()  .and_factor(in.S[0].when_high()),
             a.when_high().pt(),
         }};
     }
 
-    // configure ~P
     {
-        var mc = chip.mc(carry_propagate.mc());
+        var mc = chip.mc(out.@"~P".mc());
         mc.output.oe = .output_only;
         mc.output.slew_rate = .fast;
 
         mc.logic = comptime .{ .sum_inverted = &.{
-            input_temp_a[3].when_high().pt()
-                .and_factor(input_temp_a[2].when_high())
-                .and_factor(input_temp_a[1].when_high())
-                .and_factor(input_temp_a[0].when_high()),
+            buried.TA[3].when_high().pt()
+                .and_factor(buried.TA[2].when_high())
+                .and_factor(buried.TA[1].when_high())
+                .and_factor(buried.TA[0].when_high()),
         }};
     }
 
-    // configure ~G
     {
-        var mc = chip.mc(carry_generate.mc());
+        var mc = chip.mc(out.@"~G".mc());
         mc.output.oe = .output_only;
         mc.output.slew_rate = .fast;
 
         mc.logic = comptime .{ .sum_inverted = &.{
-            input_temp_b[3].when_high().pt(),
-            input_temp_b[2].when_high().pt() .and_factor(input_temp_a[3].when_high()),
-            input_temp_b[1].when_high().pt() .and_factor(input_temp_a[3].when_high()) .and_factor(input_temp_a[2].when_high()),
-            input_temp_b[0].when_high().pt() .and_factor(input_temp_a[3].when_high()) .and_factor(input_temp_a[2].when_high()) .and_factor(input_temp_a[1].when_high()),
+            buried.TB[3].when_high().pt(),
+            buried.TB[2].when_high().pt() .and_factor(buried.TA[3].when_high()),
+            buried.TB[1].when_high().pt() .and_factor(buried.TA[3].when_high()) .and_factor(buried.TA[2].when_high()),
+            buried.TB[0].when_high().pt() .and_factor(buried.TA[3].when_high()) .and_factor(buried.TA[2].when_high()) .and_factor(buried.TA[1].when_high()),
         }};
     }
 
-    // configure Cout
     {
-        var mc = chip.mc(carry_out.mc());
+        var mc = chip.mc(out.Cout.mc());
         mc.output.oe = .output_only;
         mc.output.slew_rate = .fast;
 
         mc.logic = comptime .{ .sum = &.{
-            input_temp_b[3].when_high().pt(),
-            input_temp_b[2].when_high().pt() .and_factor(input_temp_a[3].when_high()),
-            input_temp_b[1].when_high().pt() .and_factor(input_temp_a[3].when_high()) .and_factor(input_temp_a[2].when_high()),
-            input_temp_b[0].when_high().pt() .and_factor(input_temp_a[3].when_high()) .and_factor(input_temp_a[2].when_high()) .and_factor(input_temp_a[1].when_high()),
-            carry_in.when_high().pt()        .and_factor(input_temp_a[3].when_high()) .and_factor(input_temp_a[2].when_high()) .and_factor(input_temp_a[1].when_high()) .and_factor(input_temp_a[0].when_high()),
+            buried.TB[3].when_high().pt(),
+            buried.TB[2].when_high().pt() .and_factor(buried.TA[3].when_high()),
+            buried.TB[1].when_high().pt() .and_factor(buried.TA[3].when_high()) .and_factor(buried.TA[2].when_high()),
+            buried.TB[0].when_high().pt() .and_factor(buried.TA[3].when_high()) .and_factor(buried.TA[2].when_high()) .and_factor(buried.TA[1].when_high()),
+            in.Cin.when_high().pt()       .and_factor(buried.TA[3].when_high()) .and_factor(buried.TA[2].when_high()) .and_factor(buried.TA[1].when_high()) .and_factor(buried.TA[0].when_high()),
         }};
     }
 
-    // configure TX macrocells
-    inline for (input_temp_a, input_temp_b, xor_temp) |a, b, tx| {
+    inline for (buried.TA, buried.TB, buried.TX) |ta, tb, tx| {
         var mc = chip.mc(tx.mc());
         mc.logic = comptime .{ .sum_xor_pt0 = .{
-            .sum = &.{ a.when_high().pt() },
-            .pt0 = b.when_high().pt()
+            .sum = &.{ ta.when_high().pt() },
+            .pt0 = tb.when_high().pt()
         }};
     }
 
-    // configure F
     {
-        var mc = chip.mc(result[0].mc());
+        var mc = chip.mc(out.@"~F"[0].mc());
         mc.output.oe = .output_only;
         mc.output.slew_rate = .fast;
 
         mc.logic = comptime .{ .sum_xor_pt0 = .{
             .sum = &.{
-                op_mode.when_low().pt() .and_factor(carry_in.when_high()),
+                in.M.when_low().pt() .and_factor(in.Cin.when_high()),
             },
-            .pt0 = xor_temp[0].when_low().pt(),
+            .pt0 = buried.TX[0].when_low().pt(),
         }};
     }
     {
-        var mc = chip.mc(result[1].mc());
+        var mc = chip.mc(out.@"~F"[1].mc());
         mc.output.oe = .output_only;
         mc.output.slew_rate = .fast;
 
         mc.logic = comptime .{ .sum_xor_pt0 = .{
             .sum = &.{
-                op_mode.when_low().pt() .and_factor(input_temp_a[0].when_high()) .and_factor(carry_in.when_high()),
-                op_mode.when_low().pt() .and_factor(input_temp_b[0].when_high()),
+                in.M.when_low().pt() .and_factor(buried.TA[0].when_high()) .and_factor(in.Cin.when_high()),
+                in.M.when_low().pt() .and_factor(buried.TB[0].when_high()),
             },
-            .pt0 = xor_temp[1].when_low().pt(),
+            .pt0 = buried.TX[1].when_low().pt(),
         }};
     }
     {
-        var mc = chip.mc(result[2].mc());
+        var mc = chip.mc(out.@"~F"[2].mc());
         mc.output.oe = .output_only;
         mc.output.slew_rate = .fast;
 
         mc.logic = comptime .{ .sum_xor_pt0 = .{
             .sum = &.{
-                op_mode.when_low().pt() .and_factor(input_temp_a[1].when_high()) .and_factor(input_temp_a[0].when_high()) .and_factor(carry_in.when_high()),
-                op_mode.when_low().pt() .and_factor(input_temp_a[1].when_high()) .and_factor(input_temp_b[0].when_high()),
-                op_mode.when_low().pt() .and_factor(input_temp_b[1].when_high()),
+                in.M.when_low().pt() .and_factor(buried.TA[1].when_high()) .and_factor(buried.TA[0].when_high()) .and_factor(in.Cin.when_high()),
+                in.M.when_low().pt() .and_factor(buried.TA[1].when_high()) .and_factor(buried.TB[0].when_high()),
+                in.M.when_low().pt() .and_factor(buried.TB[1].when_high()),
             },
-            .pt0 = xor_temp[2].when_low().pt(),
+            .pt0 = buried.TX[2].when_low().pt(),
         }};
     }
     {
-        var mc = chip.mc(result[3].mc());
+        var mc = chip.mc(out.@"~F"[3].mc());
         mc.output.oe = .output_only;
         mc.output.slew_rate = .fast;
 
         mc.logic = comptime .{ .sum_xor_pt0 = .{
             .sum = &.{
-                op_mode.when_low().pt() .and_factor(input_temp_a[2].when_high()) .and_factor(input_temp_a[1].when_high()) .and_factor(input_temp_a[0].when_high()) .and_factor(carry_in.when_high()),
-                op_mode.when_low().pt() .and_factor(input_temp_a[2].when_high()) .and_factor(input_temp_a[1].when_high()) .and_factor(input_temp_b[0].when_high()),
-                op_mode.when_low().pt() .and_factor(input_temp_a[2].when_high()) .and_factor(input_temp_b[1].when_high()),
-                op_mode.when_low().pt() .and_factor(input_temp_b[2].when_high()),
+                in.M.when_low().pt() .and_factor(buried.TA[2].when_high()) .and_factor(buried.TA[1].when_high()) .and_factor(buried.TA[0].when_high()) .and_factor(in.Cin.when_high()),
+                in.M.when_low().pt() .and_factor(buried.TA[2].when_high()) .and_factor(buried.TA[1].when_high()) .and_factor(buried.TB[0].when_high()),
+                in.M.when_low().pt() .and_factor(buried.TA[2].when_high()) .and_factor(buried.TB[1].when_high()),
+                in.M.when_low().pt() .and_factor(buried.TB[2].when_high()),
             },
-            .pt0 = xor_temp[3].when_low().pt(),
+            .pt0 = buried.TX[3].when_low().pt(),
         }};
     }
 
-    // configure A=B
     {
-        var mc = chip.mc(equal.mc());
+        var mc = chip.mc(out.@"A=B".mc());
         mc.output.oe = .output_only;
         mc.output.drive_type = .open_drain;
 
         mc.logic = comptime .{ .sum = &.{
-            result[0].when_high().pt()
-                .and_factor(result[1].when_high())
-                .and_factor(result[2].when_high())
-                .and_factor(result[3].when_high()),
+            out.@"~F"[0].fb().when_high().pt()
+                .and_factor(out.@"~F"[1].fb().when_high())
+                .and_factor(out.@"~F"[2].fb().when_high())
+                .and_factor(out.@"~F"[3].fb().when_high()),
         }};
     }
 

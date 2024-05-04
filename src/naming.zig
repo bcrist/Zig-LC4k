@@ -56,6 +56,63 @@ pub fn Names(comptime Device: type) type {
             return self;
         }
 
+        pub const Add_Names_Options = struct {
+            prefix: []const u8 = "",
+            name: []const u8 = "",
+            suffix: []const u8 = "",
+        };
+
+        pub fn add_names(self: *Self, comptime what: anytype, comptime options: Add_Names_Options) !void {
+            const T = @TypeOf(what);
+            switch (T) {
+                GLB_Index => try self.add_glb_name(what, options.prefix ++ options.name ++ options.suffix),
+                MC_Ref => try self.add_mc_name(what, options.prefix ++ options.name ++ options.suffix),
+                Signal => try self.add_signal_name(what, options.prefix ++ options.name ++ options.suffix),
+                type => {
+                    const name_is_suffix = comptime std.mem.startsWith(u8, options.name, ".");
+                    const prefix = options.prefix ++ if (name_is_suffix) "" else options.name ++ if (options.name.len > 0) "." else "";
+                    const suffix = if (name_is_suffix) options.name ++ options.suffix else options.suffix;
+
+                    const decls = switch (@typeInfo(T)) {
+                        .Struct => |info| info.decls,
+                        .Union => |info| info.decls,
+                        else => @compileError("Expected struct or union type"),
+                    };
+
+                    inline for (decls) |decl| {
+                        try self.add_names(@field(what, decl.name), .{
+                            .prefix = prefix,
+                            .name = decl.name,
+                            .suffix = suffix,
+                        });
+                    }
+                },
+                else => switch (@typeInfo(T)) {
+                    .Struct => |struct_info| {
+                        const name_is_suffix = comptime std.mem.startsWith(u8, options.name, ".");
+                        const prefix = options.prefix ++ if (name_is_suffix) "" else options.name ++ if (options.name.len > 0) "." else "";
+                        const suffix = if (name_is_suffix) options.name ++ options.suffix else options.suffix;
+
+                        inline for (struct_info.fields) |field| {
+                            try self.add_names(@field(what, field.name), .{
+                                .prefix = prefix,
+                                .name = field.name,
+                                .suffix = suffix,
+                            });
+                        }
+                    },
+                    .Array, .Pointer => inline for (0.., what) |i, elem| {
+                        try self.add_names(elem, .{
+                            .prefix = options.prefix,
+                            .name = std.fmt.comptimePrint("{s}[{}]", .{ options.name, i }),
+                            .suffix = options.suffix,
+                        });
+                    },
+                    else => @compileError("Unexpected type: " ++ @typeName(T) ++ " for " ++ options.prefix ++ options.name ++ options.suffix), 
+                },
+            }
+        }
+
         pub fn add_glb_name(self: *Self, glb: GLB_Index, name: []const u8) !void {
             if (self.glb_names.contains(glb)) return error.AlreadyNamed;
             if (self.glb_lookup.contains(name)) return error.DuplicateName;
@@ -119,6 +176,9 @@ pub fn Names(comptime Device: type) type {
             }
 
             if (self.signal_names.get(Signal.mc_fb(mc))) |name| {
+                if (std.mem.endsWith(u8, name, ".fb")) {
+                    return name[0 .. name.len - 3];
+                }
                 return name;
             }
 

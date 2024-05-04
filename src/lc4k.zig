@@ -458,7 +458,7 @@ pub fn Factor(comptime Device_Signal: type) type {
         const Signal = Device_Signal;
         const Self = @This();
 
-        pub fn negate(self: Self) Self {
+        pub inline fn negate(self: Self) Self {
             return switch(self) {
                 .always => .never,
                 .never => .always,
@@ -467,13 +467,13 @@ pub fn Factor(comptime Device_Signal: type) type {
             };
         }
 
-        pub fn pt(comptime self: Self) Product_Term(Signal) {
+        pub inline fn pt(comptime self: Self) Product_Term(Signal) {
             return comptime .{ .factors = &.{ self } };
         }
-        pub fn pt_indirect(self: *Self) Product_Term(Signal) {
+        pub inline fn pt_indirect(self: *Self) Product_Term(Signal) {
             return .{ .factors = self[0..1] };
         }
-        pub fn pt_alloc(self: Self, allocator: std.mem.Allocator) !Product_Term(Signal) {
+        pub inline fn pt_alloc(self: Self, allocator: std.mem.Allocator) !Product_Term(Signal) {
             return .{ .factors = try allocator.dupe(Self, self.pt_indirect().factors) };
         }
     };
@@ -617,11 +617,11 @@ pub fn Pin(comptime Signal: type) type {
         }
 
         pub inline fn when_high(self: Self) Factor(Signal) {
-            return self.pad().when_high();
+            return .{ .when_high = @enumFromInt(self.info.grp_ordinal.?) };
         }
 
         pub inline fn when_low(self: Self) Factor(Signal) {
-            return self.pad().when_low();
+            return .{ .when_low = @enumFromInt(self.info.grp_ordinal.?) };
         }
     };
 }
