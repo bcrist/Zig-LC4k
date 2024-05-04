@@ -26,14 +26,14 @@ const PT_Usage = enum {
 };
 
 fn Report_Data(comptime Device: type) type {
-    const GRP = Device.GRP;
+    const Signal = Device.Signal;
 
     const GLB_Report_Data = struct {
         const num_pts = Device.num_mcs_per_glb * 5 + 3;
 
-        gi_routing: [Device.num_gis_per_glb]?GRP,
+        gi_routing: [Device.num_gis_per_glb]?Signal,
         sum_routing: routing.Routing_Data,
-        pts: [num_pts]lc4k.Product_Term(GRP),
+        pts: [num_pts]lc4k.Product_Term(Signal),
         pt_usage: [num_pts]PT_Usage,
         uses_bie: bool,
     };
@@ -73,10 +73,10 @@ fn Report_Data(comptime Device: type) type {
                 .disassembly_errors = dis.errors,
             };
 
-            var mcs_used = std.EnumSet(GRP) {};
-            var ios_used = std.EnumSet(GRP) {};
-            var inputs_used = std.EnumSet(GRP) {};
-            var clocks_used = std.EnumSet(GRP) {};
+            var mcs_used = std.EnumSet(Signal) {};
+            var ios_used = std.EnumSet(Signal) {};
+            var inputs_used = std.EnumSet(Signal) {};
+            var clocks_used = std.EnumSet(Signal) {};
             inline for (dis.config.glb, 0..) |glb_config, glb| {
                 var glb_data = GLB_Report_Data {
                     .gi_routing = dis.gi_routing[glb],
@@ -116,7 +116,7 @@ fn Report_Data(comptime Device: type) type {
                         const pt = try disassembly.read_pt_fuses(Device, alloc, glb, glb_pt_offset, &glb_data.gi_routing, self.jed, null);
                         glb_data.pts[glb_pt_offset] = pt;
                         glb_data.pt_usage[glb_pt_offset] = .sum;
-                        if (@TypeOf(mc_config.output) == lc4k.Output_Config(Device.GRP)) {
+                        if (@TypeOf(mc_config.output) == lc4k.Output_Config(Device.Signal)) {
                             switch (mc_config.output.routing) {
                                 .same_as_oe, .self => {},
                                 .five_pt_fast_bypass, .five_pt_fast_bypass_inverted => {
@@ -128,11 +128,11 @@ fn Report_Data(comptime Device: type) type {
 
                     if (mc_config.func != .combinational) {
                         self.num_registers_used += 1;
-                        mcs_used.insert(Device.GRP.mc_fb(mcref));
+                        mcs_used.insert(Device.Signal.mc_fb(mcref));
                     }
 
                     if (mc_config.output.oe != .input_only) {
-                        if (Device.GRP.maybe_mc_pad(mcref)) |grp| {
+                        if (Device.Signal.maybe_mc_pad(mcref)) |grp| {
                             ios_used.insert(grp);
                         }
 
@@ -142,7 +142,7 @@ fn Report_Data(comptime Device: type) type {
                             mc_config.output.oe_routing;
 
                         const src_mcref = lc4k.MC_Ref.init(glb, output_routing.absolute);
-                        mcs_used.insert(Device.GRP.mc_fb(src_mcref));
+                        mcs_used.insert(Device.Signal.mc_fb(src_mcref));
                     }
 
                     switch (mc_config.logic) {
@@ -637,7 +637,7 @@ fn write_block_clock(writer: std.io.AnyWriter, comptime Device: type, highlight:
 
     try begin_cell(writer, .{ .class = "left" });
     const name = @tagName(value);
-    const grp: Device.GRP = switch (name[3]) {
+    const grp: Device.Signal = switch (name[3]) {
         '0' => .clk0,
         '1' => .clk1,
         '2' => .clk2,
@@ -808,7 +808,7 @@ fn write_pt_usage(writer: std.io.AnyWriter, usage: PT_Usage) !void {
     });
 }
 
-fn write_pt_equation(writer: std.io.AnyWriter, comptime Device: type, pt: lc4k.Product_Term(Device.GRP), options: Write_Options(Device)) !void {
+fn write_pt_equation(writer: std.io.AnyWriter, comptime Device: type, pt: lc4k.Product_Term(Device.Signal), options: Write_Options(Device)) !void {
     try writer.writeAll("<td class=\"left\">");
 
     var first = true;
@@ -856,7 +856,7 @@ fn write_glb_routing(writer: std.io.AnyWriter, comptime Device: type, data: Repo
         for (Device.gi_options, 0..) |gi_options, gi| {
             const fuse_range = Device.get_gi_range(glb, gi);
             var fuse_iter = fuse_range.iterator();
-            var active: ?Device.GRP = null;
+            var active: ?Device.Signal = null;
             try begin_row(writer, .{ .highlight = (gi & 1) == 1 });
 
             try writer.print("<td>{}</td>", .{ gi });
@@ -962,7 +962,7 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
                 .hover_selector = mc_class,
             };
 
-            if (Device.GRP.maybe_mc_pad(mcref)) |pad| {
+            if (Device.Signal.maybe_mc_pad(mcref)) |pad| {
                 try begin_cell(writer, cell_options);
                 try writer.writeAll(pad.pin().id());
                 try end_cell(writer);
@@ -978,7 +978,7 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
             }
 
             try begin_cell(writer, cell_options);
-            try writer.writeAll(options.get_names().get_signal_name(Device.GRP.mc_fb(mcref)));
+            try writer.writeAll(options.get_names().get_signal_name(Device.Signal.mc_fb(mcref)));
             try end_cell(writer);
 
             try begin_cell(writer, cell_options);
@@ -1332,7 +1332,7 @@ fn write_timing(writer: std.io.AnyWriter, comptime Device: type, comptime speed:
 fn write_timing_for_target(writer: std.io.AnyWriter, comptime Device: type, comptime speed: comptime_int, target: timing.Node, data: Report_Data(Device), timing_data: *timing.Analyzer(Device, speed), options: Write_Options(Device), highlight: bool) !?timing.Path {
     var shortest_path: ?timing.Path = null;
 
-    for (std.enums.values(Device.GRP)) |grp| {
+    for (std.enums.values(Device.Signal)) |grp| {
         const source: timing.Node = switch (grp.kind()) {
             .io, .in, .clk => .{ .pad = @intFromEnum(grp) },
             .mc => .{ .mcq = grp.mc() },
@@ -1400,7 +1400,7 @@ fn write_setup_hold_timing(writer: std.io.AnyWriter, comptime Device: type, comp
     const clk_path = try timing_data.get_critical_path(.{ .source = clk_source, .dest = .{ .mc_clk = clk_mcref }});
     const hold_path = try timing_data.get_critical_path(.{ .source = clk_source, .dest = hold });
 
-    for (std.enums.values(Device.GRP)) |grp| {
+    for (std.enums.values(Device.Signal)) |grp| {
         const source: timing.Node = switch (grp.kind()) {
             .io, .in, .clk => .{ .pad = @intFromEnum(grp) },
             .mc => source: {

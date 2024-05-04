@@ -11,7 +11,7 @@ pub const Disassembly_Error = struct {
 pub fn Disassembly_Results(comptime Device: type) type {
     return struct {
         config: lc4k.Chip_Config(Device.device_type),
-        gi_routing: [Device.num_glbs][Device.num_gis_per_glb]?Device.GRP,
+        gi_routing: [Device.num_glbs][Device.num_gis_per_glb]?Device.Signal,
         sum_routing: [Device.num_glbs]routing.Routing_Data,
         errors: std.ArrayList(Disassembly_Error),
     };
@@ -90,7 +90,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
     // Program clock/input fuses
     for (&results.config.clock, 0..) |*clock_config, clock_pin_index| {
         const pin = Device.clock_pins[clock_pin_index];
-        const grp: Device.GRP = pin.pad();
+        const grp: Device.Signal = pin.pad();
 
         const threshold_range = Device.get_input_threshold_fuse(grp).range();
         clock_config.threshold = read_field(file.data, lc4k.Input_Threshold, threshold_range);
@@ -106,7 +106,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
 
     for (&results.config.input, 0..) |*input_config, input_pin_index| {
         const pin = Device.input_pins[input_pin_index];
-        const grp: Device.GRP = pin.pad();
+        const grp: Device.Signal = pin.pad();
 
         const threshold_range = Device.get_input_threshold_fuse(grp).range();
         input_config.threshold = read_field(file.data, lc4k.Input_Threshold, threshold_range);
@@ -262,7 +262,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                 }
             }
 
-            const Register_Config = lc4k.Register_Config(Device.GRP);
+            const Register_Config = lc4k.Register_Config(Device.Signal);
 
             const clock: @TypeOf((Register_Config {}).clock) = switch (read_clock_source(Device, file.data, mcref)) {
                 .pt1_positive => .{ .pt1_positive = try read_pt_fuses(Device, allocator, glb, mc * 5 + 1, gi_routing, file.data, &results) },
@@ -385,7 +385,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                 switch (mc_config.output.routing) {
                     .same_as_oe, .self => {},
                     .five_pt_fast_bypass, .five_pt_fast_bypass_inverted => {
-                        var pts = try allocator.alloc(Product_Term(Device.GRP), 5);
+                        var pts = try allocator.alloc(Product_Term(Device.Signal), 5);
                         var pt_index: usize = 0;
                         var num_pts: usize = 0;
                         var sum_is_always = false;
@@ -436,7 +436,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                 if (sum_is_always) num_pts += 1;
 
                 const pts = if (num_pts > 0) blk: {
-                    var pts = try allocator.alloc(Product_Term(Device.GRP), num_pts);
+                    var pts = try allocator.alloc(Product_Term(Device.Signal), num_pts);
                     var next_pt_index: usize = 0;
                     sum_is_always = false;
                     pt_iter = results.sum_routing[glb].iterator(Device, glb_config, mc);
@@ -463,7 +463,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                         });
                     }
                     break :blk pts;
-                } else &[_]Product_Term(Device.GRP) {};
+                } else &[_]Product_Term(Device.Signal) {};
 
                 switch (mc_config.logic) {
                     .sum, .sum_inverted, .sum_xor_input_buffer => |*sum| {
@@ -498,7 +498,7 @@ fn get_pt_type_from_fuses(
     comptime Device: type,
     glb: usize,
     glb_pt_offset: usize,
-    gi_signals: *[Device.num_gis_per_glb]?Device.GRP,
+    gi_signals: *[Device.num_gis_per_glb]?Device.Signal,
     jed: JEDEC_Data,
 ) PT_Type {
     const range = fuses.get_pt_range(Device, glb, glb_pt_offset);
@@ -529,11 +529,11 @@ pub fn read_pt_fuses(
     allocator: std.mem.Allocator,
     glb: usize,
     glb_pt_offset: usize,
-    gi_signals: *const [Device.num_gis_per_glb]?Device.GRP,
+    gi_signals: *const [Device.num_gis_per_glb]?Device.Signal,
     jed: JEDEC_Data,
     maybe_results: ?*Disassembly_Results(Device),
-) !Product_Term(Device.GRP) {
-    const GRP = Device.GRP;
+) !Product_Term(Device.Signal) {
+    const Signal = Device.Signal;
     const range = fuses.get_pt_range(Device, glb, glb_pt_offset);
     std.debug.assert(range.count() == gi_signals.len * 2);
 
@@ -548,13 +548,13 @@ pub fn read_pt_fuses(
         const when_low = !jed.is_set(active_low_fuse);
 
         if (when_high and when_low) {
-            return Product_Term(GRP).never();
+            return Product_Term(Signal).never();
         } else if (when_high or when_low) {
             num_factors += 1;
         }
     }
 
-    var factors: []Factor(GRP) = try allocator.alloc(Factor(GRP), num_factors);
+    var factors: []Factor(Signal) = try allocator.alloc(Factor(Signal), num_factors);
 
     var factor_index: usize = 0;
     fuse_iter = range.iterator();

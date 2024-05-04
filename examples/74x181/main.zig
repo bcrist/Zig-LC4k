@@ -8,21 +8,21 @@ pub fn main() !void {
     // inputs:
     const carry_in = Chip.pins._2.pad();
 
-    const input_a: [4]GRP = comptime .{
+    const input_a: [4]Signal = comptime .{
         Chip.pins._14.pad(),
         Chip.pins._15.pad(),
         Chip.pins._16.pad(),
         Chip.pins._17.pad(),
     };
 
-    const input_b: [4]GRP = comptime .{
+    const input_b: [4]Signal = comptime .{
         Chip.pins._38.pad(),
         Chip.pins._39.pad(),
         Chip.pins._40.pad(),
         Chip.pins._41.pad(),
     };
 
-    const op_sel: [4]GRP = comptime .{
+    const op_sel: [4]Signal = comptime .{
         Chip.pins._20.pad(),
         Chip.pins._21.pad(),
         Chip.pins._22.pad(),
@@ -32,7 +32,7 @@ pub fn main() !void {
 
 
     // outputs:
-    const result: [4]GRP = comptime .{
+    const result: [4]Signal = comptime .{
         Chip.pins._7.fb(),
         Chip.pins._8.fb(),
         Chip.pins._9.fb(),
@@ -45,21 +45,21 @@ pub fn main() !void {
     const equal = Chip.pins._31.fb();
 
     // buried macrocells:
-    const input_temp_a: [4]GRP = comptime .{
+    const input_temp_a: [4]Signal = comptime .{
         input_a[0].fb(),
         input_a[1].fb(),
         input_a[2].fb(),
         input_a[3].fb(),
     };
 
-    const input_temp_b: [4]GRP = comptime .{
+    const input_temp_b: [4]Signal = comptime .{
         input_b[0].fb(),
         input_b[1].fb(),
         input_b[2].fb(),
         input_b[3].fb(),
     };
 
-    const xor_temp: [4]GRP = comptime .{
+    const xor_temp: [4]Signal = comptime .{
         op_sel[0].fb(),
         op_sel[1].fb(),
         op_sel[2].fb(),
@@ -279,7 +279,7 @@ pub fn main() !void {
 
 var gpa: std.heap.GeneralPurposeAllocator(.{}) = .{};
 
-const GRP = Chip.GRP;
+const Signal = Chip.Signal;
 const PT = Chip.PT;
 const MC_Ref = lc4k.MC_Ref;
 

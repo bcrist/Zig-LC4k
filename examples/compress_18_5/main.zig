@@ -50,7 +50,7 @@ pub fn main() !void {
 
     var chip = Chip {};
 
-    const inputs = [_]Chip.GRP {
+    const inputs = [_]Chip.Signal {
         .io_A0,
         .io_A1,
         .io_A2,
@@ -71,7 +71,7 @@ pub fn main() !void {
         .io_B14,
     };
 
-    const outputs = [_]Chip.GRP {
+    const outputs = [_]Chip.Signal {
         .io_B0,
         .io_B1,
         .io_B2,
@@ -79,7 +79,7 @@ pub fn main() !void {
         .io_B4,
     };
 
-    const layer1_i0_o0 = [_]Chip.GRP {
+    const layer1_i0_o0 = [_]Chip.Signal {
         .mc_A0,
         .mc_A1,
         .mc_A2,
@@ -87,7 +87,7 @@ pub fn main() !void {
         .mc_A4,
         .mc_A5,
     };
-    const layer1_i0_o1 = [_]Chip.GRP {
+    const layer1_i0_o1 = [_]Chip.Signal {
         .mc_A6,
         .mc_A7,
         .mc_A8,
@@ -96,22 +96,22 @@ pub fn main() !void {
         .mc_A11,
     };
 
-    const layer2_i0_o0_0 = Chip.GRP.mc_A12;
-    const layer2_i0_o0_1 = Chip.GRP.mc_A13;
-    const layer2_i0_o1_0 = Chip.GRP.mc_A14;
-    const layer2_i0_o1_1 = Chip.GRP.mc_A15;
-    const layer2_i1_o1_0 = Chip.GRP.mc_B15;
-    const layer2_i1_o1_1 = Chip.GRP.mc_B14;
-    const layer2_i1_o2_0 = Chip.GRP.mc_B13;
-    const layer2_i1_o2_1 = Chip.GRP.mc_B12;
+    const layer2_i0_o0_0 = Chip.Signal.mc_A12;
+    const layer2_i0_o0_1 = Chip.Signal.mc_A13;
+    const layer2_i0_o1_0 = Chip.Signal.mc_A14;
+    const layer2_i0_o1_1 = Chip.Signal.mc_A15;
+    const layer2_i1_o1_0 = Chip.Signal.mc_B15;
+    const layer2_i1_o1_1 = Chip.Signal.mc_B14;
+    const layer2_i1_o2_0 = Chip.Signal.mc_B13;
+    const layer2_i1_o2_1 = Chip.Signal.mc_B12;
 
-    const layer3_i0_o1 = Chip.GRP.mc_B11;
-    const layer3_i1_o1 = Chip.GRP.mc_B10;
-    const layer3_i1_o2 = Chip.GRP.mc_B9;
+    const layer3_i0_o1 = Chip.Signal.mc_B11;
+    const layer3_i1_o1 = Chip.Signal.mc_B10;
+    const layer3_i1_o2 = Chip.Signal.mc_B9;
 
-    const layer4_i1_o2 = Chip.GRP.mc_B8;
-    const layer4_i2_o2 = Chip.GRP.mc_B7;
-    const layer4_i2_o3 = Chip.GRP.mc_B6;
+    const layer4_i1_o2 = Chip.Signal.mc_B8;
+    const layer4_i2_o2 = Chip.Signal.mc_B7;
+    const layer4_i2_o3 = Chip.Signal.mc_B6;
 
     inline for (layer1_i0_o0, 0..) |_, n| {
         const base = n * 3;
@@ -168,11 +168,11 @@ pub fn main() !void {
 }
 
 fn full_adder(chip: *Chip,
-    comptime in0: Chip.GRP,
-    comptime in1: Chip.GRP,
-    comptime in2: Chip.GRP,
-    comptime out0: Chip.GRP,
-    comptime out1: Chip.GRP,
+    comptime in0: Chip.Signal,
+    comptime in1: Chip.Signal,
+    comptime in2: Chip.Signal,
+    comptime out0: Chip.Signal,
+    comptime out1: Chip.Signal,
 ) void {
     chip.mc(out0.mc()).logic = comptime .{ .sum_xor_pt0 = .{
         .sum = &.{

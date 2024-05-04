@@ -5,7 +5,7 @@ const lc4k = @import("lc4k");
 
 pub fn main() !void {
     const Chip = lc4k.LC4032ZE_TQFP48;
-    const GRP = Chip.GRP;
+    const Signal = Chip.Signal;
 
     var chip = Chip {};
 
@@ -13,13 +13,13 @@ pub fn main() !void {
     chip.goe0.source = .{ .glb_shared_pt_enable = 0 };
     chip.goe0.polarity = .active_high;
 
-    const inputs = [_]GRP {
+    const inputs = [_]Signal {
         Chip.pins._22.pad(),
         Chip.pins._21.pad(),
         Chip.pins._20.pad(),
     };
 
-    const outputs = [_]GRP {
+    const outputs = [_]Signal {
         Chip.pins._23.pad(),
         Chip.pins._24.pad(),
         Chip.pins._26.pad(),

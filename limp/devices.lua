@@ -167,9 +167,9 @@ pub const oe_bus_size = `oe_bus_size`;
 
 pub const jedec_dimensions = Fuse_Range.init_from_dimensions(`jedec_width`, `jedec_height`);
 
-pub const F = lc4k.Factor(GRP);
-pub const PT = lc4k.Product_Term(GRP);
-pub const Pin = lc4k.Pin(GRP);
+pub const F = lc4k.Factor(Signal);
+pub const PT = lc4k.Product_Term(Signal);
+pub const Pin = lc4k.Pin(Signal);
 pub const Names = naming.Names(@This());
 
 var name_buf: [`name_buf_len`]u8 = undefined;
@@ -187,9 +187,9 @@ pub fn get_names() *const Names {
 if info.family == 'zero_power_enhanced' then
     template([[
 pub const osctimer = struct {
-    pub const osc_out = GRP.mc_`  ({[2]='A', [4]='A', [8]='A', [16]='C'})[num_glbs]`15;
+    pub const osc_out = Signal.mc_`  ({[2]='A', [4]='A', [8]='A', [16]='C'})[num_glbs]`15;
     pub const osc_disable = osc_out;
-    pub const timer_out = GRP.mc_`({[2]='B', [4]='D', [8]='G', [16]='F'})[num_glbs]`15;
+    pub const timer_out = Signal.mc_`({[2]='B', [4]='D', [8]='G', [16]='F'})[num_glbs]`15;
     pub const timer_reset = timer_out;
 };
 ]])(info)
@@ -209,7 +209,7 @@ for glb = 1, info.num_glbs do
         }
     end
 end
-write(nl, [[pub const GRP = enum (u16) {]], indent)
+write(nl, [[pub const Signal = enum (u16) {]], indent)
 do
     local counter = 0
     for grp_name in spairs(grp_names, natural_cmp) do
@@ -220,7 +220,7 @@ end
 write [[
 
 
-    pub inline fn kind(self: GRP) lc4k.GRP_Kind {
+    pub inline fn kind(self: Signal) lc4k.Signal_Kind {
         return switch (@intFromEnum(self)) {]]
 do
     indent(2)
@@ -232,7 +232,7 @@ do
         if kind == 'cl' then kind = 'clk' end
         if kind ~= last_kind then
             if last_kind ~= nil then
-                write(nl, '@intFromEnum(GRP.', first_grp_name, ')...@intFromEnum(GRP.', last_grp_name, ') => .', last_kind, ',')
+                write(nl, '@intFromEnum(Signal.', first_grp_name, ')...@intFromEnum(Signal.', last_grp_name, ') => .', last_kind, ',')
             end
 
             last_kind = kind
@@ -243,7 +243,7 @@ do
         end
     end
     if last_kind ~= nil then
-        write(nl, '@intFromEnum(GRP.', first_grp_name, ')...@intFromEnum(GRP.', last_grp_name, ') => .', last_kind, ',')
+        write(nl, '@intFromEnum(Signal.', first_grp_name, ')...@intFromEnum(Signal.', last_grp_name, ') => .', last_kind, ',')
     end
     unindent(2)
 end
@@ -253,7 +253,7 @@ write [[
         };
     }
 
-    pub inline fn maybe_mc(self: GRP) ?lc4k.MC_Ref {
+    pub inline fn maybe_mc(self: Signal) ?lc4k.MC_Ref {
         return switch (@intFromEnum(self)) {]]
 indent(2)
 for glb = 1, info.num_glbs do
@@ -266,8 +266,8 @@ for glb = 1, info.num_glbs do
         max_mc_name = 'io_'..glb_prefix..max_mc
     until grp_names[max_mc_name]
 
-    write(nl, '@intFromEnum(GRP.io_', glb_prefix, '0)...@intFromEnum(GRP.io_', glb_prefix, max_mc, ') => .{ .glb = ', glb - 1, ', .mc = @intCast(@intFromEnum(self) - @intFromEnum(GRP.io_', glb_prefix, '0)) },')
-    write(nl, '@intFromEnum(GRP.mc_', glb_prefix, '0)...@intFromEnum(GRP.mc_', glb_prefix, '15) => .{ .glb = ', glb - 1, ', .mc = @intCast(@intFromEnum(self) - @intFromEnum(GRP.mc_', glb_prefix, '0)) },')
+    write(nl, '@intFromEnum(Signal.io_', glb_prefix, '0)...@intFromEnum(Signal.io_', glb_prefix, max_mc, ') => .{ .glb = ', glb - 1, ', .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.io_', glb_prefix, '0)) },')
+    write(nl, '@intFromEnum(Signal.mc_', glb_prefix, '0)...@intFromEnum(Signal.mc_', glb_prefix, '15) => .{ .glb = ', glb - 1, ', .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.mc_', glb_prefix, '0)) },')
 end
 unindent(2)
 write [[
@@ -275,11 +275,11 @@ write [[
             else => null,
         };
     }
-    pub inline fn mc(self: GRP) lc4k.MC_Ref {
+    pub inline fn mc(self: Signal) lc4k.MC_Ref {
         return self.maybe_mc() orelse unreachable;
     }
 
-    pub inline fn maybe_pin(self: GRP) ?Pin {
+    pub inline fn maybe_pin(self: Signal) ?Pin {
         return switch (self) {]]
 do
     indent(2)
@@ -303,50 +303,50 @@ write [[
             else => null,
         };
     }
-    pub inline fn pin(self: GRP) Pin {
+    pub inline fn pin(self: Signal) Pin {
         return self.maybe_pin() orelse unreachable;
     }
 
-    pub inline fn when_high(self: GRP) F {
+    pub inline fn when_high(self: Signal) F {
         return .{ .when_high = self };
     }
 
-    pub inline fn when_low(self: GRP) F {
+    pub inline fn when_low(self: Signal) F {
         return .{ .when_low = self };
     }
 
-    pub inline fn maybe_fb(self: GRP) ?GRP {
+    pub inline fn maybe_fb(self: Signal) ?Signal {
         const mcref = self.maybe_mc() orelse return null;
         return mc_fb(mcref);
     }
 
-    pub inline fn fb(self: GRP) GRP {
+    pub inline fn fb(self: Signal) Signal {
         return mc_fb(self.mc());
     }
 
-    pub inline fn maybe_pad(self: GRP) ?GRP {
+    pub inline fn maybe_pad(self: Signal) ?Signal {
         const mcref = self.maybe_mc() orelse return null;
         return mc_pad(mcref);
     }
 
-    pub inline fn pad(self: GRP) GRP {
+    pub inline fn pad(self: Signal) Signal {
         return mc_pad(self.mc());
     }
 
-    pub inline fn mc_fb(mcref: lc4k.MC_Ref) GRP {
+    pub inline fn mc_fb(mcref: lc4k.MC_Ref) Signal {
         return mc_feedback_signals[mcref.glb][mcref.mc];
     }
 
-    pub inline fn maybe_mc_pad(mcref: lc4k.MC_Ref) ?GRP {
+    pub inline fn maybe_mc_pad(mcref: lc4k.MC_Ref) ?Signal {
         return mc_io_signals[mcref.glb][mcref.mc];
     }
 
-    pub inline fn mc_pad(mcref: lc4k.MC_Ref) GRP {
+    pub inline fn mc_pad(mcref: lc4k.MC_Ref) Signal {
         return mc_io_signals[mcref.glb][mcref.mc].?;
     }
 };
 
-pub const mc_feedback_signals = [num_glbs][num_mcs_per_glb]GRP {]]
+pub const mc_feedback_signals = [num_glbs][num_mcs_per_glb]Signal {]]
 indent()
 for glb = 1, info.num_glbs do
     write(nl, '.{')
@@ -358,7 +358,7 @@ end
 write(unindent, nl, [[
 };
 
-pub const mc_io_signals = [num_glbs][num_mcs_per_glb]?GRP {]])
+pub const mc_io_signals = [num_glbs][num_mcs_per_glb]?Signal {]])
     indent()
     for glb = 1, info.num_glbs do
         write(nl, '.{')
@@ -377,7 +377,7 @@ pub const mc_io_signals = [num_glbs][num_mcs_per_glb]?GRP {]])
 
 };
 
-pub const gi_options = [num_gis_per_glb][gi_mux_size]GRP {]]
+pub const gi_options = [num_gis_per_glb][gi_mux_size]Signal {]]
 
     indent()
     include 'grp'
@@ -396,7 +396,7 @@ pub const gi_options = [num_gis_per_glb][gi_mux_size]GRP {]]
 
 };
 
-pub const gi_options_by_grp = lc4k.invert_gi_mapping(GRP, gi_mux_size, &gi_options);
+pub const gi_options_by_grp = lc4k.invert_gi_mapping(Signal, gi_mux_size, &gi_options);
 
 ]]
 
@@ -537,7 +537,7 @@ pub fn getTimerDivRange() Fuse_Range {
         .range().expand_to_contain(Fuse.init(]], osctimer.timer_div[2][1], ', ', osctimer.timer_div[2][2], [[));
 }
 
-pub fn getInputPower_GuardFuse(input: GRP) Fuse {
+pub fn getInputPower_GuardFuse(input: Signal) Fuse {
     return switch (input) {]])
     include 'power_guard'
     local power_guard_fuses = load_power_guard_fuses(which)
@@ -553,7 +553,7 @@ pub fn getInputPower_GuardFuse(input: GRP) Fuse {
     };
 }
 
-pub fn getInputBus_MaintenanceRange(input: GRP) Fuse_Range {
+pub fn getInputBus_MaintenanceRange(input: Signal) Fuse_Range {
     return switch (input) {]]
     include 'bus_maintenance'
     local fuse1, fuse2 = load_bus_maintenance_fuses(which)
@@ -592,7 +592,7 @@ pub fn get_extra_float_input_fuses() []const Fuse {
 end
 write [[
 
-pub fn get_input_threshold_fuse(input: GRP) Fuse {
+pub fn get_input_threshold_fuse(input: Signal) Fuse {
     return switch (input) {]]
     indent(2)
     for _, pin in spairs(dedicated_inputs, natural_cmp) do

@@ -33,7 +33,7 @@ pub fn main() !void {
             var pt = Chip.PT.always();
             var n = 0;
             while (n < bit) : (n += 1) {
-                pt = pt.and_factor(Chip.GRP.mc_fb(output_pins[n].mc()).when_high());
+                pt = pt.and_factor(Chip.Signal.mc_fb(output_pins[n].mc()).when_high());
             }
             break :blk pt;
         }}};

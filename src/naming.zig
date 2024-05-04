@@ -1,5 +1,5 @@
 pub fn Names(comptime Device: type) type {
-    const GRP = Device.GRP;
+    const Signal = Device.Signal;
 
     return struct {
         gpa: std.mem.Allocator,
@@ -11,8 +11,8 @@ pub fn Names(comptime Device: type) type {
         macrocell_names: std.AutoHashMapUnmanaged(MC_Ref, []const u8) = .{},
         macrocell_lookup: std.StringHashMapUnmanaged(MC_Ref) = .{},
 
-        signal_names: std.AutoHashMapUnmanaged(GRP, []const u8) = .{},
-        signal_lookup: std.StringHashMapUnmanaged(GRP) = .{},
+        signal_names: std.AutoHashMapUnmanaged(Signal, []const u8) = .{},
+        signal_lookup: std.StringHashMapUnmanaged(Signal) = .{},
 
         const Self = @This();
 
@@ -35,21 +35,21 @@ pub fn Names(comptime Device: type) type {
             self.macrocell_names.ensureTotalCapacity(self.gpa, Device.num_mcs) catch unreachable;
             self.macrocell_lookup.ensureTotalCapacity(self.gpa, Device.num_mcs) catch unreachable;
 
-            self.signal_names.ensureTotalCapacity(self.gpa, @intCast(std.enums.values(GRP).len)) catch unreachable;
-            self.signal_lookup.ensureTotalCapacity(self.gpa, @intCast(std.enums.values(GRP).len)) catch unreachable;
+            self.signal_names.ensureTotalCapacity(self.gpa, @intCast(std.enums.values(Signal).len)) catch unreachable;
+            self.signal_lookup.ensureTotalCapacity(self.gpa, @intCast(std.enums.values(Signal).len)) catch unreachable;
 
             inline for (0..Device.num_glbs) |glb| {
-                const glb_name = @tagName(GRP.mc_fb(MC_Ref.init(glb, 0)))[3..4];
+                const glb_name = @tagName(Signal.mc_fb(MC_Ref.init(glb, 0)))[3..4];
                 self.add_glb_name(@intCast(glb), glb_name) catch unreachable;
 
                 for (0..Device.num_mcs_per_glb) |mc| {
                     const mcref = MC_Ref.init(glb, mc);
-                    const mc_name = @tagName(GRP.mc_fb(mcref))[3..];
+                    const mc_name = @tagName(Signal.mc_fb(mcref))[3..];
                     self.add_mc_name(mcref, mc_name) catch unreachable;
                 }
             }
 
-            for (std.enums.values(GRP)) |signal| {
+            for (std.enums.values(Signal)) |signal| {
                 self.add_signal_name(signal, @tagName(signal)) catch unreachable;
             }
 
@@ -78,7 +78,7 @@ pub fn Names(comptime Device: type) type {
             self.macrocell_lookup.putAssumeCapacityNoClobber(name, mc);
         }
 
-        pub fn add_signal_name(self: *Self, signal: GRP, name: []const u8) !void {
+        pub fn add_signal_name(self: *Self, signal: Signal, name: []const u8) !void {
             if (self.signal_names.contains(signal)) return error.AlreadyNamed;
             if (self.signal_lookup.contains(name)) return error.DuplicateName;
 
@@ -118,11 +118,11 @@ pub fn Names(comptime Device: type) type {
                 return name;
             }
 
-            if (self.signal_names.get(GRP.mc_fb(mc))) |name| {
+            if (self.signal_names.get(Signal.mc_fb(mc))) |name| {
                 return name;
             }
 
-            if (GRP.maybe_mc_pad(mc)) |signal| {
+            if (Signal.maybe_mc_pad(mc)) |signal| {
                 if (self.signal_names.get(signal)) |name| {
                     return name;
                 }
@@ -153,7 +153,7 @@ pub fn Names(comptime Device: type) type {
             return null;
         }
 
-        pub fn get_signal_name(self: Self, signal: GRP) []const u8 {
+        pub fn get_signal_name(self: Self, signal: Signal) []const u8 {
             if (self.signal_names.get(signal)) |name| {
                 return name;
             }
@@ -165,7 +165,7 @@ pub fn Names(comptime Device: type) type {
             return "unused";
         }
 
-        pub fn lookup_signal(self: Self, name: []const u8) ?GRP {
+        pub fn lookup_signal(self: Self, name: []const u8) ?Signal {
             if (self.signal_lookup.get(name)) |signal| {
                 return signal;
             }

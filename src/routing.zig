@@ -1,4 +1,4 @@
-pub fn add_signals_from_pt(comptime Device: type, gi_signals: *[Device.num_gis_per_glb]?Device.GRP, pt: lc4k.Product_Term(Device.GRP)) !void {
+pub fn add_signals_from_pt(comptime Device: type, gi_signals: *[Device.num_gis_per_glb]?Device.Signal, pt: lc4k.Product_Term(Device.Signal)) !void {
     for (pt.factors) |factor| switch (factor) {
         .always, .never => {},
         .when_high, .when_low => |grp| {
@@ -16,12 +16,12 @@ pub fn add_signals_from_pt(comptime Device: type, gi_signals: *[Device.num_gis_p
     };
 }
 
-pub fn route_generic_inputs(comptime Device: type, gi_signals: *[Device.num_gis_per_glb]?Device.GRP, rnd: std.rand.Random) !void {
-    var routed = [_]?Device.GRP { null } ** Device.num_gis_per_glb;
+pub fn route_generic_inputs(comptime Device: type, gi_signals: *[Device.num_gis_per_glb]?Device.Signal, rnd: std.rand.Random) !void {
+    var routed = [_]?Device.Signal { null } ** Device.num_gis_per_glb;
 
     @setEvalBranchQuota(2000);
 
-    const gi_options_by_grp: std.EnumMap(Device.GRP, []const u8) = Device.gi_options_by_grp;
+    const gi_options_by_grp: std.EnumMap(Device.Signal, []const u8) = Device.gi_options_by_grp;
     for (gi_signals) |maybe_signal| if (maybe_signal) |signal| {
         var signal_to_route = signal;
         var attempts: usize = 0;

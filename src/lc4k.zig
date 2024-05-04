@@ -94,7 +94,7 @@ pub fn Chip_Config(comptime device_type: Device_Type) type {
         pub const PT = D.PT;
         pub const F = D.F;
         pub const Pin = D.Pin;
-        pub const GRP = D.GRP;
+        pub const Signal = D.Signal;
 
         pub const pins = D.pins;
         pub const all_pins = D.all_pins;
@@ -104,7 +104,7 @@ pub fn Chip_Config(comptime device_type: Device_Type) type {
 
         const Self = @This();
 
-        pub fn mc(self: *Self, mcref: MC_Ref) *Macrocell_Config(D.family, D.GRP) {
+        pub fn mc(self: *Self, mcref: MC_Ref) *Macrocell_Config(D.family, D.Signal) {
             return &self.glb[mcref.glb].mc[mcref.mc];
         }
 
@@ -137,16 +137,16 @@ pub fn Chip_Config(comptime device_type: Device_Type) type {
 
 pub fn GLB_Config(comptime D: type) type {
     return struct {
-        mc: [D.num_mcs_per_glb] Macrocell_Config(D.family, D.GRP),
+        mc: [D.num_mcs_per_glb] Macrocell_Config(D.family, D.Signal),
         shared_pt_init: union(enum) {
-            active_high: Product_Term(D.GRP),
-            active_low: Product_Term(D.GRP),
+            active_high: Product_Term(D.Signal),
+            active_low: Product_Term(D.Signal),
         },
         shared_pt_clock: union(enum) {
-            positive: Product_Term(D.GRP), // active high when used as a latch or clock enable
-            negative: Product_Term(D.GRP), // active low when used as a latch or clock enable
+            positive: Product_Term(D.Signal), // active high when used as a latch or clock enable
+            negative: Product_Term(D.Signal), // active low when used as a latch or clock enable
         },
-        shared_pt_enable: Product_Term(D.GRP),
+        shared_pt_enable: Product_Term(D.Signal),
         bclock0: enum { clk0_pos, clk1_neg },
         bclock1: enum { clk1_pos, clk0_neg },
         bclock2: enum { clk2_pos, clk3_neg },
@@ -166,9 +166,9 @@ pub fn GLB_Config(comptime D: type) type {
         pub fn init_unused() Self {
             var self = Self {
                 .mc = undefined,
-                .shared_pt_init = .{ .active_low = Product_Term(D.GRP).always() },
-                .shared_pt_clock = .{ .positive = Product_Term(D.GRP).always() },
-                .shared_pt_enable = Product_Term(D.GRP).always(),
+                .shared_pt_init = .{ .active_low = Product_Term(D.Signal).always() },
+                .shared_pt_clock = .{ .positive = Product_Term(D.Signal).always() },
+                .shared_pt_enable = Product_Term(D.Signal).always(),
                 .bclock0 = .clk0_pos,
                 .bclock1 = .clk1_pos,
                 .bclock2 = .clk2_pos,
@@ -181,7 +181,7 @@ pub fn GLB_Config(comptime D: type) type {
             }
 
             for (&self.mc) |*mc| {
-                mc.* = Macrocell_Config(D.family, D.GRP).init_unused();
+                mc.* = Macrocell_Config(D.family, D.Signal).init_unused();
             }
 
             return self;
@@ -189,36 +189,36 @@ pub fn GLB_Config(comptime D: type) type {
     };
 }
 
-pub fn Macrocell_Config(comptime family: Device_Family, comptime GRP: type) type {
+pub fn Macrocell_Config(comptime family: Device_Family, comptime Signal: type) type {
     const MC_Input_Config = switch (family) {
         .zero_power_enhanced => Input_Config_ZE,
         else => Input_Config,
     };
     const MC_Output_Config = switch (family) {
         .zero_power_enhanced => Output_Config_ZE,
-        else => Output_Config(GRP),
+        else => Output_Config(Signal),
     };
 
     return struct {
         sum_routing: ?Cluster_Routing = null,
         wide_sum_routing: ?Wide_Routing = null,
         logic: union(enum) {
-            sum: []const Product_Term(GRP),
-            sum_inverted: []const Product_Term(GRP),
+            sum: []const Product_Term(Signal),
+            sum_inverted: []const Product_Term(Signal),
             input_buffer,
-            pt0: Product_Term(GRP),
-            pt0_inverted: Product_Term(GRP),
-            sum_xor_pt0: Sum_XOR_PT0(GRP),
-            sum_xor_pt0_inverted: Sum_XOR_PT0(GRP),
-            sum_xor_input_buffer: []const Product_Term(GRP), // TODO test this; datasheet's schematic of MC implies it is, but timing model implies it isn't.
+            pt0: Product_Term(Signal),
+            pt0_inverted: Product_Term(Signal),
+            sum_xor_pt0: Sum_XOR_PT0(Signal),
+            sum_xor_pt0_inverted: Sum_XOR_PT0(Signal),
+            sum_xor_input_buffer: []const Product_Term(Signal), // TODO test this; datasheet's schematic of MC implies it is, but timing model implies it isn't.
         },
         func: union(Macrocell_Function) {
             combinational: void,
-            latch: Register_Config(GRP),
-            t_ff: Register_Config(GRP),
-            d_ff: Register_Config(GRP),
+            latch: Register_Config(Signal),
+            t_ff: Register_Config(Signal),
+            d_ff: Register_Config(Signal),
         },
-        pt4_oe: ?Product_Term(GRP) = null,
+        pt4_oe: ?Product_Term(Signal) = null,
         input: MC_Input_Config = .{},
         output: MC_Output_Config,
 
@@ -226,7 +226,7 @@ pub fn Macrocell_Config(comptime family: Device_Family, comptime GRP: type) type
 
         pub fn init_unused() Self {
             return .{
-                .logic = .{ .sum = &.{ Product_Term(GRP).always() } },
+                .logic = .{ .sum = &.{ Product_Term(Signal).always() } },
                 .func = .combinational,
                 .output = .{ .oe = .input_only },
             };
@@ -243,7 +243,7 @@ pub const Input_Config_ZE = struct {
     power_guard: ?Power_Guard = null,
 };
 
-pub fn Output_Config(comptime GRP: type) type {
+pub fn Output_Config(comptime Signal: type) type {
     return struct {
         slew_rate: ?Slew_Rate = null,
         drive_type: ?Drive_Type = null,
@@ -252,8 +252,8 @@ pub fn Output_Config(comptime GRP: type) type {
         routing: union(Output_Routing_Mode) {
             same_as_oe,
             self,
-            five_pt_fast_bypass: []const Product_Term(GRP),
-            five_pt_fast_bypass_inverted: []const Product_Term(GRP),
+            five_pt_fast_bypass: []const Product_Term(Signal),
+            five_pt_fast_bypass_inverted: []const Product_Term(Signal),
         } = .same_as_oe,
     };
 }
@@ -304,48 +304,48 @@ pub fn Oscillator_Timer_Config(comptime Device: type) type {
     };
 }
 
-pub fn Sum_XOR_PT0(comptime GRP: type) type {
+pub fn Sum_XOR_PT0(comptime Signal: type) type {
     return struct {
-        sum: []const Product_Term(GRP),
-        pt0: Product_Term(GRP),
+        sum: []const Product_Term(Signal),
+        pt0: Product_Term(Signal),
     };
 }
 
-pub fn Register_Config(comptime GRP: type) type {
+pub fn Register_Config(comptime Signal: type) type {
     return struct {
         clock: union(Clock_Source) {
             none,
             shared_pt_clock,
-            pt1_positive: Product_Term(GRP),
-            pt1_negative: Product_Term(GRP),
+            pt1_positive: Product_Term(Signal),
+            pt1_negative: Product_Term(Signal),
             bclock0,
             bclock1,
             bclock2,
             bclock3,
         } = .none,
         ce: union(Clock_Enable_Source) {
-            pt2_active_high: Product_Term(GRP),
-            pt2_active_low: Product_Term(GRP),
+            pt2_active_high: Product_Term(Signal),
+            pt2_active_low: Product_Term(Signal),
             shared_pt_clock,
             always_active,
         } = .always_active,
         init_state: u1 = 0,
         init_source: union(Init_Source) {
-            pt3_active_high: Product_Term(GRP),
+            pt3_active_high: Product_Term(Signal),
             shared_pt_init,
         } = .shared_pt_init,
         async_source: union(Async_Trigger_Source) {
-            pt2_active_high: Product_Term(GRP),
+            pt2_active_high: Product_Term(Signal),
             none,
         } = .none,
     };
 }
 
-pub fn Product_Term(comptime Device_GRP: type) type {
+pub fn Product_Term(comptime Device_Signal: type) type {
     return struct {
-        factors: []const Factor(GRP),
+        factors: []const Factor(Signal),
 
-        pub const GRP = Device_GRP;
+        pub const Signal = Device_Signal;
         const Self = @This();
 
         pub inline fn always() Self {
@@ -387,7 +387,7 @@ pub fn Product_Term(comptime Device_GRP: type) type {
             };
         }
 
-        pub inline fn and_factor(comptime self: Self, comptime factor: Factor(GRP)) Self {
+        pub inline fn and_factor(comptime self: Self, comptime factor: Factor(Signal)) Self {
             switch (factor) {
                 .always => return self,
                 .never => return never(),
@@ -421,7 +421,7 @@ pub fn Product_Term(comptime Device_GRP: type) type {
             return pt;
         }
 
-        pub fn when_eql(comptime signals: []const GRP, comptime value: usize) Self {
+        pub fn when_eql(comptime signals: []const Signal, comptime value: usize) Self {
             comptime var pt: Self = always();
             comptime var bit_value: usize = 1;
             inline for (signals) |signal| {
@@ -432,9 +432,9 @@ pub fn Product_Term(comptime Device_GRP: type) type {
             }
             return pt;
         }
-        pub fn when_eql_alloc(allocator: std.mem.Allocator, signals: []const GRP, value: usize) Self {
+        pub fn when_eql_alloc(allocator: std.mem.Allocator, signals: []const Signal, value: usize) Self {
             var pt: Self = .{
-                .factors = try allocator.alloc(Factor(GRP), signals.len),
+                .factors = try allocator.alloc(Factor(Signal), signals.len),
             };
             var bit_value: usize = 1;
             for (signals, &pt.factors) |signal, *factor| {
@@ -446,16 +446,16 @@ pub fn Product_Term(comptime Device_GRP: type) type {
     };
 }
 
-pub fn Factor(comptime Device_GRP: type) type {
+pub fn Factor(comptime Device_Signal: type) type {
     return union(enum) {
         // "always" can normally just be represented by an empty PT,
         // but sometimes necessary to represent it in a Factor instead:
         always,
         never,
-        when_high: GRP,
-        when_low: GRP,
+        when_high: Signal,
+        when_low: Signal,
 
-        const GRP = Device_GRP;
+        const Signal = Device_Signal;
         const Self = @This();
 
         pub fn negate(self: Self) Self {
@@ -467,13 +467,13 @@ pub fn Factor(comptime Device_GRP: type) type {
             };
         }
 
-        pub fn pt(comptime self: Self) Product_Term(GRP) {
+        pub fn pt(comptime self: Self) Product_Term(Signal) {
             return comptime .{ .factors = &.{ self } };
         }
-        pub fn pt_indirect(self: *Self) Product_Term(GRP) {
+        pub fn pt_indirect(self: *Self) Product_Term(Signal) {
             return .{ .factors = self[0..1] };
         }
-        pub fn pt_alloc(self: Self, allocator: std.mem.Allocator) !Product_Term(GRP) {
+        pub fn pt_alloc(self: Self, allocator: std.mem.Allocator) !Product_Term(Signal) {
             return .{ .factors = try allocator.dupe(Self, self.pt_indirect().factors) };
         }
     };
@@ -497,12 +497,12 @@ pub const MC_Ref = struct {
         };
     }
 
-    pub fn input(self: MC_Ref, comptime GRP: type) GRP {
-        return GRP.mc_pad(self);
+    pub fn input(self: MC_Ref, comptime Signal: type) Signal {
+        return Signal.mc_pad(self);
     }
 
-    pub fn fb(self: MC_Ref, comptime GRP: type) GRP {
-        return GRP.mc_fb(self);
+    pub fn fb(self: MC_Ref, comptime Signal: type) Signal {
+        return Signal.mc_fb(self);
     }
 };
 
@@ -518,7 +518,7 @@ pub const PT_Ref = struct {
     }
 };
 
-pub const GRP_Kind = enum {
+pub const Signal_Kind = enum {
     io,
     mc,
     in,
@@ -541,13 +541,13 @@ pub const Pin_Function = union(enum) {
     tdo,
 };
 
-pub fn Pin(comptime GRP: type) type {
+pub fn Pin(comptime Signal: type) type {
     return struct {
         info: Pin_Info,
 
         const Self = @This();
 
-        pub fn init_io(pin_id: []const u8, grp: GRP) Self {
+        pub fn init_io(pin_id: []const u8, grp: Signal) Self {
             const mcref = grp.mc();
             return .{ .info = .{
                 .id = pin_id,
@@ -557,7 +557,7 @@ pub fn Pin(comptime GRP: type) type {
             }};
         }
 
-        pub fn init_oe(pin_id: []const u8, grp: GRP, comptime oe_index: comptime_int) Self {
+        pub fn init_oe(pin_id: []const u8, grp: Signal, comptime oe_index: comptime_int) Self {
             const mcref = grp.mc();
             return .{ .info = .{
                 .id = pin_id,
@@ -571,7 +571,7 @@ pub fn Pin(comptime GRP: type) type {
             }};
         }
 
-        pub fn init_clk(pin_id: []const u8, grp: GRP, clock_index: Clock_Index, glb: GLB_Index) Self {
+        pub fn init_clk(pin_id: []const u8, grp: Signal, clock_index: Clock_Index, glb: GLB_Index) Self {
             return .{ .info = .{
                 .id = pin_id,
                 .func = .{ .clock = clock_index },
@@ -580,7 +580,7 @@ pub fn Pin(comptime GRP: type) type {
             }};
         }
 
-        pub fn init_input(pin_id: []const u8, grp: GRP, glb: GLB_Index) Self {
+        pub fn init_input(pin_id: []const u8, grp: Signal, glb: GLB_Index) Self {
             return .{ .info = .{
                 .id = pin_id,
                 .func = .input,
@@ -608,19 +608,19 @@ pub fn Pin(comptime GRP: type) type {
             return self.info.mc().?;
         }
 
-        pub inline fn pad(self: Self) GRP {
+        pub inline fn pad(self: Self) Signal {
             return @enumFromInt(self.info.grp_ordinal.?);
         }
 
-        pub inline fn fb(self: Self) GRP {
+        pub inline fn fb(self: Self) Signal {
             return self.pad().fb();
         }
 
-        pub inline fn when_high(self: Self) Factor(GRP) {
+        pub inline fn when_high(self: Self) Factor(Signal) {
             return self.pad().when_high();
         }
 
-        pub inline fn when_low(self: Self) Factor(GRP) {
+        pub inline fn when_low(self: Self) Factor(Signal) {
             return self.pad().when_low();
         }
     };
@@ -630,7 +630,7 @@ pub const Pin_Info = struct {
     id: []const u8, // pin number or ball location
     func: Pin_Function,
     glb: ?GLB_Index = null, // only meaningful when func is io, io_oe0, io_oe1, input, or clock
-    grp_ordinal: ?u16 = null, // use with @intToEnum(GRP, grp_ordinal)
+    grp_ordinal: ?u16 = null, // use with @intToEnum(Signal, grp_ordinal)
 
     pub inline fn mc(self: Pin_Info) ?MC_Ref {
         return if (self.glb) |glb| switch (self.func) {
@@ -759,10 +759,10 @@ pub const Macrocell_Output_Enable_Source = enum(u1) {
 
 
 
-pub inline fn invert_gi_mapping(comptime GRP: type, comptime gi_mux_size: comptime_int, comptime mapping: []const[gi_mux_size]GRP) std.EnumMap(GRP, []const u8) {
+pub inline fn invert_gi_mapping(comptime Signal: type, comptime gi_mux_size: comptime_int, comptime mapping: []const[gi_mux_size]Signal) std.EnumMap(Signal, []const u8) {
     return comptime blk: {
         @setEvalBranchQuota(10_000);
-        var results: std.EnumMap(GRP, []const u8) = .{};
+        var results: std.EnumMap(Signal, []const u8) = .{};
         for (mapping, 0..) |options, gi| {
             for (options) |grp| {
                 results.put(grp, (results.get(grp) orelse &[_]u8 {}) ++ [_]u8 { gi });

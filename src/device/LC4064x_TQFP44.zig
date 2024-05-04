@@ -20,9 +20,9 @@ pub const oe_bus_size = 4;
 
 pub const jedec_dimensions = Fuse_Range.init_from_dimensions(352, 95);
 
-pub const F = lc4k.Factor(GRP);
-pub const PT = lc4k.Product_Term(GRP);
-pub const Pin = lc4k.Pin(GRP);
+pub const F = lc4k.Factor(Signal);
+pub const PT = lc4k.Product_Term(Signal);
+pub const Pin = lc4k.Pin(Signal);
 pub const Names = naming.Names(@This());
 
 var name_buf: [16384]u8 = undefined;
@@ -36,7 +36,7 @@ pub fn get_names() *const Names {
 }
 
 
-pub const GRP = enum (u16) {
+pub const Signal = enum (u16) {
     clk0 = 0,
     clk1 = 1,
     clk2 = 2,
@@ -138,33 +138,33 @@ pub const GRP = enum (u16) {
     mc_D14 = 98,
     mc_D15 = 99,
 
-    pub inline fn kind(self: GRP) lc4k.GRP_Kind {
+    pub inline fn kind(self: Signal) lc4k.Signal_Kind {
         return switch (@intFromEnum(self)) {
-            @intFromEnum(GRP.clk0)...@intFromEnum(GRP.clk3) => .clk,
-            @intFromEnum(GRP.io_A0)...@intFromEnum(GRP.io_D14) => .io,
-            @intFromEnum(GRP.mc_A0)...@intFromEnum(GRP.mc_D15) => .mc,
+            @intFromEnum(Signal.clk0)...@intFromEnum(Signal.clk3) => .clk,
+            @intFromEnum(Signal.io_A0)...@intFromEnum(Signal.io_D14) => .io,
+            @intFromEnum(Signal.mc_A0)...@intFromEnum(Signal.mc_D15) => .mc,
             else => unreachable,
         };
     }
 
-    pub inline fn maybe_mc(self: GRP) ?lc4k.MC_Ref {
+    pub inline fn maybe_mc(self: Signal) ?lc4k.MC_Ref {
         return switch (@intFromEnum(self)) {
-            @intFromEnum(GRP.io_A0)...@intFromEnum(GRP.io_A14) => .{ .glb = 0, .mc = @intCast(@intFromEnum(self) - @intFromEnum(GRP.io_A0)) },
-            @intFromEnum(GRP.mc_A0)...@intFromEnum(GRP.mc_A15) => .{ .glb = 0, .mc = @intCast(@intFromEnum(self) - @intFromEnum(GRP.mc_A0)) },
-            @intFromEnum(GRP.io_B0)...@intFromEnum(GRP.io_B14) => .{ .glb = 1, .mc = @intCast(@intFromEnum(self) - @intFromEnum(GRP.io_B0)) },
-            @intFromEnum(GRP.mc_B0)...@intFromEnum(GRP.mc_B15) => .{ .glb = 1, .mc = @intCast(@intFromEnum(self) - @intFromEnum(GRP.mc_B0)) },
-            @intFromEnum(GRP.io_C0)...@intFromEnum(GRP.io_C14) => .{ .glb = 2, .mc = @intCast(@intFromEnum(self) - @intFromEnum(GRP.io_C0)) },
-            @intFromEnum(GRP.mc_C0)...@intFromEnum(GRP.mc_C15) => .{ .glb = 2, .mc = @intCast(@intFromEnum(self) - @intFromEnum(GRP.mc_C0)) },
-            @intFromEnum(GRP.io_D0)...@intFromEnum(GRP.io_D14) => .{ .glb = 3, .mc = @intCast(@intFromEnum(self) - @intFromEnum(GRP.io_D0)) },
-            @intFromEnum(GRP.mc_D0)...@intFromEnum(GRP.mc_D15) => .{ .glb = 3, .mc = @intCast(@intFromEnum(self) - @intFromEnum(GRP.mc_D0)) },
+            @intFromEnum(Signal.io_A0)...@intFromEnum(Signal.io_A14) => .{ .glb = 0, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.io_A0)) },
+            @intFromEnum(Signal.mc_A0)...@intFromEnum(Signal.mc_A15) => .{ .glb = 0, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.mc_A0)) },
+            @intFromEnum(Signal.io_B0)...@intFromEnum(Signal.io_B14) => .{ .glb = 1, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.io_B0)) },
+            @intFromEnum(Signal.mc_B0)...@intFromEnum(Signal.mc_B15) => .{ .glb = 1, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.mc_B0)) },
+            @intFromEnum(Signal.io_C0)...@intFromEnum(Signal.io_C14) => .{ .glb = 2, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.io_C0)) },
+            @intFromEnum(Signal.mc_C0)...@intFromEnum(Signal.mc_C15) => .{ .glb = 2, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.mc_C0)) },
+            @intFromEnum(Signal.io_D0)...@intFromEnum(Signal.io_D14) => .{ .glb = 3, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.io_D0)) },
+            @intFromEnum(Signal.mc_D0)...@intFromEnum(Signal.mc_D15) => .{ .glb = 3, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.mc_D0)) },
             else => null,
         };
     }
-    pub inline fn mc(self: GRP) lc4k.MC_Ref {
+    pub inline fn mc(self: Signal) lc4k.MC_Ref {
         return self.maybe_mc() orelse unreachable;
     }
 
-    pub inline fn maybe_pin(self: GRP) ?Pin {
+    pub inline fn maybe_pin(self: Signal) ?Pin {
         return switch (self) {
             .clk0 => pins._39,
             .clk2 => pins._17,
@@ -201,64 +201,64 @@ pub const GRP = enum (u16) {
             else => null,
         };
     }
-    pub inline fn pin(self: GRP) Pin {
+    pub inline fn pin(self: Signal) Pin {
         return self.maybe_pin() orelse unreachable;
     }
 
-    pub inline fn when_high(self: GRP) F {
+    pub inline fn when_high(self: Signal) F {
         return .{ .when_high = self };
     }
 
-    pub inline fn when_low(self: GRP) F {
+    pub inline fn when_low(self: Signal) F {
         return .{ .when_low = self };
     }
 
-    pub inline fn maybe_fb(self: GRP) ?GRP {
+    pub inline fn maybe_fb(self: Signal) ?Signal {
         const mcref = self.maybe_mc() orelse return null;
         return mc_fb(mcref);
     }
 
-    pub inline fn fb(self: GRP) GRP {
+    pub inline fn fb(self: Signal) Signal {
         return mc_fb(self.mc());
     }
 
-    pub inline fn maybe_pad(self: GRP) ?GRP {
+    pub inline fn maybe_pad(self: Signal) ?Signal {
         const mcref = self.maybe_mc() orelse return null;
         return mc_pad(mcref);
     }
 
-    pub inline fn pad(self: GRP) GRP {
+    pub inline fn pad(self: Signal) Signal {
         return mc_pad(self.mc());
     }
 
-    pub inline fn mc_fb(mcref: lc4k.MC_Ref) GRP {
+    pub inline fn mc_fb(mcref: lc4k.MC_Ref) Signal {
         return mc_feedback_signals[mcref.glb][mcref.mc];
     }
 
-    pub inline fn maybe_mc_pad(mcref: lc4k.MC_Ref) ?GRP {
+    pub inline fn maybe_mc_pad(mcref: lc4k.MC_Ref) ?Signal {
         return mc_io_signals[mcref.glb][mcref.mc];
     }
 
-    pub inline fn mc_pad(mcref: lc4k.MC_Ref) GRP {
+    pub inline fn mc_pad(mcref: lc4k.MC_Ref) Signal {
         return mc_io_signals[mcref.glb][mcref.mc].?;
     }
 };
 
-pub const mc_feedback_signals = [num_glbs][num_mcs_per_glb]GRP {
+pub const mc_feedback_signals = [num_glbs][num_mcs_per_glb]Signal {
     .{ .mc_A0, .mc_A1, .mc_A2, .mc_A3, .mc_A4, .mc_A5, .mc_A6, .mc_A7, .mc_A8, .mc_A9, .mc_A10, .mc_A11, .mc_A12, .mc_A13, .mc_A14, .mc_A15, },
     .{ .mc_B0, .mc_B1, .mc_B2, .mc_B3, .mc_B4, .mc_B5, .mc_B6, .mc_B7, .mc_B8, .mc_B9, .mc_B10, .mc_B11, .mc_B12, .mc_B13, .mc_B14, .mc_B15, },
     .{ .mc_C0, .mc_C1, .mc_C2, .mc_C3, .mc_C4, .mc_C5, .mc_C6, .mc_C7, .mc_C8, .mc_C9, .mc_C10, .mc_C11, .mc_C12, .mc_C13, .mc_C14, .mc_C15, },
     .{ .mc_D0, .mc_D1, .mc_D2, .mc_D3, .mc_D4, .mc_D5, .mc_D6, .mc_D7, .mc_D8, .mc_D9, .mc_D10, .mc_D11, .mc_D12, .mc_D13, .mc_D14, .mc_D15, },
 };
 
-pub const mc_io_signals = [num_glbs][num_mcs_per_glb]?GRP {
+pub const mc_io_signals = [num_glbs][num_mcs_per_glb]?Signal {
     .{ .io_A0, null, .io_A2, null, .io_A4, null, .io_A6, null, .io_A8, null, .io_A10, null, .io_A12, null, .io_A14, null, },
     .{ .io_B0, null, .io_B2, null, .io_B4, null, .io_B6, null, .io_B8, null, .io_B10, null, .io_B12, null, .io_B14, null, },
     .{ .io_C0, null, .io_C2, null, .io_C4, null, .io_C6, null, .io_C8, null, .io_C10, null, .io_C12, null, .io_C14, null, },
     .{ .io_D0, null, .io_D2, null, .io_D4, null, .io_D6, null, .io_D8, null, .io_D10, null, .io_D12, null, .io_D14, null, },
 };
 
-pub const gi_options = [num_gis_per_glb][gi_mux_size]GRP {
+pub const gi_options = [num_gis_per_glb][gi_mux_size]Signal {
     .{ .mc_B9, .mc_A6, .mc_A11, .mc_B1, .mc_A1, .mc_C8, .mc_C10, .mc_D12, .mc_C2, .mc_C0, },
     .{ .io_A8, .io_A4, .mc_B4, .mc_B13, .mc_B0, .mc_C8, .io_D4, .io_C2, .mc_D1, .io_C14, },
     .{ .mc_B9, .mc_A9, .mc_B12, .mc_B2, .mc_B15, .io_C8, .mc_D6, .mc_C4, .mc_D1, .mc_C14, },
@@ -297,7 +297,7 @@ pub const gi_options = [num_gis_per_glb][gi_mux_size]GRP {
     .{ .mc_B9, .io_B4, .mc_A4, .mc_B13, .mc_A15, .mc_C6, .mc_C5, .mc_C3, .mc_D14, .mc_C1, },
 };
 
-pub const gi_options_by_grp = lc4k.invert_gi_mapping(GRP, gi_mux_size, &gi_options);
+pub const gi_options_by_grp = lc4k.invert_gi_mapping(Signal, gi_mux_size, &gi_options);
 
 const base = @import("LC4064x_TQFP48.zig");
 pub const get_glb_range = base.get_glb_range;
@@ -337,7 +337,7 @@ pub fn get_extra_float_input_fuses() []const Fuse {
     };
 }
 
-pub fn get_input_threshold_fuse(input: GRP) Fuse {
+pub fn get_input_threshold_fuse(input: Signal) Fuse {
     return switch (input) {
         .clk0 => Fuse.init(94, 348),
         .clk2 => Fuse.init(94, 350),

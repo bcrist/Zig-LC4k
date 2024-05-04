@@ -9,7 +9,7 @@ pub fn main() !void {
 
     var chip = Chip {};
 
-    const inputs = [_]Chip.GRP {
+    const inputs = [_]Chip.Signal {
         .io_A0,
         .io_A1,
         .io_A2,
@@ -28,7 +28,7 @@ pub fn main() !void {
         .io_A15,
     };
 
-    const outputs = [_]Chip.GRP {
+    const outputs = [_]Chip.Signal {
         .io_B0,
         .io_B2,
         .io_B4,

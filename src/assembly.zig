@@ -24,8 +24,8 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
     const rnd = prng.random();
 
     for (config.glb, 0..) |glb_config, glb| {
-        // Compile list of GRP signals needed in this GLB:
-        var gi_routing = [_]?Device.GRP { null } ** Device.num_gis_per_glb;
+        // Compile list of signals needed in this GLB:
+        var gi_routing = [_]?Device.Signal { null } ** Device.num_gis_per_glb;
         switch (glb_config.shared_pt_init) {
             .active_high, .active_low => |pt| try routing.add_signals_from_pt(Device, &gi_routing, pt),
         }
@@ -73,10 +73,10 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
             }
         }
 
-        // Route GRP signals to specific GI fuses:
+        // Route signals to specific GI fuses:
         try routing.route_generic_inputs(Device, &gi_routing, rnd);
         for (gi_routing, 0..) |maybe_signal, gi| if (maybe_signal) |signal| {
-            const option_index = std.mem.indexOfScalar(Device.GRP, &Device.gi_options[gi], signal).?;
+            const option_index = std.mem.indexOfScalar(Device.Signal, &Device.gi_options[gi], signal).?;
             const range = Device.get_gi_range(glb, gi);
             var iter = range.iterator();
             iter.skip(option_index);
@@ -104,7 +104,7 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
                                 try write_pt_fuses(Device, &results, glb, glb_pt_offset, &gi_routing, pt);
                                 next_sum_pt += 1;
                             } else if (!lc4k.is_sum_always(pts)) {
-                                try write_pt_fuses(Device, &results, glb, glb_pt_offset, &gi_routing, Product_Term(Device.GRP).never());
+                                try write_pt_fuses(Device, &results, glb, glb_pt_offset, &gi_routing, Product_Term(Device.Signal).never());
                             }
                         }
                         if (next_sum_pt < pts.len and !lc4k.is_sum_always(pts)) {
@@ -116,7 +116,7 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
             {
                 const sum_pts = switch (mc_config.logic) {
                     .sum, .sum_inverted, .sum_xor_input_buffer => |sum| sum,
-                    .input_buffer, .pt0, .pt0_inverted => &[_]Product_Term(Device.GRP) {},
+                    .input_buffer, .pt0, .pt0_inverted => &[_]Product_Term(Device.Signal) {},
                     .sum_xor_pt0, .sum_xor_pt0_inverted => |logic| logic.sum,
                 };
                 var next_sum_pt: usize = 0;
@@ -127,7 +127,7 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
                         try write_pt_fuses(Device, &results, glb, glb_pt_offset, &gi_routing, pt);
                         next_sum_pt += 1;
                     } else if (!lc4k.is_sum_always(sum_pts)) {
-                        try write_pt_fuses(Device, &results, glb, glb_pt_offset, &gi_routing, Product_Term(Device.GRP).never());
+                        try write_pt_fuses(Device, &results, glb, glb_pt_offset, &gi_routing, Product_Term(Device.Signal).never());
                     }
                 }
                 if (next_sum_pt < sum_pts.len and !lc4k.is_sum_always(sum_pts)) {
@@ -368,9 +368,9 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
 
 pub fn get_special_pt(
     comptime Device: type, 
-    mc_config: lc4k.Macrocell_Config(Device.family, Device.GRP),
+    mc_config: lc4k.Macrocell_Config(Device.family, Device.Signal),
     pt_index: usize
-) ?lc4k.Product_Term(Device.GRP) {
+) ?lc4k.Product_Term(Device.Signal) {
     return switch (pt_index) {
         0 => switch (mc_config.logic) {
             .pt0, .pt0_inverted => |pt| pt,
@@ -432,7 +432,7 @@ fn write_goe_fuses(comptime Device: type, data: *JEDEC_Data, goe_config: anytype
 }
 
 fn write_dedicated_input_fuses(comptime Device: type, data: *JEDEC_Data, pin_info: lc4k.Pin_Info, config: *const Chip_Config(Device.device_type), input_config: anytype) void {
-    const grp: Device.GRP = @enumFromInt(pin_info.grp_ordinal.?);
+    const grp: Device.Signal = @enumFromInt(pin_info.grp_ordinal.?);
 
     const threshold = input_config.threshold orelse config.default_input_threshold;
     write_field(data, lc4k.Input_Threshold, threshold, Device.get_input_threshold_fuse(grp).range());
@@ -446,7 +446,7 @@ fn write_dedicated_input_fuses(comptime Device: type, data: *JEDEC_Data, pin_inf
     }
 }
 
-fn write_pt_fuses(comptime Device: type, results: *Assembly_Results, glb: usize, glb_pt_offset: usize, gi_signals: *[Device.num_gis_per_glb]?Device.GRP, pt: Product_Term(Device.GRP)) !void {
+fn write_pt_fuses(comptime Device: type, results: *Assembly_Results, glb: usize, glb_pt_offset: usize, gi_signals: *[Device.num_gis_per_glb]?Device.Signal, pt: Product_Term(Device.Signal)) !void {
     if (pt.is_always()) return;
 
     const range = fuses.get_pt_range(Device, glb, glb_pt_offset);

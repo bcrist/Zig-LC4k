@@ -8,7 +8,7 @@ pub fn main() !void {
 
     var chip = Chip {};
 
-    const outputs = [_]Chip.GRP {
+    const outputs = [_]Chip.Signal {
         .io_A0, .io_A1, .io_A2, .io_A3,
         .io_A4, .io_A5, .io_A6, .io_A7,
         .io_A8, .io_A9, .io_A10, .io_A11,
@@ -19,8 +19,8 @@ pub fn main() !void {
         .io_B3, .io_B2, .io_B1, .io_B0,
     };
 
-    const dir_signal = Chip.GRP.mc_C0;
-    const none_signal = Chip.GRP.mc_C15;
+    const dir_signal = Chip.Signal.mc_C0;
+    const none_signal = Chip.Signal.mc_C15;
 
     chip.glb[0].shared_pt_clock = comptime .{ .positive = Chip.pins._12.when_high().pt() };
     chip.glb[1].shared_pt_clock = comptime .{ .positive = Chip.pins._12.when_high().pt() };
@@ -36,18 +36,18 @@ pub fn main() !void {
 
     var none_mc = chip.mc(none_signal.mc());
     none_mc.output.oe = .output_only;
-    none_mc.logic = comptime .{ .sum = &.{ Chip.GRP.mc_fb(outputs[0].mc()).when_low().pt()
-        .and_factor(Chip.GRP.mc_fb(outputs[3].mc()).when_low())
-        .and_factor(Chip.GRP.mc_fb(outputs[6].mc()).when_low())
-        .and_factor(Chip.GRP.mc_fb(outputs[9].mc()).when_low())
-        .and_factor(Chip.GRP.mc_fb(outputs[12].mc()).when_low())
-        .and_factor(Chip.GRP.mc_fb(outputs[15].mc()).when_low())
-        .and_factor(Chip.GRP.mc_fb(outputs[16].mc()).when_low())
-        .and_factor(Chip.GRP.mc_fb(outputs[19].mc()).when_low())
-        .and_factor(Chip.GRP.mc_fb(outputs[22].mc()).when_low())
-        .and_factor(Chip.GRP.mc_fb(outputs[25].mc()).when_low())
-        .and_factor(Chip.GRP.mc_fb(outputs[28].mc()).when_low())
-        .and_factor(Chip.GRP.mc_fb(outputs[31].mc()).when_low())
+    none_mc.logic = comptime .{ .sum = &.{ Chip.Signal.mc_fb(outputs[0].mc()).when_low().pt()
+        .and_factor(Chip.Signal.mc_fb(outputs[3].mc()).when_low())
+        .and_factor(Chip.Signal.mc_fb(outputs[6].mc()).when_low())
+        .and_factor(Chip.Signal.mc_fb(outputs[9].mc()).when_low())
+        .and_factor(Chip.Signal.mc_fb(outputs[12].mc()).when_low())
+        .and_factor(Chip.Signal.mc_fb(outputs[15].mc()).when_low())
+        .and_factor(Chip.Signal.mc_fb(outputs[16].mc()).when_low())
+        .and_factor(Chip.Signal.mc_fb(outputs[19].mc()).when_low())
+        .and_factor(Chip.Signal.mc_fb(outputs[22].mc()).when_low())
+        .and_factor(Chip.Signal.mc_fb(outputs[25].mc()).when_low())
+        .and_factor(Chip.Signal.mc_fb(outputs[28].mc()).when_low())
+        .and_factor(Chip.Signal.mc_fb(outputs[31].mc()).when_low())
     }};
 
     @setEvalBranchQuota(10000);
@@ -58,42 +58,42 @@ pub fn main() !void {
         mc.output.oe = .output_only;
         mc.logic = comptime .{ .sum = switch (bit) {
             0 => &.{
-                dir_signal.when_high().pt().and_factor(Chip.GRP.mc_fb(outputs[bit + 1].mc()).when_high()),
+                dir_signal.when_high().pt().and_factor(Chip.Signal.mc_fb(outputs[bit + 1].mc()).when_high()),
                 dir_signal.when_high().pt().and_factor(none_signal.when_high()),
                 dir_signal.when_low().pt()
-                    .and_factor(Chip.GRP.mc_fb(outputs[0].mc()).when_high())
-                    .and_factor(Chip.GRP.mc_fb(outputs[3].mc()).when_low())
-                    .and_factor(Chip.GRP.mc_fb(outputs[6].mc()).when_low())
-                    .and_factor(Chip.GRP.mc_fb(outputs[9].mc()).when_low())
-                    .and_factor(Chip.GRP.mc_fb(outputs[12].mc()).when_low())
-                    .and_factor(Chip.GRP.mc_fb(outputs[15].mc()).when_low())
-                    .and_factor(Chip.GRP.mc_fb(outputs[16].mc()).when_low())
-                    .and_factor(Chip.GRP.mc_fb(outputs[19].mc()).when_low())
-                    .and_factor(Chip.GRP.mc_fb(outputs[22].mc()).when_low())
-                    .and_factor(Chip.GRP.mc_fb(outputs[25].mc()).when_low())
-                    .and_factor(Chip.GRP.mc_fb(outputs[28].mc()).when_low())
-                    .and_factor(Chip.GRP.mc_fb(outputs[31].mc()).when_low())
+                    .and_factor(Chip.Signal.mc_fb(outputs[0].mc()).when_high())
+                    .and_factor(Chip.Signal.mc_fb(outputs[3].mc()).when_low())
+                    .and_factor(Chip.Signal.mc_fb(outputs[6].mc()).when_low())
+                    .and_factor(Chip.Signal.mc_fb(outputs[9].mc()).when_low())
+                    .and_factor(Chip.Signal.mc_fb(outputs[12].mc()).when_low())
+                    .and_factor(Chip.Signal.mc_fb(outputs[15].mc()).when_low())
+                    .and_factor(Chip.Signal.mc_fb(outputs[16].mc()).when_low())
+                    .and_factor(Chip.Signal.mc_fb(outputs[19].mc()).when_low())
+                    .and_factor(Chip.Signal.mc_fb(outputs[22].mc()).when_low())
+                    .and_factor(Chip.Signal.mc_fb(outputs[25].mc()).when_low())
+                    .and_factor(Chip.Signal.mc_fb(outputs[28].mc()).when_low())
+                    .and_factor(Chip.Signal.mc_fb(outputs[31].mc()).when_low())
             },
             31 => &.{
-                dir_signal.when_low().pt().and_factor(Chip.GRP.mc_fb(outputs[bit - 1].mc()).when_high()),
+                dir_signal.when_low().pt().and_factor(Chip.Signal.mc_fb(outputs[bit - 1].mc()).when_high()),
                 dir_signal.when_low().pt().and_factor(none_signal.when_high()),
                 dir_signal.when_high().pt()
-                    .and_factor(Chip.GRP.mc_fb(outputs[0].mc()).when_low())
-                    .and_factor(Chip.GRP.mc_fb(outputs[3].mc()).when_low())
-                    .and_factor(Chip.GRP.mc_fb(outputs[6].mc()).when_low())
-                    .and_factor(Chip.GRP.mc_fb(outputs[9].mc()).when_low())
-                    .and_factor(Chip.GRP.mc_fb(outputs[12].mc()).when_low())
-                    .and_factor(Chip.GRP.mc_fb(outputs[15].mc()).when_low())
-                    .and_factor(Chip.GRP.mc_fb(outputs[16].mc()).when_low())
-                    .and_factor(Chip.GRP.mc_fb(outputs[19].mc()).when_low())
-                    .and_factor(Chip.GRP.mc_fb(outputs[22].mc()).when_low())
-                    .and_factor(Chip.GRP.mc_fb(outputs[25].mc()).when_low())
-                    .and_factor(Chip.GRP.mc_fb(outputs[28].mc()).when_low())
-                    .and_factor(Chip.GRP.mc_fb(outputs[31].mc()).when_high())
+                    .and_factor(Chip.Signal.mc_fb(outputs[0].mc()).when_low())
+                    .and_factor(Chip.Signal.mc_fb(outputs[3].mc()).when_low())
+                    .and_factor(Chip.Signal.mc_fb(outputs[6].mc()).when_low())
+                    .and_factor(Chip.Signal.mc_fb(outputs[9].mc()).when_low())
+                    .and_factor(Chip.Signal.mc_fb(outputs[12].mc()).when_low())
+                    .and_factor(Chip.Signal.mc_fb(outputs[15].mc()).when_low())
+                    .and_factor(Chip.Signal.mc_fb(outputs[16].mc()).when_low())
+                    .and_factor(Chip.Signal.mc_fb(outputs[19].mc()).when_low())
+                    .and_factor(Chip.Signal.mc_fb(outputs[22].mc()).when_low())
+                    .and_factor(Chip.Signal.mc_fb(outputs[25].mc()).when_low())
+                    .and_factor(Chip.Signal.mc_fb(outputs[28].mc()).when_low())
+                    .and_factor(Chip.Signal.mc_fb(outputs[31].mc()).when_high())
             },
             else => &.{
-                dir_signal.when_low().pt().and_factor(Chip.GRP.mc_fb(outputs[bit - 1].mc()).when_high()),
-                dir_signal.when_high().pt().and_factor(Chip.GRP.mc_fb(outputs[bit + 1].mc()).when_high()),
+                dir_signal.when_low().pt().and_factor(Chip.Signal.mc_fb(outputs[bit - 1].mc()).when_high()),
+                dir_signal.when_high().pt().and_factor(Chip.Signal.mc_fb(outputs[bit + 1].mc()).when_high()),
             },
         }};
     }

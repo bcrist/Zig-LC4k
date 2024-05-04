@@ -11,14 +11,14 @@ pub fn main() !void {
 
     @setEvalBranchQuota(5000);
 
-    const counter_bits = [_]Chip.GRP {
+    const counter_bits = [_]Chip.Signal {
         .io_B0, .io_B1, .io_B2, .io_B3,
         .io_B4, .io_B5, .io_B6, .io_B7,
         .io_B8, .io_B9, .io_B10, .io_B11,
         .io_B12, .io_B13, .io_B14, .io_B15,
     };
 
-    const gray_code_bits = [_]Chip.GRP {
+    const gray_code_bits = [_]Chip.Signal {
         .io_A15, .io_A14, .io_A13, .io_A12,
         .io_A11, .io_A10, .io_A9, .io_A8,
         .io_A7, .io_A6, .io_A5, .io_A4,
@@ -52,11 +52,11 @@ pub fn main() !void {
         mc.output.oe = .output_only;
         if (bit < gray_code_bits.len - 1) {
             mc.logic = comptime .{ .sum_xor_pt0 = .{
-                .sum = &.{ Chip.GRP.mc_fb(counter_bits[bit].mc()).when_high().pt() },
-                .pt0 = Chip.GRP.mc_fb(counter_bits[bit + 1].mc()).when_high().pt(),
+                .sum = &.{ Chip.Signal.mc_fb(counter_bits[bit].mc()).when_high().pt() },
+                .pt0 = Chip.Signal.mc_fb(counter_bits[bit + 1].mc()).when_high().pt(),
             }};
         } else {
-            mc.logic = comptime .{ .sum = &.{ Chip.GRP.mc_fb(counter_bits[bit].mc()).when_high().pt() }};
+            mc.logic = comptime .{ .sum = &.{ Chip.Signal.mc_fb(counter_bits[bit].mc()).when_high().pt() }};
         }
     }
 

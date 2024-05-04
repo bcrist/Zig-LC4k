@@ -6,12 +6,12 @@
 
 pub const Picoseconds = i32;
 
-pub const GRP_Index = usize;
+pub const Signal_Index = usize;
 
 pub const Node = union (enum) {
-    pad: GRP_Index,
+    pad: Signal_Index,
 
-    in: GRP_Index,
+    in: Signal_Index,
     oe_in: lc4k.GOE_Index,
     gclk: lc4k.Clock_Index,
 
@@ -20,7 +20,7 @@ pub const Node = union (enum) {
     bclock2: lc4k.GLB_Index,
     bclock3: lc4k.GLB_Index,
 
-    grp: GRP_Index,
+    grp: Signal_Index,
 
     pt: lc4k.PT_Ref,
     sptoe: lc4k.GLB_Index, // a.k.a. BIE
@@ -61,7 +61,7 @@ pub const Node = union (enum) {
     pub fn write_name(self: Node, writer: std.io.AnyWriter, comptime Device: type, names: *const naming.Names(Device)) !void {
         switch (self) {
             .pad, .in, .grp => |grp_index| {
-                const grp: Device.GRP = @enumFromInt(grp_index);
+                const grp: Device.Signal = @enumFromInt(grp_index);
                 try writer.writeAll(names.get_signal_name(grp));
                 try writer.writeByte(' ');
                 try writer.writeAll(@tagName(self));
@@ -488,7 +488,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
 
                     if (!self.jedec.is_set(fuses.get_input_bypass_range(D, mcref).min)) {
                         const delay = Timing.tINREG + self.tINDIO();
-                        if (try self.maybe_append_to_parent(source, .{ .in = @intFromEnum(D.GRP.mc_pad(mcref)) }, dest, "tINREG", visited, delay)) |path| {
+                        if (try self.maybe_append_to_parent(source, .{ .in = @intFromEnum(D.Signal.mc_pad(mcref)) }, dest, "tINREG", visited, delay)) |path| {
                             options.appendAssumeCapacity(path);
                         }
                     } else if (!self.jedec.is_set(fuses.get_pt0_xor_range(D, mcref).min)) {
@@ -615,7 +615,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                 .sptinit => |glb| return self.compute_pt_critical_path(source, dest, glb, D.num_mcs_per_glb * 5 + 0, visited),
 
                 .grp => |grp_index| {
-                    const grp: D.GRP = @enumFromInt(grp_index);
+                    const grp: D.Signal = @enumFromInt(grp_index);
 
                     var total_gis: usize = 0;
                     for (0..D.num_glbs) |glb| {
@@ -650,7 +650,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                     // TODO tPGRT
                     const pin = D.clock_pins[index];
                     const grp_ordinal = pin.info.grp_ordinal.?;
-                    const grp: D.GRP = @enumFromInt(grp_ordinal);
+                    const grp: D.Signal = @enumFromInt(grp_ordinal);
                     const delay = Timing.tGCLK_IN + self.tIOI(grp);
                     return try self.append_to_parent(source, .{ .pad = grp_ordinal }, dest, "tGCLK_IN", visited, delay);
                 },
@@ -659,14 +659,14 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                     // TODO tPGRT
                     const pin = D.oe_pins[index];
                     const grp_ordinal = pin.info.grp_ordinal.?;
-                    const grp: D.GRP = @enumFromInt(grp_ordinal);
+                    const grp: D.Signal = @enumFromInt(grp_ordinal);
                     const delay = Timing.tGOE + self.tIOI(grp);
                     return try self.append_to_parent(source, .{ .pad = grp_ordinal }, dest, "tGOE", visited, delay);
                 },
 
                 .in => |grp_ordinal| {
                     // TODO tPGRT
-                    const grp: D.GRP = @enumFromInt(grp_ordinal);
+                    const grp: D.Signal = @enumFromInt(grp_ordinal);
 
                     if (grp.kind() == .io) {
                         const mcref = grp.mc();
@@ -756,7 +756,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
             var buf: [D.num_gis_per_glb]Path = undefined;
             var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
 
-            var gi_signals = [_]?D.GRP { null } ** D.num_gis_per_glb;
+            var gi_signals = [_]?D.Signal { null } ** D.num_gis_per_glb;
             for (0.., D.gi_options, &gi_signals) |gi, gi_options, *signal| {
                 const gi_fuses = D.get_gi_range(glb, gi);
                 var fuse_iter = gi_fuses.iterator();
@@ -861,7 +861,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
             };
         }
 
-        fn tIOI(self: *Self, grp: D.GRP) Picoseconds {
+        fn tIOI(self: *Self, grp: D.Signal) Picoseconds {
             _ = self;
             _ = grp;
             // We're not including tIOO because input/output buffer delays are heavily dependent on trace length, capacitance, etc. anyway.
