@@ -50,3 +50,4 @@ Once you have your in-memory representation of the design, you can do a number o
 * ease of use: helpers to set up common MC configurations?
 * How-To in readme
 * Verilog export
+* Logic simulation/verification

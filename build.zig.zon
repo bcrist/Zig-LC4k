@@ -1,20 +1,22 @@
 .{
-    .name = "zig-lc4k",
+    .name = "LC4k",
     .version = "0.0.2",
-    .minimum_zig_version = "0.12.0",
+    .minimum_zig_version = "0.14.0-dev.2627+6a21d18ad",
     .paths = .{
         "src",
         "build.zig",
         "build.zig.zon",
     },
     .dependencies = .{
-        .re4k = .{
-            .url = "git+https://github.com/bcrist/re4k#44d216f8f0fbf0cf87afb2d64d9a20ec631bd17b",
-            .hash = "1220688abe8f4892e3255fe72f4546de3d1eaeb4bea8f62d5bfc6cdb5c4297961d4c",
+        .LIMP = .{
+            .url = "git+https://github.com/bcrist/limp#e95510a40e2d890168b5e31b60b744f19760a803",
+            .hash = "1220d95628db6955254878f749594ca528a6077bfbd078483d2746544cf2468010a5",
+            .lazy = true,
         },
-        .limp = .{
-            .url = "git+https://github.com/bcrist/limp#87c594ae89a563c3ebfc11083ef99958c18c9427",
-            .hash = "1220cbd621c2d8d9b96a9e93d3cf726bb853aaec711a9cf176aab29186c310ae5a1d",
-        },
+        // .RE4k = .{
+        //     // .url = "git+https://github.com/bcrist/RE4k#44d216f8f0fbf0cf87afb2d64d9a20ec631bd17b",
+        //     // .hash = "1220688abe8f4892e3255fe72f4546de3d1eaeb4bea8f62d5bfc6cdb5c4297961d4c",
+        //     .lazy = true,
+        // },
     },
 }

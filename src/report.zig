@@ -1565,7 +1565,7 @@ fn begin_table(writer: std.io.AnyWriter) !void {
 
 fn table_header(writer: std.io.AnyWriter, columns: anytype) !void {
     const ColumnsType = @TypeOf(columns);
-    const columns_info = @typeInfo(ColumnsType).Struct;
+    const columns_info = @typeInfo(ColumnsType).@"struct";
 
     try writer.writeAll("<tr class=\"header\">");
 

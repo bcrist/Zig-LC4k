@@ -16,7 +16,7 @@ pub fn add_signals_from_pt(comptime Device: type, gi_signals: *[Device.num_gis_p
     };
 }
 
-pub fn route_generic_inputs(comptime Device: type, gi_signals: *[Device.num_gis_per_glb]?Device.Signal, rnd: std.rand.Random) !void {
+pub fn route_generic_inputs(comptime Device: type, gi_signals: *[Device.num_gis_per_glb]?Device.Signal, rnd: std.Random) !void {
     var routed = [_]?Device.Signal { null } ** Device.num_gis_per_glb;
 
     @setEvalBranchQuota(2000);

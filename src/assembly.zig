@@ -20,7 +20,7 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
         .errors = std.ArrayList(Assembly_Error).init(allocator),
     };
 
-    var prng = std.rand.Xoroshiro128.init(0x0416_fff9_140b_a135); // random but consistent seed
+    var prng = std.Random.Xoroshiro128.init(0x0416_fff9_140b_a135); // random but consistent seed
     const rnd = prng.random();
 
     for (config.glb, 0..) |glb_config, glb| {
@@ -483,7 +483,7 @@ fn write_pt_fuses(comptime Device: type, results: *Assembly_Results, glb: usize,
 
 fn write_field(data: *JEDEC_Data, comptime T: type, value: T, range: Fuse_Range) void {
     std.debug.assert(@bitSizeOf(T) == range.count());
-    const v = if (@typeInfo(T) == .Enum) @intFromEnum(value) else value;
+    const v = if (@typeInfo(T) == .@"enum") @intFromEnum(value) else value;
     const IntT = std.meta.Int(.unsigned, @bitSizeOf(T));
     var int_value = @as(u64, @as(IntT, @bitCast(v)));
     var iter = range.iterator();

@@ -17,7 +17,7 @@ pub fn init(what: anytype) Fuse_Range {
         Fuse_Range => what,
         JEDEC_Data => what.extents,
         else => switch (@typeInfo(T)) {
-            .Pointer => |ptr_info| if (ptr_info.size == .One) switch (ptr_info.child) {
+            .pointer => |ptr_info| if (ptr_info.size == .One) switch (ptr_info.child) {
                 device.Type => what.get().jedec_dimensions,
                 Fuse => .{ .min = what.*, .max = what.* },
                 Fuse_Range => what.*,

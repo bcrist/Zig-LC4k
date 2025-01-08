@@ -74,8 +74,8 @@ pub fn Names(comptime Device: type) type {
                     const suffix = if (name_is_suffix) options.name ++ options.suffix else options.suffix;
 
                     const decls = switch (@typeInfo(T)) {
-                        .Struct => |info| info.decls,
-                        .Union => |info| info.decls,
+                        .@"struct" => |info| info.decls,
+                        .@"union" => |info| info.decls,
                         else => @compileError("Expected struct or union type"),
                     };
 
@@ -88,7 +88,7 @@ pub fn Names(comptime Device: type) type {
                     }
                 },
                 else => switch (@typeInfo(T)) {
-                    .Struct => |struct_info| {
+                    .@"struct" => |struct_info| {
                         const name_is_suffix = comptime std.mem.startsWith(u8, options.name, ".");
                         const prefix = options.prefix ++ if (name_is_suffix) "" else options.name ++ if (options.name.len > 0) "." else "";
                         const suffix = if (name_is_suffix) options.name ++ options.suffix else options.suffix;
@@ -101,7 +101,7 @@ pub fn Names(comptime Device: type) type {
                             });
                         }
                     },
-                    .Array, .Pointer => inline for (0.., what) |i, elem| {
+                    .array, .pointer => inline for (0.., what) |i, elem| {
                         try self.add_names(elem, .{
                             .prefix = options.prefix,
                             .name = std.fmt.comptimePrint("{s}[{}]", .{ options.name, i }),

@@ -694,7 +694,7 @@ pub fn read_field(data: JEDEC_Data, comptime T: type, range: Fuse_Range) T {
         bit_value = bit_value << 1;
     }
 
-    return if (@typeInfo(T) == .Enum) @enumFromInt(int_value) else @intCast(int_value);
+    return if (@typeInfo(T) == .@"enum") @enumFromInt(int_value) else @intCast(int_value);
 }
 
 const Product_Term = lc4k.Product_Term;

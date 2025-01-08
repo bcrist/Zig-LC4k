@@ -244,7 +244,6 @@ pub fn main() !void {
 var gpa: std.heap.GeneralPurposeAllocator(.{}) = .{};
 
 const Signal = Chip.Signal;
-const PT = Chip.PT;
 const MC_Ref = lc4k.MC_Ref;
 
 const lc4k = @import("lc4k");
