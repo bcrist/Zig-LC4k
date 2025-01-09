@@ -1,4 +1,4 @@
-//[[!! include('devices', 'LC4064x_TQFP48') !! 480 ]]
+//[[!! include('devices', 'LC4064x_TQFP48') !! 508 ]]
 //[[ ################# !! GENERATED CODE -- DO NOT MODIFY !! ################# ]]
 const std = @import("std");
 const lc4k = @import("../lc4k.zig");
@@ -149,13 +149,41 @@ pub const Signal = enum (u16) {
 
     pub inline fn maybe_mc(self: Signal) ?lc4k.MC_Ref {
         return switch (@intFromEnum(self)) {
-            @intFromEnum(Signal.io_A0)...@intFromEnum(Signal.io_A14) => .{ .glb = 0, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.io_A0)) },
+            @intFromEnum(Signal.io_A0) => .{ .glb = 0, .mc = 0 },
+            @intFromEnum(Signal.io_A2) => .{ .glb = 0, .mc = 2 },
+            @intFromEnum(Signal.io_A4) => .{ .glb = 0, .mc = 4 },
+            @intFromEnum(Signal.io_A6) => .{ .glb = 0, .mc = 6 },
+            @intFromEnum(Signal.io_A8) => .{ .glb = 0, .mc = 8 },
+            @intFromEnum(Signal.io_A10) => .{ .glb = 0, .mc = 10 },
+            @intFromEnum(Signal.io_A12) => .{ .glb = 0, .mc = 12 },
+            @intFromEnum(Signal.io_A14) => .{ .glb = 0, .mc = 14 },
             @intFromEnum(Signal.mc_A0)...@intFromEnum(Signal.mc_A15) => .{ .glb = 0, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.mc_A0)) },
-            @intFromEnum(Signal.io_B0)...@intFromEnum(Signal.io_B14) => .{ .glb = 1, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.io_B0)) },
+            @intFromEnum(Signal.io_B0) => .{ .glb = 1, .mc = 0 },
+            @intFromEnum(Signal.io_B2) => .{ .glb = 1, .mc = 2 },
+            @intFromEnum(Signal.io_B4) => .{ .glb = 1, .mc = 4 },
+            @intFromEnum(Signal.io_B6) => .{ .glb = 1, .mc = 6 },
+            @intFromEnum(Signal.io_B8) => .{ .glb = 1, .mc = 8 },
+            @intFromEnum(Signal.io_B10) => .{ .glb = 1, .mc = 10 },
+            @intFromEnum(Signal.io_B12) => .{ .glb = 1, .mc = 12 },
+            @intFromEnum(Signal.io_B14) => .{ .glb = 1, .mc = 14 },
             @intFromEnum(Signal.mc_B0)...@intFromEnum(Signal.mc_B15) => .{ .glb = 1, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.mc_B0)) },
-            @intFromEnum(Signal.io_C0)...@intFromEnum(Signal.io_C14) => .{ .glb = 2, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.io_C0)) },
+            @intFromEnum(Signal.io_C0) => .{ .glb = 2, .mc = 0 },
+            @intFromEnum(Signal.io_C2) => .{ .glb = 2, .mc = 2 },
+            @intFromEnum(Signal.io_C4) => .{ .glb = 2, .mc = 4 },
+            @intFromEnum(Signal.io_C6) => .{ .glb = 2, .mc = 6 },
+            @intFromEnum(Signal.io_C8) => .{ .glb = 2, .mc = 8 },
+            @intFromEnum(Signal.io_C10) => .{ .glb = 2, .mc = 10 },
+            @intFromEnum(Signal.io_C12) => .{ .glb = 2, .mc = 12 },
+            @intFromEnum(Signal.io_C14) => .{ .glb = 2, .mc = 14 },
             @intFromEnum(Signal.mc_C0)...@intFromEnum(Signal.mc_C15) => .{ .glb = 2, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.mc_C0)) },
-            @intFromEnum(Signal.io_D0)...@intFromEnum(Signal.io_D14) => .{ .glb = 3, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.io_D0)) },
+            @intFromEnum(Signal.io_D0) => .{ .glb = 3, .mc = 0 },
+            @intFromEnum(Signal.io_D2) => .{ .glb = 3, .mc = 2 },
+            @intFromEnum(Signal.io_D4) => .{ .glb = 3, .mc = 4 },
+            @intFromEnum(Signal.io_D6) => .{ .glb = 3, .mc = 6 },
+            @intFromEnum(Signal.io_D8) => .{ .glb = 3, .mc = 8 },
+            @intFromEnum(Signal.io_D10) => .{ .glb = 3, .mc = 10 },
+            @intFromEnum(Signal.io_D12) => .{ .glb = 3, .mc = 12 },
+            @intFromEnum(Signal.io_D14) => .{ .glb = 3, .mc = 14 },
             @intFromEnum(Signal.mc_D0)...@intFromEnum(Signal.mc_D15) => .{ .glb = 3, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.mc_D0)) },
             else => null,
         };

@@ -129,7 +129,7 @@ pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: [
                 const starting_fuse = std.fmt.parseUnsigned(u32, location_str, 10) catch return error.Malformed_JEDEC_File;
                 if (data == null) {
                     if (actual_height) |h| {
-                        data = try JEDEC_Data.init(allocator, Fuse_Range.init(width, h), default orelse 1);
+                        data = try JEDEC_Data.init(allocator, Fuse_Range.init_from_dimensions(width, h), default orelse 1);
                     } else {
                         try std.io.getStdErr().writer().writeAll("Expected QF command before L or K command\n");
                         return error.Malformed_JEDEC_File;

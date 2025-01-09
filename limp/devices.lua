@@ -266,7 +266,23 @@ for glb = 1, info.num_glbs do
         max_mc_name = 'io_'..glb_prefix..max_mc
     until grp_names[max_mc_name]
 
-    write(nl, '@intFromEnum(Signal.io_', glb_prefix, '0)...@intFromEnum(Signal.io_', glb_prefix, max_mc, ') => .{ .glb = ', glb - 1, ', .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.io_', glb_prefix, '0)) },')
+    local all_mcs_have_ios = true
+    for mc = 0, max_mc do
+        if grp_names['io_'..glb_prefix..mc] == nil then
+            all_mcs_have_ios = false
+            break
+        end
+    end
+
+    if all_mcs_have_ios then
+        write(nl, '@intFromEnum(Signal.io_', glb_prefix, '0)...@intFromEnum(Signal.io_', glb_prefix, max_mc, ') => .{ .glb = ', glb - 1, ', .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.io_', glb_prefix, '0)) },')
+    else
+        for mc = 0, max_mc do
+            if grp_names['io_'..glb_prefix..mc] then
+                write(nl, '@intFromEnum(Signal.io_', glb_prefix, mc, ') => .{ .glb = ', glb - 1, ', .mc = ', mc, ' },')
+            end
+        end
+    end
     write(nl, '@intFromEnum(Signal.mc_', glb_prefix, '0)...@intFromEnum(Signal.mc_', glb_prefix, '15) => .{ .glb = ', glb - 1, ', .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.mc_', glb_prefix, '0)) },')
 end
 unindent(2)
