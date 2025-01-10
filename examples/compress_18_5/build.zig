@@ -9,11 +9,7 @@ pub fn build(b: *std.Build) void {
     });
     exe.root_module.addImport("lc4k", b.dependency("lc4k", .{}).module("lc4k"));
 
-    b.installArtifact(exe);
     var run = b.addRunArtifact(exe);
-    run.step.dependOn(b.getInstallStep());
-    b.step("run", "run example").dependOn(&run.step);
-    if (b.args) |args| {
-        run.addArgs(args);
-    }
+    run.step.dependOn(&b.addInstallArtifact(exe, .{}).step);
+    b.getInstallStep().dependOn(&run.step);
 }

@@ -81,13 +81,13 @@ pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: [
                     const expected = h * width;
                     if (qf != expected) {
                         try std.io.getStdErr().writer().print("Expected fuse count to be exactly {}, but found {}\n", .{ expected, qf });
-                        return error.IncorrectFuseCount;
+                        return error.Incorrect_Fuse_Count;
                     }
                 } else {
                     const h = qf / width;
                     if (h * width != qf) {
                         try std.io.getStdErr().writer().print("Expected fuse count to be a multiple of {}, but found {}\n", .{ width, qf });
-                        return error.IncorrectFuseCount;
+                        return error.Incorrect_Fuse_Count;
                     }
                     actual_height = h;
                 }
@@ -188,14 +188,14 @@ fn parse_binary_string(data: *JEDEC_Data, starting_fuse: usize, text: []const u8
         switch (c) {
             '0', '1' => {
                 if (i >= len) {
-                    return error.InvalidFuse;
+                    return error.Invalid_Fuse;
                 }
                 data.raw.setValue(i, c == '1');
                 i += 1;
             },
             '\r', '\n', '\t', ' ' => {},
             else => {
-                return error.InvalidData;
+                return error.Invalid_Data;
             },
         }
     }
@@ -210,11 +210,11 @@ fn parse_hex_string(data: *JEDEC_Data, starting_fuse: usize, text: []const u8) !
             'A'...'F' => @intCast(c - 'A' + 0xA),
             'a'...'f' => @intCast(c - 'a' + 0xA),
             '\r', '\n', '\t', ' ' => null,
-            else => return error.InvalidData,
+            else => return error.Invalid_Data,
         };
         if (val) |v| {
             if (i >= len) {
-                return error.InvalidFuse;
+                return error.Invalid_Fuse;
             }
             data.raw.setValue(i, 0 != (v & 0x8));
             i += 1; if (i < len) data.raw.setValue(i, 0 != (v & 0x4));

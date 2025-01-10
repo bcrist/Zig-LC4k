@@ -395,6 +395,10 @@ pub fn write(comptime Device: type, comptime speed_grade: comptime_int, file: JE
                     }
                 }
             }
+            if (err.grp_ordinal) |grp_ordinal| {
+                const name = options.get_names().get_signal_name(@enumFromInt(grp_ordinal));
+                try writer.print("Signal: {s} ", .{ name });
+            }
             // if (err.fuse) |fuse| {
             //     try writer.print("({},{})", .{ fuse.row, fuse.col });
             // }
@@ -1465,62 +1469,62 @@ fn write_setup_hold_timing(writer: std.io.AnyWriter, comptime Device: type, comp
 
             try end_row(writer);
 
-
             const dest: timing.Node = switch (setup) {
                 .mcd_setup => |mcref| .{ .mcd = mcref },
                 .mc_ce_setup => |mcref| .{ .mc_ce = mcref },
                 else => unreachable,
             };
             const pre_setup_path = try timing_data.get_critical_path(.{ .source = source, .dest = dest });
-            try begin_row(writer, .{ .highlight = highlight, .class = "details-root" });
-
-            try begin_cell(writer, .{});
-            try source.write_name(writer, Device, options.get_names());
-            for (hold_path.critical_path) |delay| {
-                try begin_details(writer, .{});
-                try delay.segment.source.write_name(writer, Device, options.get_names());
-                try end_details(writer);
-            }
-            for (pre_setup_path.critical_path) |delay| {
-                try begin_details(writer, .{});
-                try delay.segment.source.write_name(writer, Device, options.get_names());
-                try end_details(writer);
-            }
-            try end_cell(writer);
-
-            try begin_cell(writer, .{});
-            try hold.write_name(writer, Device, options.get_names());
-            for (hold_path.critical_path) |delay| {
-                try begin_details(writer, .{});
-                try delay.segment.dest.write_name(writer, Device, options.get_names());
-                try end_details(writer);
-            }
-            for (pre_setup_path.critical_path) |delay| {
-                try begin_details(writer, .{});
-                try delay.segment.dest.write_name(writer, Device, options.get_names());
-                try end_details(writer);
-            }
-            try end_cell(writer);
-
-            try begin_cell(writer, .{});
             var hold_ps: f64 = @floatFromInt(hold_path.delay);
             hold_ps -= @floatFromInt(pre_setup_path.delay);
-            try writer.print("{d} ns", .{ hold_ps / 1000 });
-            for (hold_path.critical_path) |delay| {
-                try begin_details(writer, .{});
-                try writer.print("{d} ns ({s})", .{ @as(f64, @floatFromInt(delay.delay)) / 1000, delay.name });
-                try end_details(writer);
+
+            if (hold_ps > 0) {
+                try begin_row(writer, .{ .highlight = highlight, .class = "details-root" });
+
+                try begin_cell(writer, .{});
+                try source.write_name(writer, Device, options.get_names());
+                for (hold_path.critical_path) |delay| {
+                    try begin_details(writer, .{});
+                    try delay.segment.source.write_name(writer, Device, options.get_names());
+                    try end_details(writer);
+                }
+                for (pre_setup_path.critical_path) |delay| {
+                    try begin_details(writer, .{});
+                    try delay.segment.source.write_name(writer, Device, options.get_names());
+                    try end_details(writer);
+                }
+                try end_cell(writer);
+
+                try begin_cell(writer, .{});
+                try hold.write_name(writer, Device, options.get_names());
+                for (hold_path.critical_path) |delay| {
+                    try begin_details(writer, .{});
+                    try delay.segment.dest.write_name(writer, Device, options.get_names());
+                    try end_details(writer);
+                }
+                for (pre_setup_path.critical_path) |delay| {
+                    try begin_details(writer, .{});
+                    try delay.segment.dest.write_name(writer, Device, options.get_names());
+                    try end_details(writer);
+                }
+                try end_cell(writer);
+
+                try begin_cell(writer, .{});
+                try writer.print("{d} ns", .{ hold_ps / 1000 });
+                for (hold_path.critical_path) |delay| {
+                    try begin_details(writer, .{});
+                    try writer.print("{d} ns ({s})", .{ @as(f64, @floatFromInt(delay.delay)) / 1000, delay.name });
+                    try end_details(writer);
+                }
+                for (pre_setup_path.critical_path) |delay| {
+                    try begin_details(writer, .{});
+                    try writer.print("-{d} ns ({s})", .{ @as(f64, @floatFromInt(delay.delay)) / 1000, delay.name });
+                    try end_details(writer);
+                }
+                try end_cell(writer);
+
+                try end_row(writer);
             }
-            for (pre_setup_path.critical_path) |delay| {
-                try begin_details(writer, .{});
-                try writer.print("-{d} ns ({s})", .{ @as(f64, @floatFromInt(delay.delay)) / 1000, delay.name });
-                try end_details(writer);
-            }
-            try end_cell(writer);
-
-            try end_row(writer);
-
-
         } else |_| {}
     }
 }

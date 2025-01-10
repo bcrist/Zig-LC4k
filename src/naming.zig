@@ -73,18 +73,20 @@ pub fn Names(comptime Device: type) type {
                     const prefix = options.prefix ++ if (name_is_suffix) "" else options.name ++ if (options.name.len > 0) "." else "";
                     const suffix = if (name_is_suffix) options.name ++ options.suffix else options.suffix;
 
-                    const decls = switch (@typeInfo(T)) {
+                    const decls = switch (@typeInfo(what)) {
                         .@"struct" => |info| info.decls,
                         .@"union" => |info| info.decls,
-                        else => @compileError("Expected struct or union type"),
+                        else => @compileError("Expected struct or union type; found " ++ @typeName(what)),
                     };
 
                     inline for (decls) |decl| {
-                        try self.add_names(@field(what, decl.name), .{
-                            .prefix = prefix,
-                            .name = decl.name,
-                            .suffix = suffix,
-                        });
+                        if (@typeInfo(@TypeOf(@field(what, decl.name))) != .@"fn") {
+                            try self.add_names(@field(what, decl.name), .{
+                                .prefix = prefix,
+                                .name = decl.name,
+                                .suffix = suffix,
+                            });
+                        }
                     }
                 },
                 else => switch (@typeInfo(T)) {
@@ -114,8 +116,8 @@ pub fn Names(comptime Device: type) type {
         }
 
         pub fn add_glb_name(self: *Self, glb: GLB_Index, name: []const u8) !void {
-            if (self.glb_names.contains(glb)) return error.AlreadyNamed;
-            if (self.glb_lookup.contains(name)) return error.DuplicateName;
+            if (self.glb_names.contains(glb)) return error.Already_Named;
+            if (self.glb_lookup.contains(name)) return error.Duplicate_Name;
 
             try self.glb_names.ensureUnusedCapacity(self.gpa, 1);
             try self.glb_lookup.ensureUnusedCapacity(self.gpa, 1);
@@ -125,8 +127,8 @@ pub fn Names(comptime Device: type) type {
         }
 
         pub fn add_mc_name(self: *Self, mc: MC_Ref, name: []const u8) !void {
-            if (self.macrocell_names.contains(mc)) return error.AlreadyNamed;
-            if (self.macrocell_lookup.contains(name)) return error.DuplicateName;
+            if (self.macrocell_names.contains(mc)) return error.Already_Named;
+            if (self.macrocell_lookup.contains(name)) return error.Duplicate_Name;
 
             try self.macrocell_names.ensureUnusedCapacity(self.gpa, 1);
             try self.macrocell_lookup.ensureUnusedCapacity(self.gpa, 1);
@@ -136,8 +138,8 @@ pub fn Names(comptime Device: type) type {
         }
 
         pub fn add_signal_name(self: *Self, signal: Signal, name: []const u8) !void {
-            if (self.signal_names.contains(signal)) return error.AlreadyNamed;
-            if (self.signal_lookup.contains(name)) return error.DuplicateName;
+            if (self.signal_names.contains(signal)) return error.Already_Named;
+            if (self.signal_lookup.contains(name)) return error.Duplicate_Name;
 
             try self.signal_names.ensureUnusedCapacity(self.gpa, 1);
             try self.signal_lookup.ensureUnusedCapacity(self.gpa, 1);

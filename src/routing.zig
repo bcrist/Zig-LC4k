@@ -16,7 +16,7 @@ pub fn add_signals_from_pt(comptime Device: type, gi_signals: *[Device.num_gis_p
     };
 }
 
-pub fn route_generic_inputs(comptime Device: type, gi_signals: *[Device.num_gis_per_glb]?Device.Signal, rnd: std.Random) !void {
+pub fn route_generic_inputs(comptime Device: type, gi_signals: *[Device.num_gis_per_glb]?Device.Signal, rnd: std.Random, glb: lc4k.GLB_Index, results: *assembly.Assembly_Results) !void {
     var routed = [_]?Device.Signal { null } ** Device.num_gis_per_glb;
 
     @setEvalBranchQuota(2000);
@@ -26,7 +26,7 @@ pub fn route_generic_inputs(comptime Device: type, gi_signals: *[Device.num_gis_
         var signal_to_route = signal;
         var attempts: usize = 0;
         while (attempts < 1000) : (attempts += 1) {
-            const options = gi_options_by_grp.get(signal_to_route) orelse return error.InvalidSignal;
+            const options = gi_options_by_grp.get(signal_to_route) orelse return error.Invalid_Signal;
             for (options) |option| {
                 if (routed[option] == null) {
                     routed[option] = signal_to_route;
@@ -43,7 +43,12 @@ pub fn route_generic_inputs(comptime Device: type, gi_signals: *[Device.num_gis_
             }
             break;
         } else {
-            return error.GIRoutingFailed;
+            try results.errors.append(.{
+                .err = error.GI_Routing_Failed,
+                .details = "Could not find available GI for signal",
+                .glb = glb,
+                .grp_ordinal = @intFromEnum(signal_to_route),
+            });
         }
     };
 
@@ -51,6 +56,7 @@ pub fn route_generic_inputs(comptime Device: type, gi_signals: *[Device.num_gis_
 }
 
 pub const Cluster_Router = struct {
+    glb: lc4k.GLB_Index,
     cluster_size: [16]u8,
     sum_size: [16]u8,
     forced_cluster_routing: [16]?Cluster_Routing,
@@ -60,10 +66,11 @@ pub const Cluster_Router = struct {
     open_set: std.AutoHashMap(u48, void),
     closed_set: std.AutoHashMap(u48, void),
 
-    pub fn init(allocator: std.mem.Allocator, comptime Device: type, glb_config: lc4k.GLB_Config(Device)) Cluster_Router {
+    pub fn init(allocator: std.mem.Allocator, comptime Device: type, glb: lc4k.GLB_Index, glb_config: lc4k.GLB_Config(Device)) Cluster_Router {
         std.debug.assert(Device.num_mcs_per_glb == 16);
 
         var self = Cluster_Router {
+            .glb = glb,
             .cluster_size = [_]u8 { 0 } ** 16,
             .sum_size = [_]u8 { 0 } ** 16,
             .forced_cluster_routing = [_]?Cluster_Routing { null } ** 16,
@@ -129,8 +136,6 @@ pub const Cluster_Router = struct {
     }
 
     pub fn route(self: *Cluster_Router, results: *assembly.Assembly_Results) !Routing_Data {
-        _ = results; // TODO use to record errors
-
         for (self.sum_size, 0..) |sum_size, mc| if (sum_size > 0) {
             try self.mark_forced_wide_routing(mc, .self);
         };
@@ -139,7 +144,7 @@ pub const Cluster_Router = struct {
             var next_ca = get_next_ca(mc);
             while (max_pts < sum_size) : (next_ca = get_next_ca(next_ca)) {
                 if (next_ca == mc) {
-                    return error.TooManyPTs;
+                    return error.Too_Many_PTs;
                 }
                 try self.mark_forced_wide_routing(next_ca, .self_plus_four);
                 max_pts += self.compute_max_pts_without_wide_routing(next_ca);
@@ -218,8 +223,17 @@ pub const Cluster_Router = struct {
         try self.open_set.put(@bitCast(initial_routing), {});
         try self.open_heap.add(initial_routing);
 
+        // in case we can't find a successful routing, keep track of the closest we got
+        var best_routing: Compact_Routing_Data = undefined;
+        var best_weighted_score: usize = std.math.maxInt(usize);
+
         while (self.open_heap.removeOrNull()) |routing| {
             const score = routing.compute_score(self.cluster_size, self.sum_size);
+            if (score.weighted < best_weighted_score) {
+                best_routing = routing;
+                best_weighted_score = score.weighted;
+            }
+
             if (score.success == 0) {
                 return Routing_Data.init(routing);
             }
@@ -263,7 +277,13 @@ pub const Cluster_Router = struct {
             _ = self.open_set.remove(@bitCast(routing));
         }
 
-        return error.Cluster_RoutingFailed;
+        try results.errors.append(.{
+            .err = error.Cluster_Routing_Failed,
+            .details = "Failed to find a cluster routing that allocates sufficient PTs to all MCs",
+            .glb = @intCast(self.glb),
+        });
+        // We'll report info on the details of MCs that weren't completely routed later in the assembly process
+        return Routing_Data.init(best_routing);
     }
 
     fn get_next_ca(ca: usize) usize {
@@ -275,7 +295,7 @@ pub const Cluster_Router = struct {
     fn mark_forced_wide_routing(self: *Cluster_Router, mc: usize, routing: Wide_Routing) !void {
         if (self.forced_wide_routing[mc]) |existing_routing| {
             if (existing_routing != routing) {
-                return error.InvalidWide_Routing;
+                return error.Invalid_Wide_Routing;
             }
         }
         self.forced_wide_routing[mc] = routing;

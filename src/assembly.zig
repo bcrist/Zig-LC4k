@@ -5,11 +5,13 @@ pub const Assembly_Error = struct {
     glb: ?lc4k.GLB_Index = null,
     mc: ?lc4k.MC_Index = null,
     // mc_pt: ?u8 = null,
+    grp_ordinal: ?u16 = null,
 };
 
 pub const Assembly_Results = struct {
     jedec: JEDEC_File,
     errors: std.ArrayList(Assembly_Error),
+    error_arena: std.heap.ArenaAllocator, // used to store dynamically allocated error messages
 };
 
 pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), allocator: std.mem.Allocator) !Assembly_Results {
@@ -18,6 +20,7 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
             .data = try JEDEC_Data.init_full(allocator, Device.jedec_dimensions),
         },
         .errors = std.ArrayList(Assembly_Error).init(allocator),
+        .error_arena = std.heap.ArenaAllocator.init(allocator),
     };
 
     var prng = std.Random.Xoroshiro128.init(0x0416_fff9_140b_a135); // random but consistent seed
@@ -74,7 +77,7 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
         }
 
         // Route signals to specific GI fuses:
-        try routing.route_generic_inputs(Device, &gi_routing, rnd);
+        try routing.route_generic_inputs(Device, &gi_routing, rnd, @intCast(glb), &results);
         for (gi_routing, 0..) |maybe_signal, gi| if (maybe_signal) |signal| {
             const option_index = std.mem.indexOfScalar(Device.Signal, &Device.gi_options[gi], signal).?;
             const range = Device.get_gi_range(glb, gi);
@@ -84,7 +87,7 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
         };
 
         // Assign sum PTs to clusters to MCs and program routing fuses
-        var router = routing.Cluster_Router.init(allocator, Device, glb_config);
+        var router = routing.Cluster_Router.init(allocator, Device, @intCast(glb), glb_config);
         defer router.deinit();
         var cluster_routing = try router.route(&results);
 
@@ -108,15 +111,21 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
                             }
                         }
                         if (next_sum_pt < pts.len and !lc4k.is_sum_always(pts)) {
-                            return error.TooManySumPTs;
+                            const msg = try std.fmt.allocPrint(results.error_arena.allocator(), "{} sum PTs were configured, but only {} PTs are available for fast bypass mode", .{ pts.len, next_sum_pt });
+                            try results.errors.append(.{
+                                .err = error.Too_Many_Sum_PTs,
+                                .details = msg,
+                                .glb = @intCast(glb),
+                                .mc = @intCast(mc),
+                            });
                         }
                     },
                 }
             }
             {
-                const sum_pts = switch (mc_config.logic) {
+                const sum_pts: []const Product_Term(Device.Signal) = switch (mc_config.logic) {
                     .sum, .sum_inverted, .sum_xor_input_buffer => |sum| sum,
-                    .input_buffer, .pt0, .pt0_inverted => &[_]Product_Term(Device.Signal) {},
+                    .input_buffer, .pt0, .pt0_inverted => &.{},
                     .sum_xor_pt0, .sum_xor_pt0_inverted => |logic| logic.sum,
                 };
                 var next_sum_pt: usize = 0;
@@ -131,7 +140,13 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
                     }
                 }
                 if (next_sum_pt < sum_pts.len and !lc4k.is_sum_always(sum_pts)) {
-                    return error.TooManySumPTs;
+                    const msg = try std.fmt.allocPrint(results.error_arena.allocator(), "{} sum PTs were configured, but only {} PTs were routed to this macrocell", .{ sum_pts.len, next_sum_pt });
+                    try results.errors.append(.{
+                        .err = error.Too_Many_Sum_PTs,
+                        .details = msg,
+                        .glb = @intCast(glb),
+                        .mc = @intCast(mc),
+                    });
                 }
             }
 
@@ -245,7 +260,8 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
                     .absolute => |src_mc| rel: {
                         const delta = @as(i32, src_mc) - mcref.mc;
                         if (delta < 0 or delta > 7) {
-                            return error.InvalidOutput_Routing;
+                            // TODO report through results.errors
+                            return error.Invalid_Output_Routing;
                         }
                         break :rel @intCast(delta);
                     },
@@ -468,7 +484,14 @@ fn write_pt_fuses(comptime Device: type, results: *Assembly_Results, glb: usize,
                     }
                 }
             } else {
-                return error.SignalNotRouted;
+                try results.errors.append(.{
+                    .err = error.Signal_Not_Routed,
+                    .details = "PT uses signal that isn't assigned to a GI in this GLB",
+                    .glb = @intCast(glb),
+                    .mc = if (glb_pt_offset < Device.num_mcs_per_glb * 5) @intCast(glb_pt_offset / 5) else null,
+                    .grp_ordinal = @intFromEnum(grp),
+                });
+                continue;
             };
             results.jedec.data.put(fuse, 0);
         },

@@ -165,7 +165,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
     const Node_Set = std.AutoHashMap(Node, void);
 
     const Error = error {
-        InvalidPath,
+        Invalid_Path,
         OutOfMemory,
     };
 
@@ -192,7 +192,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
         pub fn get_critical_path(self: *Self, segment: Segment) Error!Path {
             if (std.meta.eql(segment.source, segment.dest)) return Path.nil;
             if (self.cache.get(segment)) |cached| {
-                if (cached.critical_path.len == 0 and cached.delay != 0) return error.InvalidPath;
+                if (cached.critical_path.len == 0 and cached.delay != 0) return error.Invalid_Path;
                 return cached;
             }
 
@@ -204,7 +204,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
         
         fn maybe_find_critical_path(self: *Self, source: Node, dest: Node, visited: *Node_Set) Error!?Path {
             return self.find_critical_path(source, dest, visited) catch |err| switch (err) {
-                error.InvalidPath => null,
+                error.Invalid_Path => null,
                 else => err,
             };
         }
@@ -215,7 +215,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                 .source = source,
                 .dest = dest,
             })) |cached| {
-                if (cached.critical_path.len == 0 and cached.delay != 0) return error.InvalidPath;
+                if (cached.critical_path.len == 0 and cached.delay != 0) return error.Invalid_Path;
                 return cached;
             }
 
@@ -224,7 +224,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
 
         fn compute_and_cache_critical_path(self: *Self, source: Node, dest: Node, visited: *Node_Set) Error!Path {
             const val = self.compute_critical_path(source, dest, visited) catch |err| switch (err) {
-                error.InvalidPath => Path.invalid_segment_placeholder,
+                error.Invalid_Path => Path.invalid_segment_placeholder,
                 else => return err,
             };
 
@@ -234,7 +234,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
             }, val);
 
             if (val.critical_path.len == 0 and val.delay != 0) {
-                return error.InvalidPath;
+                return error.Invalid_Path;
             } else {
                 return val;
             }
@@ -243,7 +243,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
         fn compute_critical_path(self: *Self, source: Node, dest: Node, visited: *Node_Set) Error!Path {
             const gop = try visited.getOrPut(dest);
             if (gop.found_existing) {
-                return error.InvalidPath;
+                return error.Invalid_Path;
             } else {
                 gop.key_ptr.* = dest;
             }
@@ -252,7 +252,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                 .out => |mcref| {
                     if (fuses.get_output_enable_source_range(D, mcref)) |range| {
                         if (disassembly.read_field(self.jedec, lc4k.Output_Enable_Mode, range) == .input_only) {
-                            return error.InvalidPath;
+                            return error.Invalid_Path;
                         }
                     }
                     return try self.append_to_parent(source, .{ .orm = mcref }, dest, "tBUF", visited,
@@ -279,7 +279,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                             .output_only, .input_only => {},
                         }
                     }
-                    return error.InvalidPath;
+                    return error.Invalid_Path;
                 },
 
                 .orm => |mcref| {
@@ -358,13 +358,13 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                 .mc_oe => |mcref| {
                     return switch (disassembly.read_pt4_output_enable_source(D, self.jedec, mcref)) {
                         .pt4_active_high => try self.append_to_parent(source, .{ .pt = .{ .mcref = mcref, .pt = 4 } }, dest, "tPTOE", visited, Timing.tPTOE),
-                        .always_low => error.InvalidPath,
+                        .always_low => error.Invalid_Path,
                     };
                 },
 
                 .mc_async => |mcref| {
                     return switch (disassembly.read_async_trigger_source(D, self.jedec, mcref)) {
-                        .none => error.InvalidPath,
+                        .none => error.Invalid_Path,
                         .pt2_active_high => try self.append_to_parent(source, .{ .pt = .{ .mcref = mcref, .pt = 2 } }, dest, "tPTSR", visited, Timing.tPTSR),
                     };
                 },
@@ -382,7 +382,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
 
                 .mc_ce => |mcref| {
                     switch (disassembly.read_clock_enable_source(D, self.jedec, mcref)) {
-                        .always_active => return error.InvalidPath,
+                        .always_active => return error.Invalid_Path,
                         .shared_pt_clock => {
                             return try self.append_to_parent(source, .{ .sptclk = mcref.glb }, dest, "tBCLK", visited, Timing.tBCLK);
                         },
@@ -399,7 +399,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                 .mc_clk_d_hold => |mcref| {
                     const range = fuses.get_macrocell_function_range(D, mcref);
                     switch (disassembly.read_field(self.jedec, lc4k.Macrocell_Function, range)) {
-                        .combinational => return error.InvalidPath,
+                        .combinational => return error.Invalid_Path,
                         .latch => {
                             return try self.append_to_parent(source, .{ .mc_clk = mcref }, dest, "tHL", visited, Timing.tHL);
                         },
@@ -427,7 +427,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
 
                 .mc_clk => |mcref| {
                     switch (disassembly.read_clock_source(D, self.jedec, mcref)) {
-                        .none => return error.InvalidPath,
+                        .none => return error.Invalid_Path,
                         .shared_pt_clock => {
                             return try self.append_to_parent(source, .{ .sptclk = mcref.glb }, dest, "tBCLK", visited, Timing.tBCLK);
                         },
@@ -448,7 +448,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                     };
                     const range = fuses.get_macrocell_function_range(D, mcref);
                     switch (disassembly.read_field(self.jedec, lc4k.Macrocell_Function, range)) {
-                        .combinational => return error.InvalidPath,
+                        .combinational => return error.Invalid_Path,
                         .latch => {
                             if (is_ptclk) {
                                 return try self.append_to_parent(source, .{ .mcd = mcref }, dest, "tSL_PT", visited, Timing.tSL_PT);
@@ -631,7 +631,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                             }
                         }
                     }
-                    if (total_gis == 0) return error.InvalidPath;
+                    if (total_gis == 0) return error.Invalid_Path;
 
                     const delay: i32 = @intCast(Timing.tROUTE + Timing.tBLA * (total_gis - 1));
                     if (grp.kind() == .mc) {
@@ -672,7 +672,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                         const mcref = grp.mc();
                         if (fuses.get_output_enable_source_range(D, mcref)) |range| {
                             if (disassembly.read_field(self.jedec, lc4k.Output_Enable_Mode, range) == .output_only) {
-                                return error.InvalidPath;
+                                return error.Invalid_Path;
                             }
                         }
                     }
@@ -682,7 +682,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                 },
 
                 .pad => {
-                    return error.InvalidPath;
+                    return error.Invalid_Path;
                 }
             }
         }
@@ -717,7 +717,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
         }
 
         fn compute_igoe_critical_path(self: *Self, source: Node, dest: Node, n: usize, visited: *Node_Set) Error!Path {
-            if (n >= D.oe_bus_size) return error.InvalidPath;
+            if (n >= D.oe_bus_size) return error.Invalid_Path;
 
             var buf: [D.num_glbs]Path = undefined;
             var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
@@ -791,7 +791,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
 
         fn choose_critical_path(options: []const Path) Error!Path {
             if (options.len == 0) {
-                return error.InvalidPath;
+                return error.Invalid_Path;
             }
 
             var critical = options[0];
@@ -835,7 +835,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
 
         fn maybe_append_to_parent(self: *Self, source: Node, parent_node: Node, dest: Node, name: []const u8, visited: *Node_Set, delay: Picoseconds) Error!?Path {
             return self.append_to_parent(source, parent_node, dest, name, visited, delay) catch |err| switch (err) {
-                error.InvalidPath => null,
+                error.Invalid_Path => null,
                 else => err,
             };
         }
