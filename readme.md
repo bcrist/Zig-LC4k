@@ -2,7 +2,7 @@
 
 A library for creating and manipulating configuration bitstreams for LC4k CPLDs, using Zig code.
 
-This project uses reverse-engineered fuse maps from the [RE4k](https://github.com/bcrist/re4k) project.  When running tests or regenerating the device data files, it's assumed that this repo's checkout will be as a submodule of RE4k's checkout, but otherwise only this repo needs to be checked out.
+This project uses reverse-engineered fuse maps from the [RE4k](https://github.com/bcrist/re4k) project.
 
 ## Device List
 
@@ -25,12 +25,29 @@ other safety-critical applications.
 
 ## Usage
 
-To use this library, import `lc4k` and create an instance of one of the device data structures defined there.  This can be done in two ways:
+Add the library to your project through the Zig package manager:
 
-* Manually initialize the macrocells and other configuration necessary to define your design, using Zig code as a low-level pseudo-HDL.
-* Load an existing bitstream/JEDEC file.
+```
+zig fetch --save git+https://github.com/bcrist/zig-lc4k
+```
 
-Note that this library does not and will not provide support for synthesizing a design from Verilog, VHDL, ABEL, or any other HDL.  In many cases, such workflows don't allow sufficient control over how the limited hardware resources are utilized, and designs that will fit in these devices are generally not complex enough where such an abstracted representation is necessary to understand the design.
+In your `build.zig`, you can then add an import for the `lc4k` module:
+
+```zig
+my_exe.root_module.addImport("lc4k", b.dependency("LC4k", .{}).module("lc4k"));
+```
+
+## Workflow
+To use the library, you first need to construct one of the device configuration structs defined in the `lc4k` module (e.g. `lc4k.LC4032ZE_TQFP48`).  Usually this is done manually, initializing the macrocells and other configuration necessary to define your design, using Zig code as a low-level pseudo-HDL.  Check the examples directory for more details.  You can also load an existing bitstream/JEDEC file, e.g. for reverse engineering:
+
+```zig
+const file_contents = try std.fs.cwd().readFileAlloc(allocator, "path/to/bitstream_file.jed", 1000000);
+const bitstream = try lc4k.LC4032ZE_TQFP48.parse_jed(allocator, file_contents);
+const results = try lc4k.LC4032ZE_TQFP48.disassemble(allocator, bitstream);
+const chip = results.config;
+```
+
+Note that this library does not and will not provide support for synthesizing a design from Verilog, VHDL, ABEL, or any other HDL.  It is my opinion that such workflows often don't allow sufficient control over how the limited hardware resources are utilized, and designs that will fit in 32-128 macrocell CPLDs are rarely complex enough where such an abstracted representation is necessary.
 
 Once you have your in-memory representation of the design, you can do a number of things with it:
 
@@ -45,7 +62,6 @@ Once you have your in-memory representation of the design, you can do a number o
 * Tests
 * ease of use: PTs.parse() []PT
 * ease of use: helpers to set up common MC configurations?
-* How-To in readme
 * Verilog export
 * Logic simulation/verification
 * "clocks used" not accounting for BCLKs?
