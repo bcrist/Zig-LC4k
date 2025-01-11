@@ -1,7 +1,7 @@
 @pushd %~dp0examples
 @for /D %%f in (*) do @(
     pushd %%f
-    zig build
+    zig build -Doptimize=ReleaseSafe
     popd
 )
 @popd

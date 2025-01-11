@@ -15,8 +15,7 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test", "Run all tests");
     test_step.dependOn(&run_tests.step);
 
-    const no_limp = b.option(bool, "no_limp", "skip regenerating device files") orelse false;
-    if (!no_limp) {
+    if (b.option(bool, "codegen", "regenerate device source files") orelse false) {
         const re4k_path = if (b.lazyDependency("RE4k", .{})) |dep| dep.path("") else b.path("");
         if (b.lazyDependency("LIMP", .{ .optimize = .ReleaseSafe })) |dep| {
             const limp = dep.artifact("limp");
@@ -24,8 +23,7 @@ pub fn build(b: *std.Build) void {
             run_limp.addArgs(&.{ "-R", "--set", "re4k" });
             run_limp.addDirectoryArg(re4k_path);
             run_limp.addDirectoryArg(b.path("src"));
-            const limp_step = b.step("codegen", "Run LIMP codegen");
-            limp_step.dependOn(&run_limp.step);
+            b.getInstallStep().dependOn(&run_limp.step);
         }
     }
 }
