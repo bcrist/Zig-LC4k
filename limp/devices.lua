@@ -361,6 +361,38 @@ write [[
         return mc_io_signals[mcref.glb][mcref.mc].?;
     }
 };
+]]
+-- write [[
+-- pub const IO_Signal = enum (u16) {]]
+-- indent()
+-- do
+--     local counter = 0
+--     for grp_name, pin in spairs(grp_names, natural_cmp) do
+--         if pin.func == 'io' or pin.func == 'io_oe0' or pin.func == 'io_oe1' then
+--             write(nl, grp_name, ' = ', counter, ',')
+--             counter = counter + 1
+--         end
+--     end
+-- end
+-- unindent()
+-- write [[
+
+
+--     pub fn from_signal(sig: Signal) ?IO_Signal {
+--         return switch (sig) {
+--             inline else => |s| return if (@hasField(IO_Signal, @tagName(s))) @field(IO_Signal, @tagName(s)) else null,
+--         };
+--     }
+
+--     pub fn to_signal(self: IO_Signal) Signal {
+--         return switch (self) {
+--             inline else => |s| return @field(Signal, @tagName(s)),
+--         };
+--     }
+
+-- };
+-- ]]
+write [[
 
 pub const mc_feedback_signals = [num_glbs][num_mcs_per_glb]Signal {]]
 indent()

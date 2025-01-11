@@ -40,6 +40,7 @@ Once you have your in-memory representation of the design, you can do a number o
 
 * Generate an HTML report detailing the design, including timing information.
 * Export the design as a JEDEC or SVF file for programming devices.
+* Simulate your design or write tests to verify its functionality.
 * (Planned) Export a Verilog model of the design for simulation/validation/etc.
 * Write your own Zig code that does whatever you want.
 
@@ -50,5 +51,5 @@ Once you have your in-memory representation of the design, you can do a number o
 * ease of use: PTs.parse() []PT
 * ease of use: helpers to set up common MC configurations?
 * Verilog export
-* Logic simulation/verification
 * "clocks used" not accounting for BCLKs?
+* Test Macrocell_Config.logic.sum_xor_input_buffer on device

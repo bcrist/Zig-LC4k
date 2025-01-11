@@ -56,6 +56,15 @@ pub fn Names(comptime Device: type) type {
             return self;
         }
 
+        pub fn deinit(self: *Self) void {
+            self.glb_names.deinit(self.gpa);
+            self.glb_lookup.deinit(self.gpa);
+            self.macrocell_names.deinit(self.gpa);
+            self.macrocell_lookup.deinit(self.gpa);
+            self.signal_names.deinit(self.gpa);
+            self.signal_lookup.deinit(self.gpa);
+        }
+
         pub const Add_Names_Options = struct {
             prefix: []const u8 = "",
             name: []const u8 = "",
