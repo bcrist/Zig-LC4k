@@ -48,5 +48,4 @@ Once you have your in-memory representation of the design, you can do a number o
 * ease of use: PTs.parse() []PT
 * ease of use: helpers to set up common MC configurations?
 * Verilog export
-* "clocks used" not accounting for BCLKs?
 * Test Macrocell_Config.logic.sum_xor_input_buffer on device

@@ -156,7 +156,23 @@ fn Report_Data(comptime Device: type) type {
                         .combinational => {},
                         .latch, .t_ff, .d_ff => |reg_config| {
                             switch (reg_config.clock) {
-                                .none, .bclock0, .bclock1, .bclock2, .bclock3 => {},
+                                .none => {},
+                                .bclock0 => clocks_used.insert(switch (glb_config.bclock0) {
+                                    .clk0_pos => .clk0,
+                                    .clk1_neg => .clk1,
+                                }),
+                                .bclock1 => clocks_used.insert(switch (glb_config.bclock1) {
+                                    .clk0_neg => .clk0,
+                                    .clk1_pos => .clk1,
+                                }),
+                                .bclock2 => clocks_used.insert(switch (glb_config.bclock2) {
+                                    .clk2_pos => .clk2,
+                                    .clk3_neg => .clk3,
+                                }),
+                                .bclock3 => clocks_used.insert(switch (glb_config.bclock3) {
+                                    .clk2_neg => .clk2,
+                                    .clk3_pos => .clk3,
+                                }),
                                 .shared_pt_clock => {
                                     glb_data.pt_usage[shared_clock_pt] = switch (glb_data.pt_usage[shared_clock_pt]) {
                                         .ce => .clock_and_ce,
