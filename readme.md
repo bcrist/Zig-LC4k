@@ -41,13 +41,10 @@ Once you have your in-memory representation of the design, you can do a number o
 * Generate an HTML report detailing the design, including timing information.
 * Export the design as a JEDEC or SVF file for programming devices.
 * Simulate your design or write tests to verify its functionality.
-* (Planned) Export a Verilog model of the design for simulation/validation/etc.
 * Write your own Zig code that does whatever you want.
 
 # TODO
-* Error when PT4 is needed for ORM routing, but pt4_oe fuse is not cleared
 * Error when there are duplicate sum PTs or they can be simplified
-* Tests
 * ease of use: PTs.parse() []PT
 * ease of use: helpers to set up common MC configurations?
 * Verilog export

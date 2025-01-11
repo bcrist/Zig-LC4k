@@ -165,7 +165,6 @@ pub fn main() !void {
     chip.mc(addr_overflow_fault.mc()).func = .{ .d_ff = .{ .clock = .bclock0 }};
     chip.mc(addr_overflow_fault.mc()).output = .{ .oe = .output_only };
 
-
     @setEvalBranchQuota(10000);
 
     chip.mc(use_dr.mc()).logic = comptime .{ .sum = &.{

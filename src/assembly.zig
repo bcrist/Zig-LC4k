@@ -267,6 +267,21 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
                     },
                 };
                 write_field(&results.jedec.data, u3, relative, range);
+                switch (mc_config.output.oe) {
+                    .from_orm_active_high, .from_orm_active_low => {
+                        const absolute: u4 = @truncate(mcref.mc + relative);
+                        if (glb_config.mc[absolute].pt4_oe == null) {
+                            try results.errors.append(.{
+                                .err = error.PT_OE_Not_Configured,
+                                .details = "IO uses PT4 for OE, but it has not been configured",
+                                .glb = @intCast(glb),
+                                .mc = @intCast(absolute),
+                                .grp_ordinal = @intFromEnum(mcref.input(Device.Signal)),
+                            });
+                        }
+                    },
+                    else => {},
+                }
             }
 
             if (@TypeOf(mc_config.output) != lc4k.Output_Config_ZE) {

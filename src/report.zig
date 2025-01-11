@@ -387,17 +387,17 @@ pub fn write(comptime Device: type, comptime speed_grade: comptime_int, file: JE
             if (err.glb) |glb| {
                 if (err.mc) |mc| {
                     const mc_name = options.get_names().get_mc_name(lc4k.MC_Ref.init(glb, mc));
-                    try writer.print("{s} ", .{ mc_name });
+                    try writer.print("<div>MC: {s}</div>", .{ mc_name });
                 } else {
-                    try writer.print("GLB {s} ", .{ options.get_names().get_glb_name(glb) });
+                    try writer.print("<div>GLB: {s}</div>", .{ options.get_names().get_glb_name(glb) });
                     if (err.gi) |gi| {
-                        try writer.print("GI {} ", .{ gi });
+                        try writer.print("<div>GI: {}</div>", .{ gi });
                     }
                 }
             }
             if (err.grp_ordinal) |grp_ordinal| {
                 const name = options.get_names().get_signal_name(@enumFromInt(grp_ordinal));
-                try writer.print("Signal: {s} ", .{ name });
+                try writer.print("<div>Signal: {s}</div> ", .{ name });
             }
             // if (err.fuse) |fuse| {
             //     try writer.print("({},{})", .{ fuse.row, fuse.col });
