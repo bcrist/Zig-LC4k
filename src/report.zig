@@ -136,13 +136,8 @@ fn Report_Data(comptime Device: type) type {
                             ios_used.insert(grp);
                         }
 
-                        const output_routing = if (@TypeOf(mc_config.output) == lc4k.Output_Config_ZE)
-                            mc_config.output.routing
-                        else
-                            mc_config.output.oe_routing;
-
-                        const src_mcref = lc4k.MC_Ref.init(glb, output_routing.absolute);
-                        mcs_used.insert(Device.Signal.mc_fb(src_mcref));
+                        const output_routing = if (Device.family == .zero_power_enhanced) mc_config.output.routing else mc_config.output.oe_routing;
+                        mcs_used.insert(output_routing.to_absolute(mcref));
                     }
 
                     switch (mc_config.logic) {
@@ -1031,7 +1026,7 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
                 .input_buffer, .pt0, .pt0_inverted => {},
             }
 
-            if (@TypeOf(mc_config.output) != lc4k.Output_Config_ZE) {
+            if (Device.family != .zero_power_enhanced) {
                 switch (mc_config.output.routing) {
                     .five_pt_fast_bypass, .five_pt_fast_bypass_inverted => |pts| {
                         for (pts) |pt| {
@@ -1165,16 +1160,11 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
             var oe_mc_delta: usize = 0;
             var temp_oe_buf: [64]u8 = undefined;
 
-            if (@TypeOf(mc_config.output) == lc4k.Output_Config_ZE) {
-                const abs_output_mc = mc_config.output.routing.absolute;
-                out_mcref = lc4k.MC_Ref.init(glb, abs_output_mc);
-                out_mc_delta = if (abs_output_mc < mc)
-                    abs_output_mc + Device.num_mcs_per_glb - mc
-                else
-                    abs_output_mc - mc
-                ;
+            if (Device.family == .zero_power_enhanced) {
+                out_mcref = mc_config.output.routing.to_absolute(mcref).mc();
+                out_mc_delta = mc_config.output.routing.to_relative(mcref) orelse 0;
 
-                const out_mc_class = try std.fmt.bufPrint(&temp_out_buf, ".mc-{}", .{ abs_output_mc });
+                const out_mc_class = try std.fmt.bufPrint(&temp_out_buf, ".mc-{}", .{ out_mcref.mc });
                 out_options = Cell_Options {
                     .class = out_mc_class[1..],
                     .hover_selector = out_mc_class,
@@ -1187,15 +1177,10 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
                 oe_mcref = out_mcref;
                 oe_mc_delta = out_mc_delta;
             } else {
-                const abs_oe_mc = mc_config.output.oe_routing.absolute;
-                oe_mcref = lc4k.MC_Ref.init(glb, abs_oe_mc);
-                oe_mc_delta = if (abs_oe_mc < mc)
-                    abs_oe_mc + Device.num_mcs_per_glb - mc
-                else
-                    abs_oe_mc - mc
-                ;
+                oe_mcref = mc_config.output.oe_routing.to_absolute(mcref).mc();
+                oe_mc_delta = mc_config.output.oe_routing.to_relative(mcref) orelse 0;
 
-                const oe_mc_class = try std.fmt.bufPrint(&temp_oe_buf, ".mc-{}", .{ abs_oe_mc });
+                const oe_mc_class = try std.fmt.bufPrint(&temp_oe_buf, ".mc-{}", .{ oe_mcref.mc });
                 oe_options = Cell_Options {
                     .class = oe_mc_class[1..],
                     .hover_selector = oe_mc_class,

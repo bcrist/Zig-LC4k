@@ -340,15 +340,16 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
             if (fuses.get_output_enable_source_range(Device, mcref)) |range| {
                 mc_config.output.oe = read_field(file.data, lc4k.Output_Enable_Mode, range);
             }
-            if (unmap_orm(Device, file.data, mcref)) |source_mcref| {
-                if (@TypeOf(mc_config.output) == lc4k.Output_Config_ZE) {
-                    mc_config.output.routing = .{ .absolute = source_mcref.mc };
+            if (unmap_orm(Device, file.data, mcref)) |target_mcref| {
+                const fb = Device.Signal.mc_fb(target_mcref);
+                if (Device.family == .zero_power_enhanced) {
+                    mc_config.output.routing = .{ .absolute = fb };
                 } else {
-                    mc_config.output.oe_routing = .{ .absolute = source_mcref.mc };
+                    mc_config.output.oe_routing = .{ .absolute = fb };
                 }
             }
 
-            if (@TypeOf(mc_config.output) != lc4k.Output_Config_ZE) {
+            if (Device.family != .zero_power_enhanced) {
                 if (fuses.get_output_routing_mode_range(Device, mcref)) |range| {
                     mc_config.output.routing = switch (read_field(file.data, lc4k.Output_Routing_Mode, range)) {
                         .five_pt_fast_bypass => .{ .five_pt_fast_bypass = &.{} },
@@ -676,8 +677,8 @@ pub fn read_clock_source(comptime Device: type, data: JEDEC_Data, mcref: lc4k.MC
 pub fn unmap_orm(comptime Device: type, data: JEDEC_Data, mcref: lc4k.MC_Ref) ?lc4k.MC_Ref {
     if (fuses.get_output_routing_range(Device, mcref)) |range| {
         const relative = read_field(data, u3, range);
-        const absolute: lc4k.MC_Index = @intCast((@as(u32, mcref.mc) + relative) % Device.num_mcs_per_glb);
-        return lc4k.MC_Ref.init(mcref.glb, absolute);
+        const absolute_index: lc4k.MC_Index = @intCast((@as(u32, mcref.mc) + relative) % Device.num_mcs_per_glb);
+        return lc4k.MC_Ref.init(mcref.glb, absolute_index);
     }
     return null;
 }

@@ -254,17 +254,16 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
             }
 
             if (fuses.get_output_routing_range(Device, mcref)) |range| {
-                const oe_routing = if (@TypeOf(mc_config.output) == lc4k.Output_Config_ZE) mc_config.output.routing else mc_config.output.oe_routing;
-                const relative: u3 = switch (oe_routing) {
-                    .relative => |delta| delta,
-                    .absolute => |src_mc| rel: {
-                        const delta = @as(i32, src_mc) - mcref.mc;
-                        if (delta < 0 or delta > 7) {
-                            // TODO report through results.errors
-                            return error.Invalid_Output_Routing;
-                        }
-                        break :rel @intCast(delta);
-                    },
+                const oe_routing = if (Device.family == .zero_power_enhanced) mc_config.output.routing else mc_config.output.oe_routing;
+                const relative = oe_routing.to_relative(mcref) orelse rel: {
+                    try results.errors.append(.{
+                        .err = error.Invalid_Output_Routing,
+                        .details = "Invalid target for ORM routing; target signal should be a macrocell feedback signal in the same GLB with a relative offset of +0 to +7",
+                        .glb = mcref.glb,
+                        .mc = mcref.mc,
+                        .grp_ordinal = @intFromEnum(oe_routing.absolute),
+                    });
+                    break :rel 0;
                 };
                 write_field(&results.jedec.data, u3, relative, range);
                 switch (mc_config.output.oe) {
@@ -284,7 +283,7 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
                 }
             }
 
-            if (@TypeOf(mc_config.output) != lc4k.Output_Config_ZE) {
+            if (Device.family != .zero_power_enhanced) {
                 if (fuses.get_output_routing_mode_range(Device, mcref)) |range| {
                     const mode: u2 = switch (mc_config.output.routing) {
                         .same_as_oe => 2,

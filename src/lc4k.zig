@@ -205,7 +205,7 @@ pub fn Macrocell_Config(comptime family: Device_Family, comptime Signal: type) t
         else => Input_Config,
     };
     const MC_Output_Config = switch (family) {
-        .zero_power_enhanced => Output_Config_ZE,
+        .zero_power_enhanced => Output_Config_ZE(Signal),
         else => Output_Config(Signal),
     };
 
@@ -258,7 +258,7 @@ pub fn Output_Config(comptime Signal: type) type {
         slew_rate: ?Slew_Rate = null,
         drive_type: ?Drive_Type = null,
         oe: Output_Enable_Mode,
-        oe_routing: Output_Routing = .{ .relative = 0 },
+        oe_routing: Output_Routing(Signal) = .{ .relative = 0 },
         routing: union(Output_Routing_Mode) {
             same_as_oe,
             self,
@@ -267,17 +267,49 @@ pub fn Output_Config(comptime Signal: type) type {
         } = .same_as_oe,
     };
 }
-pub const Output_Config_ZE = struct {
-    slew_rate: ?Slew_Rate = null,
-    drive_type: ?Drive_Type = null,
-    oe: Output_Enable_Mode,
-    routing: Output_Routing = .{ .relative = 0 },
-};
+pub fn Output_Config_ZE(comptime Signal: type) type {
+    return struct {
+        slew_rate: ?Slew_Rate = null,
+        drive_type: ?Drive_Type = null,
+        oe: Output_Enable_Mode,
+        routing: Output_Routing(Signal) = .{ .relative = 0 },
+    };
+}
 
-pub const Output_Routing = union(enum) {
-    relative: u3,
-    absolute: MC_Index,
-};
+pub fn Output_Routing(comptime Signal: type) type {
+    return union(enum) {
+        relative: u3,
+        absolute: Signal,
+
+        pub fn to_absolute(self: @This(), io_mc: MC_Ref) Signal {
+             switch (self) {
+                .relative => |offset| {
+                    const target_mcref = MC_Ref.init(io_mc.glb, (io_mc.mc + offset) % 16);
+                    return Signal.mc_fb(target_mcref);
+                },
+                .absolute => |signal| {
+                    return signal;
+                },
+            }
+        }
+
+        pub fn to_relative(self: @This(), io_mc: MC_Ref) ?u3 {
+            switch (self) {
+                .relative => |offset| {
+                    return offset;
+                },
+                .absolute => |signal| {
+                    if (signal.maybe_fb() != signal) return null;
+                    const mc = signal.maybe_mc() orelse return null;
+                    if (mc.glb != io_mc.glb) return null;
+                    const delta = if (mc.mc < io_mc.mc) mc.mc + 16 - io_mc.mc else mc.mc - io_mc.mc;
+                    if (delta < 0 or delta >= 8) return null;
+                    return @intCast(delta);
+                },
+            }
+        }
+    };
+}
 
 pub const GOE_Polarity = enum {
     active_high,
@@ -785,12 +817,8 @@ pub fn Simulator(comptime Device: type) type {
                                 new_state.oe.remove(io_signal);
                             },
                             .from_orm_active_high, .from_orm_active_low => {
-                                const oe_routing: Output_Routing = if (@TypeOf(mc_config.output) == Output_Config_ZE) mc_config.output.routing else mc_config.output.oe_routing;
-                                const oe_mc_index: MC_Index = switch (oe_routing) {
-                                    .absolute => |index| index,
-                                    .relative => |offset| @intCast((mc + offset) % Device.num_mcs_per_glb),
-                                };
-                                var oe_state = new_state.data.contains(MC_Ref.init(glb, oe_mc_index).fb(Signal));
+                                const oe_routing = if (Device.family == .zero_power_enhanced) mc_config.output.routing else mc_config.output.oe_routing;
+                                var oe_state = new_state.data.contains(oe_routing.to_absolute(mcref));
                                 if (mc_config.output.oe == .from_orm_active_low) oe_state = !oe_state;
                                 new_state.oe.setPresent(io_signal, oe_state);
                                 if (oe_state) {
@@ -839,23 +867,13 @@ pub fn Simulator(comptime Device: type) type {
         }
 
         fn update_output_data(self: @This(), io_signal: Signal, mcref: MC_Ref, output_config: anytype, new_state_data: *std.EnumSet(Signal)) void {
-            if (@TypeOf(output_config) == Output_Config_ZE) {
-                const mc_index: MC_Index = switch (output_config.routing) {
-                    .absolute => |index| index,
-                    .relative => |offset| @intCast((mcref.mc + offset) % Device.num_mcs_per_glb),
-                };
-                const output_data_signal = MC_Ref.init(mcref.glb, mc_index).fb(Signal);
-                new_state_data.setPresent(io_signal, new_state_data.contains(output_data_signal));
+            if (Device.family == .zero_power_enhanced) {
+                new_state_data.setPresent(io_signal, new_state_data.contains(output_config.routing.to_absolute(mcref)));
             } else {
                 std.debug.assert(@TypeOf(output_config) == Output_Config);
                 switch (output_config.routing) {
                     .same_as_oe => {
-                        const mc_index: MC_Index = switch (output_config.oe_routing) {
-                            .absolute => |index| index,
-                            .relative => |offset| @intCast((mcref.mc + offset) % Device.num_mcs_per_glb),
-                        };
-                        const output_data_signal = MC_Ref.init(mcref.glb, mc_index).fb(Signal);
-                        new_state_data.setPresent(io_signal, new_state_data.contains(output_data_signal));
+                        new_state_data.setPresent(io_signal, new_state_data.contains(output_config.oe_routing.to_absolute(mcref)));
                     },
                     .self => {
                         const fb_signal = mcref.fb(Signal);
