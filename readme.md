@@ -42,10 +42,3 @@ Once you have your in-memory representation of the design, you can do a number o
 * Export the design as a JEDEC or SVF file for programming devices.
 * Simulate your design or write tests to verify its functionality.
 * Write your own Zig code that does whatever you want.
-
-# TODO
-* Error when there are duplicate sum PTs or they can be simplified
-* ease of use: PTs.parse() []PT
-* ease of use: helpers to set up common MC configurations?
-* Verilog export
-* Test Macrocell_Config.logic.sum_xor_input_buffer on device
