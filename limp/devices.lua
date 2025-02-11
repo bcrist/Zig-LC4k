@@ -16,6 +16,7 @@ local function device (name)
 
     local package = name:match('_(.*)')
     local num_glbs = math.tointeger(name:sub(4,6) / 16)
+    local num_pins = math.tointeger(package:match('[A-Za-z]*([0-9]*)'))
 
     local jedec_height = 100
     local gi_mux_size = 0
@@ -36,13 +37,14 @@ local function device (name)
 
     local jedec_width = math.tointeger((gi_mux_size + 166) * (num_glbs / 2))
 
-    local name_buf_len = num_glbs * 4096;
+    local name_buf_len = num_glbs * 4096 + num_pins * 128;
 
     devices[name] = {
         device = name,
         base = base_device,
         family = family,
         package = package,
+        num_pins = num_pins,
         num_glbs = num_glbs,
         gi_mux_size = gi_mux_size,
         oe_bus_size = oe_bus_size,
@@ -167,6 +169,7 @@ pub const oe_bus_size = `oe_bus_size`;
 
 pub const jedec_dimensions = Fuse_Range.init_from_dimensions(`jedec_width`, `jedec_height`);
 
+pub const Logic_Parser = @import("../logic_parser.zig").Logic_Parser(@This());
 pub const F = lc4k.Factor(Signal);
 pub const PT = lc4k.Product_Term(Signal);
 pub const Pin = lc4k.Pin(Signal);
@@ -178,7 +181,7 @@ var default_names: ?Names = null;
 pub fn get_names() *const Names {
     if (default_names) |*names| return names;
     var fba = std.heap.FixedBufferAllocator.init(&name_buf);
-    default_names = Names.init_defaults(fba.allocator());
+    default_names = Names.init_defaults(fba.allocator(), pins);
     return &default_names.?;
 }
 

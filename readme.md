@@ -34,7 +34,7 @@ const results = try lc4k.LC4032ZE_TQFP48.disassemble(allocator, bitstream);
 const chip = results.config;
 ```
 
-Note that this library does not and will not provide support for synthesizing a design from Verilog, VHDL, ABEL, or any other HDL.  It is my opinion that such workflows often don't allow sufficient control over how the limited hardware resources are utilized, and designs that will fit in 32-128 macrocell CPLDs are rarely complex enough where such an abstracted representation is necessary.
+Note that while this library includes a basic expression parser, it does not and will not support synthesizing a design from Verilog, VHDL, ABEL, or any other HDL.  It is my opinion that such workflows often don't allow sufficient control over how the limited hardware resources are utilized, and designs that will fit in 32-128 macrocell CPLDs are rarely complex enough where such an abstracted representation is necessary.
 
 Once you have your in-memory representation of the design, you can do a number of things with it:
 

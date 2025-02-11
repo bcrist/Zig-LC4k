@@ -8,6 +8,7 @@ pub fn build(b: *std.Build) void {
         .optimize = b.standardOptimizeOption(.{}),
     });
     exe.root_module.addImport("lc4k", b.dependency("lc4k", .{}).module("lc4k"));
+    exe.root_module.addImport("util", b.dependency("example_utils", .{}).module("util"));
 
     var run = b.addRunArtifact(exe);
     run.step.dependOn(&b.addInstallArtifact(exe, .{}).step);

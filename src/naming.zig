@@ -14,6 +14,8 @@ pub fn Names(comptime Device: type) type {
         signal_names: std.AutoHashMapUnmanaged(Signal, []const u8) = .{},
         signal_lookup: std.StringHashMapUnmanaged(Signal) = .{},
 
+        bus_lookup: std.StringHashMapUnmanaged([]const Signal) = .{},
+
         const Self = @This();
 
         pub fn init(allocator: std.mem.Allocator) Self {
@@ -23,7 +25,7 @@ pub fn Names(comptime Device: type) type {
             };
         }
 
-        pub fn init_defaults(allocator: std.mem.Allocator) Self {
+        pub fn init_defaults(allocator: std.mem.Allocator, comptime Pins: type) Self {
             var self: Self = .{
                 .gpa = allocator,
                 .fallback = null,
@@ -53,6 +55,13 @@ pub fn Names(comptime Device: type) type {
                 self.add_signal_name(signal, @tagName(signal)) catch unreachable;
             }
 
+            inline for (@typeInfo(Pins).@"struct".decls) |decl| {
+                if (@field(Pins, decl.name).info.grp_ordinal) |ordinal| {
+                    const name = if (comptime std.mem.startsWith(u8, decl.name, "_")) "pin" ++ decl.name else "pin_" ++ decl.name;
+                    self.add_bus_name(&.{ @enumFromInt(ordinal) }, name) catch unreachable;
+                }
+            }
+
             return self;
         }
 
@@ -63,6 +72,7 @@ pub fn Names(comptime Device: type) type {
             self.macrocell_lookup.deinit(self.gpa);
             self.signal_names.deinit(self.gpa);
             self.signal_lookup.deinit(self.gpa);
+            self.bus_lookup.deinit(self.gpa);
         }
 
         pub const Add_Names_Options = struct {
@@ -112,12 +122,30 @@ pub fn Names(comptime Device: type) type {
                             });
                         }
                     },
-                    .array, .pointer => inline for (0.., what) |i, elem| {
-                        try self.add_names(elem, .{
-                            .prefix = options.prefix,
-                            .name = std.fmt.comptimePrint("{s}[{}]", .{ options.name, i }),
-                            .suffix = options.suffix,
-                        });
+                    .array => |info| {
+                        inline for (0.., what) |i, elem| {
+                            try self.add_names(elem, .{
+                                .prefix = options.prefix,
+                                .name = std.fmt.comptimePrint("{s}[{}]", .{ options.name, i }),
+                                .suffix = options.suffix,
+                            });
+                        }
+                        if (info.child == Signal) {
+                            try self.add_bus_name(&what, options.prefix ++ options.name ++ options.suffix);
+                        }
+                    },
+                    .pointer => |info| {
+                        std.debug.assert(info.size == .Slice);
+                        inline for (0.., what) |i, elem| {
+                            try self.add_names(elem, .{
+                                .prefix = options.prefix,
+                                .name = std.fmt.comptimePrint("{s}[{}]", .{ options.name, i }),
+                                .suffix = options.suffix,
+                            });
+                        }
+                        if (info.child == Signal) {
+                            try self.add_bus_name(what, options.prefix ++ options.name ++ options.suffix);
+                        }
                     },
                     else => @compileError("Unexpected type: " ++ @typeName(T) ++ " for " ++ options.prefix ++ options.name ++ options.suffix), 
                 },
@@ -155,6 +183,12 @@ pub fn Names(comptime Device: type) type {
 
             self.signal_names.putAssumeCapacityNoClobber(signal, name);
             self.signal_lookup.putAssumeCapacityNoClobber(name, signal);
+        }
+
+        pub fn add_bus_name(self: *Self, comptime signals: []const Signal, name: []const u8) !void {
+            if (self.bus_lookup.contains(name)) return error.Duplicate_Name;
+            try self.bus_lookup.ensureUnusedCapacity(self.gpa, 1);
+            self.bus_lookup.putAssumeCapacityNoClobber(name, signals);
         }
 
         pub fn get_glb_name(self: Self, glb: GLB_Index) []const u8 {
@@ -243,6 +277,18 @@ pub fn Names(comptime Device: type) type {
 
             if (self.fallback) |fallback| {
                 return fallback.lookup_signal(name);
+            }
+
+            return null;
+        }
+
+        pub fn lookup_bus(self: Self, name: []const u8) ?[]const Signal {
+            if (self.bus_lookup.get(name)) |bus| {
+                return bus;
+            }
+
+            if (self.fallback) |fallback| {
+                return fallback.lookup_bus(name);
             }
 
             return null;

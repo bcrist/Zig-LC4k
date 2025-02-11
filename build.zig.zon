@@ -9,6 +9,10 @@
         "license",
     },
     .dependencies = .{
+        .console_helper = .{
+            .url = "git+https://github.com/bcrist/Zig-ConsoleHelper#e39301c1d36b3a2aa98a8c7c8e5fa2eaddfd1000",
+            .hash = "122006a04539cb247748b9d786bc8d7045f4688575cadaffc3d442a4e5bdc8705527",
+        },
         .LIMP = .{
             .url = "git+https://github.com/bcrist/limp#e95510a40e2d890168b5e31b60b744f19760a803",
             .hash = "1220d95628db6955254878f749594ca528a6077bfbd078483d2746544cf2468010a5",

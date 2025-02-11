@@ -91,6 +91,7 @@ pub fn Chip_Config(comptime device_type: Device_Type) type {
 
         pub const Device = D;
         pub const Names = D.Names;
+        pub const Logic_Parser = D.Logic_Parser;
         pub const PT = D.PT;
         pub const F = D.F;
         pub const Pin = D.Pin;
@@ -199,6 +200,102 @@ pub fn GLB_Config(comptime D: type) type {
     };
 }
 
+pub fn Macrocell_Logic(comptime Signal: type) type {
+    return union(enum) {
+        sum: []const Product_Term(Signal),
+        sum_inverted: []const Product_Term(Signal),
+        input_buffer,
+        pt0: Product_Term(Signal),
+        pt0_inverted: Product_Term(Signal),
+        sum_xor_pt0: Sum_XOR_PT0(Signal),
+        sum_xor_pt0_inverted: Sum_XOR_PT0(Signal),
+        sum_xor_input_buffer: []const Product_Term(Signal), // TODO test this; datasheet's schematic of MC implies it is, but timing model implies it isn't.
+
+        pub fn debug(self: @This(), w: std.io.AnyWriter) !void {
+            switch (self) {
+                .sum => |pts| {
+                    if (pts.len == 0) {
+                        try w.writeByte('0');
+                        return;
+                    }
+                    try pts[0].debug(w);
+                    for (pts[1..]) |pt| {
+                        try w.writeAll(" | ");
+                        try pt.debug(w);
+                    }
+                },
+                .sum_inverted => |pts| {
+                    try w.writeByte('~');
+                    if (pts.len == 0) {
+                        try w.writeByte('0');
+                        return;
+                    }
+                    try w.writeByte('(');
+                    try pts[0].debug(w);
+                    for (pts[1..]) |pt| {
+                        try w.writeAll(" | ");
+                        try pt.debug(w);
+                    }
+                    try w.writeByte(')');
+                },
+                .input_buffer => try w.writeAll("<input>"),
+                .pt0 => |pt| try pt.debug(w),
+                .pt0_inverted => |pt| {
+                    try w.writeAll("~(");
+                    try pt.debug(w);
+                    try w.writeByte(')');
+                },
+                .sum_xor_pt0 => |info| {
+                    try w.writeByte('(');
+                    try info.pt0.debug(w);
+                    try w.writeAll(") ^ ");
+                    if (info.sum.len == 0) {
+                        try w.writeByte('0');
+                        return;
+                    }
+                    try w.writeByte('(');
+                    try info.sum[0].debug(w);
+                    for (info.sum[1..]) |pt| {
+                        try w.writeAll(" | ");
+                        try pt.debug(w);
+                    }
+                    try w.writeByte(')');
+                },
+                .sum_xor_pt0_inverted => |info| {
+                    try w.writeAll("~(");
+                    try info.pt0.debug(w);
+                    try w.writeAll(") ^ ");
+                    if (info.sum.len == 0) {
+                        try w.writeByte('0');
+                        return;
+                    }
+                    try w.writeByte('(');
+                    try info.sum[0].debug(w);
+                    for (info.sum[1..]) |pt| {
+                        try w.writeAll(" | ");
+                        try pt.debug(w);
+                    }
+                    try w.writeByte(')');
+                },
+                .sum_xor_input_buffer => |pts| {
+                    try w.writeAll("<input> ^ ");
+                    if (pts.len == 0) {
+                        try w.writeByte('0');
+                        return;
+                    }
+                    try w.writeByte('(');
+                    try pts[0].debug(w);
+                    for (pts[1..]) |pt| {
+                        try w.writeAll(" | ");
+                        try pt.debug(w);
+                    }
+                    try w.writeByte(')');
+                },
+            }
+        }
+    };
+}
+
 pub fn Macrocell_Config(comptime family: Device_Family, comptime Signal: type) type {
     const MC_Input_Config = switch (family) {
         .zero_power_enhanced => Input_Config_ZE,
@@ -212,16 +309,7 @@ pub fn Macrocell_Config(comptime family: Device_Family, comptime Signal: type) t
     return struct {
         sum_routing: ?Cluster_Routing = null,
         wide_sum_routing: ?Wide_Routing = null,
-        logic: union(enum) {
-            sum: []const Product_Term(Signal),
-            sum_inverted: []const Product_Term(Signal),
-            input_buffer,
-            pt0: Product_Term(Signal),
-            pt0_inverted: Product_Term(Signal),
-            sum_xor_pt0: Sum_XOR_PT0(Signal),
-            sum_xor_pt0_inverted: Sum_XOR_PT0(Signal),
-            sum_xor_input_buffer: []const Product_Term(Signal), // TODO test this; datasheet's schematic of MC implies it is, but timing model implies it isn't.
-        },
+        logic: Macrocell_Logic(Signal),
         func: union(Macrocell_Function) {
             combinational: void,
             latch: Register_Config(Signal),
@@ -485,6 +573,20 @@ pub fn Product_Term(comptime Device_Signal: type) type {
             }
             return pt;
         }
+
+        pub fn debug(self: Self, w: std.io.AnyWriter) !void {
+            if (self.factors.len == 0) {
+                try w.writeAll("1");
+                return;
+            }
+
+            try self.factors[0].debug(w);
+
+            for (self.factors[1..]) |factor| {
+                try w.writeAll(" & ");
+                try factor.debug(w);
+            }
+        }
     };
 }
 
@@ -517,6 +619,18 @@ pub fn Factor(comptime Device_Signal: type) type {
         }
         pub inline fn pt_alloc(self: Self, allocator: std.mem.Allocator) !Product_Term(Signal) {
             return .{ .factors = try allocator.dupe(Self, self.pt_indirect().factors) };
+        }
+
+        pub fn debug(self: Self, w: std.io.AnyWriter) !void {
+            switch (self) {
+                .always => try w.writeAll("1"),
+                .never => try w.writeAll("0"),
+                .when_high => |signal| try w.writeAll(@tagName(signal)),
+                .when_low => |signal| {
+                    try w.writeByte('~');
+                    try w.writeAll(@tagName(signal));
+                },
+            }
         }
     };
 }
@@ -1210,6 +1324,8 @@ const device = @import("device.zig");
 pub const Device_Type = device.Type;
 pub const Device_Family = device.Family;
 pub const Device_Package = device.Package;
+pub const Logic_Parser = logic_parser.Logic_Parser;
+pub const logic_parser = @import("logic_parser.zig");
 pub const JEDEC_Data = @import("JEDEC_Data.zig");
 pub const JEDEC_File = @import("JEDEC_File.zig");
 pub const Fuse = @import("Fuse.zig");

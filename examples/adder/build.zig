@@ -11,6 +11,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     exe.root_module.addImport("lc4k", b.dependency("lc4k", .{}).module("lc4k"));
+    exe.root_module.addImport("util", b.dependency("example_utils", .{}).module("util"));
 
     var run = b.addRunArtifact(exe);
     run.step.dependOn(&b.addInstallArtifact(exe, .{}).step);
@@ -22,6 +23,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     test_exe.root_module.addImport("lc4k", b.dependency("lc4k", .{}).module("lc4k"));
+    test_exe.root_module.addImport("util", b.dependency("example_utils", .{}).module("util"));
 
     var run_test = b.addRunArtifact(test_exe);
     b.step("test", "Run tests").dependOn(&run_test.step);

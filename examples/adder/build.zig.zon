@@ -5,5 +5,6 @@
     .paths = .{""},
     .dependencies = .{
         .lc4k = .{ .path = "../.." },
+        .example_utils = .{ .path = "../util" },
     },
 }

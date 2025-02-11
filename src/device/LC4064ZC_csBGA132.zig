@@ -1,4 +1,4 @@
-//[[!! include('devices', 'LC4064ZC_csBGA132') !! 726 ]]
+//[[!! include('devices', 'LC4064ZC_csBGA132') !! 727 ]]
 //[[ ################# !! GENERATED CODE -- DO NOT MODIFY !! ################# ]]
 const std = @import("std");
 const lc4k = @import("../lc4k.zig");
@@ -20,18 +20,19 @@ pub const oe_bus_size = 4;
 
 pub const jedec_dimensions = Fuse_Range.init_from_dimensions(356, 100);
 
+pub const Logic_Parser = @import("../logic_parser.zig").Logic_Parser(@This());
 pub const F = lc4k.Factor(Signal);
 pub const PT = lc4k.Product_Term(Signal);
 pub const Pin = lc4k.Pin(Signal);
 pub const Names = naming.Names(@This());
 
-var name_buf: [16384]u8 = undefined;
+var name_buf: [33280]u8 = undefined;
 var default_names: ?Names = null;
 
 pub fn get_names() *const Names {
     if (default_names) |*names| return names;
     var fba = std.heap.FixedBufferAllocator.init(&name_buf);
-    default_names = Names.init_defaults(fba.allocator());
+    default_names = Names.init_defaults(fba.allocator(), pins);
     return &default_names.?;
 }
 

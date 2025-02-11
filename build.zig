@@ -4,6 +4,7 @@ pub fn build(b: *std.Build) void {
     const lc4k = b.addModule("lc4k", .{
         .root_source_file = b.path("src/lc4k.zig"),
     });
+    lc4k.addImport("console", b.dependency("console_helper", .{}).module("console"));
 
     const tests = b.addTest(.{
         .root_source_file = b.path("test/tests.zig"),
