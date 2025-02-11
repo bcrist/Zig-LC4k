@@ -514,6 +514,30 @@ pub fn Logic_Parser(comptime Device: type) type {
                         return extracted_bits;
                     },
 
+                    .mux => {
+                        const data = slice.items(.data)[node_index].binary;
+                        const bus_bits = try self.infer_and_check_node_bit_width(slice, data.lhs);
+                        const selector_bits = try self.infer_and_check_node_bit_width(slice, data.rhs);
+                        if (selector_bits > 6) {
+                            self.report_node_error_fmt_3(
+                                node, "Multiplexer selector width cannot be greater than 6 bits", .{},
+                                data.lhs, "Bus has width of {} bits", .{ bus_bits },
+                                data.rhs, "Selector has width of {} bits", .{ selector_bits });
+                            return error.InvalidEquation;
+                        }
+                        const expected_bus_bits = @as(u7, 1) << @intCast(selector_bits);
+                        if (expected_bus_bits != bus_bits) {
+                            self.report_node_error_fmt_3(
+                                node, "Multiplexer width mismatch", .{},
+                                data.lhs, "Bus has width of {} bits (expected {} bits)", .{ bus_bits, expected_bus_bits },
+                                data.rhs, "Selector has width of {} bits", .{ selector_bits });
+                            return error.InvalidEquation;
+                        }
+
+                        slice.items(.result_bits)[node_index] = 1;
+                        return 1;
+                    },
+
                     .sum, .product, .xor => {
                         const data = slice.items(.data)[node_index].nary;
                         const children = self.extra_children.items[data.offset..][0..data.len];
@@ -794,7 +818,34 @@ pub fn Logic_Parser(comptime Device: type) type {
                         }
                     },
 
-                    // N-ary
+                    .mux => {
+                        const bus = data.binary.lhs;
+                        const selector = data.binary.rhs;
+                        const selector_bits = slice.items(.result_bits)[@intFromEnum(selector)].?;
+
+                        var selector_ir: [6]IR.ID = undefined;
+                        var inverted_selector_ir: [6]IR.ID = undefined;
+                        for (0..selector_bits) |bit| {
+                            selector_ir[bit] = try self.build_node_ir(irdata, slice, selector, @intCast(bit));
+                            inverted_selector_ir[bit] = try irdata.make_complement(selector_ir[bit]);
+                        }
+
+                        var result: ?IR.ID = null;
+
+                        for (0 .. @as(u64, 1) << selector_bits) |permutation| {
+                            var product = try self.build_node_ir(irdata, slice, bus, @intCast(permutation));
+                            const permutation_bits: std.StaticBitSet(32) = .{ .mask = @intCast(permutation) };
+                            for (0..selector_bits) |bit| {
+                                const bit_ir = if (permutation_bits.isSet(bit)) selector_ir[bit] else inverted_selector_ir[bit];
+                                product = try irdata.make_binary(.product, product, bit_ir);
+                            }
+
+                            result = if (result) |lhs| try irdata.make_binary(.sum, lhs, product) else product;
+                        }
+
+                        return result.?;
+                    },
+
                     .sum => {
                         const children = self.extra_children.items[data.nary.offset..][0..data.nary.len];
                         var result = try self.build_node_ir(irdata, slice, children[0], bit_index);
@@ -962,7 +1013,7 @@ pub fn Logic_Parser(comptime Device: type) type {
                             try w.writeAll(": ");
                             try self.debug_node(slice, data.unary, indent, w);
                         },
-                        .equals, .not_equals, .binary_sum, .binary_product, .binary_xor, .binary_concat_be, .binary_concat_le, .extract, .extract_be, .extract_le => {
+                        .equals, .not_equals, .binary_sum, .binary_product, .binary_xor, .binary_concat_be, .binary_concat_le, .extract, .extract_be, .extract_le, .mux => {
                             try w.writeAll(":\n");
                             const new_indent = indent + 1;
 
@@ -1192,6 +1243,7 @@ pub fn Logic_Parser(comptime Device: type) type {
             // lhs [ literal_range < literal_range ... ]
             // lhs [ > literal_range > literal_range ... ]
             // lhs [ < literal_range < literal_range ... ]
+            // lhs [ sum ]
             fn try_extract(self: *Parse_Data, lhs: Node.ID) Parse_Error!?Node.ID {
                 const begin_token = self.next_token;
                 if (!self.try_token(.begin_extract)) return null;
@@ -1204,8 +1256,13 @@ pub fn Logic_Parser(comptime Device: type) type {
 
                 var maybe_endianness: ?std.builtin.Endian = null;
                 var first_endianness_token: u32 = 0;
+                var is_mux_definition = false;
 
                 while (!self.try_token(.end_extract)) {
+                    if (is_mux_definition) {
+                        self.report_token_error_2(self.next_token, "Expected closing ']'", begin_token, "for mux definition beginning here");
+                        return error.InvalidEquation;
+                    }
                     if (try self.try_bit_range()) |node| {
                         try self.temp_nodes.append(self.gpa, node);
                     } else if (self.try_token(.little_endian)) {
@@ -1228,12 +1285,14 @@ pub fn Logic_Parser(comptime Device: type) type {
                             maybe_endianness = .big;
                             first_endianness_token = self.next_token - 1;
                         }
+                    } else if (self.temp_nodes.items.len > initial_temp_nodes_len + 1) {
+                        self.report_token_error_2(self.next_token, "Expected bit literal or range, or closing ']'", begin_token, "for extraction beginning here");
+                        return error.InvalidEquation;
+                    } else if (try self.try_sum()) |selector| {
+                        try self.temp_nodes.append(self.gpa, selector);
+                        is_mux_definition = true;
                     } else {
-                        if (self.temp_nodes.items.len > initial_temp_nodes_len + 1) {
-                            self.report_token_error_2(self.next_token, "Expected bit literal or range, or closing ']'", begin_token, "for extraction beginning here");
-                        } else {
-                            self.report_token_error_2(self.next_token, "Expected bit literal or range", begin_token, "for extraction beginning here");
-                        }
+                        self.report_token_error_2(self.next_token, "Expected bit literal, range, or expression", begin_token, "for extraction/mux beginning here");
                         return error.InvalidEquation;
                     }
                 }
@@ -1244,10 +1303,12 @@ pub fn Logic_Parser(comptime Device: type) type {
 
                 const children = self.temp_nodes.items[initial_temp_nodes_len..];
                 if (children.len < 2) {
-                    self.report_token_error_2(self.next_token - 1, "Expected at least one bit literal or range", begin_token, "for extraction beginning here");
+                    self.report_token_error_2(self.next_token - 1, "Expected at least one bit literal, range, or expression", begin_token, "for extraction/mux beginning here");
                     return error.InvalidEquation;
                 }
-                const new_node = if (maybe_endianness) |e| switch (e) {
+                const new_node = if (is_mux_definition)
+                    try self.create_binary_node(children[0], children[1], .mux, create_options)
+                else if (maybe_endianness) |e| switch (e) {
                     .big => try self.create_binary_or_nary_node(children, .extract_be, .multi_extract_be, create_options),
                     .little => try self.create_binary_or_nary_node(children, .extract_le, .multi_extract_le, create_options),
                 } else try self.create_binary_or_nary_node(children, .extract, .multi_extract, create_options);
@@ -1978,6 +2039,7 @@ pub const Node_Kind = enum (u8) {
     extract,
     extract_be,
     extract_le,
+    mux,
 
     // N-ary
     sum,

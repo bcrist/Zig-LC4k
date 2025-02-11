@@ -210,6 +210,19 @@ test "parsing" {
         \\      [4] 38-41 bit_range (0b) 4:3
         \\
     );
+
+    try test_parse(lp.Logic_Parser(Device), &p, "{io_A0 io_A1 io_A2 io_A3}[{clk1 clk0}]",
+        \\0-38 mux:
+        \\   [0] 0-25 concat_be:
+        \\      [0] 1-6 signal (1b) io_A0
+        \\      [1] 7-12 signal (1b) io_A1
+        \\      [2] 13-18 signal (1b) io_A2
+        \\      [3] 19-24 signal (1b) io_A3
+        \\   [1] 26-37 binary_concat_be:
+        \\      [0] 27-31 signal (1b) clk1
+        \\      [1] 32-36 signal (1b) clk0
+        \\
+    );
 }
 
 fn test_parse(comptime LP: type, p: *LP, eqn: []const u8, expected: []const u8) !void {
@@ -398,6 +411,15 @@ test "typechecking" {
         \\   [0] 0-1 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
         \\   [1] 3-6 bit_range (0b) 2:2
         \\   [2] 6-7 bit_range (0b) null:null
+        \\
+    );
+
+    try test_bit_widths(lp.Logic_Parser(Device), &p, "A[{clk1 clk0}]",
+        \\0-14 mux (1b):
+        \\   [0] 0-1 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
+        \\   [1] 2-13 binary_concat_be (2b):
+        \\      [0] 3-7 signal (1b) clk1
+        \\      [1] 8-12 signal (1b) clk0
         \\
     );
 }
@@ -721,6 +743,26 @@ test "build IR" {
         \\
     );
 
+    try test_build_ir(lp.Logic_Parser(Device), &p, "A[{clk1 clk0}]", 0, .{},
+        \\sum:
+        \\   [0] product:
+        \\      [0] complement: signal 0
+        \\      [1] complement: signal 1
+        \\      [2] signal 74
+        \\   [1] product:
+        \\      [0] signal 0
+        \\      [1] complement: signal 1
+        \\      [2] signal 75
+        \\   [2] product:
+        \\      [0] complement: signal 0
+        \\      [1] signal 1
+        \\      [2] signal 76
+        \\   [3] product:
+        \\      [0] signal 0
+        \\      [1] signal 1
+        \\      [2] signal 77
+        \\
+    );
 }
 
 fn test_build_ir(comptime LP: type, p: *LP, eqn: []const u8, bit: u6, normalize: ?lp.IR_Data.Normalize_Options, expected: []const u8) !void {

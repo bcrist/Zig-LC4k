@@ -28,12 +28,6 @@ pub fn intern(self: *IR_Data, ir: IR) std.mem.Allocator.Error!IR.ID {
     const id = IR.ID.init(@intCast(result.index));
     if (!result.found_existing) {
         result.key_ptr.* = ir;
-        
-        // TODO NO_COMMIT
-        // Whenever we add a novel expression, we also add its complement.
-        // this ensures that they'll be sorted next to each other in binary operations,
-        // which is required for some transformations in normalize() to work correctly.
-        // if (ir != .complement) _ = try self.make_complement(id);
     }
     return id;
 }
