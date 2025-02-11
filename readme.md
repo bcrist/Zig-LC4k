@@ -74,19 +74,20 @@ Note: the `input_buffer` and `sum_xor_input_buffer` modes will never be generate
 
 ; Anything between a semicolon and the next LF (\n) character is considered a comment.
 
-abcd ; Identifiers represent named signals or buses, defined by the Names struct that the parser is referencing.
+abcd ; Identifiers represent named signals or buses, defined by the Names struct.
 a123 ; Identifiers may contain ASCII letters, underscores, and digits, but may not start with a digit.
 
 0    ; Literals are numeric constants representing specific bit patterns.
 123  ; Decimal literals are considered to have the minimum number of bits required to store their value.
-8'0  ; You can explicitly specify the number of bits before the literal value by separating them with the single-quote ('), similar to Verilog.
+8'0  ; You can specify the number of bits before the literal value by separating them with the
+     ; single-quote ('), similar to Verilog.
 0xFF ; You can specify hex literals with the "0x" or "0h" prefixes (they are all equivalent).
 #FF  ; You can also use the "#" character prefix to indicate a hex literal.
 0o77 ; Octal literals can be specified with "0o".
 0b11 ; And binary literals with "0b".
-'hFF ; Just plain "h", "x", "o", or "b" can be used, as long as it's not the very first character of the literal.
-     ; All literals must start with a digit, the single-quote (') character, a minus sign (-), or an octothorpe (#).
-8'xF ; Hex/octal/binary literals are considered to have an amount of bits equal to log2(base) * num_digits, but this can be overridden.
+'hFF ; Just "h", "x", "o", or "b" works, as long as it's not the very first character of the literal.
+     ; All literals must start with a digit, "'", "-", or "#".
+8'xF ; Hex/octal/binary literal bits = log2(base) * num_digits, but this can be overridden.
 
 (expr) ; Parentheses can be used to group subexpressions.
 
@@ -101,14 +102,14 @@ A ^ B ; Bitwise XOR.  A and B must have the same bit width.
 A & B ; Bitwise AND.  A and B must have the same bit width.
 A * B ; Bitwise AND (alternate style)
 
-A == B ; Syntactic sugar for &~(A^B).  A and B must have the same bit width; the result will always be 1 bit.
-A != B ; Syntactic sugar for |(A^B).  A and B must have the same bit width; the result will always be 1 bit.
+A == B ; Syntactic sugar for &~(A^B).  A and B must have same width; the result will always be 1 bit.
+A != B ; Syntactic sugar for |(A^B).  A and B must have same width; the result will always be 1 bit.
 
 ~ A   ; Ones' complement.  The result will have the same bit width as A.
 ! A   ; Ones' complement (alternate style)
 | A   ; Condensing OR.  A may have any bit width; the result will always be 1 bit.
 + A   ; Condensing OR (alternate style)
-^ A   ; Condensing XOR (even parity generator).  A may have any bit width; the result will always be 1 bit.
+^ A   ; Condensing XOR (even parity generator).  A may have any width; the result will always be 1 bit.
 & A   ; Condensing AND.  A may have any bit width; the result will always be 1 bit.
 * A   ; Condensing AND (alternate style)
 
@@ -128,7 +129,7 @@ A[>4:7]    ; Same as above; using big-endian ordering.
 A[4:7]     ; Illegal; endianness must be explicit when extracting a reversed range.
 A[:]       ; Endpoints that are omitted are assumed to be either 0 or bits(A)-1.
 A[7 3 1:0] ; Individual bits and ranges can be mixed and matched.
-A[B]       ; A mux can be defined by using a signal or bus instead of a constant.  bits(A) must == 2^bits(B).
+A[B]       ; Define a mux by using an identifier instead of a constant.  bits(A) must == 2^bits(B).
 A[B C]     ; Illegal; only a single non-constant expression is allowed for muxes.
 
 ; Concatenation operator:
