@@ -94,12 +94,12 @@ a123 ; Identifiers may contain ASCII letters, underscores, and digits, but may n
 ;;;; Operations ;;;;
 ; Listed in order of increasing binding power.
 
-A | B ; Bitwise OR.  A and B must have the same bit width.
+A | B ; Bitwise OR.  A and B must have the same bit width or one of them must have width of 1 bit.
 A + B ; Bitwise OR (alternate style)
-A ^ B ; Bitwise XOR.  A and B must have the same bit width.
+A ^ B ; Bitwise XOR.  A and B must have the same bit width or one of them must have width of 1 bit.
       ; When mixed, OR and XOR operations are performed from left to right.
 
-A & B ; Bitwise AND.  A and B must have the same bit width.
+A & B ; Bitwise AND.  A and B must have the same bit width or one of them must have width of 1 bit.
 A * B ; Bitwise AND (alternate style)
 
 A == B ; Syntactic sugar for &~(A^B).  A and B must have same width; the result will always be 1 bit.

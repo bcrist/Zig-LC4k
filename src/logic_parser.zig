@@ -479,16 +479,17 @@ pub fn Logic_Parser(comptime Device: type) type {
                         const data = slice.items(.data)[node_index].binary;
                         const lhs_bits = try self.infer_and_check_node_bit_width(slice, data.lhs);
                         const rhs_bits = try self.infer_and_check_node_bit_width(slice, data.rhs);
-                        if (lhs_bits != rhs_bits) {
+                        if (lhs_bits != rhs_bits and lhs_bits != 1 and rhs_bits != 1) {
                             self.report_node_error_fmt_3(
-                                node, "Both sides of binary operator must have the same bit width", .{},
+                                node, "Both sides of binary operator must have the same bit width, or one side must have a width of 1 bit", .{},
                                 data.lhs, "Left side has width of {} bits", .{ lhs_bits },
                                 data.rhs, "Right side has width of {} bits", .{ rhs_bits });
                             return error.InvalidEquation;
                         }
 
-                        slice.items(.result_bits)[node_index] = lhs_bits;
-                        return lhs_bits;
+                        const bits = @max(lhs_bits, rhs_bits);
+                        slice.items(.result_bits)[node_index] = bits;
+                        return bits;
                     },
 
                     .binary_concat_be, .binary_concat_le => {
@@ -541,20 +542,30 @@ pub fn Logic_Parser(comptime Device: type) type {
                     .sum, .product, .xor => {
                         const data = slice.items(.data)[node_index].nary;
                         const children = self.extra_children.items[data.offset..][0..data.len];
-                        const lhs_bits = try self.infer_and_check_node_bit_width(slice, children[0]);
-                        for (children[1..], 2..) |child, i| {
+
+                        var bus_width: ?u6 = null;
+                        var bus_child: Node.ID = undefined;
+
+                        for (children, 1..) |child, n| {
                             const child_bits = try self.infer_and_check_node_bit_width(slice, child);
-                            if (lhs_bits != child_bits) {
-                                self.report_node_error_fmt_3(
-                                    node, "All items in compound operator must have the same bit width", .{},
-                                    children[0], "Item 1 has width of {} bits", .{ lhs_bits },
-                                    child, "Item {} has width of {} bits", .{ i, child_bits });
-                                return error.InvalidEquation;
+                            if (child_bits != 1) {
+                                if (bus_width) |width| {
+                                    if (width != child_bits) {
+                                        self.report_node_error_fmt_3(
+                                            node, "All items in compound operator must have the same bit width, or a width of 1 bit", .{},
+                                            bus_child, "Expected width is {} bits", .{ width },
+                                            child, "Item {} has width of {} bits", .{ n, child_bits });
+                                        return error.InvalidEquation;
+                                    }
+                                } else {
+                                    bus_width = child_bits;
+                                    bus_child = child;
+                                }
                             }
                         }
 
-                        slice.items(.result_bits)[node_index] = lhs_bits;
-                        return lhs_bits;
+                        slice.items(.result_bits)[node_index] = bus_width orelse 1;
+                        return bus_width orelse 1;
                     },
 
                     .concat_be, .concat_le => {
@@ -658,13 +669,14 @@ pub fn Logic_Parser(comptime Device: type) type {
                 const slice = self.nodes.slice();
                 return try self.build_node_ir(irdata, slice, self.root.?, bit_index);
             }
-            fn build_node_ir(self: *Parse_Data, irdata: *IR_Data, slice: std.MultiArrayList(Node).Slice, node: Node.ID, bit_index: u6) !IR.ID {
+            fn build_node_ir(self: *Parse_Data, irdata: *IR_Data, slice: std.MultiArrayList(Node).Slice, node: Node.ID, unchecked_bit_index: u6) !IR.ID {
                 const node_index = @intFromEnum(node);
                 const data = slice.items(.data)[node_index];
                 const result_bits: []?u6 = slice.items(.result_bits);
+                const bit_index = if (unchecked_bit_index < result_bits[node_index].?) unchecked_bit_index else 0;
+
                 switch (slice.items(.kind)[node_index]) {
                     .literal => {
-                        std.debug.assert(bit_index < result_bits[node_index].?);
                         const value: u1 = @truncate(data.literal >> bit_index);
                         return switch (value) {
                             0 => .zero,
