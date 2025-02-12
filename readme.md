@@ -48,7 +48,7 @@ An expression parser is included as a more convenient way to define the logic to
 * A general purpose allocator used for temporary data needed while parsing (does not retain any allocations between calls to the parser).
 * An arena used to allocate the final results of parsing (arrays of product terms and factors).
 * A `*const Names` used to map identifiers within expressions to device signals.
-For examples of initializing a parser, check the [examples](https://github.com/bcrist/Zig-LC4k/blob/main/examples/adder/main.zig#L182).
+For examples of initializing a parser, check the [examples](https://github.com/bcrist/Zig-LC4k/blob/main/examples/adder/main.zig#L129).
 
 Once you have a parser, there are four ways to parse an expression:
 * `Logic_Parser.pt(equation, options)`: Generates a single product term, suitable for assignment to a GLB config's `shared_pt_clock`, etc.
