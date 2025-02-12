@@ -1,14 +1,9 @@
 // This example implements a larson scanner "moving lights" effect.
 
-const std = @import("std");
-const lc4k = @import("lc4k");
+const Chip = lc4k.LC4064ZC_TQFP100;
 
-pub fn main() !void {
-    const Chip = lc4k.LC4064ZC_TQFP100;
-
-    var chip = Chip {};
-
-    const outputs = [_]Chip.Signal {
+const signals = struct {
+    pub const out = [_]Chip.Signal {
         .io_A0, .io_A1, .io_A2, .io_A3,
         .io_A4, .io_A5, .io_A6, .io_A7,
         .io_A8, .io_A9, .io_A10, .io_A11,
@@ -19,83 +14,72 @@ pub fn main() !void {
         .io_B3, .io_B2, .io_B1, .io_B0,
     };
 
-    const dir_signal = Chip.Signal.mc_C0;
-    const none_signal = Chip.Signal.mc_C15;
+    pub const @".fb" = struct {
+        pub const out = [_]Chip.Signal {
+            signals.out[0].fb(), signals.out[1].fb(), signals.out[2].fb(), signals.out[3].fb(),
+            signals.out[4].fb(), signals.out[5].fb(), signals.out[6].fb(), signals.out[7].fb(),
+            signals.out[8].fb(), signals.out[9].fb(), signals.out[10].fb(), signals.out[11].fb(),
+            signals.out[12].fb(), signals.out[13].fb(), signals.out[14].fb(), signals.out[15].fb(),
+            signals.out[16].fb(), signals.out[17].fb(), signals.out[18].fb(), signals.out[19].fb(),
+            signals.out[20].fb(), signals.out[21].fb(), signals.out[22].fb(), signals.out[23].fb(),
+            signals.out[24].fb(), signals.out[25].fb(), signals.out[26].fb(), signals.out[27].fb(),
+            signals.out[28].fb(), signals.out[29].fb(), signals.out[30].fb(), signals.out[31].fb(),
+        };
+    };
 
-    chip.glb[0].shared_pt_clock = comptime .{ .positive = Chip.pins._12.when_high().pt() };
-    chip.glb[1].shared_pt_clock = comptime .{ .positive = Chip.pins._12.when_high().pt() };
-    chip.glb[2].shared_pt_clock = comptime .{ .positive = Chip.pins._12.when_high().pt() };
+    pub const dir = Chip.Signal.mc_C0;
+    pub const none = Chip.Signal.mc_C15;
+};
 
-    var dir_mc = chip.mc(dir_signal.mc());
+pub fn main() !void {
+    var chip = Chip {};
+
+    var names = Chip.Names.init(gpa.allocator());
+    try names.add_names(signals, .{});
+    defer names.deinit();
+
+    var lp: Chip.Logic_Parser = .{
+        .gpa = gpa.allocator(),
+        .arena = .init(gpa.allocator()),
+        .names = &names,
+    };
+    defer lp.arena.deinit();
+
+    const clk = try lp.pt_with_polarity("pin_12", .{});
+
+    chip.glb[0].shared_pt_clock = clk;
+    chip.glb[1].shared_pt_clock = clk;
+    chip.glb[2].shared_pt_clock = clk;
+
+    var dir_mc = chip.mc(signals.dir.mc());
     dir_mc.func = .{ .t_ff = .{
         .init_state = 1,
         .clock = .shared_pt_clock,
     }};
     dir_mc.output.oe = .output_only;
-    dir_mc.logic = comptime .{ .sum = &.{ none_signal.when_high().pt() } };
+    dir_mc.logic = try lp.logic("none", .{});
 
-    var none_mc = chip.mc(none_signal.mc());
+    var none_mc = chip.mc(signals.none.mc());
     none_mc.output.oe = .output_only;
-    none_mc.logic = comptime .{ .sum = &.{ Chip.Signal.mc_fb(outputs[0].mc()).when_low().pt()
-        .and_factor(Chip.Signal.mc_fb(outputs[3].mc()).when_low())
-        .and_factor(Chip.Signal.mc_fb(outputs[6].mc()).when_low())
-        .and_factor(Chip.Signal.mc_fb(outputs[9].mc()).when_low())
-        .and_factor(Chip.Signal.mc_fb(outputs[12].mc()).when_low())
-        .and_factor(Chip.Signal.mc_fb(outputs[15].mc()).when_low())
-        .and_factor(Chip.Signal.mc_fb(outputs[16].mc()).when_low())
-        .and_factor(Chip.Signal.mc_fb(outputs[19].mc()).when_low())
-        .and_factor(Chip.Signal.mc_fb(outputs[22].mc()).when_low())
-        .and_factor(Chip.Signal.mc_fb(outputs[25].mc()).when_low())
-        .and_factor(Chip.Signal.mc_fb(outputs[28].mc()).when_low())
-        .and_factor(Chip.Signal.mc_fb(outputs[31].mc()).when_low())
-    }};
+    none_mc.logic = try lp.logic("@fb &~out[31 28 25 22 19 16 15 12 9 6 3 0]", .{});
 
     @setEvalBranchQuota(10000);
 
-    inline for (outputs, 0..) |out, bit| {
+    inline for (signals.out, 0..) |out, bit| {
         var mc = chip.mc(out.mc());
         mc.func = .{ .d_ff = .{ .clock = .shared_pt_clock }};
         mc.output.oe = .output_only;
-        mc.logic = comptime .{ .sum = switch (bit) {
-            0 => &.{
-                dir_signal.when_high().pt().and_factor(Chip.Signal.mc_fb(outputs[bit + 1].mc()).when_high()),
-                dir_signal.when_high().pt().and_factor(none_signal.when_high()),
-                dir_signal.when_low().pt()
-                    .and_factor(Chip.Signal.mc_fb(outputs[0].mc()).when_high())
-                    .and_factor(Chip.Signal.mc_fb(outputs[3].mc()).when_low())
-                    .and_factor(Chip.Signal.mc_fb(outputs[6].mc()).when_low())
-                    .and_factor(Chip.Signal.mc_fb(outputs[9].mc()).when_low())
-                    .and_factor(Chip.Signal.mc_fb(outputs[12].mc()).when_low())
-                    .and_factor(Chip.Signal.mc_fb(outputs[15].mc()).when_low())
-                    .and_factor(Chip.Signal.mc_fb(outputs[16].mc()).when_low())
-                    .and_factor(Chip.Signal.mc_fb(outputs[19].mc()).when_low())
-                    .and_factor(Chip.Signal.mc_fb(outputs[22].mc()).when_low())
-                    .and_factor(Chip.Signal.mc_fb(outputs[25].mc()).when_low())
-                    .and_factor(Chip.Signal.mc_fb(outputs[28].mc()).when_low())
-                    .and_factor(Chip.Signal.mc_fb(outputs[31].mc()).when_low())
-            },
-            31 => &.{
-                dir_signal.when_low().pt().and_factor(Chip.Signal.mc_fb(outputs[bit - 1].mc()).when_high()),
-                dir_signal.when_low().pt().and_factor(none_signal.when_high()),
-                dir_signal.when_high().pt()
-                    .and_factor(Chip.Signal.mc_fb(outputs[0].mc()).when_low())
-                    .and_factor(Chip.Signal.mc_fb(outputs[3].mc()).when_low())
-                    .and_factor(Chip.Signal.mc_fb(outputs[6].mc()).when_low())
-                    .and_factor(Chip.Signal.mc_fb(outputs[9].mc()).when_low())
-                    .and_factor(Chip.Signal.mc_fb(outputs[12].mc()).when_low())
-                    .and_factor(Chip.Signal.mc_fb(outputs[15].mc()).when_low())
-                    .and_factor(Chip.Signal.mc_fb(outputs[16].mc()).when_low())
-                    .and_factor(Chip.Signal.mc_fb(outputs[19].mc()).when_low())
-                    .and_factor(Chip.Signal.mc_fb(outputs[22].mc()).when_low())
-                    .and_factor(Chip.Signal.mc_fb(outputs[25].mc()).when_low())
-                    .and_factor(Chip.Signal.mc_fb(outputs[28].mc()).when_low())
-                    .and_factor(Chip.Signal.mc_fb(outputs[31].mc()).when_high())
-            },
-            else => &.{
-                dir_signal.when_low().pt().and_factor(Chip.Signal.mc_fb(outputs[bit - 1].mc()).when_high()),
-                dir_signal.when_high().pt().and_factor(Chip.Signal.mc_fb(outputs[bit + 1].mc()).when_high()),
-            },
-        }};
+
+        const extra = .{
+            .next_bit = bit + 1,
+            .prev_bit = bit -| 1,
+        };
+
+        mc.logic = try lp.logic(switch (bit) {
+            0  => " dir & @fb out[next_bit] |  dir & none | ~dir & @fb &{out[0]  ~out[<  3 6 9 12 15 16 19 22 25 28 31]}",
+            31 => "~dir & @fb out[prev_bit] | ~dir & none |  dir & @fb &{out[31] ~out[<0 3 6 9 12 15 16 19 22 25 28   ]}",
+            else => "@fb out[next_bit prev_bit][dir]",
+        }, extra);
     }
 
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -115,5 +99,11 @@ pub fn main() !void {
     defer report_file.close();
     try Chip.write_report(7, results.jedec, report_file.writer(), .{
         .assembly_errors = results.errors.items,
+        .names = &names,
     });
 }
+
+var gpa: std.heap.GeneralPurposeAllocator(.{}) = .{};
+
+const lc4k = @import("lc4k");
+const std = @import("std");

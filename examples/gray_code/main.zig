@@ -1,62 +1,75 @@
 // This example outputs a 16-bit binary counter on GLB B, and
 // the gray-code equivalent of the current counter value on GLB A.
 
-const std = @import("std");
-const lc4k = @import("lc4k");
-
 const Chip = lc4k.LC4064ZC_TQFP100;
 
-pub fn main() !void {
-    var chip = Chip {};
-
-    @setEvalBranchQuota(5000);
-
-    const counter_bits = [_]Chip.Signal {
+const signals = struct {
+    pub const bin = [_]Chip.Signal {
         .io_B0, .io_B1, .io_B2, .io_B3,
         .io_B4, .io_B5, .io_B6, .io_B7,
         .io_B8, .io_B9, .io_B10, .io_B11,
         .io_B12, .io_B13, .io_B14, .io_B15,
     };
 
-    const gray_code_bits = [_]Chip.Signal {
+    pub const gray = [_]Chip.Signal {
         .io_A15, .io_A14, .io_A13, .io_A12,
         .io_A11, .io_A10, .io_A9, .io_A8,
         .io_A7, .io_A6, .io_A5, .io_A4,
         .io_A3, .io_A2, .io_A1, .io_A0,
     };
+};
 
-    chip.glb[0].shared_pt_clock = comptime .{ .positive = Chip.pins._12.when_high().pt() };
-    chip.glb[1].shared_pt_clock = comptime .{ .positive = Chip.pins._12.when_high().pt() };
-    chip.glb[2].shared_pt_clock = comptime .{ .positive = Chip.pins._12.when_high().pt() };
+pub fn main() !void {
+    var chip = Chip {};
 
-    inline for (counter_bits, 0..) |out, bit| {
+    @setEvalBranchQuota(5000);
+
+    var names: Chip.Names = .init(gpa.allocator());
+    try names.add_names(signals, .{});
+    defer names.deinit();
+
+    var lp: Chip.Logic_Parser = .{
+        .gpa = gpa.allocator(),
+        .arena = .init(gpa.allocator()),
+        .names = &names,
+    };
+    defer lp.arena.deinit();
+
+    const clk = try lp.pt_with_polarity("pin_12", .{});
+
+    chip.glb[0].shared_pt_clock = clk;
+    chip.glb[1].shared_pt_clock = clk;
+    chip.glb[2].shared_pt_clock = clk;
+
+    inline for (signals.bin, 0..) |out, bit| {
         var mc = chip.mc(out.mc());
-        mc.func = .{ .t_ff = .{
-            .clock = .shared_pt_clock,
-        }};
+        mc.func = .{ .t_ff = .{ .clock = .shared_pt_clock } };
         mc.output.oe = .output_only;
 
-        mc.logic = comptime .{ .sum = &.{ blk: {
-            // Each bit of the counter should toggle when every lower bit is a 1
-            var pt = Chip.PT.always();
-            var n = 0;
-            while (n < bit) : (n += 1) {
-                pt = pt.and_factor(counter_bits[n].when_high());
-            }
-            break :blk pt;
-        }}};
+        mc.logic = comptime .{ .sum = .{
+            .polarity = .positive,
+            .sum = &.{ blk: {
+                // Each bit of the counter should toggle when every lower bit is a 1
+                var pt = Chip.PT.always();
+                var n = 0;
+                while (n < bit) : (n += 1) {
+                    pt = pt.and_factor(signals.bin[n].when_high());
+                }
+                break :blk pt;
+            }},
+        }};
     }
 
-    inline for (gray_code_bits, 0..) |out, bit| {
+    inline for (signals.gray, 0..) |out, bit| {
         var mc = chip.mc(out.mc());
         mc.output.oe = .output_only;
-        if (bit < gray_code_bits.len - 1) {
-            mc.logic = comptime .{ .sum_xor_pt0 = .{
-                .sum = &.{ Chip.Signal.mc_fb(counter_bits[bit].mc()).when_high().pt() },
-                .pt0 = Chip.Signal.mc_fb(counter_bits[bit + 1].mc()).when_high().pt(),
-            }};
+        if (bit < signals.gray.len - 1) {
+            mc.logic = try lp.logic("@fb bin[bit] ^ @fb bin[next_bit]", .{
+                .bit = bit,
+                .next_bit = bit + 1,
+            });
         } else {
-            mc.logic = comptime .{ .sum = &.{ Chip.Signal.mc_fb(counter_bits[bit].mc()).when_high().pt() }};
+            mc.logic = try lp.logic("@fb bin[bit]", .{ .bit = bit });
         }
     }
 
@@ -79,3 +92,8 @@ pub fn main() !void {
         .assembly_errors = results.errors.items,
     });
 }
+
+var gpa: std.heap.GeneralPurposeAllocator(.{}) = .{};
+
+const lc4k = @import("lc4k");
+const std = @import("std");

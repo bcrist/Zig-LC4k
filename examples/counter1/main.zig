@@ -10,7 +10,7 @@ pub fn main() !void {
 
     chip.glb[0].shared_pt_enable = comptime Chip.pins._20.when_high().pt();
     chip.goe0.source = .{ .glb_shared_pt_enable = 0 };
-    chip.goe0.polarity = .active_high;
+    chip.goe0.polarity = .positive;
 
     const output_pins = [_]Chip.Pin {
         Chip.pins._23,

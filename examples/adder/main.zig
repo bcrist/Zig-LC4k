@@ -109,59 +109,6 @@ fn configure_chip(lp: *Chip.Logic_Parser) !Chip {
     add1(&chip, .{ .a = in.A[15], .b = in.B[15], .sum = out.S[15], .ci = buried.C14, .p = buried.P15, .g = buried.G15 });
 
     // Carry lookahead logic:
-    // chip.mc(buried.C4.mc()).logic = comptime .{ .sum = &.{
-    //     buried.G4.when_high().pt(),
-    //     buried.P4.when_high().pt().and_factor(buried.C2.when_high()),
-    // }};
-    // chip.mc(buried.C6.mc()).logic = comptime .{ .sum = &.{
-    //     buried.G6.when_high().pt(),
-    //     buried.P6.when_high().pt().and_factor(buried.G4.when_high()),
-    //     buried.P6.when_high().pt().and_factor(buried.P4.when_high()).and_factor(buried.C2.when_high()),
-    // }};
-    // chip.mc(buried.C8.mc()).logic = comptime .{ .sum = &.{
-    //     buried.G8.when_high().pt(),
-    //     buried.P8.when_high().pt().and_factor(buried.G6.when_high()),
-    //     buried.P8.when_high().pt().and_factor(buried.P6.when_high()).and_factor(buried.G4.when_high()),
-    //     buried.P8.when_high().pt().and_factor(buried.P6.when_high()).and_factor(buried.P4.when_high()).and_factor(buried.C2.when_high()),
-    // }};
-    // chip.mc(buried.C10.mc()).logic = comptime .{ .sum = &.{
-    //     buried.G10.when_high().pt(),
-    //     buried.P10.when_high().pt().and_factor(buried.G8.when_high()),
-    //     buried.P10.when_high().pt().and_factor(buried.P8.when_high()).and_factor(buried.G6.when_high()),
-    //     buried.P10.when_high().pt().and_factor(buried.P8.when_high()).and_factor(buried.P6.when_high()).and_factor(buried.G4.when_high()),
-    //     buried.P10.when_high().pt().and_factor(buried.P8.when_high()).and_factor(buried.P6.when_high()).and_factor(buried.P4.when_high()).and_factor(buried.C2.when_high()),
-    // }};
-    // chip.mc(buried.C12.mc()).logic = comptime .{ .sum = &.{
-    //     buried.G12.when_high().pt(),
-    //     buried.P12.when_high().pt().and_factor(buried.G10.when_high()),
-    //     buried.P12.when_high().pt().and_factor(buried.P10.when_high()).and_factor(buried.G8.when_high()),
-    //     buried.P12.when_high().pt().and_factor(buried.P10.when_high()).and_factor(buried.P8.when_high()).and_factor(buried.G6.when_high()),
-    //     buried.P12.when_high().pt().and_factor(buried.P10.when_high()).and_factor(buried.P8.when_high()).and_factor(buried.P6.when_high()).and_factor(buried.G4.when_high()),
-    //     buried.P12.when_high().pt().and_factor(buried.P10.when_high()).and_factor(buried.P8.when_high()).and_factor(buried.P6.when_high()).and_factor(buried.P4.when_high()).and_factor(buried.C2.when_high()),
-    // }};
-    // chip.mc(buried.C14.mc()).logic = comptime .{ .sum = &.{
-    //     buried.G14.when_high().pt(),
-    //     buried.P14.when_high().pt().and_factor(buried.G12.when_high()),
-    //     buried.P14.when_high().pt().and_factor(buried.P12.when_high()).and_factor(buried.G10.when_high()),
-    //     buried.P14.when_high().pt().and_factor(buried.P12.when_high()).and_factor(buried.P10.when_high()).and_factor(buried.G8.when_high()),
-    //     buried.P14.when_high().pt().and_factor(buried.P12.when_high()).and_factor(buried.P10.when_high()).and_factor(buried.P8.when_high()).and_factor(buried.G6.when_high()),
-    //     buried.P14.when_high().pt().and_factor(buried.P12.when_high()).and_factor(buried.P10.when_high()).and_factor(buried.P8.when_high()).and_factor(buried.P6.when_high()).and_factor(buried.G4.when_high()),
-    //     buried.P14.when_high().pt().and_factor(buried.P12.when_high()).and_factor(buried.P10.when_high()).and_factor(buried.P8.when_high()).and_factor(buried.P6.when_high()).and_factor(buried.P4.when_high()).and_factor(buried.C2.when_high()),
-    // }};
-    // chip.mc(out.C.mc()).logic = comptime .{ .sum = &.{
-    //     buried.G15.when_high().pt(),
-    //     buried.P15.when_high().pt().and_factor(buried.G14.when_high()),
-    //     buried.P15.when_high().pt().and_factor(buried.P14.when_high()).and_factor(buried.G12.when_high()),
-    //     buried.P15.when_high().pt().and_factor(buried.P14.when_high()).and_factor(buried.P12.when_high()).and_factor(buried.G10.when_high()),
-    //     buried.P15.when_high().pt().and_factor(buried.P14.when_high()).and_factor(buried.P12.when_high()).and_factor(buried.P10.when_high()).and_factor(buried.G8.when_high()),
-    //     buried.P15.when_high().pt().and_factor(buried.P14.when_high()).and_factor(buried.P12.when_high()).and_factor(buried.P10.when_high()).and_factor(buried.P8.when_high()).and_factor(buried.G6.when_high()),
-    //     buried.P15.when_high().pt().and_factor(buried.P14.when_high()).and_factor(buried.P12.when_high()).and_factor(buried.P10.when_high()).and_factor(buried.P8.when_high()).and_factor(buried.P6.when_high()).and_factor(buried.G4.when_high()),
-    //     buried.P15.when_high().pt().and_factor(buried.P14.when_high()).and_factor(buried.P12.when_high()).and_factor(buried.P10.when_high()).and_factor(buried.P8.when_high()).and_factor(buried.P6.when_high()).and_factor(buried.P4.when_high()).and_factor(buried.C2.when_high()),
-    // }};
-
-    //    ^^^^^^ BEFORE ^^^^^^
-    // ===========================
-    //    vvvvvv AFTER vvvvvv
 
     chip.mc(buried.C4.mc()).logic = try lp.logic("G4 | P4 & C2", .{});
     chip.mc(buried.C6.mc()).logic = try lp.logic("G6 | P6 & G4 | &{P6 P4 C2}", .{});

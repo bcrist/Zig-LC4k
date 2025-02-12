@@ -11,7 +11,7 @@ pub fn main() !void {
 
     chip.glb[0].shared_pt_enable = comptime Chip.pins._19.when_high().pt();
     chip.goe0.source = .{ .glb_shared_pt_enable = 0 };
-    chip.goe0.polarity = .active_high;
+    chip.goe0.polarity = .positive;
 
     const inputs = [_]Signal {
         Chip.pins._22.pad(),
