@@ -152,19 +152,17 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
 
         {
             // parse shared_pt_init
-            const pt = try read_pt_fuses(Device, allocator, glb, 80, gi_routing, file.data, &results);
-            glb_config.shared_pt_init = switch (file.data.get(fuses.get_shared_init_polarity_range(Device, glb).min)) {
-                0 => .{ .active_low = pt },
-                1 => .{ .active_high = pt },
+            glb_config.shared_pt_init = .{
+                .polarity = @enumFromInt(file.data.get(fuses.get_shared_init_polarity_range(Device, glb).min)),
+                .pt = try read_pt_fuses(Device, allocator, glb, 80, gi_routing, file.data, &results),
             };
         }
 
         {
             // parse shared_pt_clock
-            const pt = try read_pt_fuses(Device, allocator, glb, 81, gi_routing, file.data, &results);
-            glb_config.shared_pt_clock = switch (file.data.get(fuses.get_shared_clock_polarity_range(Device, glb).min)) {
-                0 => .{ .negative = pt },
-                1 => .{ .positive = pt },
+            glb_config.shared_pt_clock = .{
+                .polarity = @enumFromInt(file.data.get(fuses.get_shared_clock_polarity_range(Device, glb).min)),
+                .pt = try read_pt_fuses(Device, allocator, glb, 81, gi_routing, file.data, &results),
             };
         }
 
@@ -250,30 +248,36 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                     }
                 } else if (pt0xor) {
                     const pt = try read_pt_fuses(Device, allocator, glb, mc * 5, gi_routing, file.data, &results);
-                    if (invert) {
-                        mc_config.logic = .{ .pt0_inverted = pt };
-                    } else {
-                        mc_config.logic = .{ .pt0 = pt };
-                    }
-                } else if (invert) {
-                    mc_config.logic = .{ .sum_inverted = &.{} };
+                    mc_config.logic = .{ .pt0 = .{
+                        .pt = pt,
+                        .polarity = if (invert) .negative else .positive,
+                    }};
                 } else {
-                    mc_config.logic = .{ .sum = &.{} };
+                    mc_config.logic = .{ .sum = .{
+                        .sum = &.{},
+                        .polarity = if (invert) .negative else .positive,
+                    }};
                 }
             }
 
             const Register_Config = lc4k.Register_Config(Device.Signal);
 
             const clock: @TypeOf((Register_Config {}).clock) = switch (read_clock_source(Device, file.data, mcref)) {
-                .pt1_positive => .{ .pt1_positive = try read_pt_fuses(Device, allocator, glb, mc * 5 + 1, gi_routing, file.data, &results) },
-                .pt1_negative => .{ .pt1_negative = try read_pt_fuses(Device, allocator, glb, mc * 5 + 1, gi_routing, file.data, &results) },
-                inline else => |t| t,
+                .pt1_positive => .{ .pt1 = .{ .polarity = .positive, .pt = try read_pt_fuses(Device, allocator, glb, mc * 5 + 1, gi_routing, file.data, &results) } },
+                .pt1_negative => .{ .pt1 = .{ .polarity = .negative, .pt = try read_pt_fuses(Device, allocator, glb, mc * 5 + 1, gi_routing, file.data, &results) } },
+                .none => .none,
+                .shared_pt_clock => .shared_pt_clock,
+                .bclock0 => .bclock0,
+                .bclock1 => .bclock1,
+                .bclock2 => .bclock2,
+                .bclock3 => .bclock3,
             };
 
             const ce: @TypeOf((Register_Config {}).ce) = switch (read_clock_enable_source(Device, file.data, mcref)) {
-                .pt2_active_high => .{ .pt2_active_high = try read_pt_fuses(Device, allocator, glb, mc * 5 + 2, gi_routing, file.data, &results) },
-                .pt2_active_low => .{ .pt2_active_low = try read_pt_fuses(Device, allocator, glb, mc * 5 + 2, gi_routing, file.data, &results) },
-                inline else => |t| t,
+                .pt2_active_high => .{ .pt2 = .{ .polarity = .positive, .pt = try read_pt_fuses(Device, allocator, glb, mc * 5 + 2, gi_routing, file.data, &results) } },
+                .pt2_active_low  => .{ .pt2 = .{ .polarity = .negative, .pt = try read_pt_fuses(Device, allocator, glb, mc * 5 + 2, gi_routing, file.data, &results) } },
+                .shared_pt_clock => .shared_pt_clock,
+                .always_active => .always_active,
             };
 
             const init_state: u1 = 1 ^ read_field(file.data, u1, fuses.get_init_state_range(Device, mcref));
@@ -352,8 +356,8 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
             if (Device.family != .zero_power_enhanced) {
                 if (fuses.get_output_routing_mode_range(Device, mcref)) |range| {
                     mc_config.output.routing = switch (read_field(file.data, lc4k.Output_Routing_Mode, range)) {
-                        .five_pt_fast_bypass => .{ .five_pt_fast_bypass = &.{} },
-                        .five_pt_fast_bypass_inverted => .{ .five_pt_fast_bypass_inverted = &.{} },
+                        .five_pt_fast_bypass => .{ .five_pt_fast_bypass = .{ .sum = &.{}, .polarity = .positive } },
+                        .five_pt_fast_bypass_inverted => .{ .five_pt_fast_bypass = .{ .sum = &.{}, .polarity = .negative } },
                         .same_as_oe => .same_as_oe,
                         .self => .self,
                     };
@@ -385,7 +389,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
             if (Device.family != .zero_power_enhanced) {
                 switch (mc_config.output.routing) {
                     .same_as_oe, .self => {},
-                    .five_pt_fast_bypass, .five_pt_fast_bypass_inverted => {
+                    .five_pt_fast_bypass => {
                         var pts = try allocator.alloc(Product_Term(Device.Signal), 5);
                         var pt_index: usize = 0;
                         var num_pts: usize = 0;
@@ -410,15 +414,8 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                                 .mc = mcref.mc,
                             });
                         }
-                        switch (mc_config.output.routing) {
-                            .same_as_oe, .self => {},
-                            .five_pt_fast_bypass => {
-                                mc_config.output.routing = .{ .five_pt_fast_bypass = pts };
-                            },
-                            .five_pt_fast_bypass_inverted => {
-                                mc_config.output.routing = .{ .five_pt_fast_bypass_inverted = pts };
-                            },
-                        }
+                        
+                        mc_config.output.routing.five_pt_fast_bypass.sum = pts;
                     },
                 }
             }
@@ -467,21 +464,19 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                 } else &[_]Product_Term(Device.Signal) {};
 
                 switch (mc_config.logic) {
-                    .sum, .sum_inverted, .sum_xor_input_buffer => |*sum| {
-                        sum.* = pts;
-                    },
-                    .sum_xor_pt0, .sum_xor_pt0_inverted => |*logic| {
-                        logic.sum = pts;
+                    .sum,  => |*sp| sp.sum = pts,
+                    .sum_xor_pt0 => |*sxpt| sxpt.sum = pts,
+                    .pt0 => |ptp| if (pts.len > 0) {
+                        mc_config.logic = .{ .sum_xor_pt0 = .{
+                            .pt0 = ptp.pt,
+                            .sum = pts,
+                            .polarity = ptp.polarity,
+                        }};
                     },
                     .input_buffer => if (pts.len > 0) {
                         mc_config.logic = .{ .sum_xor_input_buffer = pts };
                     },
-                    .pt0 => |pt0| {
-                        mc_config.logic = .{ .sum_xor_pt0 = .{ .pt0 = pt0, .sum = pts }};
-                    },
-                    .pt0_inverted => |pt0| {
-                        mc_config.logic = .{ .sum_xor_pt0_inverted = .{ .pt0 = pt0, .sum = pts }};
-                    },
+                    .sum_xor_input_buffer => |*sum| sum.* = pts,
                 }
             }
         }
@@ -585,6 +580,8 @@ pub fn read_pt_fuses(
         }
     }
 
+    std.sort.pdq(Factor(Signal), factors, {}, Factor(Signal).less_than);
+
     return .{ .factors = factors };
 }
 
@@ -599,8 +596,8 @@ fn read_goe_config(comptime Device: type, data: JEDEC_Data, goe_config: anytype,
         else => unreachable,
     }
     goe_config.polarity = switch (data.get(Device.get_goe_polarity_fuse(goe_index))) {
-        0 => .active_low,
-        1 => .active_high,
+        0 => .negative,
+        1 => .positive,
     };
 }
 

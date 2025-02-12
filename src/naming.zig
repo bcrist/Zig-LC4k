@@ -5,16 +5,18 @@ pub fn Names(comptime Device: type) type {
         gpa: std.mem.Allocator,
         fallback: ?*const Self,
 
-        glb_names: std.AutoHashMapUnmanaged(GLB_Index, []const u8) = .{},
-        glb_lookup: std.StringHashMapUnmanaged(GLB_Index) = .{},
+        glb_names: std.AutoHashMapUnmanaged(GLB_Index, []const u8) = .empty,
+        glb_lookup: std.StringHashMapUnmanaged(GLB_Index) = .empty,
 
-        macrocell_names: std.AutoHashMapUnmanaged(MC_Ref, []const u8) = .{},
-        macrocell_lookup: std.StringHashMapUnmanaged(MC_Ref) = .{},
+        macrocell_names: std.AutoHashMapUnmanaged(MC_Ref, []const u8) = .empty,
+        macrocell_lookup: std.StringHashMapUnmanaged(MC_Ref) = .empty,
 
-        signal_names: std.AutoHashMapUnmanaged(Signal, []const u8) = .{},
-        signal_lookup: std.StringHashMapUnmanaged(Signal) = .{},
+        signal_names: std.AutoHashMapUnmanaged(Signal, []const u8) = .empty,
+        signal_lookup: std.StringHashMapUnmanaged(Signal) = .empty,
 
-        bus_lookup: std.StringHashMapUnmanaged([]const Signal) = .{},
+        bus_lookup: std.StringHashMapUnmanaged([]const Signal) = .empty,
+
+        constant_lookup: std.StringHashMapUnmanaged(Literal) = .empty,
 
         const Self = @This();
 
@@ -73,6 +75,7 @@ pub fn Names(comptime Device: type) type {
             self.signal_names.deinit(self.gpa);
             self.signal_lookup.deinit(self.gpa);
             self.bus_lookup.deinit(self.gpa);
+            self.constant_lookup.deinit(self.gpa);
         }
 
         pub const Add_Names_Options = struct {
@@ -135,7 +138,9 @@ pub fn Names(comptime Device: type) type {
                         }
                     },
                     .pointer => |info| {
-                        std.debug.assert(info.size == .Slice);
+                        if (info.size != .Slice) {
+                            @compileError("Unexpected type: " ++ @typeName(T) ++ " for " ++ options.prefix ++ options.name ++ options.suffix);
+                        }
                         inline for (0.., what) |i, elem| {
                             try self.add_names(elem, .{
                                 .prefix = options.prefix,
@@ -146,6 +151,9 @@ pub fn Names(comptime Device: type) type {
                         if (info.child == Signal) {
                             try self.add_bus_name(what, options.prefix ++ options.name ++ options.suffix);
                         }
+                    },
+                    .int => {
+                        try self.add_constant(what, options.prefix ++ options.name ++ options.suffix);
                     },
                     else => @compileError("Unexpected type: " ++ @typeName(T) ++ " for " ++ options.prefix ++ options.name ++ options.suffix), 
                 },
@@ -189,6 +197,73 @@ pub fn Names(comptime Device: type) type {
             if (self.bus_lookup.contains(name)) return error.Duplicate_Name;
             try self.bus_lookup.ensureUnusedCapacity(self.gpa, 1);
             self.bus_lookup.putAssumeCapacityNoClobber(name, signals);
+        }
+
+        pub fn add_constant(self: *Self, constant: anytype, name: []const u8) !void {
+            const T = @TypeOf(constant);
+            if (self.constant_lookup.contains(name)) return error.Duplicate_Name;
+            try self.constant_lookup.ensureUnusedCapacity(self.gpa, 1);
+            self.constant_lookup.putAssumeCapacityNoClobber(name, if (T == Literal) constant else .{
+                .value = if (T == u64 or T == usize) constant else @bitCast(@as(i64, constant)),
+                .max_bit_index = @intCast(@typeInfo(T).int.bits - 1),
+            });
+        }
+
+        pub fn debug(self: Self, w: std.io.AnyWriter) !void {
+            if (self.constant_lookup.count() > 0) {
+                try w.writeAll("\nConstants:\n");
+                var constant_iter = self.constant_lookup.iterator();
+                while (constant_iter.next()) |entry| {
+                    const constant = entry.value_ptr.*;
+                    const constant_bits: std.StaticBitSet(64) = .{ .mask = constant.value };
+                    try w.print("   {s}: {}'0b", .{ entry.key_ptr.*, constant.bits });
+                    for (0..constant.bits) |i| {
+                        try w.writeByte(if (constant_bits.isSet(constant.bits - i - 1)) "1" else "0");
+                    }
+                    try w.writeByte('\n');
+                }
+            }
+
+            if (self.bus_lookup.count() > 0) {
+                try w.writeAll("\nBuses:\n");
+                var bus_iter = self.bus_lookup.iterator();
+                while (bus_iter.next()) |entry| {
+                    try w.print("   {s}:", .{ entry.key_ptr.* });
+                    for (entry.value_ptr.*) |signal| {
+                        try w.print(" {s}", .{ @tagName(signal) });
+                    }
+                    try w.writeByte('\n');
+                }
+            }
+
+            if (self.signal_lookup.count() > 0) {
+                try w.writeAll("\nSignals:\n");
+                var sig_iter = self.signal_lookup.iterator();
+                while (sig_iter.next()) |entry| {
+                    try w.print("   {s}: {s}\n", .{ entry.key_ptr.*, @tagName(entry.value_ptr.*) });
+                }
+            }
+
+            if (self.macrocell_lookup.count() > 0) {
+                try w.writeAll("\nMacrocells:\n");
+                var mc_iter = self.macrocell_lookup.iterator();
+                while (mc_iter.next()) |entry| {
+                    try w.print("   {s}: GLB {} MC {}\n", .{ entry.key_ptr.*, entry.value_ptr.glb, entry.value_ptr.mc });
+                }
+            }
+
+            if (self.glb_lookup.count() > 0) {
+                try w.writeAll("\nGLBs:\n");
+                var glb_iter = self.glb_lookup.iterator();
+                while (glb_iter.next()) |entry| {
+                    try w.print("   {s}: {}\n", .{ entry.key_ptr.*, entry.value_ptr.* });
+                }
+            }
+
+            if (self.fallback) |fallback| {
+                try w.writeAll("\nFallback:\n");
+                try fallback.debug(w);
+            }
         }
 
         pub fn get_glb_name(self: Self, glb: GLB_Index) []const u8 {
@@ -293,9 +368,22 @@ pub fn Names(comptime Device: type) type {
 
             return null;
         }
+
+        pub fn lookup_constant(self: Self, name: []const u8) ?Literal {
+            if (self.constant_lookup.get(name)) |literal| {
+                return literal;
+            }
+
+            if (self.fallback) |fallback| {
+                return fallback.lookup_constant(name);
+            }
+
+            return null;
+        }
     };
 }
 
+const Literal = @import("logic_parser/Literal.zig");
 const GLB_Index = lc4k.GLB_Index;
 const MC_Ref = lc4k.MC_Ref;
 const device = @import("device.zig");

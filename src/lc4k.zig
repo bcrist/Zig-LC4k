@@ -149,14 +149,8 @@ pub fn Chip_Config(comptime device_type: Device_Type) type {
 pub fn GLB_Config(comptime D: type) type {
     return struct {
         mc: [D.num_mcs_per_glb] Macrocell_Config(D.family, D.Signal),
-        shared_pt_init: union(enum) {
-            active_high: Product_Term(D.Signal),
-            active_low: Product_Term(D.Signal),
-        },
-        shared_pt_clock: union(enum) {
-            positive: Product_Term(D.Signal), // active high when used as a latch or clock enable
-            negative: Product_Term(D.Signal), // active low when used as a latch or clock enable
-        },
+        shared_pt_init: Product_Term_With_Polarity(D.Signal),
+        shared_pt_clock: Product_Term_With_Polarity(D.Signal),
         shared_pt_enable: Product_Term(D.Signal),
         bclock0: enum { clk0_pos, clk1_neg },
         bclock1: enum { clk1_pos, clk0_neg },
@@ -177,9 +171,15 @@ pub fn GLB_Config(comptime D: type) type {
         pub fn init_unused() Self {
             var self = Self {
                 .mc = undefined,
-                .shared_pt_init = .{ .active_low = Product_Term(D.Signal).always() },
-                .shared_pt_clock = .{ .positive = Product_Term(D.Signal).always() },
-                .shared_pt_enable = Product_Term(D.Signal).always(),
+                .shared_pt_init = .{
+                    .polarity = .negative,
+                    .pt = .always(),
+                },
+                .shared_pt_clock = .{
+                    .polarity = .positive,
+                    .pt = .always(),
+                },
+                .shared_pt_enable = .always(),
                 .bclock0 = .clk0_pos,
                 .bclock1 = .clk1_pos,
                 .bclock2 = .clk2_pos,
@@ -192,7 +192,7 @@ pub fn GLB_Config(comptime D: type) type {
             }
 
             for (&self.mc) |*mc| {
-                mc.* = Macrocell_Config(D.family, D.Signal).init_unused();
+                mc.* = .init_unused();
             }
 
             return self;
@@ -201,82 +201,19 @@ pub fn GLB_Config(comptime D: type) type {
 }
 
 pub fn Macrocell_Logic(comptime Signal: type) type {
-    return union(enum) {
-        sum: []const Product_Term(Signal),
-        sum_inverted: []const Product_Term(Signal),
-        input_buffer,
-        pt0: Product_Term(Signal),
-        pt0_inverted: Product_Term(Signal),
+    return union (enum) {
+        pt0: Product_Term_With_Polarity(Signal),
+        sum: Sum_With_Polarity(Signal),
         sum_xor_pt0: Sum_XOR_PT0(Signal),
-        sum_xor_pt0_inverted: Sum_XOR_PT0(Signal),
+        input_buffer,
         sum_xor_input_buffer: []const Product_Term(Signal), // TODO test this; datasheet's schematic of MC implies it is, but timing model implies it isn't.
 
         pub fn debug(self: @This(), w: std.io.AnyWriter) !void {
             switch (self) {
-                .sum => |pts| {
-                    if (pts.len == 0) {
-                        try w.writeByte('0');
-                        return;
-                    }
-                    try pts[0].debug(w);
-                    for (pts[1..]) |pt| {
-                        try w.writeAll(" | ");
-                        try pt.debug(w);
-                    }
-                },
-                .sum_inverted => |pts| {
-                    try w.writeByte('~');
-                    if (pts.len == 0) {
-                        try w.writeByte('0');
-                        return;
-                    }
-                    try w.writeByte('(');
-                    try pts[0].debug(w);
-                    for (pts[1..]) |pt| {
-                        try w.writeAll(" | ");
-                        try pt.debug(w);
-                    }
-                    try w.writeByte(')');
-                },
+                .pt0 => |ptp| try ptp.debug(w),
+                .sum => |sp| try sp.debug(w),
+                .sum_xor_pt0 => |sxpt| try sxpt.debug(w),
                 .input_buffer => try w.writeAll("<input>"),
-                .pt0 => |pt| try pt.debug(w),
-                .pt0_inverted => |pt| {
-                    try w.writeAll("~(");
-                    try pt.debug(w);
-                    try w.writeByte(')');
-                },
-                .sum_xor_pt0 => |info| {
-                    try w.writeByte('(');
-                    try info.pt0.debug(w);
-                    try w.writeAll(") ^ ");
-                    if (info.sum.len == 0) {
-                        try w.writeByte('0');
-                        return;
-                    }
-                    try w.writeByte('(');
-                    try info.sum[0].debug(w);
-                    for (info.sum[1..]) |pt| {
-                        try w.writeAll(" | ");
-                        try pt.debug(w);
-                    }
-                    try w.writeByte(')');
-                },
-                .sum_xor_pt0_inverted => |info| {
-                    try w.writeAll("~(");
-                    try info.pt0.debug(w);
-                    try w.writeAll(") ^ ");
-                    if (info.sum.len == 0) {
-                        try w.writeByte('0');
-                        return;
-                    }
-                    try w.writeByte('(');
-                    try info.sum[0].debug(w);
-                    for (info.sum[1..]) |pt| {
-                        try w.writeAll(" | ");
-                        try pt.debug(w);
-                    }
-                    try w.writeByte(')');
-                },
                 .sum_xor_input_buffer => |pts| {
                     try w.writeAll("<input> ^ ");
                     if (pts.len == 0) {
@@ -324,7 +261,10 @@ pub fn Macrocell_Config(comptime family: Device_Family, comptime Signal: type) t
 
         pub fn init_unused() Self {
             return .{
-                .logic = .{ .sum = &.{ Product_Term(Signal).always() } },
+                .logic = .{ .sum = .{
+                    .polarity = .positive,
+                    .sum = &.{ .always() }
+                }},
                 .func = .combinational,
                 .output = .{ .oe = .input_only },
             };
@@ -347,11 +287,21 @@ pub fn Output_Config(comptime Signal: type) type {
         drive_type: ?Drive_Type = null,
         oe: Output_Enable_Mode,
         oe_routing: Output_Routing(Signal) = .{ .relative = 0 },
-        routing: union(Output_Routing_Mode) {
+        routing: union (enum) {
             same_as_oe,
             self,
-            five_pt_fast_bypass: []const Product_Term(Signal),
-            five_pt_fast_bypass_inverted: []const Product_Term(Signal),
+            five_pt_fast_bypass: Sum_With_Polarity(Signal),
+
+            pub fn mode(self: @This()) Output_Routing_Mode {
+                return switch (self) {
+                    .same_as_oe => .same_as_oe,
+                    .self => .self,
+                    .five_pt_fast_bypass => |sp| switch (sp.polarity) {
+                        .positive => .five_pt_fast_bypass,
+                        .negative => .five_pt_fast_bypass_inverted,
+                    },
+                };
+            }
         } = .same_as_oe,
     };
 }
@@ -399,17 +349,12 @@ pub fn Output_Routing(comptime Signal: type) type {
     };
 }
 
-pub const GOE_Polarity = enum {
-    active_high,
-    active_low,
-};
-
 pub const GOE_Config_Pin = struct {
-    polarity: GOE_Polarity = .active_high,
+    polarity: Polarity = .positive,
 };
 
 pub const GOE_Config_Bus = struct {
-    polarity: GOE_Polarity = .active_high,
+    polarity: Polarity = .positive,
     source: union(enum) {
         constant_high: void,
         glb_shared_pt_enable: GLB_Index,
@@ -417,7 +362,7 @@ pub const GOE_Config_Bus = struct {
 };
 
 pub const GOE_Config_Bus_Or_Pin = struct {
-    polarity: GOE_Polarity = .active_high,
+    polarity: Polarity = .positive,
     source: union(enum) {
         constant_high: void,
         input: void,
@@ -438,26 +383,71 @@ pub fn Sum_XOR_PT0(comptime Signal: type) type {
     return struct {
         sum: []const Product_Term(Signal),
         pt0: Product_Term(Signal),
+        polarity: Polarity,
+
+        pub fn debug(self: @This(), w: std.io.AnyWriter) !void {
+            if (self.polarity == .negative) {
+                try w.writeByte('~');
+            }
+            try w.writeByte('(');
+            try self.pt0.debug(w);
+            try w.writeAll(") ^ ");
+            if (self.sum.len == 0) {
+                try w.writeByte('0');
+            } else {
+                try w.writeByte('(');
+                try self.sum[0].debug(w);
+                for (self.sum[1..]) |pt| {
+                    try w.writeAll(" | ");
+                    try pt.debug(w);
+                }
+                try w.writeByte(')');
+            }
+        }
     };
 }
 
 pub fn Register_Config(comptime Signal: type) type {
     return struct {
-        clock: union(Clock_Source) {
+        clock: union (enum) {
             none,
             shared_pt_clock,
-            pt1_positive: Product_Term(Signal),
-            pt1_negative: Product_Term(Signal),
+            pt1: Product_Term_With_Polarity(Signal),
             bclock0,
             bclock1,
             bclock2,
             bclock3,
+
+            pub fn source(self: @This()) Clock_Source {
+                return switch (self) {
+                    .none => .none,
+                    .shared_pt_clock => .shared_pt_clock,
+                    .pt1 => |ptp| switch (ptp.polarity) {
+                        .positive => .pt1_positive,
+                        .negative => .pt1_negative,
+                    },
+                    .bclock0 => .bclock0,
+                    .bclock1 => .bclock1,
+                    .bclock2 => .bclock2,
+                    .bclock3 => .bclock3,
+                };
+            }
         } = .none,
-        ce: union(Clock_Enable_Source) {
-            pt2_active_high: Product_Term(Signal),
-            pt2_active_low: Product_Term(Signal),
+        ce: union (enum) {
+            pt2: Product_Term_With_Polarity(Signal),
             shared_pt_clock,
             always_active,
+
+            pub fn source(self: @This()) Clock_Enable_Source {
+                return switch (self) {
+                    .pt2 => |ptp| switch (ptp.polarity) {
+                        .positive => .pt2_active_high,
+                        .negative => .pt2_active_low,
+                    },
+                    .shared_pt_clock => .shared_pt_clock,
+                    .always_active => .always_active,
+                };
+            }
         } = .always_active,
         init_state: u1 = 0,
         init_source: union(Init_Source) {
@@ -468,6 +458,50 @@ pub fn Register_Config(comptime Signal: type) type {
             pt2_active_high: Product_Term(Signal),
             none,
         } = .none,
+    };
+}
+
+pub fn Sum_With_Polarity(comptime Device_Signal: type) type {
+    return struct {
+        sum: []const Product_Term(Device_Signal),
+        polarity: Polarity,
+
+        pub fn debug(self: @This(), w: std.io.AnyWriter) !void {
+            if (self.polarity == .negative) {
+                try w.writeAll("~(");
+            }
+
+            if (self.sum.len == 0) {
+                try w.writeByte('0');
+                return;
+            }
+            try self.sum[0].debug(w);
+            for (self.sum[1..]) |pt| {
+                try w.writeAll(" | ");
+                try pt.debug(w);
+            }
+
+            if (self.polarity == .negative) {
+                try w.writeAll(")");
+            }
+        }
+    };
+}
+
+pub fn Product_Term_With_Polarity(comptime Device_Signal: type) type {
+    return struct {
+        pt: Product_Term(Device_Signal),
+        polarity: Polarity,
+
+        pub fn debug(self: @This(), w: std.io.AnyWriter) !void {
+            if (self.polarity == .negative) {
+                try w.writeAll("~(");
+                try self.pt.debug(w);
+                try w.writeByte(')');
+            } else {
+                try self.pt.debug(w);
+            }
+        }
     };
 }
 
@@ -630,6 +664,24 @@ pub fn Factor(comptime Device_Signal: type) type {
                     try w.writeByte('~');
                     try w.writeAll(@tagName(signal));
                 },
+            }
+        }
+
+        pub fn less_than(_: void, a: Self, b: Self) bool {
+            const at: std.meta.Tag(Self) = a;
+            const bt: std.meta.Tag(Self) = b;
+            const at2 = if (at == .when_low) .when_high else at;
+            const bt2 = if (bt == .when_low) .when_high else bt;
+            if (at2 != bt2) return @intFromEnum(at2) < @intFromEnum(bt2);
+            switch (a) {
+                .always, .never => return false,
+                .when_high, .when_low => |as| {
+                    const bs = switch (b) {
+                        .when_high, .when_low => |s| s,
+                        else => unreachable,
+                    };
+                    return if (as != bs) @intFromEnum(as) < @intFromEnum(bs) else @intFromEnum(at) < @intFromEnum(bt);
+                }
             }
         }
     };
@@ -975,8 +1027,8 @@ pub fn Simulator(comptime Device: type) type {
             };
 
             return switch (config.polarity) {
-                .active_high => oe_state,
-                .active_low => !oe_state,
+                .positive => oe_state,
+                .negative => !oe_state,
             };
         }
 
@@ -1012,9 +1064,9 @@ pub fn Simulator(comptime Device: type) type {
         fn evaluate_init_condition(self: @This(), reg_config: Register_Config(Signal), mc: MC_Ref) bool {
             return switch (reg_config.init_source) {
                 .pt3_active_high => |pt| evaluate_pt(self.state.data, pt),
-                .shared_pt_init => switch (self.chip.glb[mc.glb].shared_pt_init) {
-                    .active_high => |pt| evaluate_pt(self.state.data, pt),
-                    .active_low => |pt| !evaluate_pt(self.state.data, pt),
+                .shared_pt_init => switch (self.chip.glb[mc.glb].shared_pt_init.polarity) {
+                    .positive => |pt| evaluate_pt(self.state.data, pt),
+                    .negative => |pt| !evaluate_pt(self.state.data, pt),
                 },
             };
         }
@@ -1182,8 +1234,12 @@ pub fn Simulator(comptime Device: type) type {
     };
 }
 
+pub const Polarity = enum (u1) {
+    negative = 0, // inverted / active low / falling edge clock
+    positive = 1, // not inverted / active high / rising edge clock
+};
 
-pub const Bus_Maintenance = enum(u2) {
+pub const Bus_Maintenance = enum (u2) {
     pulldown = 0,
     float = 1,
     keeper = 2,

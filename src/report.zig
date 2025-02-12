@@ -119,7 +119,7 @@ fn Report_Data(comptime Device: type) type {
                         if (@TypeOf(mc_config.output) == lc4k.Output_Config(Device.Signal)) {
                             switch (mc_config.output.routing) {
                                 .same_as_oe, .self => {},
-                                .five_pt_fast_bypass, .five_pt_fast_bypass_inverted => {
+                                .five_pt_fast_bypass => {
                                     glb_data.pt_usage[glb_pt_offset] = .fast;
                                 },
                             }
@@ -141,8 +141,8 @@ fn Report_Data(comptime Device: type) type {
                     }
 
                     switch (mc_config.logic) {
-                        .sum, .sum_inverted, .input_buffer, .sum_xor_input_buffer => {},
-                        .pt0, .pt0_inverted, .sum_xor_pt0, .sum_xor_pt0_inverted => {
+                        .sum, .input_buffer, .sum_xor_input_buffer => {},
+                        .pt0, .sum_xor_pt0 => {
                             glb_data.pt_usage[mc * 5] = .xor;
                         },
                     }
@@ -174,7 +174,7 @@ fn Report_Data(comptime Device: type) type {
                                         else => .clock,
                                     };
                                 },
-                                .pt1_positive, .pt1_negative => {
+                                .pt1 => {
                                     glb_data.pt_usage[mc * 5 + 1] = .clock;
                                 },
                             }
@@ -199,7 +199,7 @@ fn Report_Data(comptime Device: type) type {
                                         },
                                     }
                                 },
-                                .pt2_active_low, .pt2_active_high => {
+                                .pt2 => {
                                     glb_data.pt_usage[mc * 5 + 2] = .ce;
                                 },
                             }
@@ -608,38 +608,38 @@ fn write_goe(writer: std.io.AnyWriter, comptime Device: type, highlight: bool, g
     try end_row(writer);
 }
 
-fn write_bus_goe_equation(writer: std.io.AnyWriter, polarity: lc4k.GOE_Polarity, glb: usize) !void {
+fn write_bus_goe_equation(writer: std.io.AnyWriter, polarity: lc4k.Polarity, glb: usize) !void {
     try writer.writeAll(switch (polarity) {
-        .active_high => "<abbr>",
-        .active_low => "<abbr><u>",
+        .positive => "<abbr>",
+        .negative => "<abbr><u>",
     });
 
     try writer.print("glb{}_shared_oe_pt", .{ glb });
 
     try writer.writeAll(switch (polarity) {
-        .active_high => "</abbr>",
-        .active_low => "</u></abbr>",
+        .positive => "</abbr>",
+        .negative => "</u></abbr>",
     });
 }
 
-fn write_unused_goe_equation(writer: std.io.AnyWriter, polarity: lc4k.GOE_Polarity) !void {
+fn write_unused_goe_equation(writer: std.io.AnyWriter, polarity: lc4k.Polarity) !void {
     try writer.writeAll(switch (polarity) {
-        .active_high => "<abbr>true</abbr>",
-        .active_low => "<abbr>false</abbr>",
+        .positive => "<abbr>true</abbr>",
+        .negative => "<abbr>false</abbr>",
     });
 }
 
-fn write_pin_goe_equation(writer: std.io.AnyWriter, comptime Device: type, polarity: lc4k.GOE_Polarity, pin: Device.Pin, options: Write_Options(Device)) !void {
+fn write_pin_goe_equation(writer: std.io.AnyWriter, comptime Device: type, polarity: lc4k.Polarity, pin: Device.Pin, options: Write_Options(Device)) !void {
     try writer.writeAll(switch (polarity) {
-        .active_high => "<abbr>",
-        .active_low => "<abbr><u>",
+        .positive => "<abbr>",
+        .negative => "<abbr><u>",
     });
 
     try writer.writeAll(options.get_names().get_signal_name(pin.pad()));
 
     try writer.writeAll(switch (polarity) {
-        .active_high => "</abbr>",
-        .active_low => "</u></abbr>",
+        .positive => "</abbr>",
+        .negative => "</u></abbr>",
     });
 }
 
@@ -1017,19 +1017,22 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
 
             var sum_pts: usize = 0;
             switch (mc_config.logic) {
-                .sum, .sum_inverted, .sum_xor_input_buffer => |sum| for (sum) |pt| {
+                .sum => |sp| for (sp.sum) |pt| {
                     if (!pt.is_always()) sum_pts += 1;
                 },
-                .sum_xor_pt0, .sum_xor_pt0_inverted => |logic| for (logic.sum) |pt| {
+                .sum_xor_pt0 => |sxpt| for (sxpt.sum) |pt| {
                     if (!pt.is_always()) sum_pts += 1;
                 },
-                .input_buffer, .pt0, .pt0_inverted => {},
+                .sum_xor_input_buffer => |sum| for (sum) |pt| {
+                    if (!pt.is_always()) sum_pts += 1;
+                },
+                .input_buffer, .pt0 => {},
             }
 
             if (Device.family != .zero_power_enhanced) {
                 switch (mc_config.output.routing) {
-                    .five_pt_fast_bypass, .five_pt_fast_bypass_inverted => |pts| {
-                        for (pts) |pt| {
+                    .five_pt_fast_bypass => |sp| {
+                        for (sp.sum) |pt| {
                             if (!pt.is_always()) sum_pts += 1;
                         }
                     },
@@ -1042,13 +1045,19 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
 
             try begin_cell(writer, cell_options);
             try writer.writeAll(switch (mc_config.logic) {
-                .sum          => "<kbd class=\"logic sum\">Sum</kbd>",
-                .sum_inverted => "<kbd class=\"logic sum\">Sum</kbd> <kbd class=\"logic invert\">Invert</kbd>",
+                .sum => |sp| switch (sp.polarity) {
+                    .positive => "<kbd class=\"logic sum\">Sum</kbd>",
+                    .negative => "<kbd class=\"logic sum\">Sum</kbd> <kbd class=\"logic invert\">Invert</kbd>",
+                },
+                .pt0 => |ptp| switch (ptp.polarity) {
+                    .positive => "<kbd class=\"logic pt\">PT</kbd>",
+                    .negative => "<kbd class=\"logic pt\">PT</kbd> <kbd class=\"logic invert\">Invert</kbd>",
+                },
+                .sum_xor_pt0 => |sxpt| switch (sxpt.polarity) {
+                    .positive => "<kbd class=\"logic sum\">Sum</kbd> <kbd class=\"logic xor-pt\">XOR PT</kbd>",
+                    .negative => "<kbd class=\"logic sum\">Sum</kbd> <kbd class=\"logic xor-pt\">XOR PT</kbd> <kbd class=\"logic invert\">Invert</kbd>",
+                },
                 .input_buffer => "<kbd class=\"logic input\">Input</kbd>",
-                .pt0          => "<kbd class=\"logic pt\">PT</kbd>",
-                .pt0_inverted => "<kbd class=\"logic pt\">PT</kbd> <kbd class=\"logic invert\">Invert</kbd>",
-                .sum_xor_pt0  => "<kbd class=\"logic sum\">Sum</kbd> <kbd class=\"logic xor-pt\">XOR PT</kbd>",
-                .sum_xor_pt0_inverted => "<kbd class=\"logic sum\">Sum</kbd> <kbd class=\"logic xor-pt\">XOR PT</kbd> <kbd class=\"logic invert\">Invert</kbd>",
                 .sum_xor_input_buffer => "<kbd class=\"logic sum\">Sum</kbd> <kbd class=\"logic xor-input\">XOR Input</kbd>",
             });
             try end_cell(writer);
@@ -1069,18 +1078,17 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
                     .none => null,
                     .shared_pt_clock => blk: {
                         try writer.writeAll("<kbd class=\"clk shared-pt\">Shared PT</kbd>");
-                        break :blk switch (glb_config.shared_pt_clock) {
+                        break :blk switch (glb_config.shared_pt_clock.polarity) {
                             .positive => false,
                             .negative => true,
                         };
                     },
-                    .pt1_positive => blk: {
+                    .pt1 => |ptp| blk: {
                         try writer.writeAll("<kbd class=\"clk pt\">PT</kbd>");
-                        break :blk false;
-                    },
-                    .pt1_negative => blk: {
-                        try writer.writeAll("<kbd class=\"clk pt\">PT</kbd>");
-                        break :blk true;
+                        break :blk switch (ptp.polarity) {
+                            .positive => false,
+                            .negative => true,
+                        };
                     },
                     .bclock0 => blk: {
                         try writer.writeAll("<kbd class=\"clk bclk0\">BCLK 0</kbd>");
@@ -1112,9 +1120,11 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
             try writer.writeAll(switch (mc_config.func) {
                 .combinational => "",
                 .latch, .t_ff, .d_ff => |reg_config| switch (reg_config.ce) {
-                    .pt2_active_high => "<kbd class=\"ce pt\">PT</kbd> <kbd class=\"ce pos\">Active High</kbd>",
-                    .pt2_active_low => "<kbd class=\"ce pt\">PT</kbd> <kbd class=\"ce neg\">Active Low</kbd>",
-                    .shared_pt_clock => switch (glb_config.shared_pt_clock) {
+                    .pt2 => |ptp| switch (ptp.polarity) {
+                        .positive => "<kbd class=\"ce pt\">PT</kbd> <kbd class=\"ce pos\">Active High</kbd>",
+                        .negative => "<kbd class=\"ce pt\">PT</kbd> <kbd class=\"ce neg\">Active Low</kbd>",
+                    },
+                    .shared_pt_clock => switch (glb_config.shared_pt_clock.polarity) {
                         .positive => "<kbd class=\"ce shared-pt\">Shared PT</kbd> <kbd class=\"ce pos\">Active High</kbd>",
                         .negative => "<kbd class=\"ce shared-pt\">Shared PT</kbd> <kbd class=\"ce neg\">Active Low</kbd>",
                     },
@@ -1130,9 +1140,9 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
                     try writer.print("{}", .{ reg_config.init_state });
                     try writer.writeAll(switch (reg_config.init_source) {
                         .pt3_active_high => " <kbd class=\"init pt\">PT</kbd> <kbd class=\"init pos\">Active High</kbd>",
-                        .shared_pt_init => switch (glb_config.shared_pt_init) {
-                            .active_high => " <kbd class=\"init shared-pt\">Shared PT</kbd> <kbd class=\"init pos\">Active High</kbd>",
-                            .active_low => " <kbd class=\"init shared-pt\">Shared PT</kbd> <kbd class=\"init neg\">Active Low</kbd>",
+                        .shared_pt_init => switch (glb_config.shared_pt_init.polarity) {
+                            .positive => " <kbd class=\"init shared-pt\">Shared PT</kbd> <kbd class=\"init pos\">Active High</kbd>",
+                            .negative => " <kbd class=\"init shared-pt\">Shared PT</kbd> <kbd class=\"init neg\">Active Low</kbd>",
                         },
                     });
                 },
@@ -1186,7 +1196,7 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
                     .hover_selector = oe_mc_class,
                 };
 
-                switch (mc_config.output.routing) {
+                switch (mc_config.output.routing.mode()) {
                     .same_as_oe => {
                         out_mcref = oe_mcref;
                         out_mc_delta = oe_mc_delta;

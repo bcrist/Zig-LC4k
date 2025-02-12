@@ -1,9 +1,9 @@
 test "lexer basics" {
-    const tokens, const offsets = try lp.lex(std.testing.allocator, "abc + 123 & asdf[4:] ; I'm a teapot");
+    const tokens, const offsets = try lp.lexer.lex(std.testing.allocator, "abc + 123 & asdf[4:] ; I'm a teapot");
     defer std.testing.allocator.free(tokens);
     defer std.testing.allocator.free(offsets);
 
-    try std.testing.expectEqualSlices(lp.Token, &.{
+    try std.testing.expectEqualSlices(lp.lexer.Token, &.{
         .id, .sum, .literal, .product, .id, .begin_extract, .literal, .range, .end_extract, .eof,
     }, tokens);
     try std.testing.expectEqualSlices(u32, &.{
@@ -12,23 +12,25 @@ test "lexer basics" {
 }
 
 test "lexer subexpr and concat" {
-    const tokens, const offsets = try lp.lex(std.testing.allocator,
+    const tokens, const offsets = try lp.lexer.lex(std.testing.allocator,
         \\  abc[>0 1 2]
         \\  {a<b     <   c}
         \\  (x + (y)) & z
         \\== != asdf #123
+        \\ @asdf
     );
     defer std.testing.allocator.free(tokens);
     defer std.testing.allocator.free(offsets);
 
-    try std.testing.expectEqualSlices(lp.Token, &.{
+    try std.testing.expectEqualSlices(lp.lexer.Token, &.{
         .id, .begin_extract, .big_endian, .literal, .literal, .literal, .end_extract,
         .begin_concat, .id, .little_endian, .id, .little_endian, .id, .end_concat,
         .begin_subexpr, .id, .sum, .begin_subexpr, .id, .end_subexpr, .end_subexpr, .product, .id,
-        .equals, .not_equals, .id, .literal, .eof,
+        .equals, .not_equals, .id, .literal,
+        .builtin, .eof,
     }, tokens);
     try std.testing.expectEqualSlices(u32, &.{
-        2, 5, 6, 7, 9, 11, 12, 16, 17, 18, 19, 25, 29, 30, 34, 35, 37, 39, 40, 41, 42, 44, 46, 49, 52, 54, 59, 63
+        2, 5, 6, 7, 9, 11, 12, 16, 17, 18, 19, 25, 29, 30, 34, 35, 37, 39, 40, 41, 42, 44, 46, 49, 52, 54, 59, 65, 70
     }, offsets);
 }
 
@@ -85,25 +87,20 @@ fn test_literal(str: []const u8, value: u64, bits: u6) !void {
 
 test "parsing" {
     const Device = lc4k.LC4032ZC_TQFP48.Device;
-    var p: lp.Logic_Parser(Device) = .{
-        .gpa = std.testing.allocator,
-        .arena = std.heap.ArenaAllocator.init(std.testing.allocator),
-        .names = Device.get_names(),
-    };
-    defer p.arena.deinit();
+    const names = Device.get_names();
 
-    try test_parse(lp.Logic_Parser(Device), &p, "pin_33",
+    try test_parse(Device, names, "pin_33",
         \\0-6 bus_ref (1b) < io_B10
         \\
     );
 
-    try test_parse(lp.Logic_Parser(Device), &p, "clk0 | clk1",
+    try test_parse(Device, names, "clk0 | clk1",
         \\0-11 binary_sum:
         \\   [0] 0-4 signal (1b) clk0
         \\   [1] 7-11 signal (1b) clk1
         \\
     );
-    try test_parse(lp.Logic_Parser(Device), &p, "~(clk0 + clk1) & ~!io_B0 * io_B1 ^ io_A13",
+    try test_parse(Device, names, "~(clk0 + clk1) & ~!io_B0 * io_B1 ^ io_A13",
         \\0-41 binary_xor:
         \\   [0] 0-32 product:
         \\      [0] 0-14 complement: 1-14 subexpr: 2-13 binary_sum:
@@ -115,7 +112,7 @@ test "parsing" {
         \\
     );
 
-    try test_parse(lp.Logic_Parser(Device), &p, "io_A0 + io_A1 | io_A2 ^ io_A3 ^ io_A4 | io_A5 + io_A6 ^ io_A7",
+    try test_parse(Device, names, "io_A0 + io_A1 | io_A2 ^ io_A3 ^ io_A4 | io_A5 + io_A6 ^ io_A7",
         \\0-61 binary_xor:
         \\   [0] 0-53 sum:
         \\      [0] 0-37 xor:
@@ -131,7 +128,7 @@ test "parsing" {
         \\
     );
 
-    try test_parse(lp.Logic_Parser(Device), &p, "io_A0 == io_A1 & io_A2 != io_A3 & 'x1234",
+    try test_parse(Device, names, "io_A0 == io_A1 & io_A2 != io_A3 & 'x1234",
         \\0-40 product:
         \\   [0] 0-14 equals:
         \\      [0] 0-5 signal (1b) io_A0
@@ -143,28 +140,28 @@ test "parsing" {
         \\
     );
 
-    try test_parse(lp.Logic_Parser(Device), &p, "&pin_3 | |pin_4",
+    try test_parse(Device, names, "&pin_3 | |pin_4",
         \\0-15 binary_sum:
         \\   [0] 0-6 unary_product: 1-6 bus_ref (1b) < io_A6
         \\   [1] 9-15 unary_sum: 10-15 bus_ref (1b) < io_A7
         \\
     );
 
-    try test_parse(lp.Logic_Parser(Device), &p, "~&pin_3 | *+^~pin_4",
+    try test_parse(Device, names, "~&pin_3 | *+^~pin_4",
         \\0-19 binary_sum:
         \\   [0] 0-7 complement: 1-7 unary_product: 2-7 bus_ref (1b) < io_A6
         \\   [1] 10-19 unary_product: 11-19 unary_sum: 12-19 unary_xor: 13-19 complement: 14-19 bus_ref (1b) < io_A7
         \\
     );
 
-    try test_parse(lp.Logic_Parser(Device), &p, "{~pin_3 pin_4}",
+    try test_parse(Device, names, "{~pin_3 pin_4}",
         \\0-14 binary_concat_be:
         \\   [0] 1-7 complement: 2-7 bus_ref (1b) < io_A6
         \\   [1] 8-13 bus_ref (1b) < io_A7
         \\
     );
 
-    try test_parse(lp.Logic_Parser(Device), &p, "{>~pin_3 pin_4 pin_8}",
+    try test_parse(Device, names, "{>~pin_3 pin_4 pin_8}",
         \\0-21 concat_be:
         \\   [0] 2-8 complement: 3-8 bus_ref (1b) < io_A6
         \\   [1] 9-14 bus_ref (1b) < io_A7
@@ -172,14 +169,14 @@ test "parsing" {
         \\
     );
 
-    try test_parse(lp.Logic_Parser(Device), &p, "{ <<<<<~pin_3<<<<<<pin_4<<}",
+    try test_parse(Device, names, "{ <<<<<~pin_3<<<<<<pin_4<<}",
         \\0-27 binary_concat_le:
         \\   [0] 7-13 complement: 8-13 bus_ref (1b) < io_A6
         \\   [1] 19-24 bus_ref (1b) < io_A7
         \\
     );
 
-    try test_parse(lp.Logic_Parser(Device), &p, "{~pin_3<pin_4<io_A7}",
+    try test_parse(Device, names, "{~pin_3<pin_4<io_A7}",
         \\0-20 concat_le:
         \\   [0] 1-7 complement: 2-7 bus_ref (1b) < io_A6
         \\   [1] 8-13 bus_ref (1b) < io_A7
@@ -187,31 +184,31 @@ test "parsing" {
         \\
     );
 
-    try test_parse(lp.Logic_Parser(Device), &p, "pin_3[0]",
+    try test_parse(Device, names, "pin_3[0]",
         \\0-8 extract:
         \\   [0] 0-5 bus_ref (1b) < io_A6
-        \\   [1] 6-7 literal (1b) 0b0
+        \\   [1] 6-7 literal (6b) 0b0
         \\
     );
 
-    try test_parse(lp.Logic_Parser(Device), &p, "{ pin_3[<0:7] pin_4[1] pin_4[>1>2 3>>>4:3>] }",
+    try test_parse(Device, names, "{ pin_3[<0:7] pin_4[1] pin_4[>1>2 3>>>4:3>] }",
         \\0-45 concat_be:
         \\   [0] 2-13 extract_le:
         \\      [0] 2-7 bus_ref (1b) < io_A6
         \\      [1] 9-12 bit_range (0b) 0:7
         \\   [1] 14-22 extract:
         \\      [0] 14-19 bus_ref (1b) < io_A7
-        \\      [1] 20-21 literal (1b) 0b1
+        \\      [1] 20-21 literal (6b) 0b1
         \\   [2] 23-43 multi_extract_be:
         \\      [0] 23-28 bus_ref (1b) < io_A7
-        \\      [1] 30-31 literal (1b) 0b1
-        \\      [2] 32-33 literal (2b) 0b10
-        \\      [3] 34-35 literal (2b) 0b11
+        \\      [1] 30-31 literal (6b) 0b1
+        \\      [2] 32-33 literal (6b) 0b10
+        \\      [3] 34-35 literal (6b) 0b11
         \\      [4] 38-41 bit_range (0b) 4:3
         \\
     );
 
-    try test_parse(lp.Logic_Parser(Device), &p, "{io_A0 io_A1 io_A2 io_A3}[{clk1 clk0}]",
+    try test_parse(Device, names, "{io_A0 io_A1 io_A2 io_A3}[{clk1 clk0}]",
         \\0-38 mux:
         \\   [0] 0-25 concat_be:
         \\      [0] 1-6 signal (1b) io_A0
@@ -223,16 +220,23 @@ test "parsing" {
         \\      [1] 32-36 signal (1b) clk0
         \\
     );
+
+    try test_parse(Device, names, "@fb @pad {io_A0 mc_A1}",
+        \\0-22 fb_signal: 4-22 pad_signal: 9-22 binary_concat_be:
+        \\   [0] 10-15 signal (1b) io_A0
+        \\   [1] 16-21 signal (1b) mc_A1
+        \\
+    );
 }
 
-fn test_parse(comptime LP: type, p: *LP, eqn: []const u8, expected: []const u8) !void {
-    var pd = try LP.Parse_Data.parse(p, eqn);
-    defer pd.deinit();
+fn test_parse(comptime Device: type, names: *const Device.Names, eqn: []const u8, expected: []const u8) !void {
+    var ast = try lp.Ast(Device).parse(std.testing.allocator, names, eqn);
+    defer ast.deinit();
 
     var temp = std.ArrayList(u8).init(std.testing.allocator);
     defer temp.deinit();
 
-    try pd.debug(temp.writer().any());
+    try ast.debug(temp.writer().any());
     try std.testing.expectEqualStrings(expected, temp.items);
 }
 
@@ -255,69 +259,62 @@ test "typechecking" {
         };
     }, .{});
 
-    var p: lp.Logic_Parser(Device) = .{
-        .gpa = std.testing.allocator,
-        .arena = std.heap.ArenaAllocator.init(std.testing.allocator),
-        .names = &names,
-    };
-    defer p.arena.deinit();
-
-    try test_bit_widths(lp.Logic_Parser(Device), &p, "~(A)",
+    try test_bit_widths(Device, &names, "~(A)",
         \\0-4 complement (4b): 1-4 subexpr (4b): 2-3 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
         \\
     );
 
-    try test_bit_widths(lp.Logic_Parser(Device), &p, "&A",
+    try test_bit_widths(Device, &names, "&A",
         \\0-2 unary_product (1b): 1-2 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
         \\
     );
 
-    try test_bit_widths(lp.Logic_Parser(Device), &p, "+A",
+    try test_bit_widths(Device, &names, "+A",
         \\0-2 unary_sum (1b): 1-2 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
         \\
     );
 
-    try test_bit_widths(lp.Logic_Parser(Device), &p, "^A",
+    try test_bit_widths(Device, &names, "^A",
         \\0-2 unary_xor (1b): 1-2 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
         \\
     );
 
-    try test_bit_widths(lp.Logic_Parser(Device), &p, "A == B",
+    try test_bit_widths(Device, &names, "A == B",
         \\0-6 equals (1b):
         \\   [0] 0-1 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
         \\   [1] 5-6 bus_ref (4b) < mc_B0 mc_B1 mc_B2 mc_B3
         \\
     );
 
-    try test_bit_widths(lp.Logic_Parser(Device), &p, "A != B",
+    try test_bit_widths(Device, &names, "A != B",
         \\0-6 not_equals (1b):
         \\   [0] 0-1 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
         \\   [1] 5-6 bus_ref (4b) < mc_B0 mc_B1 mc_B2 mc_B3
         \\
     );
 
-    try test_bit_widths(lp.Logic_Parser(Device), &p, "A | B",
+    try test_bit_widths(Device, &names, "A | B",
         \\0-5 binary_sum (4b):
         \\   [0] 0-1 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
         \\   [1] 4-5 bus_ref (4b) < mc_B0 mc_B1 mc_B2 mc_B3
         \\
     );
 
-    try test_bit_widths(lp.Logic_Parser(Device), &p, "A * B",
+    try test_bit_widths(Device, &names, "A * B",
         \\0-5 binary_product (4b):
         \\   [0] 0-1 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
         \\   [1] 4-5 bus_ref (4b) < mc_B0 mc_B1 mc_B2 mc_B3
         \\
     );
 
-    try test_bit_widths(lp.Logic_Parser(Device), &p, "A ^ B",
+    try test_bit_widths(Device, &names, "A ^ B",
         \\0-5 binary_xor (4b):
         \\   [0] 0-1 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
         \\   [1] 4-5 bus_ref (4b) < mc_B0 mc_B1 mc_B2 mc_B3
         \\
     );
 
-    try test_bit_widths(lp.Logic_Parser(Device), &p, "A | B | B",
+    try test_bit_widths(Device, &names, "A | B | B",
         \\0-9 sum (4b):
         \\   [0] 0-1 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
         \\   [1] 4-5 bus_ref (4b) < mc_B0 mc_B1 mc_B2 mc_B3
@@ -325,7 +322,7 @@ test "typechecking" {
         \\
     );
 
-    try test_bit_widths(lp.Logic_Parser(Device), &p, "A * B & B",
+    try test_bit_widths(Device, &names, "A * B & B",
         \\0-9 product (4b):
         \\   [0] 0-1 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
         \\   [1] 4-5 bus_ref (4b) < mc_B0 mc_B1 mc_B2 mc_B3
@@ -333,7 +330,7 @@ test "typechecking" {
         \\
     );
 
-    try test_bit_widths(lp.Logic_Parser(Device), &p, "A ^ B ^ B",
+    try test_bit_widths(Device, &names, "A ^ B ^ B",
         \\0-9 xor (4b):
         \\   [0] 0-1 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
         \\   [1] 4-5 bus_ref (4b) < mc_B0 mc_B1 mc_B2 mc_B3
@@ -341,72 +338,72 @@ test "typechecking" {
         \\
     );
 
-    try test_bit_widths(lp.Logic_Parser(Device), &p, "{A B}",
+    try test_bit_widths(Device, &names, "{A B}",
         \\0-5 binary_concat_be (8b):
         \\   [0] 1-2 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
         \\   [1] 3-4 bus_ref (4b) < mc_B0 mc_B1 mc_B2 mc_B3
         \\
     );
 
-    try test_bit_widths(lp.Logic_Parser(Device), &p, "A[2]",
+    try test_bit_widths(Device, &names, "A[2]",
         \\0-4 extract (1b):
         \\   [0] 0-1 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
-        \\   [1] 2-3 literal (2b) 0b10
+        \\   [1] 2-3 literal (6b) 0b10
         \\
     );
 
-    try test_bit_widths(lp.Logic_Parser(Device), &p, "A[2:1]",
+    try test_bit_widths(Device, &names, "A[2:1]",
         \\0-6 extract (2b):
         \\   [0] 0-1 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
         \\   [1] 2-5 bit_range (0b) 2:1
         \\
     );
 
-    try test_bit_widths(lp.Logic_Parser(Device), &p, "A[2:]",
+    try test_bit_widths(Device, &names, "A[2:]",
         \\0-5 extract (3b):
         \\   [0] 0-1 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
         \\   [1] 2-4 bit_range (0b) 2:null
         \\
     );
 
-    try test_bit_widths(lp.Logic_Parser(Device), &p, "A[:1]",
+    try test_bit_widths(Device, &names, "A[:1]",
         \\0-5 extract (3b):
         \\   [0] 0-1 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
         \\   [1] 2-4 bit_range (0b) null:1
         \\
     );
 
-    try test_bit_widths(lp.Logic_Parser(Device), &p, "A[:]",
+    try test_bit_widths(Device, &names, "A[:]",
         \\0-4 extract (4b):
         \\   [0] 0-1 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
         \\   [1] 2-3 bit_range (0b) null:null
         \\
     );
 
-    try test_bit_widths(lp.Logic_Parser(Device), &p, "{<A B A B[0]}",
+    try test_bit_widths(Device, &names, "{<A B A B[0]}",
         \\0-13 concat_le (13b):
         \\   [0] 2-3 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
         \\   [1] 4-5 bus_ref (4b) < mc_B0 mc_B1 mc_B2 mc_B3
         \\   [2] 6-7 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
         \\   [3] 8-12 extract (1b):
         \\      [0] 8-9 bus_ref (4b) < mc_B0 mc_B1 mc_B2 mc_B3
-        \\      [1] 10-11 literal (1b) 0b0
+        \\      [1] 10-11 literal (6b) 0b0
         \\
     );
 
-    try test_bit_widths(lp.Logic_Parser(Device), &p, "A[0 1 2 3 3 3>]",
+    try test_bit_widths(Device, &names, "A[0 1 2 3 3 3>]",
         \\0-15 multi_extract_be (6b):
         \\   [0] 0-1 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
-        \\   [1] 2-3 literal (1b) 0b0
-        \\   [2] 4-5 literal (1b) 0b1
-        \\   [3] 6-7 literal (2b) 0b10
-        \\   [4] 8-9 literal (2b) 0b11
-        \\   [5] 10-11 literal (2b) 0b11
-        \\   [6] 12-13 literal (2b) 0b11
+        \\   [1] 2-3 literal (6b) 0b0
+        \\   [2] 4-5 literal (6b) 0b1
+        \\   [3] 6-7 literal (6b) 0b10
+        \\   [4] 8-9 literal (6b) 0b11
+        \\   [5] 10-11 literal (6b) 0b11
+        \\   [6] 12-13 literal (6b) 0b11
         \\
     );
 
-    try test_bit_widths(lp.Logic_Parser(Device), &p, "A[>2:2:]",
+    try test_bit_widths(Device, &names, "A[>2:2:]",
         \\0-8 multi_extract_be (5b):
         \\   [0] 0-1 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
         \\   [1] 3-6 bit_range (0b) 2:2
@@ -414,7 +411,7 @@ test "typechecking" {
         \\
     );
 
-    try test_bit_widths(lp.Logic_Parser(Device), &p, "A[{clk1 clk0}]",
+    try test_bit_widths(Device, &names, "A[{clk1 clk0}]",
         \\0-14 mux (1b):
         \\   [0] 0-1 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
         \\   [1] 2-13 binary_concat_be (2b):
@@ -422,18 +419,25 @@ test "typechecking" {
         \\      [1] 8-12 signal (1b) clk0
         \\
     );
+
+    try test_bit_widths(Device, &names, "@fb @pad {io_A0 mc_A1}",
+        \\0-22 fb_signal (2b): 4-22 pad_signal (2b): 9-22 binary_concat_be (2b):
+        \\   [0] 10-15 signal (1b) io_A0
+        \\   [1] 16-21 signal (1b) mc_A1
+        \\
+    );
 }
 
-fn test_bit_widths(comptime LP: type, p: *LP, eqn: []const u8, expected: []const u8) !void {
-    var pd = try LP.Parse_Data.parse(p, eqn);
-    defer pd.deinit();
+fn test_bit_widths(comptime Device: type, names: *const Device.Names, eqn: []const u8, expected: []const u8) !void {
+    var ast = try lp.Ast(Device).parse(std.testing.allocator, names, eqn);
+    defer ast.deinit();
 
-    _ = try pd.infer_and_check_bit_widths(.{});
+    _ = try ast.infer_and_check_bit_widths(.{});
 
     var temp = std.ArrayList(u8).init(std.testing.allocator);
     defer temp.deinit();
 
-    try pd.debug(temp.writer().any());
+    try ast.debug(temp.writer().any());
     try std.testing.expectEqualStrings(expected, temp.items);
 }
 
@@ -456,28 +460,21 @@ test "build IR" {
         };
     }, .{});
 
-    var p: lp.Logic_Parser(Device) = .{
-        .gpa = std.testing.allocator,
-        .arena = std.heap.ArenaAllocator.init(std.testing.allocator),
-        .names = &names,
-    };
-    defer p.arena.deinit();
+    try test_build_ir(Device, &names, "~(A)", 0, null, "complement: signal 74\n");
+    try test_build_ir(Device, &names, "~(A)", 1, null, "complement: signal 75\n");
+    try test_build_ir(Device, &names, "~(A)", 2, null, "complement: signal 76\n");
+    try test_build_ir(Device, &names, "~(A)", 3, null, "complement: signal 77\n");
+    try test_build_ir(Device, &names, "~(B)", 0, null, "complement: signal 90\n");
+    try test_build_ir(Device, &names, "~(B)", 1, null, "complement: signal 91\n");
+    try test_build_ir(Device, &names, "~(B)", 2, null, "complement: signal 92\n");
+    try test_build_ir(Device, &names, "~(B)", 3, null, "complement: signal 93\n");
+    try test_build_ir(Device, &names, "A[3]", 0, null, "signal 77\n");
+    try test_build_ir(Device, &names, "{ io_A0 io_A1 }", 0, null, "signal 11\n");
+    try test_build_ir(Device, &names, "{ io_A0 io_A1 }", 1, null, "signal 10\n");
+    try test_build_ir(Device, &names, "{< io_A0 io_A1 }", 0, null, "signal 10\n");
+    try test_build_ir(Device, &names, "{< io_A0 io_A1 }", 1, null, "signal 11\n");
 
-    try test_build_ir(lp.Logic_Parser(Device), &p, "~(A)", 0, null, "complement: signal 74\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "~(A)", 1, null, "complement: signal 75\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "~(A)", 2, null, "complement: signal 76\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "~(A)", 3, null, "complement: signal 77\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "~(B)", 0, null, "complement: signal 90\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "~(B)", 1, null, "complement: signal 91\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "~(B)", 2, null, "complement: signal 92\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "~(B)", 3, null, "complement: signal 93\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "A[3]", 0, null, "signal 77\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "{ io_A0 io_A1 }", 0, null, "signal 11\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "{ io_A0 io_A1 }", 1, null, "signal 10\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "{< io_A0 io_A1 }", 0, null, "signal 10\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "{< io_A0 io_A1 }", 1, null, "signal 11\n");
-
-    try test_build_ir(lp.Logic_Parser(Device), &p, "io_A0 + io_A1 * io_A2 ^ io_A3 & io_A4 | io_A5", 0, null,
+    try test_build_ir(Device, &names, "io_A0 + io_A1 * io_A2 ^ io_A3 & io_A4 | io_A5", 0, null,
         \\sum:
         \\   [0] xor:
         \\      [0] sum:
@@ -492,7 +489,7 @@ test "build IR" {
         \\
     );
 
-    try test_build_ir(lp.Logic_Parser(Device), &p, "io_A0 + io_A1 | io_A2 ^ io_A3 ^ io_A4 | io_A5 + io_A6 ^ io_A7", 0, null,
+    try test_build_ir(Device, &names, "io_A0 + io_A1 | io_A2 ^ io_A3 ^ io_A4 | io_A5 + io_A6 ^ io_A7", 0, null,
         \\xor:
         \\   [0] sum:
         \\      [0] xor:
@@ -508,14 +505,14 @@ test "build IR" {
         \\
     );
 
-    try test_build_ir(lp.Logic_Parser(Device), &p, "|A[1:]", 0, null,
+    try test_build_ir(Device, &names, "|A[1:]", 0, null,
         \\sum:
         \\   [0] signal 74
         \\   [1] signal 75
         \\
     );
     
-    try test_build_ir(lp.Logic_Parser(Device), &p, "&A", 0, null,
+    try test_build_ir(Device, &names, "&A", 0, null,
         \\product:
         \\   [0] signal 74
         \\   [1] signal 75
@@ -524,7 +521,7 @@ test "build IR" {
         \\
     );
 
-    try test_build_ir(lp.Logic_Parser(Device), &p, "|{A A A}", 0, null,
+    try test_build_ir(Device, &names, "|{A A A}", 0, null,
         \\sum:
         \\   [0] signal 74
         \\   [1] signal 75
@@ -533,7 +530,7 @@ test "build IR" {
         \\
     );
 
-    try test_build_ir(lp.Logic_Parser(Device), &p, "^{<A B}[<2 5:3]", 0, null,
+    try test_build_ir(Device, &names, "^{<A B}[<2 5:3]", 0, null,
         \\xor:
         \\   [0] signal 76
         \\   [1] signal 91
@@ -542,7 +539,7 @@ test "build IR" {
         \\
     );
 
-    try test_build_ir(lp.Logic_Parser(Device), &p, "^{B A}[3:5>2]", 0, null,
+    try test_build_ir(Device, &names, "^{B A}[3:5>2]", 0, null,
         \\xor:
         \\   [0] signal 76
         \\   [1] signal 91
@@ -551,7 +548,7 @@ test "build IR" {
         \\
     );
 
-    try test_build_ir(lp.Logic_Parser(Device), &p, "^{B A}[5:3 2]", 0, null,
+    try test_build_ir(Device, &names, "^{B A}[5:3 2]", 0, null,
         \\xor:
         \\   [0] signal 76
         \\   [1] signal 77
@@ -560,43 +557,43 @@ test "build IR" {
         \\
     );
 
-    try test_build_ir(lp.Logic_Parser(Device), &p, "~1", 0, .{}, "zero\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "~0", 0, .{}, "one\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "~~1", 0, .{}, "one\n");
+    try test_build_ir(Device, &names, "~1", 0, .{}, "zero\n");
+    try test_build_ir(Device, &names, "~0", 0, .{}, "one\n");
+    try test_build_ir(Device, &names, "~~1", 0, .{}, "one\n");
 
-    try test_build_ir(lp.Logic_Parser(Device), &p, "io_A0 & 0", 0, .{}, "zero\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "io_A0 & 1", 0, .{}, "signal 10\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "0 & io_A0", 0, .{}, "zero\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "1 & io_A0", 0, .{}, "signal 10\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "~io_A0 & io_A0", 0, .{}, "zero\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "io_A0 & ~io_A0", 0, .{}, "zero\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "io_A0 & (io_A0|io_A1)", 0, .{}, "signal 10\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "(io_A0|io_A1) & io_A0", 0, .{}, "signal 10\n");
+    try test_build_ir(Device, &names, "io_A0 & 0", 0, .{}, "zero\n");
+    try test_build_ir(Device, &names, "io_A0 & 1", 0, .{}, "signal 10\n");
+    try test_build_ir(Device, &names, "0 & io_A0", 0, .{}, "zero\n");
+    try test_build_ir(Device, &names, "1 & io_A0", 0, .{}, "signal 10\n");
+    try test_build_ir(Device, &names, "~io_A0 & io_A0", 0, .{}, "zero\n");
+    try test_build_ir(Device, &names, "io_A0 & ~io_A0", 0, .{}, "zero\n");
+    try test_build_ir(Device, &names, "io_A0 & (io_A0|io_A1)", 0, .{}, "signal 10\n");
+    try test_build_ir(Device, &names, "(io_A0|io_A1) & io_A0", 0, .{}, "signal 10\n");
 
-    try test_build_ir(lp.Logic_Parser(Device), &p, "io_A0 | 0", 0, .{}, "signal 10\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "io_A0 | 1", 0, .{}, "one\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "0 | io_A0", 0, .{}, "signal 10\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "1 | io_A0", 0, .{}, "one\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "~io_A0 | io_A0", 0, .{}, "one\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "io_A0 | ~io_A0", 0, .{}, "one\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "io_A0 | (io_A0 & io_A1)", 0, .{}, "signal 10\n");
-    try test_build_ir(lp.Logic_Parser(Device), &p, "(io_A0 & io_A1) | io_A0", 0, .{}, "signal 10\n");
+    try test_build_ir(Device, &names, "io_A0 | 0", 0, .{}, "signal 10\n");
+    try test_build_ir(Device, &names, "io_A0 | 1", 0, .{}, "one\n");
+    try test_build_ir(Device, &names, "0 | io_A0", 0, .{}, "signal 10\n");
+    try test_build_ir(Device, &names, "1 | io_A0", 0, .{}, "one\n");
+    try test_build_ir(Device, &names, "~io_A0 | io_A0", 0, .{}, "one\n");
+    try test_build_ir(Device, &names, "io_A0 | ~io_A0", 0, .{}, "one\n");
+    try test_build_ir(Device, &names, "io_A0 | (io_A0 & io_A1)", 0, .{}, "signal 10\n");
+    try test_build_ir(Device, &names, "(io_A0 & io_A1) | io_A0", 0, .{}, "signal 10\n");
 
-    try test_build_ir(lp.Logic_Parser(Device), &p, "~(A | B)", 0, .{},
+    try test_build_ir(Device, &names, "~(A | B)", 0, .{},
         \\product:
         \\   [0] complement: signal 74
         \\   [1] complement: signal 90
         \\
     );
 
-    try test_build_ir(lp.Logic_Parser(Device), &p, "~(A & B)", 0, .{},
+    try test_build_ir(Device, &names, "~(A & B)", 0, .{},
         \\sum:
         \\   [0] complement: signal 74
         \\   [1] complement: signal 90
         \\
     );
 
-    try test_build_ir(lp.Logic_Parser(Device), &p, "io_A0 & (io_A1|io_A2)", 0, .{},
+    try test_build_ir(Device, &names, "io_A0 & (io_A1|io_A2)", 0, .{},
         \\sum:
         \\   [0] product:
         \\      [0] signal 10
@@ -606,7 +603,7 @@ test "build IR" {
         \\      [1] signal 11
         \\
     );
-    try test_build_ir(lp.Logic_Parser(Device), &p, "(io_A1|io_A2) & io_A0", 0, .{},
+    try test_build_ir(Device, &names, "(io_A1|io_A2) & io_A0", 0, .{},
         \\sum:
         \\   [0] product:
         \\      [0] signal 12
@@ -617,7 +614,7 @@ test "build IR" {
         \\
     );
 
-    try test_build_ir(lp.Logic_Parser(Device), &p, "A == #5", 0, .{},
+    try test_build_ir(Device, &names, "A == #5", 0, .{},
         \\product:
         \\   [0] signal 74
         \\   [1] signal 76
@@ -626,7 +623,7 @@ test "build IR" {
         \\
     );
 
-    try test_build_ir(lp.Logic_Parser(Device), &p, "io_A0 | io_A1 & io_A2 ^ io_A3 & io_A4 | io_A5", 0, .{},
+    try test_build_ir(Device, &names, "io_A0 | io_A1 & io_A2 ^ io_A3 & io_A4 | io_A5", 0, .{},
         \\sum:
         \\   [0] signal 15
         \\   [1] product:
@@ -656,7 +653,7 @@ test "build IR" {
         \\
     );
 
-    try test_build_ir(lp.Logic_Parser(Device), &p, "io_A0 + io_A1 | io_A2 ^ io_A3 ^ io_A4 | io_A5 + io_A6 ^ io_A7", 0, .{},
+    try test_build_ir(Device, &names, "io_A0 + io_A1 | io_A2 ^ io_A3 ^ io_A4 | io_A5 + io_A6 ^ io_A7", 0, .{},
         \\xor:
         \\   [0] signal 17
         \\   [1] sum:
@@ -701,7 +698,7 @@ test "build IR" {
         \\
     );
 
-    try test_build_ir(lp.Logic_Parser(Device), &p, "(io_A0|io_A1) * (clk0|clk1|clk2|clk3)", 0, .{},
+    try test_build_ir(Device, &names, "(io_A0|io_A1) * (clk0|clk1|clk2|clk3)", 0, .{},
         \\sum:
         \\   [0] product:
         \\      [0] signal 11
@@ -730,7 +727,7 @@ test "build IR" {
         \\
     );
 
-    try test_build_ir(lp.Logic_Parser(Device), &p, "~((io_A0|io_A1) * (clk0|clk1|clk2|clk3))", 0, .{},
+    try test_build_ir(Device, &names, "~((io_A0|io_A1) * (clk0|clk1|clk2|clk3))", 0, .{},
         \\sum:
         \\   [0] product:
         \\      [0] complement: signal 10
@@ -743,7 +740,7 @@ test "build IR" {
         \\
     );
 
-    try test_build_ir(lp.Logic_Parser(Device), &p, "A[{clk1 clk0}]", 0, .{},
+    try test_build_ir(Device, &names, "A[{clk1 clk0}]", 0, .{},
         \\sum:
         \\   [0] product:
         \\      [0] complement: signal 0
@@ -763,18 +760,27 @@ test "build IR" {
         \\      [2] signal 77
         \\
     );
+
+    try test_build_ir(Device, &names, "@pad {io_A0 mc_A0}", 0, .{}, "signal 10\n");
+    try test_build_ir(Device, &names, "@pad {io_A0 mc_A0}", 1, .{}, "signal 10\n");
+    try test_build_ir(Device, &names, "@fb {io_A0 mc_A0}", 0, .{}, "signal 74\n");
+    try test_build_ir(Device, &names, "@fb {io_A0 mc_A0}", 1, .{}, "signal 74\n");
+    try test_build_ir(Device, &names, "@pad @fb {io_A0 mc_A0}", 0, .{}, "signal 10\n");
+    try test_build_ir(Device, &names, "@pad @fb {io_A0 mc_A0}", 1, .{}, "signal 10\n");
+    try test_build_ir(Device, &names, "@fb @pad {io_A0 mc_A0}", 0, .{}, "signal 74\n");
+    try test_build_ir(Device, &names, "@fb @pad {io_A0 mc_A0}", 1, .{}, "signal 74\n");
 }
 
-fn test_build_ir(comptime LP: type, p: *LP, eqn: []const u8, bit: u6, normalize: ?lp.IR_Data.Normalize_Options, expected: []const u8) !void {
-    var pd = try LP.Parse_Data.parse(p, eqn);
-    defer pd.deinit();
+fn test_build_ir(comptime Device: type, names: *const Device.Names, eqn: []const u8, bit: u6, normalize: ?lp.IR_Data.Normalize_Options, expected: []const u8) !void {
+    var ast = try lp.Ast(Device).parse(std.testing.allocator, names, eqn);
+    defer ast.deinit();
 
-    _ = try pd.infer_and_check_bit_widths(.{});
+    _ = try ast.infer_and_check_bit_widths(.{});
 
     var ir_data = try lp.IR_Data.init(std.testing.allocator);
     defer ir_data.deinit();
 
-    var ir_id = try pd.build_ir(&ir_data, bit);
+    var ir_id = try ast.build_ir(&ir_data, bit);
 
     if (normalize) |options| {
         ir_id = try ir_data.normalize(ir_id, options);
@@ -835,13 +841,21 @@ test "Logic_Parser" {
     try std.testing.expectEqualDeep(comptime lc4k.Macrocell_Logic(Signal) { .sum_xor_pt0 = .{
         .pt0 = Signal.clk0.when_high().pt(),
         .sum = &.{ Signal.clk2.when_high().pt().and_factor(Signal.clk1.when_high()) },
+        .polarity = .positive,
     }}, xor);
 
     const xor_inverted = try parser.logic("clk0 ^ (clk1 | clk2)", .{});
-    try std.testing.expectEqualDeep(comptime lc4k.Macrocell_Logic(Signal) { .sum_xor_pt0_inverted = .{
+    try std.testing.expectEqualDeep(comptime lc4k.Macrocell_Logic(Signal) { .sum_xor_pt0 = .{
         .pt0 = Signal.clk0.when_high().pt(),
         .sum = &.{ Signal.clk1.when_low().pt().and_factor(Signal.clk2.when_low()) },
+        .polarity = .negative,
     }}, xor_inverted);
+
+    const ptp = try parser.pt_with_polarity("clk0 | clk1 | clk2", .{});
+    try std.testing.expectEqualDeep(comptime lc4k.Product_Term_With_Polarity(Signal) {
+        .pt = Signal.clk0.when_low().pt().and_factor(Signal.clk1.when_low()).and_factor(Signal.clk2.when_low()),
+        .polarity = .negative,
+    }, ptp);
 
     const sum2 = try parser.sum(
         \\   ~clk0 & ~clk1 & ~clk2
@@ -874,6 +888,28 @@ test "Logic_Parser" {
         Signal.clk2.when_low().pt().and_factor(Signal.clk1.when_high()),
     }, sum2opt);
 
+    const sp = try parser.sum_with_polarity(
+        \\   ~clk0 &  clk1 & ~clk2 & ~clk3
+        \\ |  clk0 & ~clk1 & ~clk2 & ~clk3
+        \\ |  clk0 & ~clk1 &  clk2 & ~clk3
+        \\ |  clk0 & ~clk1 &  clk2 &  clk3
+        \\ |  clk0 &  clk1 & ~clk2 & ~clk3
+        \\ |  clk0 &  clk1 &  clk2 &  clk3
+        , .{ .optimize = false, .dont_care = 
+        \\    clk0 & ~clk1 & ~clk2 &  clk3
+        \\ |  clk0 &  clk1 &  clk2 & ~clk3
+        });
+    try std.testing.expectEqualDeep(comptime lc4k.Sum_With_Polarity(Signal) {
+        .sum = &.{
+            Signal.clk1.when_low().pt().and_factor(Signal.clk0.when_low()),
+            Signal.clk2.when_high().pt().and_factor(Signal.clk0.when_low()),
+            Signal.clk3.when_high().pt().and_factor(Signal.clk0.when_low()),
+            Signal.clk3.when_high().pt().and_factor(Signal.clk2.when_low()),
+            Signal.clk3.when_low().pt().and_factor(Signal.clk2.when_high()).and_factor(Signal.clk1.when_high()),
+        },
+        .polarity = .negative,
+    }, sp);
+
     const logic2 = try parser.logic(
         \\   ~clk0 &  clk1 & ~clk2 & ~clk3
         \\ |  clk0 & ~clk1 & ~clk2 & ~clk3
@@ -885,14 +921,16 @@ test "Logic_Parser" {
         \\    clk0 & ~clk1 & ~clk2 &  clk3
         \\ |  clk0 &  clk1 &  clk2 & ~clk3
         });
-
-    try std.testing.expectEqualDeep(comptime lc4k.Macrocell_Logic(Signal) { .sum_inverted = &.{
-        Signal.clk1.when_low().pt().and_factor(Signal.clk0.when_low()),
-        Signal.clk2.when_high().pt().and_factor(Signal.clk0.when_low()),
-        Signal.clk3.when_high().pt().and_factor(Signal.clk0.when_low()),
-        Signal.clk3.when_high().pt().and_factor(Signal.clk2.when_low()),
-        Signal.clk3.when_low().pt().and_factor(Signal.clk2.when_high()).and_factor(Signal.clk1.when_high()),
-    } }, logic2);
+    try std.testing.expectEqualDeep(comptime lc4k.Macrocell_Logic(Signal) { .sum = .{
+        .sum = &.{
+            Signal.clk1.when_low().pt().and_factor(Signal.clk0.when_low()),
+            Signal.clk2.when_high().pt().and_factor(Signal.clk0.when_low()),
+            Signal.clk3.when_high().pt().and_factor(Signal.clk0.when_low()),
+            Signal.clk3.when_high().pt().and_factor(Signal.clk2.when_low()),
+            Signal.clk3.when_low().pt().and_factor(Signal.clk2.when_high()).and_factor(Signal.clk1.when_high()),
+        },
+        .polarity = .negative,
+    }}, logic2);
 
     const logic2opt = try parser.logic(
         \\   ~clk0 &  clk1 & ~clk2 & ~clk3
@@ -905,10 +943,13 @@ test "Logic_Parser" {
         \\    clk0 & ~clk1 & ~clk2 &  clk3
         \\ |  clk0 &  clk1 &  clk2 & ~clk3
         });
-    try std.testing.expectEqualDeep(comptime lc4k.Macrocell_Logic(Signal) { .sum = &.{
-        Signal.clk2.when_high().pt().and_factor(Signal.clk0.when_high()),
-        Signal.clk3.when_low().pt().and_factor(Signal.clk2.when_low()).and_factor(Signal.clk1.when_high()),
-        Signal.clk3.when_low().pt().and_factor(Signal.clk0.when_high()), // this is a non-essential prime implicant
+    try std.testing.expectEqualDeep(comptime lc4k.Macrocell_Logic(Signal) { .sum = .{
+        .sum = &.{
+            Signal.clk2.when_high().pt().and_factor(Signal.clk0.when_high()),
+            Signal.clk3.when_low().pt().and_factor(Signal.clk2.when_low()).and_factor(Signal.clk1.when_high()),
+            Signal.clk3.when_low().pt().and_factor(Signal.clk0.when_high()), // this is a non-essential prime implicant
+        },
+        .polarity = .positive,
     }}, logic2opt);
 
     const logic2opt2 = try parser.logic(
@@ -917,11 +958,30 @@ test "Logic_Parser" {
         \\    clk0 & ~clk1 & ~clk2 &  clk3
         \\ |  clk0 &  clk1 &  clk2 & ~clk3
         });
-    try std.testing.expectEqualDeep(comptime lc4k.Macrocell_Logic(Signal) { .sum = &.{
-        Signal.clk0.when_high().pt().and_factor(Signal.clk1.when_low()), // this is the other non-essential prime implicant that wasn't used in logic2opt
-        Signal.clk3.when_low().pt().and_factor(Signal.clk2.when_low()).and_factor(Signal.clk1.when_high()),
-        Signal.clk2.when_high().pt().and_factor(Signal.clk0.when_high()),
+    try std.testing.expectEqualDeep(comptime lc4k.Macrocell_Logic(Signal) { .sum = .{
+        .sum = &.{
+            Signal.clk0.when_high().pt().and_factor(Signal.clk1.when_low()), // this is the other non-essential prime implicant that wasn't used in logic2opt
+            Signal.clk3.when_low().pt().and_factor(Signal.clk2.when_low()).and_factor(Signal.clk1.when_high()),
+            Signal.clk2.when_high().pt().and_factor(Signal.clk0.when_high()),
+        },
+        .polarity = .positive,
     }}, logic2opt2);
+
+
+    const name_overrides = try parser.logic(
+        \\asdf | &some_bus
+        , .{
+            .optimize = true,
+            .asdf = Signal.io_A0,
+            .some_bus = @as([]const Signal, &.{ .io_A1, .io_A2 }),
+        });
+    try std.testing.expectEqualDeep(comptime lc4k.Macrocell_Logic(Signal) { .sum = .{
+        .sum = &.{
+            Signal.io_A0.when_high().pt(),
+            Signal.io_A2.when_high().pt().and_factor(Signal.io_A1.when_high()),
+        },
+        .polarity = .positive,
+    }}, name_overrides);
 
 }
 

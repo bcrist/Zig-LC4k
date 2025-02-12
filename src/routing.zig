@@ -92,7 +92,7 @@ pub const Cluster_Router = struct {
             if (Device.family != .zero_power_enhanced) {
                 switch (mc_config.output.routing) {
                     .same_as_oe, .self => {},
-                    .five_pt_fast_bypass, .five_pt_fast_bypass_inverted => available = 0,
+                    .five_pt_fast_bypass => available = 0,
                 }
             }
             if (mc_config.sum_routing) |routing| self.forced_cluster_routing[mc] = routing;
@@ -101,14 +101,14 @@ pub const Cluster_Router = struct {
             self.cluster_size[mc] = available;
 
             switch (mc_config.logic) {
-                .sum, .sum_inverted => |sum| {
-                    if (!lc4k.is_sum_always(sum)) {
-                        self.sum_size[mc] = @intCast(sum.len);
+                .sum => |sp| {
+                    if (!lc4k.is_sum_always(sp.sum)) {
+                        self.sum_size[mc] = @intCast(sp.sum.len);
                     }
                 },
-                .sum_xor_pt0, .sum_xor_pt0_inverted => |logic| {
-                    if (!lc4k.is_sum_always(logic.sum)) {
-                        self.sum_size[mc] = @intCast(logic.sum.len);
+                .sum_xor_pt0 => |sxpt| {
+                    if (!lc4k.is_sum_always(sxpt.sum)) {
+                        self.sum_size[mc] = @intCast(sxpt.sum.len);
                     }
                 },
                 .sum_xor_input_buffer => |sum| {
@@ -116,7 +116,7 @@ pub const Cluster_Router = struct {
                         self.sum_size[mc] = @intCast(sum.len);
                     }
                 },
-                .input_buffer, .pt0, .pt0_inverted => {},
+                .input_buffer, .pt0 => {},
             }
         }
 
@@ -620,7 +620,7 @@ fn PT_Iterator(comptime Device: type) type {
                     if (Device.family != .zero_power_enhanced) {
                         switch (mc_config.output.routing) {
                             .same_as_oe, .self => {},
-                            .five_pt_fast_bypass, .five_pt_fast_bypass_inverted => continue,
+                            .five_pt_fast_bypass => continue,
                         }
                     }
                     if (assembly.get_special_pt(Device, mc_config.*, pt) == null) {

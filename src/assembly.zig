@@ -29,27 +29,23 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
     for (config.glb, 0..) |glb_config, glb| {
         // Compile list of signals needed in this GLB:
         var gi_routing = [_]?Device.Signal { null } ** Device.num_gis_per_glb;
-        switch (glb_config.shared_pt_init) {
-            .active_high, .active_low => |pt| try routing.add_signals_from_pt(Device, &gi_routing, pt),
-        }
-        switch (glb_config.shared_pt_clock) {
-            .positive, .negative => |pt| try routing.add_signals_from_pt(Device, &gi_routing, pt),
-        }
+        try routing.add_signals_from_pt(Device, &gi_routing, glb_config.shared_pt_init.pt);
+        try routing.add_signals_from_pt(Device, &gi_routing, glb_config.shared_pt_clock.pt);
         try routing.add_signals_from_pt(Device, &gi_routing, glb_config.shared_pt_enable);
 
         for (glb_config.mc) |mc_config| {
             switch (mc_config.logic) {
-                .sum, .sum_inverted => |sum| {
-                    for (sum) |pt| {
+                .sum => |sp| {
+                    for (sp.sum) |pt| {
                         try routing.add_signals_from_pt(Device, &gi_routing, pt);
                     }
                 },
-                .pt0, .pt0_inverted => |pt| {
-                    try routing.add_signals_from_pt(Device, &gi_routing, pt);
+                .pt0 => |ptp| {
+                    try routing.add_signals_from_pt(Device, &gi_routing, ptp.pt);
                 },
-                .sum_xor_pt0, .sum_xor_pt0_inverted => |logic| {
-                    try routing.add_signals_from_pt(Device, &gi_routing, logic.pt0);
-                    for (logic.sum) |pt| {
+                .sum_xor_pt0 => |sxpt| {
+                    try routing.add_signals_from_pt(Device, &gi_routing, sxpt.pt0);
+                    for (sxpt.sum) |pt| {
                         try routing.add_signals_from_pt(Device, &gi_routing, pt);
                     }
                 },
@@ -69,7 +65,7 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
             if (Device.family != .zero_power_enhanced) {
                 switch (mc_config.output.routing) {
                     .same_as_oe, .self => {},
-                    .five_pt_fast_bypass, .five_pt_fast_bypass_inverted => |pts| for (pts) |pt| {
+                    .five_pt_fast_bypass => |sp| for (sp.sum) |pt| {
                         try routing.add_signals_from_pt(Device, &gi_routing, pt);
                     },
                 }
@@ -96,22 +92,22 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
              if (Device.family != .zero_power_enhanced) {
                 switch (mc_config.output.routing) {
                     .same_as_oe, .self => {},
-                    .five_pt_fast_bypass, .five_pt_fast_bypass_inverted => |pts| {
+                    .five_pt_fast_bypass => |sp| {
                         var next_sum_pt: usize = 0;
                         var pt_index: usize = 0;
                         while (pt_index < 5) : (pt_index += 1) {
                             if (get_special_pt(Device, mc_config, pt_index)) |_| continue;
                             const glb_pt_offset = mc * 5 + pt_index;
-                            if (next_sum_pt < pts.len) {
-                                const pt = pts[next_sum_pt];
+                            if (next_sum_pt < sp.sum.len) {
+                                const pt = sp.sum[next_sum_pt];
                                 try write_pt_fuses(Device, &results, glb, glb_pt_offset, &gi_routing, pt);
                                 next_sum_pt += 1;
-                            } else if (!lc4k.is_sum_always(pts)) {
+                            } else if (!lc4k.is_sum_always(sp.sum)) {
                                 try write_pt_fuses(Device, &results, glb, glb_pt_offset, &gi_routing, Product_Term(Device.Signal).never());
                             }
                         }
-                        if (next_sum_pt < pts.len and !lc4k.is_sum_always(pts)) {
-                            const msg = try std.fmt.allocPrint(results.error_arena.allocator(), "{} sum PTs were configured, but only {} PTs are available for fast bypass mode", .{ pts.len, next_sum_pt });
+                        if (next_sum_pt < sp.sum.len and !lc4k.is_sum_always(sp.sum)) {
+                            const msg = try std.fmt.allocPrint(results.error_arena.allocator(), "{} sum PTs were configured, but only {} PTs are available for fast bypass mode", .{ sp.sum.len, next_sum_pt });
                             try results.errors.append(.{
                                 .err = error.Too_Many_Sum_PTs,
                                 .details = msg,
@@ -124,9 +120,10 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
             }
             {
                 const sum_pts: []const Product_Term(Device.Signal) = switch (mc_config.logic) {
-                    .sum, .sum_inverted, .sum_xor_input_buffer => |sum| sum,
-                    .input_buffer, .pt0, .pt0_inverted => &.{},
-                    .sum_xor_pt0, .sum_xor_pt0_inverted => |logic| logic.sum,
+                    .sum => |sp| sp.sum,
+                    .sum_xor_input_buffer => |sum| sum,
+                    .sum_xor_pt0 => |sxpt| sxpt.sum,
+                    .input_buffer, .pt0 => &.{},
                 };
                 var next_sum_pt: usize = 0;
                 var pt_iter = cluster_routing.iterator(Device, &glb_config, mc);
@@ -158,12 +155,8 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
             }
         }
 
-        switch (glb_config.shared_pt_init) {
-            .active_high, .active_low => |pt| try write_pt_fuses(Device, &results, glb, 80, &gi_routing, pt),
-        }
-        switch (glb_config.shared_pt_clock) {
-            .positive, .negative => |pt| try write_pt_fuses(Device, &results, glb, 81, &gi_routing, pt),
-        }
+        try write_pt_fuses(Device, &results, glb, 80, &gi_routing, glb_config.shared_pt_init.pt);
+        try write_pt_fuses(Device, &results, glb, 81, &gi_routing, glb_config.shared_pt_clock.pt);
         try write_pt_fuses(Device, &results, glb, 82, &gi_routing, glb_config.shared_pt_enable);
 
         // Program MC-slice configuration fuses (Replace default/unset parameters with the defaults)
@@ -174,14 +167,20 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
             write_field(&results.jedec.data, lc4k.Wide_Routing, cluster_routing.wide[mc], fuses.get_wide_routing_range(Device, mcref));
 
             const pt0xor: u1 = switch (mc_config.logic) {
-                .pt0, .pt0_inverted, .sum_xor_pt0, .sum_xor_pt0_inverted => 0,
-                .sum, .sum_inverted, .sum_xor_input_buffer, .input_buffer => 1,
+                .pt0, .sum_xor_pt0 => 0,
+                .sum, .sum_xor_input_buffer, .input_buffer => 1,
             };
             write_field(&results.jedec.data, u1, pt0xor, fuses.get_pt0_xor_range(Device, mcref));
 
-            const invert: u1 = switch (mc_config.logic) {
-                .sum_inverted, .pt0_inverted, .sum_xor_pt0_inverted => 1,
-                .sum, .input_buffer, .pt0, .sum_xor_pt0, .sum_xor_input_buffer => 0,
+            const logic_polarity: lc4k.Polarity = switch (mc_config.logic) {
+                .sum => |sp| sp.polarity,
+                .pt0 => |ptp| ptp.polarity,
+                .sum_xor_pt0 => |sxpt| sxpt.polarity,
+                .input_buffer, .sum_xor_input_buffer => .positive,
+            };
+            const invert: u1 = switch (logic_polarity) {
+                .positive => 0,
+                .negative => 1,
             };
             write_field(&results.jedec.data, u1, invert, fuses.get_invert_range(Device, mcref));
 
@@ -195,7 +194,7 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
             switch (mc_config.func) {
                 .combinational => {},
                 .latch, .t_ff, .d_ff => |reg_config| {
-                    switch (reg_config.clock) {
+                    switch (reg_config.clock.source()) {
                         .none => {},
                         .pt1_positive => {
                             write_field(&results.jedec.data, u2, 0, fuses.get_clock_source_range_low(Device, mcref));
@@ -223,7 +222,7 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
                             write_field(&results.jedec.data, u1, 0, fuses.get_clock_source_range_high(Device, mcref));
                         },
                     }
-                    const ce: u2 = switch (reg_config.ce) {
+                    const ce: u2 = switch (reg_config.ce.source()) {
                         .pt2_active_high => 0,
                         .pt2_active_low => 1,
                         .shared_pt_clock => 2,
@@ -285,7 +284,7 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
 
             if (Device.family != .zero_power_enhanced) {
                 if (fuses.get_output_routing_mode_range(Device, mcref)) |range| {
-                    const mode: u2 = switch (mc_config.output.routing) {
+                    const mode: u2 = switch (mc_config.output.routing.mode()) {
                         .same_as_oe => 2,
                         .self => 3,
                         .five_pt_fast_bypass => 0,
@@ -317,40 +316,21 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
                 const pgdf = mc_config.input.power_guard orelse config.ext.default_power_guard;
                 write_field(&results.jedec.data, lc4k.Power_Guard, pgdf, fuses.get_power_guard_range(Device, mcref));
             }
-
         }
 
-        const spt_init_pol: u1 = switch (glb_config.shared_pt_init) {
-            .active_low => 0,
-            .active_high => 1,
-        };
+        const spt_init_pol: u1 = @intFromEnum(glb_config.shared_pt_init.polarity);
         write_field(&results.jedec.data, u1, spt_init_pol, fuses.get_shared_init_polarity_range(Device, glb));
 
-        const spt_clk_pol: u1 = switch (glb_config.shared_pt_clock) {
-            .negative => 0,
-            .positive => 1,
-        };
+        const spt_clk_pol: u1 = @intFromEnum(glb_config.shared_pt_clock.polarity);
         write_field(&results.jedec.data, u1, spt_clk_pol, fuses.get_shared_clock_polarity_range(Device, glb));
 
-        const bclk0: u1 = switch (glb_config.bclock0) {
-            .clk0_pos => 1,
-            .clk1_neg => 0,
-        };
+        const bclk0: u1 = switch (glb_config.bclock0) { .clk0_pos => 1, .clk1_neg => 0 };
+        const bclk1: u1 = switch (glb_config.bclock1) { .clk1_pos => 1, .clk0_neg => 0 };
+        const bclk2: u1 = switch (glb_config.bclock2) { .clk2_pos => 1, .clk3_neg => 0 };
+        const bclk3: u1 = switch (glb_config.bclock3) { .clk3_pos => 1, .clk2_neg => 0 };
         write_field(&results.jedec.data, u1, bclk0, Device.get_bclock_range(glb).sub_rows(0, 1));
-        const bclk1: u1 = switch (glb_config.bclock1) {
-            .clk1_pos => 1,
-            .clk0_neg => 0,
-        };
         write_field(&results.jedec.data, u1, bclk1, Device.get_bclock_range(glb).sub_rows(1, 1));
-        const bclk2: u1 = switch (glb_config.bclock2) {
-            .clk2_pos => 1,
-            .clk3_neg => 0,
-        };
         write_field(&results.jedec.data, u1, bclk2, Device.get_bclock_range(glb).sub_rows(2, 1));
-        const bclk3: u1 = switch (glb_config.bclock3) {
-            .clk3_pos => 1,
-            .clk2_neg => 0,
-        };
         write_field(&results.jedec.data, u1, bclk3, Device.get_bclock_range(glb).sub_rows(3, 1));
     }
 
@@ -403,15 +383,15 @@ pub fn get_special_pt(
 ) ?lc4k.Product_Term(Device.Signal) {
     return switch (pt_index) {
         0 => switch (mc_config.logic) {
-            .pt0, .pt0_inverted => |pt| pt,
-            .sum_xor_pt0, .sum_xor_pt0_inverted => |logic| logic.pt0,
-            .sum, .sum_inverted, .sum_xor_input_buffer, .input_buffer => null,
+            .pt0 => |ptp| ptp.pt,
+            .sum_xor_pt0 => |sxpt| sxpt.pt0,
+            .sum, .sum_xor_input_buffer, .input_buffer => null, 
         },
         1 => switch (mc_config.func) {
             .combinational => null,
             .latch, .t_ff, .d_ff => |reg_config| switch (reg_config.clock) {
                 .none, .shared_pt_clock, .bclock0, .bclock1, .bclock2, .bclock3 => null,
-                .pt1_positive, .pt1_negative => |pt| pt,
+                .pt1 => |ptp| ptp.pt,
             },
         },
         2 => switch (mc_config.func) {
@@ -421,7 +401,7 @@ pub fn get_special_pt(
                     .none => null,
                     .pt2_active_high => |pt| pt,
                 },
-                .pt2_active_low, .pt2_active_high => |pt| pt,
+                .pt2 => |ptp| ptp.pt,
             },
         },
         3 => switch (mc_config.func) {
@@ -458,7 +438,7 @@ fn write_goe_fuses(comptime Device: type, data: *JEDEC_Data, goe_config: anytype
         },
         else => {},
     }
-    data.put(Device.get_goe_polarity_fuse(goe_index), @intFromBool(goe_config.polarity == .active_high));
+    data.put(Device.get_goe_polarity_fuse(goe_index), @intFromEnum(goe_config.polarity));
 }
 
 fn write_dedicated_input_fuses(comptime Device: type, data: *JEDEC_Data, pin_info: lc4k.Pin_Info, config: *const Chip_Config(Device.device_type), input_config: anytype) void {

@@ -45,7 +45,7 @@ Once you have your in-memory representation of the design, you can do a number o
 
 ## Logic Parser
 An expression parser is included as a more convenient way to define the logic to assign to a particular macrocell, compared to manually defining product terms with, e.g. `signal.when_high().pt().and_factor(...)` which can quickly become hard to read.  To use the logic parser, you will need three things:
-* A temporary, general purpose allocator.  This is used for temporary data needed while parsing.
+* A general purpose allocator used for temporary data needed while parsing (does not retain any allocations between calls to the parser).
 * An arena used to allocate the final results of parsing (arrays of product terms and factors).
 * A `*const Names` used to map identifiers within expressions to device signals.
 For examples of initializing a parser, check the [examples](https://github.com/bcrist/Zig-LC4k/blob/main/examples/adder/main.zig#L182).
@@ -75,7 +75,7 @@ Note: the `input_buffer` and `sum_xor_input_buffer` modes will never be generate
 ; Anything between a semicolon and the next LF (\n) character is considered a comment.
 
 abcd ; Identifiers represent named signals or buses, defined by the Names struct.
-a123 ; Identifiers may contain ASCII letters, underscores, and digits, but may not start with a digit.
+a123 ; Identifiers may contain ASCII letters, digits, "_", ".", or "$" but may not start with a digit.
 
 0    ; Literals are numeric constants representing specific bit patterns.
 123  ; Decimal literals are considered to have the minimum number of bits required to store their value.
@@ -105,13 +105,15 @@ A * B ; Bitwise AND (alternate style)
 A == B ; Syntactic sugar for &~(A^B).  A and B must have same width; the result will always be 1 bit.
 A != B ; Syntactic sugar for |(A^B).  A and B must have same width; the result will always be 1 bit.
 
-~ A   ; Ones' complement.  The result will have the same bit width as A.
-! A   ; Ones' complement (alternate style)
-| A   ; Condensing OR.  A may have any bit width; the result will always be 1 bit.
-+ A   ; Condensing OR (alternate style)
-^ A   ; Condensing XOR (even parity generator).  A may have any width; the result will always be 1 bit.
-& A   ; Condensing AND.  A may have any bit width; the result will always be 1 bit.
-* A   ; Condensing AND (alternate style)
+~ A    ; Ones' complement.  The result will have the same bit width as A.
+! A    ; Ones' complement (alternate style)
+| A    ; Condensing OR.  A may have any bit width; the result will always be 1 bit.
++ A    ; Condensing OR (alternate style)
+^ A    ; Condensing XOR (even parity generator).  A may have any width; the result will always be 1 bit.
+& A    ; Condensing AND.  A may have any bit width; the result will always be 1 bit.
+* A    ; Condensing AND (alternate style)
+@pad A ; Converts any macrocell feedback signals in A to the corresponding macrocell's I/O pad signal.
+@fb A  ; Converts any macrocell I/O signals in A to the corresponding macrocell's feedback signal.
 
 ; Extraction operator:
 A[0]       ; Extract bit 0.  The LSB has index 0.
