@@ -132,15 +132,20 @@ pub fn main() !void {
     chip.mc(outputs[2].mc()).logic = comptime .{ .sum_xor_pt0 = .{
         .sum = &.{ layer4_i1_o2.when_high().pt() },
         .pt0 = layer4_i2_o2.when_high().pt(),
+        .polarity = .positive,
     }};
 
     chip.mc(outputs[3].mc()).logic = comptime .{ .sum_xor_pt0 = .{
         .sum = &.{ layer4_i2_o2.when_high().pt().and_factor(layer4_i1_o2.when_high()) },
         .pt0 = layer4_i2_o3.when_high().pt(),
+        .polarity = .positive,
     }};
 
-    chip.mc(outputs[4].mc()).logic = comptime .{ .sum = &.{
-        layer4_i1_o2.when_high().pt().and_factor(layer4_i2_o2.when_high()).and_factor(layer4_i2_o3.when_high()),
+    chip.mc(outputs[4].mc()).logic = comptime .{ .sum = .{
+        .sum = &.{
+            layer4_i1_o2.when_high().pt().and_factor(layer4_i2_o2.when_high()).and_factor(layer4_i2_o3.when_high()),
+        },
+        .polarity = .positive,
     }};
 
     inline for (outputs) |out| {
@@ -180,13 +185,17 @@ fn full_adder(chip: *Chip,
             in1.when_high().pt().and_factor(in0.when_low()),
         },
         .pt0 = in2.when_high().pt(),
+        .polarity = .positive,
     }};
 
-    chip.mc(out1.mc()).logic = comptime .{ .sum = &.{
-        in0.when_high().pt().and_factor(in1.when_high()),
-        in0.when_high().pt().and_factor(in2.when_high()),
-        in1.when_high().pt().and_factor(in2.when_high()),
-        in0.when_high().pt().and_factor(in1.when_high()).and_factor(in2.when_high()),
+    chip.mc(out1.mc()).logic = comptime .{ .sum = .{
+        .sum = &.{
+            in0.when_high().pt().and_factor(in1.when_high()),
+            in0.when_high().pt().and_factor(in2.when_high()),
+            in1.when_high().pt().and_factor(in2.when_high()),
+            in0.when_high().pt().and_factor(in1.when_high()).and_factor(in2.when_high()),
+        },
+        .polarity = .positive,
     }};
 }
 
@@ -199,9 +208,13 @@ fn half_adder(chip: *Chip,
     chip.mc(out0.mc()).logic = comptime .{ .sum_xor_pt0 = .{
         .sum = &.{ in0.when_high().pt() },
         .pt0 = in1.when_high().pt(),
+        .polarity = .positive,
     }};
 
-    chip.mc(out1.mc()).logic = comptime .{ .sum = &.{
-        in0.when_high().pt().and_factor(in1.when_high()),
+    chip.mc(out1.mc()).logic = comptime .{ .sum = .{
+        .sum = &.{
+            in0.when_high().pt().and_factor(in1.when_high()),
+        },
+        .polarity = .positive,
     }};
 }

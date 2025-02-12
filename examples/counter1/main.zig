@@ -28,15 +28,18 @@ pub fn main() !void {
         mc.func = .{ .t_ff = .{ .clock = .bclock2 }};
         mc.output.oe = .goe0;
 
-        mc.logic = comptime .{ .sum = &.{ blk: {
-            // Each bit of the counter should toggle when every lower bit is a 1
-            var pt = Chip.PT.always();
-            var n = 0;
-            while (n < bit) : (n += 1) {
-                pt = pt.and_factor(Chip.Signal.mc_fb(output_pins[n].mc()).when_high());
-            }
-            break :blk pt;
-        }}};
+        mc.logic = comptime .{ .sum = .{
+            .sum = &.{ blk: {
+                // Each bit of the counter should toggle when every lower bit is a 1
+                var pt = Chip.PT.always();
+                var n = 0;
+                while (n < bit) : (n += 1) {
+                    pt = pt.and_factor(Chip.Signal.mc_fb(output_pins[n].mc()).when_high());
+                }
+                break :blk pt;
+            }},
+            .polarity = .positive,
+        }};
     }
 
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);

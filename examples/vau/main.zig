@@ -167,76 +167,112 @@ pub fn main() !void {
 
     @setEvalBranchQuota(10000);
 
-    chip.mc(use_dr.mc()).logic = comptime .{ .sum = &.{
-        Chip.PT.when_eql(&vao, 0x20),
-        Chip.PT.when_eql(&vao, 0x21),
-        Chip.PT.when_eql(&vao, 0x22),
+    chip.mc(use_dr.mc()).logic = comptime .{ .sum = .{
+        .sum = &.{
+            Chip.PT.when_eql(&vao, 0x20),
+            Chip.PT.when_eql(&vao, 0x21),
+            Chip.PT.when_eql(&vao, 0x22),
+        },
+        .polarity = .positive,
     }};
 
-    chip.mc(offset[0].mc()).logic = comptime .{ .sum = &.{
-        use_dr.when_low().pt().and_factor(vao[0].when_high()),
-        Chip.PT.when_eql(&vao, 0x20).and_factor(dr[0].when_high()),
-        Chip.PT.when_eql(&vao, 0x21).and_factor(dr[8].when_high()),
+    chip.mc(offset[0].mc()).logic = comptime .{ .sum = .{
+        .sum = &.{
+            use_dr.when_low().pt().and_factor(vao[0].when_high()),
+            Chip.PT.when_eql(&vao, 0x20).and_factor(dr[0].when_high()),
+            Chip.PT.when_eql(&vao, 0x21).and_factor(dr[8].when_high()),
+        },
+        .polarity = .positive,
     }};
-    chip.mc(offset[1].mc()).logic = comptime .{ .sum = &.{
-        use_dr.when_low().pt().and_factor(vao[1].when_high()),
-        Chip.PT.when_eql(&vao, 0x20).and_factor(dr[1].when_high()),
-        Chip.PT.when_eql(&vao, 0x21).and_factor(dr[9].when_high()),
+    chip.mc(offset[1].mc()).logic = comptime .{ .sum = .{
+        .sum = &.{
+            use_dr.when_low().pt().and_factor(vao[1].when_high()),
+            Chip.PT.when_eql(&vao, 0x20).and_factor(dr[1].when_high()),
+            Chip.PT.when_eql(&vao, 0x21).and_factor(dr[9].when_high()),
+        },
+        .polarity = .positive,
     }};
-    chip.mc(offset[2].mc()).logic = comptime .{ .sum = &.{
-        use_dr.when_low().pt().and_factor(vao[2].when_high()),
-        Chip.PT.when_eql(&vao, 0x20).and_factor(dr[2].when_high()),
-        Chip.PT.when_eql(&vao, 0x21).and_factor(dr[10].when_high()),
-        Chip.PT.when_eql(&vao, 0x22).and_factor(dr[8].when_high()),
+    chip.mc(offset[2].mc()).logic = comptime .{ .sum = .{
+        .sum = &.{
+            use_dr.when_low().pt().and_factor(vao[2].when_high()),
+            Chip.PT.when_eql(&vao, 0x20).and_factor(dr[2].when_high()),
+            Chip.PT.when_eql(&vao, 0x21).and_factor(dr[10].when_high()),
+            Chip.PT.when_eql(&vao, 0x22).and_factor(dr[8].when_high()),
+        },
+        .polarity = .positive,
     }};
-    chip.mc(offset[3].mc()).logic = comptime .{ .sum = &.{
-        use_dr.when_low().pt().and_factor(vao[3].when_high()),
-        Chip.PT.when_eql(&vao, 0x20).and_factor(dr[3].when_high()),
-        Chip.PT.when_eql(&vao, 0x21).and_factor(dr[11].when_high()),
-        Chip.PT.when_eql(&vao, 0x22).and_factor(dr[9].when_high()),
+    chip.mc(offset[3].mc()).logic = comptime .{ .sum = .{
+        .sum = &.{
+            use_dr.when_low().pt().and_factor(vao[3].when_high()),
+            Chip.PT.when_eql(&vao, 0x20).and_factor(dr[3].when_high()),
+            Chip.PT.when_eql(&vao, 0x21).and_factor(dr[11].when_high()),
+            Chip.PT.when_eql(&vao, 0x22).and_factor(dr[9].when_high()),
+        },
+        .polarity = .positive,
     }};
-    chip.mc(offset[4].mc()).logic = comptime .{ .sum = &.{
-        use_dr.when_low().pt().and_factor(vao[4].when_high()),
-        Chip.PT.when_eql(&vao, 0x20).and_factor(dr[4].when_high()),
-        Chip.PT.when_eql(&vao, 0x21).and_factor(dr[12].when_high()),
-        Chip.PT.when_eql(&vao, 0x22).and_factor(dr[10].when_high()),
+    chip.mc(offset[4].mc()).logic = comptime .{ .sum = .{
+        .sum = &.{
+            use_dr.when_low().pt().and_factor(vao[4].when_high()),
+            Chip.PT.when_eql(&vao, 0x20).and_factor(dr[4].when_high()),
+            Chip.PT.when_eql(&vao, 0x21).and_factor(dr[12].when_high()),
+            Chip.PT.when_eql(&vao, 0x22).and_factor(dr[10].when_high()),
+        },
+        .polarity = .positive,
     }};
-    chip.mc(offset[5].mc()).logic = comptime .{ .sum = &.{
-        use_dr.when_low().pt().and_factor(vao[5].when_high()),
-        Chip.PT.when_eql(&vao, 0x20).and_factor(dr[5].when_high()),
-        Chip.PT.when_eql(&vao, 0x21).and_factor(dr[13].when_high()),
-        Chip.PT.when_eql(&vao, 0x22).and_factor(dr[11].when_high()),
+    chip.mc(offset[5].mc()).logic = comptime .{ .sum = .{
+        .sum = &.{
+            use_dr.when_low().pt().and_factor(vao[5].when_high()),
+            Chip.PT.when_eql(&vao, 0x20).and_factor(dr[5].when_high()),
+            Chip.PT.when_eql(&vao, 0x21).and_factor(dr[13].when_high()),
+            Chip.PT.when_eql(&vao, 0x22).and_factor(dr[11].when_high()),
+        },
+        .polarity = .positive,
     }};
-    chip.mc(offset[6].mc()).logic = comptime .{ .sum = &.{
-        use_dr.when_low().pt().and_factor(vao[5].when_high()),
-        Chip.PT.when_eql(&vao, 0x20).and_factor(dr[6].when_high()),
-        Chip.PT.when_eql(&vao, 0x21).and_factor(dr[13].when_high()),
-        Chip.PT.when_eql(&vao, 0x22).and_factor(dr[11].when_high()),
+    chip.mc(offset[6].mc()).logic = comptime .{ .sum = .{
+        .sum = &.{
+            use_dr.when_low().pt().and_factor(vao[5].when_high()),
+            Chip.PT.when_eql(&vao, 0x20).and_factor(dr[6].when_high()),
+            Chip.PT.when_eql(&vao, 0x21).and_factor(dr[13].when_high()),
+            Chip.PT.when_eql(&vao, 0x22).and_factor(dr[11].when_high()),
+        },
+        .polarity = .positive,
     }};
-    chip.mc(offset[7].mc()).logic = comptime .{ .sum = &.{
-        use_dr.when_low().pt().and_factor(vao[5].when_high()),
-        Chip.PT.when_eql(&vao, 0x20).and_factor(dr[7].when_high()),
-        Chip.PT.when_eql(&vao, 0x21).and_factor(dr[14].when_high()),
-        Chip.PT.when_eql(&vao, 0x22).and_factor(dr[12].when_high()),
+    chip.mc(offset[7].mc()).logic = comptime .{ .sum = .{
+        .sum = &.{
+            use_dr.when_low().pt().and_factor(vao[5].when_high()),
+            Chip.PT.when_eql(&vao, 0x20).and_factor(dr[7].when_high()),
+            Chip.PT.when_eql(&vao, 0x21).and_factor(dr[14].when_high()),
+            Chip.PT.when_eql(&vao, 0x22).and_factor(dr[12].when_high()),
+        },
+        .polarity = .positive,
     }};
-    chip.mc(offset[8].mc()).logic = comptime .{ .sum = &.{
-        use_dr.when_low().pt().and_factor(vao[5].when_high()),
-        Chip.PT.when_eql(&vao, 0x20).and_factor(dr[8].when_high()),
-        Chip.PT.when_eql(&vao, 0x21).and_factor(dr[15].when_high()),
-        Chip.PT.when_eql(&vao, 0x22).and_factor(dr[13].when_high()),
+    chip.mc(offset[8].mc()).logic = comptime .{ .sum = .{
+        .sum = &.{
+            use_dr.when_low().pt().and_factor(vao[5].when_high()),
+            Chip.PT.when_eql(&vao, 0x20).and_factor(dr[8].when_high()),
+            Chip.PT.when_eql(&vao, 0x21).and_factor(dr[15].when_high()),
+            Chip.PT.when_eql(&vao, 0x22).and_factor(dr[13].when_high()),
+        },
+        .polarity = .positive,
     }};
-    chip.mc(offset[9].mc()).logic = comptime .{ .sum = &.{
-        use_dr.when_low().pt().and_factor(vao[5].when_high()),
-        Chip.PT.when_eql(&vao, 0x20).and_factor(dr[9].when_high()),
-        Chip.PT.when_eql(&vao, 0x21).and_factor(dr[15].when_high()),
-        Chip.PT.when_eql(&vao, 0x22).and_factor(dr[14].when_high()),
+    chip.mc(offset[9].mc()).logic = comptime .{ .sum = .{
+        .sum = &.{
+            use_dr.when_low().pt().and_factor(vao[5].when_high()),
+            Chip.PT.when_eql(&vao, 0x20).and_factor(dr[9].when_high()),
+            Chip.PT.when_eql(&vao, 0x21).and_factor(dr[15].when_high()),
+            Chip.PT.when_eql(&vao, 0x22).and_factor(dr[14].when_high()),
+        },
+        .polarity = .positive,
     }};
     inline for (10..16) |bit| {
-        chip.mc(offset[bit].mc()).logic = comptime .{ .sum = &.{
-            use_dr.when_low().pt().and_factor(vao[5].when_high()),
-            Chip.PT.when_eql(&vao, 0x20).and_factor(dr[bit].when_high()),
-            Chip.PT.when_eql(&vao, 0x21).and_factor(dr[15].when_high()),
-            Chip.PT.when_eql(&vao, 0x22).and_factor(dr[15].when_high()),
+        chip.mc(offset[bit].mc()).logic = comptime .{ .sum = .{
+            .sum = &.{
+                use_dr.when_low().pt().and_factor(vao[5].when_high()),
+                Chip.PT.when_eql(&vao, 0x20).and_factor(dr[bit].when_high()),
+                Chip.PT.when_eql(&vao, 0x21).and_factor(dr[15].when_high()),
+                Chip.PT.when_eql(&vao, 0x22).and_factor(dr[15].when_high()),
+            },
+            .polarity = .positive,
         }};
     }
 
@@ -259,11 +295,14 @@ pub fn main() !void {
             decrement_pt = decrement_pt.and_factor(prev_base.when_low());
         }
 
-        chip.mc(result.mc()).logic = comptime .{ .sum = &.{
-            sign.when_low().pt().and_factor(carry16.when_low()).and_factor(base.when_high()),
-            sign.when_high().pt().and_factor(carry16.when_high()).and_factor(base.when_high()),
-            increment_pt,
-            decrement_pt,
+        chip.mc(result.mc()).logic = comptime .{ .sum = .{
+            .sum = &.{
+                sign.when_low().pt().and_factor(carry16.when_low()).and_factor(base.when_high()),
+                sign.when_high().pt().and_factor(carry16.when_high()).and_factor(base.when_high()),
+                increment_pt,
+                decrement_pt,
+            },
+            .polarity = .positive,
         }};
     }
 
@@ -273,60 +312,84 @@ pub fn main() !void {
         increment_overflow_pt = increment_overflow_pt.and_factor(base.when_high());
         decrement_overflow_pt = decrement_overflow_pt.and_factor(base.when_low());
     }
-    chip.mc(addr_overflow_fault.mc()).logic = comptime .{ .sum = &.{
-        increment_overflow_pt,
-        decrement_overflow_pt,
+    chip.mc(addr_overflow_fault.mc()).logic = comptime .{ .sum = .{
+        .sum = &.{
+            increment_overflow_pt,
+            decrement_overflow_pt,
+        },
+        .polarity = .positive,
     }};
 
     // Carry lookahead logic:
-    chip.mc(carry4.mc()).logic = comptime .{ .sum = &.{
-        g4.when_high().pt(),
-        p4.when_high().pt().and_factor(carry2.when_high()),
+    chip.mc(carry4.mc()).logic = comptime .{ .sum = .{
+        .sum = &.{
+            g4.when_high().pt(),
+            p4.when_high().pt().and_factor(carry2.when_high()),
+        },
+        .polarity = .positive,
     }};
-    chip.mc(carry6.mc()).logic = comptime .{ .sum = &.{
-        g6.when_high().pt(),
-        p6.when_high().pt().and_factor(g4.when_high()),
-        p6.when_high().pt().and_factor(p4.when_high()).and_factor(carry2.when_high()),
+    chip.mc(carry6.mc()).logic = comptime .{ .sum = .{
+        .sum = &.{
+            g6.when_high().pt(),
+            p6.when_high().pt().and_factor(g4.when_high()),
+            p6.when_high().pt().and_factor(p4.when_high()).and_factor(carry2.when_high()),
+        },
+        .polarity = .positive,
     }};
-    chip.mc(carry8.mc()).logic = comptime .{ .sum = &.{
-        g8.when_high().pt(),
-        p8.when_high().pt().and_factor(g6.when_high()),
-        p8.when_high().pt().and_factor(p6.when_high()).and_factor(g4.when_high()),
-        p8.when_high().pt().and_factor(p6.when_high()).and_factor(p4.when_high()).and_factor(carry2.when_high()),
+    chip.mc(carry8.mc()).logic = comptime .{ .sum = .{
+        .sum = &.{
+            g8.when_high().pt(),
+            p8.when_high().pt().and_factor(g6.when_high()),
+            p8.when_high().pt().and_factor(p6.when_high()).and_factor(g4.when_high()),
+            p8.when_high().pt().and_factor(p6.when_high()).and_factor(p4.when_high()).and_factor(carry2.when_high()),
+        },
+        .polarity = .positive,
     }};
-    chip.mc(carry10.mc()).logic = comptime .{ .sum = &.{
-        g10.when_high().pt(),
-        p10.when_high().pt().and_factor(g8.when_high()),
-        p10.when_high().pt().and_factor(p8.when_high()).and_factor(g6.when_high()),
-        p10.when_high().pt().and_factor(p8.when_high()).and_factor(p6.when_high()).and_factor(g4.when_high()),
-        p10.when_high().pt().and_factor(p8.when_high()).and_factor(p6.when_high()).and_factor(p4.when_high()).and_factor(carry2.when_high()),
+    chip.mc(carry10.mc()).logic = comptime .{ .sum = .{
+        .sum = &.{
+            g10.when_high().pt(),
+            p10.when_high().pt().and_factor(g8.when_high()),
+            p10.when_high().pt().and_factor(p8.when_high()).and_factor(g6.when_high()),
+            p10.when_high().pt().and_factor(p8.when_high()).and_factor(p6.when_high()).and_factor(g4.when_high()),
+            p10.when_high().pt().and_factor(p8.when_high()).and_factor(p6.when_high()).and_factor(p4.when_high()).and_factor(carry2.when_high()),
+        },
+        .polarity = .positive,
     }};
-    chip.mc(carry12.mc()).logic = comptime .{ .sum = &.{
-        g12.when_high().pt(),
-        p12.when_high().pt().and_factor(g10.when_high()),
-        p12.when_high().pt().and_factor(p10.when_high()).and_factor(g8.when_high()),
-        p12.when_high().pt().and_factor(p10.when_high()).and_factor(p8.when_high()).and_factor(g6.when_high()),
-        p12.when_high().pt().and_factor(p10.when_high()).and_factor(p8.when_high()).and_factor(p6.when_high()).and_factor(g4.when_high()),
-        p12.when_high().pt().and_factor(p10.when_high()).and_factor(p8.when_high()).and_factor(p6.when_high()).and_factor(p4.when_high()).and_factor(carry2.when_high()),
+    chip.mc(carry12.mc()).logic = comptime .{ .sum = .{
+        .sum = &.{
+            g12.when_high().pt(),
+            p12.when_high().pt().and_factor(g10.when_high()),
+            p12.when_high().pt().and_factor(p10.when_high()).and_factor(g8.when_high()),
+            p12.when_high().pt().and_factor(p10.when_high()).and_factor(p8.when_high()).and_factor(g6.when_high()),
+            p12.when_high().pt().and_factor(p10.when_high()).and_factor(p8.when_high()).and_factor(p6.when_high()).and_factor(g4.when_high()),
+            p12.when_high().pt().and_factor(p10.when_high()).and_factor(p8.when_high()).and_factor(p6.when_high()).and_factor(p4.when_high()).and_factor(carry2.when_high()),
+        },
+        .polarity = .positive,
     }};
-    chip.mc(carry14.mc()).logic = comptime .{ .sum = &.{
-        g14.when_high().pt(),
-        p14.when_high().pt().and_factor(g12.when_high()),
-        p14.when_high().pt().and_factor(p12.when_high()).and_factor(g10.when_high()),
-        p14.when_high().pt().and_factor(p12.when_high()).and_factor(p10.when_high()).and_factor(g8.when_high()),
-        p14.when_high().pt().and_factor(p12.when_high()).and_factor(p10.when_high()).and_factor(p8.when_high()).and_factor(g6.when_high()),
-        p14.when_high().pt().and_factor(p12.when_high()).and_factor(p10.when_high()).and_factor(p8.when_high()).and_factor(p6.when_high()).and_factor(g4.when_high()),
-        p14.when_high().pt().and_factor(p12.when_high()).and_factor(p10.when_high()).and_factor(p8.when_high()).and_factor(p6.when_high()).and_factor(p4.when_high()).and_factor(carry2.when_high()),
+    chip.mc(carry14.mc()).logic = comptime .{ .sum = .{
+        .sum = &.{
+            g14.when_high().pt(),
+            p14.when_high().pt().and_factor(g12.when_high()),
+            p14.when_high().pt().and_factor(p12.when_high()).and_factor(g10.when_high()),
+            p14.when_high().pt().and_factor(p12.when_high()).and_factor(p10.when_high()).and_factor(g8.when_high()),
+            p14.when_high().pt().and_factor(p12.when_high()).and_factor(p10.when_high()).and_factor(p8.when_high()).and_factor(g6.when_high()),
+            p14.when_high().pt().and_factor(p12.when_high()).and_factor(p10.when_high()).and_factor(p8.when_high()).and_factor(p6.when_high()).and_factor(g4.when_high()),
+            p14.when_high().pt().and_factor(p12.when_high()).and_factor(p10.when_high()).and_factor(p8.when_high()).and_factor(p6.when_high()).and_factor(p4.when_high()).and_factor(carry2.when_high()),
+        },
+        .polarity = .positive,
     }};
-    chip.mc(carry16.mc()).logic = comptime .{ .sum = &.{
-        g16.when_high().pt(),
-        p16.when_high().pt().and_factor(g14.when_high()),
-        p16.when_high().pt().and_factor(p14.when_high()).and_factor(g12.when_high()),
-        p16.when_high().pt().and_factor(p14.when_high()).and_factor(p12.when_high()).and_factor(g10.when_high()),
-        p16.when_high().pt().and_factor(p14.when_high()).and_factor(p12.when_high()).and_factor(p10.when_high()).and_factor(g8.when_high()),
-        p16.when_high().pt().and_factor(p14.when_high()).and_factor(p12.when_high()).and_factor(p10.when_high()).and_factor(p8.when_high()).and_factor(g6.when_high()),
-        p16.when_high().pt().and_factor(p14.when_high()).and_factor(p12.when_high()).and_factor(p10.when_high()).and_factor(p8.when_high()).and_factor(p6.when_high()).and_factor(g4.when_high()),
-        p16.when_high().pt().and_factor(p14.when_high()).and_factor(p12.when_high()).and_factor(p10.when_high()).and_factor(p8.when_high()).and_factor(p6.when_high()).and_factor(p4.when_high()).and_factor(carry2.when_high()),
+    chip.mc(carry16.mc()).logic = comptime .{ .sum = .{
+        .sum = &.{
+            g16.when_high().pt(),
+            p16.when_high().pt().and_factor(g14.when_high()),
+            p16.when_high().pt().and_factor(p14.when_high()).and_factor(g12.when_high()),
+            p16.when_high().pt().and_factor(p14.when_high()).and_factor(p12.when_high()).and_factor(g10.when_high()),
+            p16.when_high().pt().and_factor(p14.when_high()).and_factor(p12.when_high()).and_factor(p10.when_high()).and_factor(g8.when_high()),
+            p16.when_high().pt().and_factor(p14.when_high()).and_factor(p12.when_high()).and_factor(p10.when_high()).and_factor(p8.when_high()).and_factor(g6.when_high()),
+            p16.when_high().pt().and_factor(p14.when_high()).and_factor(p12.when_high()).and_factor(p10.when_high()).and_factor(p8.when_high()).and_factor(p6.when_high()).and_factor(g4.when_high()),
+            p16.when_high().pt().and_factor(p14.when_high()).and_factor(p12.when_high()).and_factor(p10.when_high()).and_factor(p8.when_high()).and_factor(p6.when_high()).and_factor(p4.when_high()).and_factor(carry2.when_high()),
+        },
+        .polarity = .positive,
     }};
 
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);

@@ -39,23 +39,26 @@ pub fn main() !void {
         mc.func = .{ .d_ff = .{ .clock = .bclock2 }};
         mc.output.oe = .goe0;
 
-        mc.logic = comptime .{ .sum = blk: {
-            // Each bit of the counter will be set on the next clock cycle when:
-            //      a) it is currently 0 and every lower bit is a 1
-            //      b) it is currently 1 but at least one lower bit is not 1
-            //
-            // Implementing a) requires only one product term for counters up to ~36 bits.
-            // Implementing b) requires N product terms, where N is the bit index.
-            var sum: []const Chip.PT = &.{};
-            var pt = Chip.PT.always();
-            var n = bit;
-            while (n > 0) : (n -= 1) {
-                const out_n = Chip.Signal.mc_fb(output_pins[n - 1].mc());
-                pt = pt.and_factor(out_n.when_high());
-                sum = sum ++ [_]Chip.PT{ out.when_high().pt().and_factor(out_n.when_low()) };
-            }
-            pt = pt.and_factor(out.when_low());
-            break :blk sum ++ [_]Chip.PT{ pt };
+        mc.logic = comptime .{ .sum = .{
+            .sum = blk: {
+                // Each bit of the counter will be set on the next clock cycle when:
+                //      a) it is currently 0 and every lower bit is a 1
+                //      b) it is currently 1 but at least one lower bit is not 1
+                //
+                // Implementing a) requires only one product term for counters up to ~36 bits.
+                // Implementing b) requires N product terms, where N is the bit index.
+                var sum: []const Chip.PT = &.{};
+                var pt = Chip.PT.always();
+                var n = bit;
+                while (n > 0) : (n -= 1) {
+                    const out_n = Chip.Signal.mc_fb(output_pins[n - 1].mc());
+                    pt = pt.and_factor(out_n.when_high());
+                    sum = sum ++ [_]Chip.PT{ out.when_high().pt().and_factor(out_n.when_low()) };
+                }
+                pt = pt.and_factor(out.when_low());
+                break :blk sum ++ [_]Chip.PT{ pt };
+            },
+            .polarity = .positive,
         }};
     }
 

@@ -685,15 +685,15 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr>
 <td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p10</abbr> &middot; <abbr>g8</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p10</abbr> &middot; <abbr>g6</abbr> &middot; <abbr>p8</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p8</abbr> &middot; <abbr>p10</abbr> &middot; <abbr>g6</abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p10</abbr> &middot; <abbr>g4</abbr> &middot; <abbr>p6</abbr> &middot; <abbr>p8</abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p6</abbr> &middot; <abbr>p8</abbr> &middot; <abbr>p10</abbr> &middot; <abbr>g4</abbr></td></tr>
 <tr>
-<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p10</abbr> &middot; <abbr>carry2</abbr> &middot; <abbr>p4</abbr> &middot; <abbr>p6</abbr> &middot; <abbr>p8</abbr></td></tr>
+<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p4</abbr> &middot; <abbr>p6</abbr> &middot; <abbr>p8</abbr> &middot; <abbr>p10</abbr> &middot; <abbr>carry2</abbr></td></tr>
 <tr class="highlight">
 <td rowspan="5">carry4</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>g4</abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>carry2</abbr> &middot; <abbr>p4</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p4</abbr> &middot; <abbr>carry2</abbr></td></tr>
 <tr class="highlight">
 <td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
@@ -703,9 +703,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr>
 <td rowspan="5">carry6</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>g6</abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>g4</abbr> &middot; <abbr>p6</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p6</abbr> &middot; <abbr>g4</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>carry2</abbr> &middot; <abbr>p4</abbr> &middot; <abbr>p6</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p4</abbr> &middot; <abbr>p6</abbr> &middot; <abbr>carry2</abbr></td></tr>
 <tr>
 <td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
@@ -723,15 +723,15 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr>
 <td rowspan="5">carry8</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>g8</abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>g6</abbr> &middot; <abbr>p8</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p8</abbr> &middot; <abbr>g6</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>g4</abbr> &middot; <abbr>p6</abbr> &middot; <abbr>p8</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p6</abbr> &middot; <abbr>p8</abbr> &middot; <abbr>g4</abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>carry2</abbr> &middot; <abbr>p4</abbr> &middot; <abbr>p6</abbr> &middot; <abbr>p8</abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p4</abbr> &middot; <abbr>p6</abbr> &middot; <abbr>p8</abbr> &middot; <abbr>carry2</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
-<td rowspan="5">vab[4]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p10</abbr> &middot; <abbr>p12</abbr> &middot; <abbr>carry2</abbr> &middot; <abbr>p4</abbr> &middot; <abbr>p6</abbr> &middot; <abbr>p8</abbr></td></tr>
+<td rowspan="5">vab[4]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p4</abbr> &middot; <abbr>p6</abbr> &middot; <abbr>p8</abbr> &middot; <abbr>p10</abbr> &middot; <abbr>p12</abbr> &middot; <abbr>carry2</abbr></td></tr>
 <tr class="highlight">
 <td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
@@ -747,13 +747,13 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr>
 <td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p10</abbr> &middot; <abbr>p12</abbr> &middot; <abbr>g8</abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p10</abbr> &middot; <abbr>p12</abbr> &middot; <abbr>g6</abbr> &middot; <abbr>p8</abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p8</abbr> &middot; <abbr>p10</abbr> &middot; <abbr>p12</abbr> &middot; <abbr>g6</abbr></td></tr>
 <tr>
-<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p10</abbr> &middot; <abbr>p12</abbr> &middot; <abbr>g4</abbr> &middot; <abbr>p6</abbr> &middot; <abbr>p8</abbr></td></tr>
+<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p6</abbr> &middot; <abbr>p8</abbr> &middot; <abbr>p10</abbr> &middot; <abbr>p12</abbr> &middot; <abbr>g4</abbr></td></tr>
 <tr class="highlight">
-<td rowspan="5">A7</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p10</abbr> &middot; <abbr>p12</abbr> &middot; <abbr>g4</abbr> &middot; <abbr>p14</abbr> &middot; <abbr>p6</abbr> &middot; <abbr>p8</abbr></td></tr>
+<td rowspan="5">A7</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p6</abbr> &middot; <abbr>p8</abbr> &middot; <abbr>p10</abbr> &middot; <abbr>p12</abbr> &middot; <abbr>p14</abbr> &middot; <abbr>g4</abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p10</abbr> &middot; <abbr>p12</abbr> &middot; <abbr>carry2</abbr> &middot; <abbr>p4</abbr> &middot; <abbr>p14</abbr> &middot; <abbr>p6</abbr> &middot; <abbr>p8</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p4</abbr> &middot; <abbr>p6</abbr> &middot; <abbr>p8</abbr> &middot; <abbr>p10</abbr> &middot; <abbr>p12</abbr> &middot; <abbr>p14</abbr> &middot; <abbr>carry2</abbr></td></tr>
 <tr class="highlight">
 <td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
@@ -763,29 +763,29 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr>
 <td rowspan="5">carry14</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>g14</abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>g12</abbr> &middot; <abbr>p14</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p14</abbr> &middot; <abbr>g12</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p12</abbr> &middot; <abbr>g10</abbr> &middot; <abbr>p14</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p12</abbr> &middot; <abbr>p14</abbr> &middot; <abbr>g10</abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p10</abbr> &middot; <abbr>p12</abbr> &middot; <abbr>g8</abbr> &middot; <abbr>p14</abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p10</abbr> &middot; <abbr>p12</abbr> &middot; <abbr>p14</abbr> &middot; <abbr>g8</abbr></td></tr>
 <tr>
-<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p10</abbr> &middot; <abbr>p12</abbr> &middot; <abbr>g6</abbr> &middot; <abbr>p14</abbr> &middot; <abbr>p8</abbr></td></tr>
+<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p8</abbr> &middot; <abbr>p10</abbr> &middot; <abbr>p12</abbr> &middot; <abbr>p14</abbr> &middot; <abbr>g6</abbr></td></tr>
 <tr class="highlight">
 <td rowspan="5">carry16</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>g16</abbr></td></tr>
 <tr class="highlight">
 <td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p16</abbr> &middot; <abbr>g14</abbr></td></tr>
 <tr class="highlight">
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>g12</abbr> &middot; <abbr>p16</abbr> &middot; <abbr>p14</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p14</abbr> &middot; <abbr>p16</abbr> &middot; <abbr>g12</abbr></td></tr>
 <tr class="highlight">
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p12</abbr> &middot; <abbr>g10</abbr> &middot; <abbr>p16</abbr> &middot; <abbr>p14</abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p12</abbr> &middot; <abbr>p14</abbr> &middot; <abbr>p16</abbr> &middot; <abbr>g10</abbr></td></tr>
 <tr class="highlight">
-<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p10</abbr> &middot; <abbr>p12</abbr> &middot; <abbr>p16</abbr> &middot; <abbr>g8</abbr> &middot; <abbr>p14</abbr></td></tr>
+<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p10</abbr> &middot; <abbr>p12</abbr> &middot; <abbr>p14</abbr> &middot; <abbr>p16</abbr> &middot; <abbr>g8</abbr></td></tr>
 <tr>
-<td rowspan="5">vab[8]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p10</abbr> &middot; <abbr>p12</abbr> &middot; <abbr>g6</abbr> &middot; <abbr>p16</abbr> &middot; <abbr>p14</abbr> &middot; <abbr>p8</abbr></td></tr>
+<td rowspan="5">vab[8]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p8</abbr> &middot; <abbr>p10</abbr> &middot; <abbr>p12</abbr> &middot; <abbr>p14</abbr> &middot; <abbr>p16</abbr> &middot; <abbr>g6</abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p10</abbr> &middot; <abbr>p12</abbr> &middot; <abbr>p16</abbr> &middot; <abbr>g4</abbr> &middot; <abbr>p14</abbr> &middot; <abbr>p6</abbr> &middot; <abbr>p8</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p6</abbr> &middot; <abbr>p8</abbr> &middot; <abbr>p10</abbr> &middot; <abbr>p12</abbr> &middot; <abbr>p14</abbr> &middot; <abbr>p16</abbr> &middot; <abbr>g4</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p10</abbr> &middot; <abbr>p12</abbr> &middot; <abbr>carry2</abbr> &middot; <abbr>p4</abbr> &middot; <abbr>p16</abbr> &middot; <abbr>p14</abbr> &middot; <abbr>p6</abbr> &middot; <abbr>p8</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>p4</abbr> &middot; <abbr>p6</abbr> &middot; <abbr>p8</abbr> &middot; <abbr>p10</abbr> &middot; <abbr>p12</abbr> &middot; <abbr>p14</abbr> &middot; <abbr>p16</abbr> &middot; <abbr>carry2</abbr></td></tr>
 <tr>
 <td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
@@ -797,7 +797,7 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr class="highlight">
 <td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[3]</abbr> &middot; <abbr>offset[4]</abbr></td></tr>
 <tr class="highlight">
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[4]</abbr> &middot; <abbr>offset[3]</abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[3]</abbr> &middot; <abbr>offset[4]</abbr></td></tr>
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
@@ -807,13 +807,13 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr>
 <td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[5]</abbr> &middot; <abbr>offset[6]</abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[6]</abbr> &middot; <abbr>offset[5]</abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[5]</abbr> &middot; <abbr>offset[6]</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
 <td rowspan="5">p8</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[7]</abbr> &middot; <abbr>vab[8]</abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[7]</abbr> &middot; <abbr>vab[8]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[8]</abbr> &middot; <abbr>offset[7]</abbr></td></tr>
 <tr class="highlight">
 <td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[7]</abbr> &middot; <abbr>offset[8]</abbr></td></tr>
 <tr class="highlight">
@@ -821,13 +821,13 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
-<td rowspan="5">p10</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[10]</abbr> &middot; <abbr>vab[9]</abbr></td></tr>
+<td rowspan="5">p10</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[9]</abbr> &middot; <abbr>vab[10]</abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[9]</abbr> &middot; <abbr>vab[10]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[10]</abbr> &middot; <abbr>offset[9]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[10]</abbr> &middot; <abbr>vab[9]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[9]</abbr> &middot; <abbr>offset[10]</abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[10]</abbr> &middot; <abbr>offset[9]</abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[9]</abbr> &middot; <abbr>offset[10]</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
@@ -857,7 +857,7 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr>
 <td rowspan="5">p12</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[11]</abbr> &middot; <abbr>vab[12]</abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[11]</abbr> &middot; <abbr>vab[12]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[12]</abbr> &middot; <abbr>offset[11]</abbr></td></tr>
 <tr>
 <td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[11]</abbr> &middot; <abbr>offset[12]</abbr></td></tr>
 <tr>
@@ -865,19 +865,19 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
-<td rowspan="5">p14</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[14]</abbr> &middot; <abbr>vab[13]</abbr></td></tr>
+<td rowspan="5">p14</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[13]</abbr> &middot; <abbr>vab[14]</abbr></td></tr>
 <tr class="highlight">
 <td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[14]</abbr> &middot; <abbr>offset[13]</abbr></td></tr>
 <tr class="highlight">
 <td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[13]</abbr> &middot; <abbr>offset[14]</abbr></td></tr>
 <tr class="highlight">
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[14]</abbr> &middot; <abbr>offset[13]</abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[13]</abbr> &middot; <abbr>offset[14]</abbr></td></tr>
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
 <td rowspan="5">p16</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[15]</abbr> &middot; <abbr>vab[16]</abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[15]</abbr> &middot; <abbr>vab[16]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[16]</abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr>
 <td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[15]</abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr>
@@ -907,19 +907,19 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr class="highlight">
 <td rowspan="5">g4</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[4]</abbr> &middot; <abbr>offset[4]</abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[4]</abbr> &middot; <abbr>offset[3]</abbr> &middot; <abbr>vab[3]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[3]</abbr> &middot; <abbr>vab[4]</abbr> &middot; <abbr>offset[3]</abbr></td></tr>
 <tr class="highlight">
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[4]</abbr> &middot; <abbr>offset[3]</abbr> &middot; <abbr>vab[3]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[3]</abbr> &middot; <abbr>offset[3]</abbr> &middot; <abbr>offset[4]</abbr></td></tr>
 <tr class="highlight">
 <td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
-<td rowspan="5">g6</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[6]</abbr> &middot; <abbr>vab[6]</abbr></td></tr>
+<td rowspan="5">g6</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[6]</abbr> &middot; <abbr>offset[6]</abbr></td></tr>
 <tr>
 <td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[5]</abbr> &middot; <abbr>vab[6]</abbr> &middot; <abbr>offset[5]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[5]</abbr> &middot; <abbr>offset[6]</abbr> &middot; <abbr>offset[5]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[5]</abbr> &middot; <abbr>offset[5]</abbr> &middot; <abbr>offset[6]</abbr></td></tr>
 <tr>
 <td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
@@ -935,21 +935,21 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>true</abbr></td></tr>
 <tr>
-<td rowspan="5">g8</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[8]</abbr> &middot; <abbr>vab[8]</abbr></td></tr>
+<td rowspan="5">g8</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[8]</abbr> &middot; <abbr>offset[8]</abbr></td></tr>
 <tr>
 <td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[7]</abbr> &middot; <abbr>vab[8]</abbr> &middot; <abbr>offset[7]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[7]</abbr> &middot; <abbr>offset[8]</abbr> &middot; <abbr>offset[7]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[7]</abbr> &middot; <abbr>offset[7]</abbr> &middot; <abbr>offset[8]</abbr></td></tr>
 <tr>
 <td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
-<td rowspan="5">g10</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[10]</abbr> &middot; <abbr>vab[10]</abbr></td></tr>
+<td rowspan="5">g10</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[10]</abbr> &middot; <abbr>offset[10]</abbr></td></tr>
 <tr class="highlight">
 <td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[9]</abbr> &middot; <abbr>vab[10]</abbr> &middot; <abbr>offset[9]</abbr></td></tr>
 <tr class="highlight">
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[9]</abbr> &middot; <abbr>offset[10]</abbr> &middot; <abbr>offset[9]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[9]</abbr> &middot; <abbr>offset[9]</abbr> &middot; <abbr>offset[10]</abbr></td></tr>
 <tr class="highlight">
 <td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
@@ -957,7 +957,7 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr>
 <td rowspan="5">g12</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[12]</abbr> &middot; <abbr>offset[12]</abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[11]</abbr> &middot; <abbr>offset[11]</abbr> &middot; <abbr>vab[12]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[11]</abbr> &middot; <abbr>vab[12]</abbr> &middot; <abbr>offset[11]</abbr></td></tr>
 <tr>
 <td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[11]</abbr> &middot; <abbr>offset[11]</abbr> &middot; <abbr>offset[12]</abbr></td></tr>
 <tr>
@@ -977,17 +977,17 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr>
 <td rowspan="5">g14</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[14]</abbr> &middot; <abbr>offset[14]</abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[14]</abbr> &middot; <abbr>vab[13]</abbr> &middot; <abbr>offset[13]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[13]</abbr> &middot; <abbr>vab[14]</abbr> &middot; <abbr>offset[13]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[13]</abbr> &middot; <abbr>offset[14]</abbr> &middot; <abbr>offset[13]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[13]</abbr> &middot; <abbr>offset[13]</abbr> &middot; <abbr>offset[14]</abbr></td></tr>
 <tr>
 <td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
-<td rowspan="5">g16</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[15]</abbr> &middot; <abbr>vab[16]</abbr></td></tr>
+<td rowspan="5">g16</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[16]</abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[15]</abbr> &middot; <abbr>offset[15]</abbr> &middot; <abbr>vab[16]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[15]</abbr> &middot; <abbr>vab[16]</abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr class="highlight">
 <td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[15]</abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr class="highlight">
@@ -995,19 +995,19 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
-<td rowspan="5">carry2</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[2]</abbr> &middot; <abbr>vab[2]</abbr></td></tr>
+<td rowspan="5">carry2</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[2]</abbr> &middot; <abbr>offset[2]</abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[1]</abbr> &middot; <abbr>vab[2]</abbr> &middot; <abbr>vab[1]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[1]</abbr> &middot; <abbr>vab[2]</abbr> &middot; <abbr>offset[1]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[1]</abbr> &middot; <abbr>offset[2]</abbr> &middot; <abbr>vab[1]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[1]</abbr> &middot; <abbr>offset[1]</abbr> &middot; <abbr>offset[2]</abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[2]</abbr> &middot; <abbr>vab[1]</abbr> &middot; <abbr>offset[0]</abbr> &middot; <abbr>vab[0]</abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[0]</abbr> &middot; <abbr>vab[1]</abbr> &middot; <abbr>vab[2]</abbr> &middot; <abbr>offset[0]</abbr></td></tr>
 <tr>
-<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[2]</abbr> &middot; <abbr>vab[1]</abbr> &middot; <abbr>offset[0]</abbr> &middot; <abbr>vab[0]</abbr></td></tr>
+<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[0]</abbr> &middot; <abbr>vab[1]</abbr> &middot; <abbr>offset[0]</abbr> &middot; <abbr>offset[2]</abbr></td></tr>
 <tr class="highlight">
-<td rowspan="5">B15</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[1]</abbr> &middot; <abbr>vab[2]</abbr> &middot; <abbr>offset[0]</abbr> &middot; <abbr>vab[0]</abbr></td></tr>
+<td rowspan="5">B15</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[0]</abbr> &middot; <abbr>vab[2]</abbr> &middot; <abbr>offset[0]</abbr> &middot; <abbr>offset[1]</abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[1]</abbr> &middot; <abbr>offset[2]</abbr> &middot; <abbr>offset[0]</abbr> &middot; <abbr>vab[0]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[0]</abbr> &middot; <abbr>offset[0]</abbr> &middot; <abbr>offset[1]</abbr> &middot; <abbr>offset[2]</abbr></td></tr>
 <tr class="highlight">
 <td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
@@ -1129,11 +1129,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>true</abbr></td></tr>
 <tr>
-<td rowspan="5">use_dr</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr></td></tr>
+<td rowspan="5">use_dr</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr>vao[1]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr></td></tr>
 <tr>
 <td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
@@ -1225,9 +1225,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr>
 <td rowspan="5">offset[0]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr><u>use_dr</u></abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>dr[0]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[0]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>dr[8]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[8]</abbr></td></tr>
 <tr>
 <td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
@@ -1243,33 +1243,33 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>true</abbr></td></tr>
 <tr>
-<td rowspan="5">offset[1]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>use_dr</u></abbr> &middot; <abbr>vao[1]</abbr></td></tr>
+<td rowspan="5">offset[1]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[1]</abbr> &middot; <abbr><u>use_dr</u></abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>dr[1]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[1]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr>dr[9]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[9]</abbr></td></tr>
 <tr>
 <td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
-<td rowspan="5">offset[2]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>use_dr</u></abbr> &middot; <abbr>vao[2]</abbr></td></tr>
+<td rowspan="5">offset[2]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[2]</abbr> &middot; <abbr><u>use_dr</u></abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>dr[2]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[2]</abbr></td></tr>
 <tr class="highlight">
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr>dr[10]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[10]</abbr></td></tr>
 <tr class="highlight">
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>dr[8]</abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[8]</abbr></td></tr>
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
 <td rowspan="5">offset[3]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[3]</abbr> &middot; <abbr><u>use_dr</u></abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr>dr[3]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[3]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>dr[11]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[11]</abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr>dr[9]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[9]</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
@@ -1283,33 +1283,33 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>true</abbr></td></tr>
 <tr>
-<td rowspan="5">offset[4]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>use_dr</u></abbr> &middot; <abbr>vao[4]</abbr></td></tr>
+<td rowspan="5">offset[4]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[4]</abbr> &middot; <abbr><u>use_dr</u></abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>dr[4]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[4]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>dr[12]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[12]</abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr>dr[10]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[10]</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
 <td rowspan="5">offset[5]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[5]</abbr> &middot; <abbr><u>use_dr</u></abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr>dr[5]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[5]</abbr></td></tr>
 <tr class="highlight">
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>dr[13]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[13]</abbr></td></tr>
 <tr class="highlight">
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>dr[11]</abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[11]</abbr></td></tr>
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
 <td rowspan="5">offset[6]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[5]</abbr> &middot; <abbr><u>use_dr</u></abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr>dr[6]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[6]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>dr[13]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[13]</abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>dr[11]</abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[11]</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
@@ -1325,31 +1325,31 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr>
 <td rowspan="5">offset[7]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[5]</abbr> &middot; <abbr><u>use_dr</u></abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr>dr[7]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[7]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr>dr[14]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[14]</abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>dr[12]</abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[12]</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
 <td rowspan="5">offset[8]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[5]</abbr> &middot; <abbr><u>use_dr</u></abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>dr[8]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[8]</abbr></td></tr>
 <tr class="highlight">
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr></td></tr>
 <tr class="highlight">
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>dr[13]</abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[13]</abbr></td></tr>
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
 <td rowspan="5">offset[9]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[5]</abbr> &middot; <abbr><u>use_dr</u></abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr>dr[9]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[9]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr>dr[14]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[14]</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
@@ -1379,31 +1379,31 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr>
 <td rowspan="5">offset[10]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[5]</abbr> &middot; <abbr><u>use_dr</u></abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr>dr[10]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[10]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
 <td rowspan="5">offset[11]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[5]</abbr> &middot; <abbr><u>use_dr</u></abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>dr[11]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[11]</abbr></td></tr>
 <tr class="highlight">
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr></td></tr>
 <tr class="highlight">
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr></td></tr>
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
 <td rowspan="5">offset[12]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[5]</abbr> &middot; <abbr><u>use_dr</u></abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>dr[12]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[12]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
@@ -1419,31 +1419,31 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr>
 <td rowspan="5">offset[13]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[5]</abbr> &middot; <abbr><u>use_dr</u></abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>dr[13]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[13]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
 <td rowspan="5">offset[14]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[5]</abbr> &middot; <abbr><u>use_dr</u></abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr>dr[14]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[14]</abbr></td></tr>
 <tr class="highlight">
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr></td></tr>
 <tr class="highlight">
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr></td></tr>
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
 <td rowspan="5">offset[15]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[5]</abbr> &middot; <abbr><u>use_dr</u></abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vao[0]</abbr> &middot; <abbr><u>vao[1]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[4]</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vao[0]</u></abbr> &middot; <abbr>vao[1]</abbr> &middot; <abbr><u>vao[2]</u></abbr> &middot; <abbr><u>vao[3]</u></abbr> &middot; <abbr><u>vao[4]</u></abbr> &middot; <abbr>vao[5]</abbr> &middot; <abbr>dr[15]</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
@@ -1563,11 +1563,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr class="highlight">
 <td rowspan="5">page_offset[1]</td><td>0</td><td><kbd class="pt-usage xor">XOR</kbd></td><td class="left"><abbr>vab[1]</abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[1]</abbr> &middot; <abbr><u>vab[0]</u></abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[0]</u></abbr> &middot; <abbr>offset[1]</abbr></td></tr>
 <tr class="highlight">
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[1]</abbr> &middot; <abbr><u>offset[0]</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[0]</u></abbr> &middot; <abbr>offset[1]</abbr></td></tr>
 <tr class="highlight">
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[1]</u></abbr> &middot; <abbr>offset[0]</abbr> &middot; <abbr>vab[0]</abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[0]</abbr> &middot; <abbr>offset[0]</abbr> &middot; <abbr><u>offset[1]</u></abbr></td></tr>
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
@@ -1575,19 +1575,19 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr>
 <td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[1]</abbr> &middot; <abbr>offset[1]</abbr> &middot; <abbr><u>offset[2]</u></abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[1]</abbr> &middot; <abbr>offset[0]</abbr> &middot; <abbr><u>offset[2]</u></abbr> &middot; <abbr>vab[0]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[0]</abbr> &middot; <abbr>vab[1]</abbr> &middot; <abbr>offset[0]</abbr> &middot; <abbr><u>offset[2]</u></abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[1]</abbr> &middot; <abbr>offset[0]</abbr> &middot; <abbr><u>offset[2]</u></abbr> &middot; <abbr>vab[0]</abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[0]</abbr> &middot; <abbr>offset[0]</abbr> &middot; <abbr>offset[1]</abbr> &middot; <abbr><u>offset[2]</u></abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[1]</u></abbr> &middot; <abbr><u>offset[1]</u></abbr> &middot; <abbr>offset[2]</abbr></td></tr>
 <tr class="highlight">
-<td rowspan="5">F3</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[1]</u></abbr> &middot; <abbr>offset[2]</abbr> &middot; <abbr><u>vab[0]</u></abbr></td></tr>
+<td rowspan="5">F3</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[0]</u></abbr> &middot; <abbr><u>vab[1]</u></abbr> &middot; <abbr>offset[2]</abbr></td></tr>
 <tr class="highlight">
 <td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[1]</u></abbr> &middot; <abbr><u>offset[0]</u></abbr> &middot; <abbr>offset[2]</abbr></td></tr>
 <tr class="highlight">
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[1]</u></abbr> &middot; <abbr>offset[2]</abbr> &middot; <abbr><u>vab[0]</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[0]</u></abbr> &middot; <abbr><u>offset[1]</u></abbr> &middot; <abbr>offset[2]</abbr></td></tr>
 <tr class="highlight">
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[1]</u></abbr> &middot; <abbr><u>offset[0]</u></abbr> &middot; <abbr>offset[2]</abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[0]</u></abbr> &middot; <abbr><u>offset[1]</u></abbr> &middot; <abbr>offset[2]</abbr></td></tr>
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
@@ -1603,19 +1603,19 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr class="highlight">
 <td rowspan="5">page_offset[4]</td><td>0</td><td><kbd class="pt-usage xor">XOR</kbd></td><td class="left"><abbr>vab[4]</abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[3]</u></abbr> &middot; <abbr>offset[4]</abbr> &middot; <abbr><u>offset[3]</u></abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[3]</u></abbr> &middot; <abbr><u>offset[3]</u></abbr> &middot; <abbr>offset[4]</abbr></td></tr>
 <tr class="highlight">
 <td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[3]</u></abbr> &middot; <abbr><u>carry2</u></abbr> &middot; <abbr>offset[4]</abbr></td></tr>
 <tr class="highlight">
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>carry2</u></abbr> &middot; <abbr>offset[4]</abbr> &middot; <abbr><u>offset[3]</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>carry2</u></abbr> &middot; <abbr><u>offset[3]</u></abbr> &middot; <abbr>offset[4]</abbr></td></tr>
 <tr class="highlight">
-<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[3]</abbr> &middot; <abbr><u>offset[4]</u></abbr> &middot; <abbr>offset[3]</abbr></td></tr>
+<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[3]</abbr> &middot; <abbr>offset[3]</abbr> &middot; <abbr><u>offset[4]</u></abbr></td></tr>
 <tr>
 <td rowspan="5">page_offset[5]</td><td>0</td><td><kbd class="pt-usage xor">XOR</kbd></td><td class="left"><abbr>vab[5]</abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[5]</u></abbr> &middot; <abbr>carry4</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>carry4</abbr> &middot; <abbr><u>offset[5]</u></abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[5]</abbr> &middot; <abbr><u>carry4</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>carry4</u></abbr> &middot; <abbr>offset[5]</abbr></td></tr>
 <tr>
 <td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
@@ -1623,7 +1623,7 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr class="highlight">
 <td rowspan="5">F7</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[3]</abbr> &middot; <abbr>carry2</abbr> &middot; <abbr><u>offset[4]</u></abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>carry2</abbr> &middot; <abbr><u>offset[4]</u></abbr> &middot; <abbr>offset[3]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>carry2</abbr> &middot; <abbr>offset[3]</abbr> &middot; <abbr><u>offset[4]</u></abbr></td></tr>
 <tr class="highlight">
 <td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
@@ -1633,17 +1633,17 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr>
 <td rowspan="5">page_offset[6]</td><td>0</td><td><kbd class="pt-usage xor">XOR</kbd></td><td class="left"><abbr>vab[6]</abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[6]</abbr> &middot; <abbr><u>offset[5]</u></abbr> &middot; <abbr><u>vab[5]</u></abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[5]</u></abbr> &middot; <abbr><u>offset[5]</u></abbr> &middot; <abbr>offset[6]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[6]</abbr> &middot; <abbr><u>carry4</u></abbr> &middot; <abbr><u>vab[5]</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[5]</u></abbr> &middot; <abbr><u>carry4</u></abbr> &middot; <abbr>offset[6]</abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[6]</abbr> &middot; <abbr><u>offset[5]</u></abbr> &middot; <abbr><u>carry4</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>carry4</u></abbr> &middot; <abbr><u>offset[5]</u></abbr> &middot; <abbr>offset[6]</abbr></td></tr>
 <tr>
-<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[6]</u></abbr> &middot; <abbr>offset[5]</abbr> &middot; <abbr>vab[5]</abbr></td></tr>
+<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[5]</abbr> &middot; <abbr>offset[5]</abbr> &middot; <abbr><u>offset[6]</u></abbr></td></tr>
 <tr class="highlight">
-<td rowspan="5">F9</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[6]</u></abbr> &middot; <abbr>carry4</abbr> &middot; <abbr>vab[5]</abbr></td></tr>
+<td rowspan="5">F9</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[5]</abbr> &middot; <abbr>carry4</abbr> &middot; <abbr><u>offset[6]</u></abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[6]</u></abbr> &middot; <abbr>offset[5]</abbr> &middot; <abbr>carry4</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>carry4</abbr> &middot; <abbr>offset[5]</abbr> &middot; <abbr><u>offset[6]</u></abbr></td></tr>
 <tr class="highlight">
 <td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
@@ -1653,17 +1653,17 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr>
 <td rowspan="5">page_offset[7]</td><td>0</td><td><kbd class="pt-usage xor">XOR</kbd></td><td class="left"><abbr>vab[7]</abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[7]</u></abbr> &middot; <abbr>carry6</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>carry6</abbr> &middot; <abbr><u>offset[7]</u></abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[7]</abbr> &middot; <abbr><u>carry6</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>carry6</u></abbr> &middot; <abbr>offset[7]</abbr></td></tr>
 <tr>
 <td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
-<td rowspan="5">F11</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[7]</abbr> &middot; <abbr><u>offset[8]</u></abbr> &middot; <abbr>carry6</abbr></td></tr>
+<td rowspan="5">F11</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[7]</abbr> &middot; <abbr>carry6</abbr> &middot; <abbr><u>offset[8]</u></abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[8]</u></abbr> &middot; <abbr>offset[7]</abbr> &middot; <abbr>carry6</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>carry6</abbr> &middot; <abbr>offset[7]</abbr> &middot; <abbr><u>offset[8]</u></abbr></td></tr>
 <tr class="highlight">
 <td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
@@ -1673,13 +1673,13 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr>
 <td rowspan="5">page_offset[8]</td><td>0</td><td><kbd class="pt-usage xor">XOR</kbd></td><td class="left"><abbr>vab[8]</abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[7]</u></abbr> &middot; <abbr>offset[8]</abbr> &middot; <abbr><u>offset[7]</u></abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[7]</u></abbr> &middot; <abbr><u>offset[7]</u></abbr> &middot; <abbr>offset[8]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[7]</u></abbr> &middot; <abbr>offset[8]</abbr> &middot; <abbr><u>carry6</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[7]</u></abbr> &middot; <abbr><u>carry6</u></abbr> &middot; <abbr>offset[8]</abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[8]</abbr> &middot; <abbr><u>offset[7]</u></abbr> &middot; <abbr><u>carry6</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>carry6</u></abbr> &middot; <abbr><u>offset[7]</u></abbr> &middot; <abbr>offset[8]</abbr></td></tr>
 <tr>
-<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[7]</abbr> &middot; <abbr><u>offset[8]</u></abbr> &middot; <abbr>offset[7]</abbr></td></tr>
+<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[7]</abbr> &middot; <abbr>offset[7]</abbr> &middot; <abbr><u>offset[8]</u></abbr></td></tr>
 <tr class="highlight">
 <td rowspan="5">page_offset[9]</td><td>0</td><td><kbd class="pt-usage xor">XOR</kbd></td><td class="left"><abbr>vab[9]</abbr></td></tr>
 <tr class="highlight">
@@ -1693,17 +1693,17 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr>
 <td rowspan="5">page_offset[10]</td><td>0</td><td><kbd class="pt-usage xor">XOR</kbd></td><td class="left"><abbr>vab[10]</abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[10]</abbr> &middot; <abbr><u>offset[9]</u></abbr> &middot; <abbr><u>vab[9]</u></abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[9]</u></abbr> &middot; <abbr><u>offset[9]</u></abbr> &middot; <abbr>offset[10]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>carry8</u></abbr> &middot; <abbr>offset[10]</abbr> &middot; <abbr><u>vab[9]</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[9]</u></abbr> &middot; <abbr><u>carry8</u></abbr> &middot; <abbr>offset[10]</abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>carry8</u></abbr> &middot; <abbr>offset[10]</abbr> &middot; <abbr><u>offset[9]</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>carry8</u></abbr> &middot; <abbr><u>offset[9]</u></abbr> &middot; <abbr>offset[10]</abbr></td></tr>
 <tr>
-<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[10]</u></abbr> &middot; <abbr>offset[9]</abbr> &middot; <abbr>vab[9]</abbr></td></tr>
+<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[9]</abbr> &middot; <abbr>offset[9]</abbr> &middot; <abbr><u>offset[10]</u></abbr></td></tr>
 <tr class="highlight">
-<td rowspan="5">F15</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>carry8</abbr> &middot; <abbr><u>offset[10]</u></abbr> &middot; <abbr>vab[9]</abbr></td></tr>
+<td rowspan="5">F15</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[9]</abbr> &middot; <abbr>carry8</abbr> &middot; <abbr><u>offset[10]</u></abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>carry8</abbr> &middot; <abbr><u>offset[10]</u></abbr> &middot; <abbr>offset[9]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>carry8</abbr> &middot; <abbr>offset[9]</abbr> &middot; <abbr><u>offset[10]</u></abbr></td></tr>
 <tr class="highlight">
 <td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
@@ -1767,9 +1767,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr>
 <td rowspan="5">page[1]</td><td>0</td><td><kbd class="pt-usage xor">XOR</kbd></td><td class="left"><abbr>vab[13]</abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[13]</u></abbr> &middot; <abbr>carry12</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>carry12</abbr> &middot; <abbr><u>offset[13]</u></abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[13]</abbr> &middot; <abbr><u>carry12</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>carry12</u></abbr> &middot; <abbr>offset[13]</abbr></td></tr>
 <tr>
 <td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
@@ -1777,27 +1777,27 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr class="highlight">
 <td rowspan="5">page[2]</td><td>0</td><td><kbd class="pt-usage xor">XOR</kbd></td><td class="left"><abbr>vab[14]</abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[13]</u></abbr> &middot; <abbr><u>vab[13]</u></abbr> &middot; <abbr>offset[14]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[13]</u></abbr> &middot; <abbr><u>offset[13]</u></abbr> &middot; <abbr>offset[14]</abbr></td></tr>
 <tr class="highlight">
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[13]</u></abbr> &middot; <abbr>offset[14]</abbr> &middot; <abbr><u>carry12</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[13]</u></abbr> &middot; <abbr><u>carry12</u></abbr> &middot; <abbr>offset[14]</abbr></td></tr>
 <tr class="highlight">
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[13]</u></abbr> &middot; <abbr>offset[14]</abbr> &middot; <abbr><u>carry12</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>carry12</u></abbr> &middot; <abbr><u>offset[13]</u></abbr> &middot; <abbr>offset[14]</abbr></td></tr>
 <tr class="highlight">
-<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[13]</abbr> &middot; <abbr>vab[13]</abbr> &middot; <abbr><u>offset[14]</u></abbr></td></tr>
+<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[13]</abbr> &middot; <abbr>offset[13]</abbr> &middot; <abbr><u>offset[14]</u></abbr></td></tr>
 <tr>
 <td rowspan="5">page[3]</td><td>0</td><td><kbd class="pt-usage xor">XOR</kbd></td><td class="left"><abbr>vab[15]</abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[15]</u></abbr> &middot; <abbr>carry14</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>carry14</abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[15]</abbr> &middot; <abbr><u>carry14</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>carry14</u></abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr>
 <td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
-<td rowspan="5">G7</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[13]</abbr> &middot; <abbr><u>offset[14]</u></abbr> &middot; <abbr>carry12</abbr></td></tr>
+<td rowspan="5">G7</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[13]</abbr> &middot; <abbr>carry12</abbr> &middot; <abbr><u>offset[14]</u></abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[13]</abbr> &middot; <abbr><u>offset[14]</u></abbr> &middot; <abbr>carry12</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>carry12</abbr> &middot; <abbr>offset[13]</abbr> &middot; <abbr><u>offset[14]</u></abbr></td></tr>
 <tr class="highlight">
 <td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
@@ -1809,13 +1809,13 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr>
 <td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[15]</u></abbr> &middot; <abbr>offset[15]</abbr> &middot; <abbr><u>carry14</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[15]</u></abbr> &middot; <abbr><u>carry14</u></abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr>
 <td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
-<td rowspan="5">page[5]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[15]</abbr> &middot; <abbr><u>offset[15]</u></abbr> &middot; <abbr>carry14</abbr></td></tr>
+<td rowspan="5">page[5]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[15]</abbr> &middot; <abbr>carry14</abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr class="highlight">
 <td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
@@ -1825,53 +1825,53 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
-<td rowspan="5">page[6]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[15]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>vab[18]</abbr></td></tr>
+<td rowspan="5">page[6]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[18]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[15]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>vab[18]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[18]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr><u>offset[15]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr><u>vab[18]</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr>offset[15]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>vab[18]</u></abbr></td></tr>
-<tr>
-<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
-<tr class="highlight">
-<td rowspan="5">G11</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr><u>offset[15]</u></abbr> &middot; <abbr><u>carry16</u></abbr></td></tr>
-<tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>offset[15]</abbr> &middot; <abbr>carry16</abbr></td></tr>
-<tr class="highlight">
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>offset[15]</u></abbr> &middot; <abbr>carry16</abbr></td></tr>
-<tr class="highlight">
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr>offset[15]</abbr> &middot; <abbr><u>carry16</u></abbr></td></tr>
-<tr class="highlight">
-<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
-<tr>
-<td rowspan="5">page[7]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[15]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>vab[19]</abbr></td></tr>
-<tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[15]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>vab[19]</abbr></td></tr>
-<tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr><u>offset[15]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr>vab[18]</abbr></td></tr>
-<tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr>offset[15]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
-<td rowspan="5">page[8]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[15]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>vab[20]</abbr></td></tr>
+<td rowspan="5">G11</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[15]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>vab[20]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr class="highlight">
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr><u>offset[15]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr>vab[18]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr class="highlight">
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr>offset[15]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
-<td rowspan="5">page[9]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[15]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>vab[21]</abbr></td></tr>
+<td rowspan="5">page[7]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[19]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[15]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>vab[21]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[19]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr><u>offset[15]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>vab[20]</abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr>vab[18]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr>offset[15]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>offset[15]</abbr></td></tr>
+<tr>
+<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
+<tr class="highlight">
+<td rowspan="5">page[8]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[20]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
+<tr class="highlight">
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[20]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>offset[15]</abbr></td></tr>
+<tr class="highlight">
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
+<tr class="highlight">
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>offset[15]</abbr></td></tr>
+<tr class="highlight">
+<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
+<tr>
+<td rowspan="5">page[9]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[21]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
+<tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[21]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>offset[15]</abbr></td></tr>
+<tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr>vab[20]</abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
+<tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
@@ -1899,33 +1899,33 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <table>
 <tr class="header"><th>MC</th><th>PT</th><th>Usage</th><th>Equation</th></tr>
 <tr>
-<td rowspan="5">page[10]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[15]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>vab[22]</abbr></td></tr>
+<td rowspan="5">page[10]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[22]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[15]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>vab[22]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[22]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr>vab[21]</abbr> &middot; <abbr><u>offset[15]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr><u>vab[22]</u></abbr> &middot; <abbr>vab[20]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr>vab[20]</abbr> &middot; <abbr>vab[21]</abbr> &middot; <abbr><u>vab[22]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr>offset[15]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>vab[22]</u></abbr> &middot; <abbr><u>vab[20]</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr><u>vab[22]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
-<td rowspan="5">page[11]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[15]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>vab[23]</abbr></td></tr>
+<td rowspan="5">page[11]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[23]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[15]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>vab[23]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[23]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr class="highlight">
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr>vab[21]</abbr> &middot; <abbr><u>offset[15]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>vab[22]</abbr> &middot; <abbr>vab[20]</abbr> &middot; <abbr><u>vab[23]</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr>vab[20]</abbr> &middot; <abbr>vab[21]</abbr> &middot; <abbr>vab[22]</abbr> &middot; <abbr><u>vab[23]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr class="highlight">
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr>offset[15]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>vab[22]</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>vab[23]</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr><u>vab[22]</u></abbr> &middot; <abbr><u>vab[23]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
-<td rowspan="5">page[12]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[15]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>vab[24]</abbr></td></tr>
+<td rowspan="5">page[12]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[24]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[15]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>vab[24]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[24]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr>vab[21]</abbr> &middot; <abbr><u>offset[15]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr><u>vab[24]</u></abbr> &middot; <abbr>vab[22]</abbr> &middot; <abbr>vab[20]</abbr> &middot; <abbr>vab[23]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr>vab[20]</abbr> &middot; <abbr>vab[21]</abbr> &middot; <abbr>vab[22]</abbr> &middot; <abbr>vab[23]</abbr> &middot; <abbr><u>vab[24]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr>offset[15]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>vab[24]</u></abbr> &middot; <abbr><u>vab[22]</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>vab[23]</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr><u>vab[22]</u></abbr> &middot; <abbr><u>vab[23]</u></abbr> &middot; <abbr><u>vab[24]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
@@ -1939,33 +1939,33 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>true</abbr></td></tr>
 <tr>
-<td rowspan="5">page[13]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[25]</abbr> &middot; <abbr><u>offset[15]</u></abbr> &middot; <abbr><u>carry16</u></abbr></td></tr>
+<td rowspan="5">page[13]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[25]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[25]</abbr> &middot; <abbr>offset[15]</abbr> &middot; <abbr>carry16</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[25]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr><u>vab[25]</u></abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr>vab[21]</abbr> &middot; <abbr><u>offset[15]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>vab[24]</abbr> &middot; <abbr>vab[22]</abbr> &middot; <abbr>vab[20]</abbr> &middot; <abbr>vab[23]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr>vab[20]</abbr> &middot; <abbr>vab[21]</abbr> &middot; <abbr>vab[22]</abbr> &middot; <abbr>vab[23]</abbr> &middot; <abbr>vab[24]</abbr> &middot; <abbr><u>vab[25]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[25]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr>offset[15]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>vab[24]</u></abbr> &middot; <abbr><u>vab[22]</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>vab[23]</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr><u>vab[22]</u></abbr> &middot; <abbr><u>vab[23]</u></abbr> &middot; <abbr><u>vab[24]</u></abbr> &middot; <abbr><u>vab[25]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
-<td rowspan="5">page[14]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[26]</abbr> &middot; <abbr><u>offset[15]</u></abbr> &middot; <abbr><u>carry16</u></abbr></td></tr>
+<td rowspan="5">page[14]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[26]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[26]</abbr> &middot; <abbr>offset[15]</abbr> &middot; <abbr>carry16</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[26]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr class="highlight">
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>vab[25]</abbr> &middot; <abbr><u>vab[26]</u></abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr>vab[21]</abbr> &middot; <abbr><u>offset[15]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>vab[24]</abbr> &middot; <abbr>vab[22]</abbr> &middot; <abbr>vab[20]</abbr> &middot; <abbr>vab[23]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr>vab[20]</abbr> &middot; <abbr>vab[21]</abbr> &middot; <abbr>vab[22]</abbr> &middot; <abbr>vab[23]</abbr> &middot; <abbr>vab[24]</abbr> &middot; <abbr>vab[25]</abbr> &middot; <abbr><u>vab[26]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr class="highlight">
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[25]</u></abbr> &middot; <abbr><u>vab[26]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr>offset[15]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>vab[24]</u></abbr> &middot; <abbr><u>vab[22]</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>vab[23]</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr><u>vab[22]</u></abbr> &middot; <abbr><u>vab[23]</u></abbr> &middot; <abbr><u>vab[24]</u></abbr> &middot; <abbr><u>vab[25]</u></abbr> &middot; <abbr><u>vab[26]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
-<td rowspan="5">page[15]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[15]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>vab[27]</abbr></td></tr>
+<td rowspan="5">page[15]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[27]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[15]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>vab[27]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[27]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>vab[25]</abbr> &middot; <abbr>vab[26]</abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr>vab[21]</abbr> &middot; <abbr><u>offset[15]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>vab[24]</abbr> &middot; <abbr><u>vab[27]</u></abbr> &middot; <abbr>vab[22]</abbr> &middot; <abbr>vab[20]</abbr> &middot; <abbr>vab[23]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr>vab[20]</abbr> &middot; <abbr>vab[21]</abbr> &middot; <abbr>vab[22]</abbr> &middot; <abbr>vab[23]</abbr> &middot; <abbr>vab[24]</abbr> &middot; <abbr>vab[25]</abbr> &middot; <abbr>vab[26]</abbr> &middot; <abbr><u>vab[27]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[25]</u></abbr> &middot; <abbr><u>vab[26]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr>offset[15]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>vab[24]</u></abbr> &middot; <abbr><u>vab[27]</u></abbr> &middot; <abbr><u>vab[22]</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>vab[23]</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr><u>vab[22]</u></abbr> &middot; <abbr><u>vab[23]</u></abbr> &middot; <abbr><u>vab[24]</u></abbr> &middot; <abbr><u>vab[25]</u></abbr> &middot; <abbr><u>vab[26]</u></abbr> &middot; <abbr><u>vab[27]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
@@ -1979,33 +1979,33 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>true</abbr></td></tr>
 <tr>
-<td rowspan="5">page[16]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[15]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>vab[28]</abbr></td></tr>
+<td rowspan="5">page[16]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[28]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[15]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>vab[28]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[28]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>vab[25]</abbr> &middot; <abbr>vab[26]</abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr>vab[21]</abbr> &middot; <abbr><u>offset[15]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>vab[24]</abbr> &middot; <abbr>vab[27]</abbr> &middot; <abbr>vab[22]</abbr> &middot; <abbr><u>vab[28]</u></abbr> &middot; <abbr>vab[20]</abbr> &middot; <abbr>vab[23]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr>vab[20]</abbr> &middot; <abbr>vab[21]</abbr> &middot; <abbr>vab[22]</abbr> &middot; <abbr>vab[23]</abbr> &middot; <abbr>vab[24]</abbr> &middot; <abbr>vab[25]</abbr> &middot; <abbr>vab[26]</abbr> &middot; <abbr>vab[27]</abbr> &middot; <abbr><u>vab[28]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[25]</u></abbr> &middot; <abbr><u>vab[26]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr>offset[15]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>vab[24]</u></abbr> &middot; <abbr><u>vab[27]</u></abbr> &middot; <abbr><u>vab[22]</u></abbr> &middot; <abbr><u>vab[28]</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>vab[23]</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr><u>vab[22]</u></abbr> &middot; <abbr><u>vab[23]</u></abbr> &middot; <abbr><u>vab[24]</u></abbr> &middot; <abbr><u>vab[25]</u></abbr> &middot; <abbr><u>vab[26]</u></abbr> &middot; <abbr><u>vab[27]</u></abbr> &middot; <abbr><u>vab[28]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
-<td rowspan="5">page[17]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[15]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>vab[29]</abbr></td></tr>
+<td rowspan="5">page[17]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[29]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[15]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>vab[29]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[29]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr class="highlight">
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>vab[25]</abbr> &middot; <abbr>vab[26]</abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr>vab[21]</abbr> &middot; <abbr><u>offset[15]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>vab[24]</abbr> &middot; <abbr>vab[27]</abbr> &middot; <abbr>vab[22]</abbr> &middot; <abbr>vab[28]</abbr> &middot; <abbr>vab[20]</abbr> &middot; <abbr><u>vab[29]</u></abbr> &middot; <abbr>vab[23]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr>vab[20]</abbr> &middot; <abbr>vab[21]</abbr> &middot; <abbr>vab[22]</abbr> &middot; <abbr>vab[23]</abbr> &middot; <abbr>vab[24]</abbr> &middot; <abbr>vab[25]</abbr> &middot; <abbr>vab[26]</abbr> &middot; <abbr>vab[27]</abbr> &middot; <abbr>vab[28]</abbr> &middot; <abbr><u>vab[29]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr class="highlight">
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[25]</u></abbr> &middot; <abbr><u>vab[26]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr>offset[15]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>vab[24]</u></abbr> &middot; <abbr><u>vab[27]</u></abbr> &middot; <abbr><u>vab[22]</u></abbr> &middot; <abbr><u>vab[28]</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>vab[29]</u></abbr> &middot; <abbr><u>vab[23]</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr><u>vab[22]</u></abbr> &middot; <abbr><u>vab[23]</u></abbr> &middot; <abbr><u>vab[24]</u></abbr> &middot; <abbr><u>vab[25]</u></abbr> &middot; <abbr><u>vab[26]</u></abbr> &middot; <abbr><u>vab[27]</u></abbr> &middot; <abbr><u>vab[28]</u></abbr> &middot; <abbr><u>vab[29]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
-<td rowspan="5">page[18]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[15]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>vab[30]</abbr></td></tr>
+<td rowspan="5">page[18]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[30]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[15]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>vab[30]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[30]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>vab[25]</abbr> &middot; <abbr>vab[26]</abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr>vab[21]</abbr> &middot; <abbr><u>offset[15]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>vab[24]</abbr> &middot; <abbr>vab[27]</abbr> &middot; <abbr>vab[22]</abbr> &middot; <abbr><u>vab[30]</u></abbr> &middot; <abbr>vab[28]</abbr> &middot; <abbr>vab[20]</abbr> &middot; <abbr>vab[29]</abbr> &middot; <abbr>vab[23]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr>vab[20]</abbr> &middot; <abbr>vab[21]</abbr> &middot; <abbr>vab[22]</abbr> &middot; <abbr>vab[23]</abbr> &middot; <abbr>vab[24]</abbr> &middot; <abbr>vab[25]</abbr> &middot; <abbr>vab[26]</abbr> &middot; <abbr>vab[27]</abbr> &middot; <abbr>vab[28]</abbr> &middot; <abbr>vab[29]</abbr> &middot; <abbr><u>vab[30]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[25]</u></abbr> &middot; <abbr><u>vab[26]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr>offset[15]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>vab[24]</u></abbr> &middot; <abbr><u>vab[27]</u></abbr> &middot; <abbr><u>vab[22]</u></abbr> &middot; <abbr><u>vab[30]</u></abbr> &middot; <abbr><u>vab[28]</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>vab[29]</u></abbr> &middot; <abbr><u>vab[23]</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr><u>vab[22]</u></abbr> &middot; <abbr><u>vab[23]</u></abbr> &middot; <abbr><u>vab[24]</u></abbr> &middot; <abbr><u>vab[25]</u></abbr> &middot; <abbr><u>vab[26]</u></abbr> &middot; <abbr><u>vab[27]</u></abbr> &middot; <abbr><u>vab[28]</u></abbr> &middot; <abbr><u>vab[29]</u></abbr> &middot; <abbr><u>vab[30]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
@@ -2019,13 +2019,13 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>true</abbr></td></tr>
 <tr>
-<td rowspan="5">page[19]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>offset[15]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>vab[31]</abbr></td></tr>
+<td rowspan="5">page[19]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[31]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>offset[15]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>vab[31]</abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[31]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>vab[25]</abbr> &middot; <abbr>vab[26]</abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr>vab[21]</abbr> &middot; <abbr><u>offset[15]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>vab[24]</abbr> &middot; <abbr>vab[27]</abbr> &middot; <abbr>vab[22]</abbr> &middot; <abbr><u>vab[31]</u></abbr> &middot; <abbr>vab[30]</abbr> &middot; <abbr>vab[28]</abbr> &middot; <abbr>vab[20]</abbr> &middot; <abbr>vab[29]</abbr> &middot; <abbr>vab[23]</abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr>vab[20]</abbr> &middot; <abbr>vab[21]</abbr> &middot; <abbr>vab[22]</abbr> &middot; <abbr>vab[23]</abbr> &middot; <abbr>vab[24]</abbr> &middot; <abbr>vab[25]</abbr> &middot; <abbr>vab[26]</abbr> &middot; <abbr>vab[27]</abbr> &middot; <abbr>vab[28]</abbr> &middot; <abbr>vab[29]</abbr> &middot; <abbr>vab[30]</abbr> &middot; <abbr><u>vab[31]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[25]</u></abbr> &middot; <abbr><u>vab[26]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr>offset[15]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>vab[24]</u></abbr> &middot; <abbr><u>vab[27]</u></abbr> &middot; <abbr><u>vab[22]</u></abbr> &middot; <abbr><u>vab[31]</u></abbr> &middot; <abbr><u>vab[30]</u></abbr> &middot; <abbr><u>vab[28]</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>vab[29]</u></abbr> &middot; <abbr><u>vab[23]</u></abbr></td></tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr><u>vab[22]</u></abbr> &middot; <abbr><u>vab[23]</u></abbr> &middot; <abbr><u>vab[24]</u></abbr> &middot; <abbr><u>vab[25]</u></abbr> &middot; <abbr><u>vab[26]</u></abbr> &middot; <abbr><u>vab[27]</u></abbr> &middot; <abbr><u>vab[28]</u></abbr> &middot; <abbr><u>vab[29]</u></abbr> &middot; <abbr><u>vab[30]</u></abbr> &middot; <abbr><u>vab[31]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
@@ -2039,9 +2039,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>true</abbr></td></tr>
 <tr>
-<td rowspan="5">addr_overflow_fault</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>vab[25]</abbr> &middot; <abbr>vab[26]</abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr>vab[21]</abbr> &middot; <abbr><u>offset[15]</u></abbr> &middot; <abbr>carry16</abbr> &middot; <abbr>vab[24]</abbr> &middot; <abbr>vab[27]</abbr> &middot; <abbr>vab[22]</abbr> &middot; <abbr>vab[31]</abbr> &middot; <abbr>vab[30]</abbr> &middot; <abbr>vab[28]</abbr> &middot; <abbr>vab[20]</abbr> &middot; <abbr>vab[29]</abbr> &middot; <abbr>vab[23]</abbr></td></tr>
+<td rowspan="5">addr_overflow_fault</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>vab[17]</abbr> &middot; <abbr>vab[18]</abbr> &middot; <abbr>vab[19]</abbr> &middot; <abbr>vab[20]</abbr> &middot; <abbr>vab[21]</abbr> &middot; <abbr>vab[22]</abbr> &middot; <abbr>vab[23]</abbr> &middot; <abbr>vab[24]</abbr> &middot; <abbr>vab[25]</abbr> &middot; <abbr>vab[26]</abbr> &middot; <abbr>vab[27]</abbr> &middot; <abbr>vab[28]</abbr> &middot; <abbr>vab[29]</abbr> &middot; <abbr>vab[30]</abbr> &middot; <abbr>vab[31]</abbr> &middot; <abbr>carry16</abbr> &middot; <abbr><u>offset[15]</u></abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[25]</u></abbr> &middot; <abbr><u>vab[26]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr>offset[15]</abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr><u>vab[24]</u></abbr> &middot; <abbr><u>vab[27]</u></abbr> &middot; <abbr><u>vab[22]</u></abbr> &middot; <abbr><u>vab[31]</u></abbr> &middot; <abbr><u>vab[30]</u></abbr> &middot; <abbr><u>vab[28]</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>vab[29]</u></abbr> &middot; <abbr><u>vab[23]</u></abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>vab[17]</u></abbr> &middot; <abbr><u>vab[18]</u></abbr> &middot; <abbr><u>vab[19]</u></abbr> &middot; <abbr><u>vab[20]</u></abbr> &middot; <abbr><u>vab[21]</u></abbr> &middot; <abbr><u>vab[22]</u></abbr> &middot; <abbr><u>vab[23]</u></abbr> &middot; <abbr><u>vab[24]</u></abbr> &middot; <abbr><u>vab[25]</u></abbr> &middot; <abbr><u>vab[26]</u></abbr> &middot; <abbr><u>vab[27]</u></abbr> &middot; <abbr><u>vab[28]</u></abbr> &middot; <abbr><u>vab[29]</u></abbr> &middot; <abbr><u>vab[30]</u></abbr> &middot; <abbr><u>vab[31]</u></abbr> &middot; <abbr><u>carry16</u></abbr> &middot; <abbr>offset[15]</abbr></td></tr>
 <tr>
 <td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>

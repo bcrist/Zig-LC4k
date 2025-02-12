@@ -26,13 +26,17 @@ pub fn Chip_Util(comptime Chip: type) type {
                             ci.when_low().pt().and_factor(b.when_high()),
                         },
                         .pt0 = a.when_high().pt(),
+                        .polarity = .positive,
                     },
                 };
                 if (options.co) |co| {
-                    chip.mc(co.mc()).logic = comptime .{ .sum = &.{
-                        a.when_high().pt().and_factor(b.when_high()),
-                        a.when_high().pt().and_factor(ci.when_high()),
-                        b.when_high().pt().and_factor(ci.when_high()),
+                    chip.mc(co.mc()).logic = comptime .{ .sum = .{
+                        .sum = &.{
+                            a.when_high().pt().and_factor(b.when_high()),
+                            a.when_high().pt().and_factor(ci.when_high()),
+                            b.when_high().pt().and_factor(ci.when_high()),
+                        },
+                        .polarity = .positive,
                     }};
                 }
             } else {
@@ -40,31 +44,44 @@ pub fn Chip_Util(comptime Chip: type) type {
                     .sum_xor_pt0 = .{
                         .sum = &.{ b.when_high().pt() },
                         .pt0 = a.when_high().pt(),
+                        .polarity = .positive,
                     },
                 };
                 if (options.co) |co| {
-                    chip.mc(co.mc()).logic = comptime .{ .sum = &.{
-                        a.when_high().pt().and_factor(b.when_high()),
+                    chip.mc(co.mc()).logic = comptime .{ .sum = .{
+                        .sum = &.{
+                            a.when_high().pt().and_factor(b.when_high()),
+                        },
+                        .polarity = .positive,
                     }};
                 }
             }
 
             if (options.g) |g| {
-                chip.mc(g.mc()).logic = comptime .{ .sum = &.{
-                    a.when_high().pt().and_factor(b.when_high()),
+                chip.mc(g.mc()).logic = comptime .{ .sum = .{
+                    .sum = &.{
+                        a.when_high().pt().and_factor(b.when_high()),
+                    },
+                    .polarity = .positive,
                 }};
             }
 
             if (options.p) |p| {
-                chip.mc(p.mc()).logic = comptime .{ .sum = &.{
-                    a.when_high().pt(),
-                    b.when_high().pt(),
+                chip.mc(p.mc()).logic = comptime .{ .sum = .{
+                    .sum = &.{
+                        a.when_high().pt(),
+                        b.when_high().pt(),
+                    },
+                    .polarity = .positive,
                 }};
             }
 
             if (options.k) |k| {
-                chip.mc(k.mc()).logic = comptime .{ .sum = &.{
-                    a.when_low().pt().and_factor(b.when_low()),
+                chip.mc(k.mc()).logic = comptime .{ .sum = .{
+                    .sum = &.{
+                        a.when_low().pt().and_factor(b.when_low()),
+                    },
+                    .polarity = .positive,
                 }};
             }
         }
@@ -97,6 +114,7 @@ pub fn Chip_Util(comptime Chip: type) type {
                             ci.when_low().pt().and_factor(b[0].when_high()),
                         },
                         .pt0 = a[0].when_high().pt(),
+                        .polarity = .positive,
                     },
                 };
                 // carry0 = a[0] & b[0]
@@ -113,17 +131,21 @@ pub fn Chip_Util(comptime Chip: type) type {
                             b[1].when_low().pt().and_factor(b[0].when_high()).and_factor(ci.when_high()),
                         },
                         .pt0 = a[1].when_high().pt(),
+                        .polarity = .positive,
                     },
                 };
                 if (options.co) |co| {
-                    chip.mc(co.mc()).logic = comptime .{ .sum = &.{
-                        a[1].when_high().pt().and_factor(b[1].when_high()),
-                        a[1].when_high().pt().and_factor(a[0].when_high()).and_factor(b[0].when_high()),
-                        b[1].when_high().pt().and_factor(a[0].when_high()).and_factor(b[0].when_high()),
-                        a[1].when_high().pt().and_factor(a[0].when_high()).and_factor(ci.when_high()),
-                        b[1].when_high().pt().and_factor(a[0].when_high()).and_factor(ci.when_high()),
-                        a[1].when_high().pt().and_factor(b[0].when_high()).and_factor(ci.when_high()),
-                        b[1].when_high().pt().and_factor(b[0].when_high()).and_factor(ci.when_high()),
+                    chip.mc(co.mc()).logic = comptime .{ .sum = .{
+                        .sum = &.{
+                            a[1].when_high().pt().and_factor(b[1].when_high()),
+                            a[1].when_high().pt().and_factor(a[0].when_high()).and_factor(b[0].when_high()),
+                            b[1].when_high().pt().and_factor(a[0].when_high()).and_factor(b[0].when_high()),
+                            a[1].when_high().pt().and_factor(a[0].when_high()).and_factor(ci.when_high()),
+                            b[1].when_high().pt().and_factor(a[0].when_high()).and_factor(ci.when_high()),
+                            a[1].when_high().pt().and_factor(b[0].when_high()).and_factor(ci.when_high()),
+                            b[1].when_high().pt().and_factor(b[0].when_high()).and_factor(ci.when_high()),
+                        },
+                        .polarity = .positive,
                     }};
                 }
             } else {
@@ -131,6 +153,7 @@ pub fn Chip_Util(comptime Chip: type) type {
                     .sum_xor_pt0 = .{
                         .sum = &.{ b[0].when_high().pt() },
                         .pt0 = a[0].when_high().pt(),
+                        .polarity = .positive,
                     },
                 };
                 // carry0 = a[0] & b[0]
@@ -142,13 +165,17 @@ pub fn Chip_Util(comptime Chip: type) type {
                             b[1].when_low().pt().and_factor(a[0].when_high()).and_factor(b[0].when_high()),
                         },
                         .pt0 = a[1].when_high().pt(),
+                        .polarity = .positive,
                     },
                 };
                 if (options.co) |co| {
-                    chip.mc(co.mc()).logic = comptime .{ .sum = &.{
-                        a[1].when_high().pt().and_factor(b[1].when_high()),
-                        a[1].when_high().pt().and_factor(a[0].when_high()).and_factor(b[0].when_high()),
-                        b[1].when_high().pt().and_factor(a[0].when_high()).and_factor(b[0].when_high()),
+                    chip.mc(co.mc()).logic = comptime .{ .sum = .{
+                        .sum = &.{
+                            a[1].when_high().pt().and_factor(b[1].when_high()),
+                            a[1].when_high().pt().and_factor(a[0].when_high()).and_factor(b[0].when_high()),
+                            b[1].when_high().pt().and_factor(a[0].when_high()).and_factor(b[0].when_high()),
+                        },
+                        .polarity = .positive,
                     }};
                 }
             }
@@ -159,29 +186,38 @@ pub fn Chip_Util(comptime Chip: type) type {
 
             if (options.g) |g| {
                 // g = g[1] | p[1] & g[0]
-                chip.mc(g.mc()).logic = comptime .{ .sum = &.{
-                    a[1].when_high().pt().and_factor(b[1].when_high()),
-                    a[1].when_high().pt().and_factor(a[0].when_high()).and_factor(b[0].when_high()),
-                    b[1].when_high().pt().and_factor(a[0].when_high()).and_factor(b[0].when_high()),
+                chip.mc(g.mc()).logic = comptime .{ .sum = .{
+                    .sum = &.{
+                        a[1].when_high().pt().and_factor(b[1].when_high()),
+                        a[1].when_high().pt().and_factor(a[0].when_high()).and_factor(b[0].when_high()),
+                        b[1].when_high().pt().and_factor(a[0].when_high()).and_factor(b[0].when_high()),
+                    },
+                    .polarity = .positive,
                 }};
             }
 
             if (options.p) |p| {
                 // p = p[1] & p[0]
-                chip.mc(p.mc()).logic = comptime .{ .sum = &.{
-                    a[1].when_high().pt().and_factor(a[0].when_high()),
-                    a[1].when_high().pt().and_factor(b[0].when_high()),
-                    b[1].when_high().pt().and_factor(a[0].when_high()),
-                    b[1].when_high().pt().and_factor(b[0].when_high()),
+                chip.mc(p.mc()).logic = comptime .{ .sum = .{
+                    .sum = &.{
+                        a[1].when_high().pt().and_factor(a[0].when_high()),
+                        a[1].when_high().pt().and_factor(b[0].when_high()),
+                        b[1].when_high().pt().and_factor(a[0].when_high()),
+                        b[1].when_high().pt().and_factor(b[0].when_high()),
+                    },
+                    .polarity = .positive,
                 }};
             }
 
             if (options.k) |k| {
                 // k = k[1] | ~g[1] & k[0]
-                chip.mc(k.mc()).logic = comptime .{ .sum = &.{
-                    a[1].when_low().pt().and_factor(b[1].when_low()),
-                    a[1].when_low().pt().and_factor(a[0].when_low()).and_factor(b[0].when_low()),
-                    b[1].when_low().pt().and_factor(a[0].when_low()).and_factor(b[0].when_low()),
+                chip.mc(k.mc()).logic = comptime .{ .sum = .{
+                    .sum = &.{
+                        a[1].when_low().pt().and_factor(b[1].when_low()),
+                        a[1].when_low().pt().and_factor(a[0].when_low()).and_factor(b[0].when_low()),
+                        b[1].when_low().pt().and_factor(a[0].when_low()).and_factor(b[0].when_low()),
+                    },
+                    .polarity = .positive,
                 }};
             }
         }
@@ -205,6 +241,7 @@ pub fn Chip_Util(comptime Chip: type) type {
                 .sum_xor_pt0 = .{
                     .sum = &.{ b[0].when_high().pt() },
                     .pt0 = a[0].when_high().pt(),
+                    .polarity = .positive,
                 },
             };
             // carry0 = a[0] & b[0]
@@ -216,6 +253,7 @@ pub fn Chip_Util(comptime Chip: type) type {
                         b[1].when_low().pt().and_factor(a[0].when_high()).and_factor(b[0].when_high()),
                     },
                     .pt0 = a[1].when_high().pt(),
+                    .polarity = .positive,
                 },
             };
             // carry1 = a[1] & b[1] | a[1] & a[0] & b[0] | b[1] & a[0] & b[0]
@@ -233,18 +271,22 @@ pub fn Chip_Util(comptime Chip: type) type {
                         b[2].when_high().pt().and_factor(b[1].when_low()).and_factor(b[0].when_low()),
                     },
                     .pt0 = a[2].when_high().pt(),
+                    .polarity = .positive,
                 },
             };
 
             if (options.co) |co| {
-                chip.mc(co.mc()).logic = comptime .{ .sum = &.{
-                    a[2].when_high().pt().and_factor(b[2].when_high()),
-                    a[1].when_high().pt().and_factor(b[1].when_high()).and_factor(a[2].when_high()),
-                    a[1].when_high().pt().and_factor(b[1].when_high()).and_factor(b[2].when_high()),
-                    a[0].when_high().pt().and_factor(b[0].when_high()).and_factor(a[1].when_high()).and_factor(a[2].when_high()),
-                    a[0].when_high().pt().and_factor(b[0].when_high()).and_factor(a[1].when_high()).and_factor(b[2].when_high()),
-                    a[0].when_high().pt().and_factor(b[0].when_high()).and_factor(b[1].when_high()).and_factor(a[2].when_high()),
-                    a[0].when_high().pt().and_factor(b[0].when_high()).and_factor(b[1].when_high()).and_factor(b[2].when_high()),
+                chip.mc(co.mc()).logic = comptime .{ .sum = .{
+                    .sum = &.{
+                        a[2].when_high().pt().and_factor(b[2].when_high()),
+                        a[1].when_high().pt().and_factor(b[1].when_high()).and_factor(a[2].when_high()),
+                        a[1].when_high().pt().and_factor(b[1].when_high()).and_factor(b[2].when_high()),
+                        a[0].when_high().pt().and_factor(b[0].when_high()).and_factor(a[1].when_high()).and_factor(a[2].when_high()),
+                        a[0].when_high().pt().and_factor(b[0].when_high()).and_factor(a[1].when_high()).and_factor(b[2].when_high()),
+                        a[0].when_high().pt().and_factor(b[0].when_high()).and_factor(b[1].when_high()).and_factor(a[2].when_high()),
+                        a[0].when_high().pt().and_factor(b[0].when_high()).and_factor(b[1].when_high()).and_factor(b[2].when_high()),
+                    },
+                    .polarity = .positive,
                 }};
             }
         }

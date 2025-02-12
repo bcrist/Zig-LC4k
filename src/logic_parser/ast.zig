@@ -163,11 +163,11 @@ pub fn Ast(comptime Device: type) type {
                     const data = slice.items(.data)[node_index].binary;
                     const lhs_max_bit = try self.infer_and_check_node_max_bit(slice, data.lhs);
                     const rhs_max_bit = try self.infer_and_check_node_max_bit(slice, data.rhs);
-                    if (lhs_max_bit != rhs_max_bit and lhs_max_bit != 1 and rhs_max_bit != 1) {
+                    if (lhs_max_bit != rhs_max_bit and lhs_max_bit != 0 and rhs_max_bit != 0) {
                         report_node_error_fmt_3(self.gpa, self.nodes.slice(), self.eqn, 
                             node, "Both sides of binary operator must have the same bit width, or one side must have a width of 1 bit", .{},
-                            data.lhs, "Left side has width of {} bits", .{ lhs_max_bit },
-                            data.rhs, "Right side has width of {} bits", .{ rhs_max_bit }
+                            data.lhs, "Left side has width of {} bits", .{ @as(usize, lhs_max_bit) + 1 },
+                            data.rhs, "Right side has width of {} bits", .{ @as(usize, rhs_max_bit) + 1 }
                         );
                         return error.InvalidEquation;
                     }

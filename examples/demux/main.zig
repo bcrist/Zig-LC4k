@@ -33,12 +33,15 @@ pub fn main() !void {
     inline for (outputs, 0..) |out, bit| {
         var mc = chip.mc(out.mc());
         mc.output.oe = .goe0;
-        mc.logic = comptime .{ .sum_inverted = &.{
-            Chip.PT.when_eql(&.{
-                inputs[0],
-                inputs[1],
-                inputs[2],
-            }, bit),
+        mc.logic = comptime .{ .sum = .{
+            .sum = &.{
+                Chip.PT.when_eql(&.{
+                    inputs[0],
+                    inputs[1],
+                    inputs[2],
+                }, bit),
+            },
+            .polarity = .negative,
         }};
     }
 
