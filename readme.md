@@ -50,9 +50,11 @@ An expression parser is included as a more convenient way to define the logic to
 * A `*const Names` used to map identifiers within expressions to device signals.
 For examples of initializing a parser, check the [examples](https://github.com/bcrist/Zig-LC4k/blob/main/examples/adder/main.zig#L129).
 
-Once you have a parser, there are four ways to parse an expression:
-* `Logic_Parser.pt(equation, options)`: Generates a single product term, suitable for assignment to a GLB config's `shared_pt_clock`, etc.
-* `Logic_Parser.sum(equation, options)`: Generates an array of product terms, suitable for assignment to an output config's `five_pt_fast_bypass` option.
+Once you have a parser, there are several ways to parse an expression:
+* `Logic_Parser.pt(equation, options)`: Generates a single product term, suitable for assignment to a GLB config's `shared_pt_enable`, etc.
+* `Logic_Parser.pt_with_polarity(equation, options)`: Generates a single product term, suitable for assignment to a GLB config's `shared_pt_clock`, etc, where the product term can be inverted to support sum expressions.
+* `Logic_Parser.sum(equation, options)`: Generates an array of product terms, for use when you want to process the results more before using them
+* `Logic_Parser.sum_with_polarity(equation, options)`: Generates an array of product terms suitable for assignment to `five_pt_fast_bypass`, etc, where the result can be inverted to support product-of-sums expressions.
 * `Logic_Parser.logic(equation, options)`: Suitable for assignment to a macrocell config's `logic` field.
 * `Logic_Parser.assign_logic(chip, mc_signals, equation, options)`: Unlike all the previous functions, this form allows the final result of the equation to have multiple bits.  Rather than returning the parsed logic, it will automatically assign each bit of the result to the macrocell logic field corresponding to the same bit in the `mc_signals` array.
 
@@ -66,6 +68,9 @@ Note: the `input_buffer` and `sum_xor_input_buffer` modes will never be generate
 * `Options.max_product_terms`: Allows limiting the number of product terms that can be produced before an error will be generated.  By default, up to 80 PTs can be generated (the maximum that exist in each GLB)
 * `Options.optimize`: When enabled, expressions will be optimized using the Quine-McCluskey-Petrick method.  This optimization is exponential in time and space complexity, so it is not enabled by default.  When disabled, expressions will be normalized if they are not in sum-of-products form, and many symbolic simplifications will be performed if possible, but there is no guarantee that the minimum number of product terms will be used.
 * `Options.dont_care`: When optimization is enabled, a secondary equation can be provided here to indicate conditions where the result does not matter.  The optimizer may then be able to use fewer product terms.
+
+Options are passed to the the `Logic_Parser` through an `anytype` parameter.  Arbitrary additional names can be defined in this struct and they can be used in the expression as if they had been defined in the `Names` struct.
+See the [gray code counter](https://github.com/bcrist/Zig-LC4k/blob/main/examples/gray_code/main.zig#L67) example for a demonstration of this.
 
 ### Parser Syntax
 
