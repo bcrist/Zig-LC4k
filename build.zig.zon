@@ -1,7 +1,7 @@
 .{
     .name = "LC4k",
-    .version = "0.0.2",
-    .minimum_zig_version = "0.14.0-dev.2627+6a21d18ad",
+    .version = "0.1.0",
+    .minimum_zig_version = "0.14.0-dev.3217+5b9b5e45c",
     .paths = .{
         "src",
         "build.zig",
@@ -14,8 +14,8 @@
             .hash = "122006a04539cb247748b9d786bc8d7045f4688575cadaffc3d442a4e5bdc8705527",
         },
         .LIMP = .{
-            .url = "git+https://github.com/bcrist/limp#e95510a40e2d890168b5e31b60b744f19760a803",
-            .hash = "1220d95628db6955254878f749594ca528a6077bfbd078483d2746544cf2468010a5",
+            .url = "git+https://github.com/bcrist/limp#612b738e5302493098cc1f2136defc8c08e77876",
+            .hash = "12204fb0a6662064d46e4cf1a24f3dc7e3c7cb53985c1eda8427858ac8a30b2eddff",
             .lazy = true,
         },
         .RE4k = .{

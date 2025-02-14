@@ -82,7 +82,7 @@ test "literal values" {
 fn test_literal(str: []const u8, value: u64, bits: u6) !void {
     const lit = try lp.Literal.parse(str);
     try std.testing.expectEqual(value, lit.value);
-    try std.testing.expectEqual(bits, lit.bits);
+    try std.testing.expectEqual(bits, lit.max_bit_index + 1);
 }
 
 test "parsing" {
@@ -195,7 +195,7 @@ test "parsing" {
         \\0-45 concat_be:
         \\   [0] 2-13 extract_le:
         \\      [0] 2-7 bus_ref (1b) < io_A6
-        \\      [1] 9-12 bit_range (0b) 0:7
+        \\      [1] 9-12 bit_range (6b) 0:7
         \\   [1] 14-22 extract:
         \\      [0] 14-19 bus_ref (1b) < io_A7
         \\      [1] 20-21 literal (6b) 0b1
@@ -204,7 +204,7 @@ test "parsing" {
         \\      [1] 30-31 literal (6b) 0b1
         \\      [2] 32-33 literal (6b) 0b10
         \\      [3] 34-35 literal (6b) 0b11
-        \\      [4] 38-41 bit_range (0b) 4:3
+        \\      [4] 38-41 bit_range (6b) 4:3
         \\
     );
 
@@ -355,28 +355,28 @@ test "typechecking" {
     try test_bit_widths(Device, &names, "A[2:1]",
         \\0-6 extract (2b):
         \\   [0] 0-1 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
-        \\   [1] 2-5 bit_range (0b) 2:1
+        \\   [1] 2-5 bit_range (6b) 2:1
         \\
     );
 
     try test_bit_widths(Device, &names, "A[2:]",
         \\0-5 extract (3b):
         \\   [0] 0-1 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
-        \\   [1] 2-4 bit_range (0b) 2:null
+        \\   [1] 2-4 bit_range (6b) 2:null
         \\
     );
 
     try test_bit_widths(Device, &names, "A[:1]",
         \\0-5 extract (3b):
         \\   [0] 0-1 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
-        \\   [1] 2-4 bit_range (0b) null:1
+        \\   [1] 2-4 bit_range (6b) null:1
         \\
     );
 
     try test_bit_widths(Device, &names, "A[:]",
         \\0-4 extract (4b):
         \\   [0] 0-1 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
-        \\   [1] 2-3 bit_range (0b) null:null
+        \\   [1] 2-3 bit_range (6b) null:null
         \\
     );
 
@@ -406,8 +406,8 @@ test "typechecking" {
     try test_bit_widths(Device, &names, "A[>2:2:]",
         \\0-8 multi_extract_be (5b):
         \\   [0] 0-1 bus_ref (4b) < mc_A0 mc_A1 mc_A2 mc_A3
-        \\   [1] 3-6 bit_range (0b) 2:2
-        \\   [2] 6-7 bit_range (0b) null:null
+        \\   [1] 3-6 bit_range (6b) 2:2
+        \\   [2] 6-7 bit_range (6b) null:null
         \\
     );
 
@@ -432,7 +432,7 @@ fn test_bit_widths(comptime Device: type, names: *const Device.Names, eqn: []con
     var ast = try lp.Ast(Device).parse(std.testing.allocator, names, eqn);
     defer ast.deinit();
 
-    _ = try ast.infer_and_check_bit_widths(.{});
+    _ = try ast.infer_and_check_max_bit(.{});
 
     var temp = std.ArrayList(u8).init(std.testing.allocator);
     defer temp.deinit();
@@ -775,7 +775,7 @@ fn test_build_ir(comptime Device: type, names: *const Device.Names, eqn: []const
     var ast = try lp.Ast(Device).parse(std.testing.allocator, names, eqn);
     defer ast.deinit();
 
-    _ = try ast.infer_and_check_bit_widths(.{});
+    _ = try ast.infer_and_check_max_bit(.{});
 
     var ir_data = try lp.IR_Data.init(std.testing.allocator);
     defer ir_data.deinit();

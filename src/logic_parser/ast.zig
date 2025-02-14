@@ -766,9 +766,9 @@ pub fn Ast(comptime Device: type) type {
 
                 try w.print("{d}-{d} {s}", .{ start_offset, end_offset, @tagName(kind) });
 
-                const result_bits = slice.items(.result_bits)[node_index];
-                if (result_bits) |bits| {
-                    try w.print(" ({d}b)", .{ bits });
+                const max_bits = slice.items(.max_bit)[node_index];
+                if (max_bits) |bits| {
+                    try w.print(" ({d}b)", .{ @as(usize, bits) + 1 });
                 }
 
                 const data = slice.items(.data)[node_index];
@@ -783,9 +783,9 @@ pub fn Ast(comptime Device: type) type {
                         try w.print(" {s}\n", .{ @tagName(data.signal) });
                     },
                     .bus_ref => {
-                        if (result_bits) |bits| {
+                        if (max_bits) |max_bit| {
                             try w.writeAll(" <");
-                            for (data.bus_ref[0..bits]) |signal| {
+                            for (data.bus_ref[0 .. @as(usize, max_bit) + 1]) |signal| {
                                 try w.print(" {s}", .{ @tagName(signal) });
                             }
                             try w.writeByte('\n');

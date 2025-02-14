@@ -138,7 +138,7 @@ pub fn Names(comptime Device: type) type {
                         }
                     },
                     .pointer => |info| {
-                        if (info.size != .Slice) {
+                        if (info.size != .slice) {
                             @compileError("Unexpected type: " ++ @typeName(T) ++ " for " ++ options.prefix ++ options.name ++ options.suffix);
                         }
                         inline for (0.., what) |i, elem| {
