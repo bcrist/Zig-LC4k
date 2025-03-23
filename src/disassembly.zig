@@ -21,7 +21,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
     var results = Disassembly_Results(Device) {
         .config = .{},
         .gi_routing = .{ .{ null } ** Device.num_gis_per_glb } ** Device.num_glbs,
-        .sum_routing = .{ .{} } ** Device.num_glbs,
+        .sum_routing = .{ routing.Routing_Data{} } ** Device.num_glbs,
         .errors = std.ArrayList(Disassembly_Error).init(allocator),
     };
 

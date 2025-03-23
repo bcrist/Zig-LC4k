@@ -17,8 +17,8 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_tests.step);
 
     if (b.option(bool, "codegen", "regenerate device source files") orelse false) {
-        const re4k_path = if (b.lazyDependency("RE4k", .{})) |dep| dep.path("") else b.path("");
-        if (b.lazyDependency("LIMP", .{ .optimize = .ReleaseSafe })) |dep| {
+        const re4k_path = if (b.lazyDependency("re4k", .{})) |dep| dep.path("") else b.path("");
+        if (b.lazyDependency("limp", .{ .optimize = .ReleaseSafe })) |dep| {
             const limp = dep.artifact("limp");
             const run_limp = b.addRunArtifact(limp);
             run_limp.addArgs(&.{ "-R", "--set", "re4k" });

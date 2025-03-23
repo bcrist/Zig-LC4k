@@ -1,7 +1,8 @@
 .{
-    .name = "counter2",
+    .name = .counter2,
+    .fingerprint = 0x44ca65971af47549,
     .version = "0.0.1",
-    .minimum_zig_version = "0.14.0-dev.2627+6a21d18ad",
+    .minimum_zig_version = "0.14.0",
     .paths = .{""},
     .dependencies = .{
         .lc4k = .{ .path = "../.." },

@@ -1,7 +1,8 @@
 .{
-    .name = "LC4k",
+    .name = .lc4k,
+    .fingerprint = 0x7b6fa9f9423b1ee5,
     .version = "0.1.0",
-    .minimum_zig_version = "0.14.0-dev.3217+5b9b5e45c",
+    .minimum_zig_version = "0.14.0",
     .paths = .{
         "src",
         "build.zig",
@@ -10,17 +11,17 @@
     },
     .dependencies = .{
         .console_helper = .{
-            .url = "git+https://github.com/bcrist/Zig-ConsoleHelper#e39301c1d36b3a2aa98a8c7c8e5fa2eaddfd1000",
-            .hash = "122006a04539cb247748b9d786bc8d7045f4688575cadaffc3d442a4e5bdc8705527",
+            .url = "git+https://github.com/bcrist/Zig-ConsoleHelper#32b5e5e57554cdf549da81e7808a5fb37fd12154",
+            .hash = "console_helper-0.3.1-19g4EyVCAABN800zgOQeVtcgyuI1mqdn0p__Uyn7OZVH",
         },
-        .LIMP = .{
-            .url = "git+https://github.com/bcrist/limp#612b738e5302493098cc1f2136defc8c08e77876",
-            .hash = "12204fb0a6662064d46e4cf1a24f3dc7e3c7cb53985c1eda8427858ac8a30b2eddff",
+        .limp = .{
+            .url = "git+https://github.com/bcrist/limp#00416cf2cb4681c23533e0e804dc13c573a6eb28",
+            .hash = "limp-0.2.11-RgAsz7l1DwCs9TF_4CAtEdFGyugwd90u9EYN75E4KPor",
             .lazy = true,
         },
-        .RE4k = .{
-            .url = "git+https://github.com/bcrist/RE4k#b6935754045747f3c9ce12ee7a408d148c5253f5",
-            .hash = "122060ebf8918ac936a7fa115f8fb9a435897402b94458672d6cf9da72c6913fd6bc",
+        .re4k = .{
+            .url = "git+https://github.com/bcrist/RE4k#6f10bd630c8c7b4a415cc6d8e03a79a193903bb7",
+            .hash = "RE4k-0.1.0-AAAAAILhwwBg6_iRisk2p_oRX4-5pDWJdAK5RFhnLWz5",
             .lazy = true,
         },
     },
