@@ -198,6 +198,12 @@ pub const osctimer = struct {
 ]])(info)
 end
 
+local pinned_grp_names = {}
+for _, pin in pairs(info.pins) do
+    if pin.grp_name and pin.grp_name ~= '' then
+        pinned_grp_names[pin.grp_name] = pin
+    end
+end
 local grp_names = {}
 for _, pin in pairs(info.grp_pins) do
     if pin.grp_name and pin.grp_name ~= '' then
@@ -215,8 +221,11 @@ end
 write(nl, [[pub const Signal = enum (u16) {]], indent)
 do
     local counter = 0
-    for grp_name in spairs(grp_names, natural_cmp) do
+    for grp_name, pin_or_mc in spairs(grp_names, natural_cmp) do
         write(nl, grp_name, ' = ', counter, ',')
+        if pin_or_mc.func and pinned_grp_names[grp_name] == nil then
+            write " // Unconnected internally"
+        end
         counter = counter + 1
     end
 end

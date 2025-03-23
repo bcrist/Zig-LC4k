@@ -979,7 +979,7 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
 
             if (Device.Signal.maybe_mc_pad(mcref)) |pad| {
                 try begin_cell(writer, cell_options);
-                try writer.writeAll(pad.pin().id());
+                if (pad.maybe_pin()) |pi| try writer.writeAll(pi.id());
                 try end_cell(writer);
 
                 try begin_cell(writer, cell_options);
@@ -1159,140 +1159,162 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
             });
             try end_cell(writer);
 
-            var out_mcref = mcref;
-            var out_options = cell_options;
-            var out_mc_delta: usize = 0;
-            var out_from_extra: []const u8 = "";
-            var temp_out_buf: [64]u8 = undefined;
+            if (Device.Signal.maybe_mc_pad(mcref) == null) {
+                // Output columns:
+                try begin_cell(writer, .{}); // From
+                try end_cell(writer);
 
-            var oe_mcref = mcref;
-            var oe_options = cell_options;
-            var oe_mc_delta: usize = 0;
-            var temp_oe_buf: [64]u8 = undefined;
+                try begin_cell(writer, .{}); // OE
+                try end_cell(writer);
 
-            if (Device.family == .zero_power_enhanced) {
-                out_mcref = mc_config.output.routing.to_absolute(mcref).mc();
-                out_mc_delta = mc_config.output.routing.to_relative(mcref) orelse 0;
+                try begin_cell(writer, .{}); // Slew
+                try end_cell(writer);
 
-                const out_mc_class = try std.fmt.bufPrint(&temp_out_buf, ".mc-{}", .{ out_mcref.mc });
-                out_options = Cell_Options {
-                    .class = out_mc_class[1..],
-                    .hover_selector = out_mc_class,
-                };
+                try begin_cell(writer, .{}); // Drive
+                try end_cell(writer);
 
-                oe_options = switch (mc_config.output.oe) {
-                    .from_orm_active_high, .from_orm_active_low => out_options,
-                    else => .{},
-                };
-                oe_mcref = out_mcref;
-                oe_mc_delta = out_mc_delta;
+                // Input columns:
+                try begin_cell(writer, .{}); // Threshold
+                try end_cell(writer);
+
+                try begin_cell(writer, .{}); // Term
+                try end_cell(writer);
             } else {
-                oe_mcref = mc_config.output.oe_routing.to_absolute(mcref).mc();
-                oe_mc_delta = mc_config.output.oe_routing.to_relative(mcref) orelse 0;
+                var out_mcref = mcref;
+                var out_options = cell_options;
+                var out_mc_delta: usize = 0;
+                var out_from_extra: []const u8 = "";
+                var temp_out_buf: [64]u8 = undefined;
 
-                const oe_mc_class = try std.fmt.bufPrint(&temp_oe_buf, ".mc-{}", .{ oe_mcref.mc });
-                oe_options = Cell_Options {
-                    .class = oe_mc_class[1..],
-                    .hover_selector = oe_mc_class,
-                };
+                var oe_mcref = mcref;
+                var oe_options = cell_options;
+                var oe_mc_delta: usize = 0;
+                var temp_oe_buf: [64]u8 = undefined;
 
-                switch (mc_config.output.routing.mode()) {
-                    .same_as_oe => {
-                        out_mcref = oe_mcref;
-                        out_mc_delta = oe_mc_delta;
-                        out_options = oe_options;
-                    },
-                    .self => {},
-                    .five_pt_fast_bypass => out_from_extra = " <kbd class=\"out fast\">Fast-Bypass</kbd>",
-                    .five_pt_fast_bypass_inverted => out_from_extra = " <kbd class=\"out fast\">Fast-Bypass</kbd> <kbd class=\"out invert\">Invert</kbd>",
+                if (Device.family == .zero_power_enhanced) {
+                    out_mcref = mc_config.output.routing.to_absolute(mcref).mc();
+                    out_mc_delta = mc_config.output.routing.to_relative(mcref) orelse 0;
+
+                    const out_mc_class = try std.fmt.bufPrint(&temp_out_buf, ".mc-{}", .{ out_mcref.mc });
+                    out_options = Cell_Options {
+                        .class = out_mc_class[1..],
+                        .hover_selector = out_mc_class,
+                    };
+
+                    oe_options = switch (mc_config.output.oe) {
+                        .from_orm_active_high, .from_orm_active_low => out_options,
+                        else => .{},
+                    };
+                    oe_mcref = out_mcref;
+                    oe_mc_delta = out_mc_delta;
+                } else {
+                    oe_mcref = mc_config.output.oe_routing.to_absolute(mcref).mc();
+                    oe_mc_delta = mc_config.output.oe_routing.to_relative(mcref) orelse 0;
+
+                    const oe_mc_class = try std.fmt.bufPrint(&temp_oe_buf, ".mc-{}", .{ oe_mcref.mc });
+                    oe_options = Cell_Options {
+                        .class = oe_mc_class[1..],
+                        .hover_selector = oe_mc_class,
+                    };
+
+                    switch (mc_config.output.routing.mode()) {
+                        .same_as_oe => {
+                            out_mcref = oe_mcref;
+                            out_mc_delta = oe_mc_delta;
+                            out_options = oe_options;
+                        },
+                        .self => {},
+                        .five_pt_fast_bypass => out_from_extra = " <kbd class=\"out fast\">Fast-Bypass</kbd>",
+                        .five_pt_fast_bypass_inverted => out_from_extra = " <kbd class=\"out fast\">Fast-Bypass</kbd> <kbd class=\"out invert\">Invert</kbd>",
+                    }
+
+                    switch (mc_config.output.oe) {
+                        .from_orm_active_high, .from_orm_active_low => {},
+                        else => oe_options = .{},
+                    }
                 }
 
+                if (mc_config.output.oe == .input_only) {
+                    out_options = .{};
+                    oe_options = .{};
+                }
+
+                try begin_cell(writer, out_options);
+                if (mc_config.output.oe != .input_only) {
+                    if (out_mc_delta != 0) {
+                        try writer.print("<kbd class=\"out routing\">+{}</kbd> ", .{ out_mc_delta });
+                    }
+                    try writer.writeAll(options.get_names().get_mc_name(out_mcref));
+                }
+                try writer.writeAll(out_from_extra);
+                try end_cell(writer);
+
+                try begin_cell(writer, oe_options);
                 switch (mc_config.output.oe) {
-                    .from_orm_active_high, .from_orm_active_low => {},
-                    else => oe_options = .{},
+                    .goe0 => try writer.writeAll("<kbd class=\"oe goe0\">GOE 0</kbd> <kbd class=\"oe pos\">Active High</kbd>"),
+                    .goe1 => try writer.writeAll("<kbd class=\"oe goe1\">GOE 1</kbd> <kbd class=\"oe pos\">Active High</kbd>"),
+                    .goe2 => try writer.writeAll("<kbd class=\"oe goe2\">GOE 2</kbd> <kbd class=\"oe pos\">Active High</kbd>"),
+                    .goe3 => try writer.writeAll("<kbd class=\"oe goe3\">GOE 3</kbd> <kbd class=\"oe pos\">Active High</kbd>"),
+                    .from_orm_active_high => {
+                        if (oe_mc_delta != 0) {
+                            try writer.print("<kbd class=\"oe routing\">+{}</kbd> ", .{ oe_mc_delta });
+                        }
+                        try writer.writeAll(options.get_names().get_mc_name(oe_mcref));
+                        try writer.writeAll(" <kbd class=\"oe from-orm\">PT</kbd> <kbd class=\"oe pos\">Active High</kbd>");
+                    },
+                    .from_orm_active_low => {
+                        if (oe_mc_delta != 0) {
+                            try writer.print("<kbd class=\"oe routing\">+{}</kbd> ", .{ oe_mc_delta });
+                        }
+                        try writer.writeAll(options.get_names().get_mc_name(oe_mcref));
+                        try writer.writeAll(" <kbd class=\"oe from-orm\">PT</kbd> <kbd class=\"oe neg\">Active Low</kbd>");
+                    },
+                    .output_only => try writer.writeAll("<kbd class=\"oe output-only\">Output</kbd>"),
+                    .input_only => try writer.writeAll("<kbd class=\"oe input-only\">Input</kbd>"),
                 }
-            }
+                try end_cell(writer);
 
-            if (mc_config.output.oe == .input_only) {
-                out_options = .{};
-                oe_options = .{};
-            }
-
-            try begin_cell(writer, out_options);
-            if (mc_config.output.oe != .input_only) {
-                if (out_mc_delta != 0) {
-                    try writer.print("<kbd class=\"out routing\">+{}</kbd> ", .{ out_mc_delta });
+                try begin_cell(writer, out_options);
+                if (mc_config.output.oe != .input_only) {
+                    try writer.writeAll(switch (mc_config.output.slew_rate.?) {
+                        .slow => "<kbd class=\"slew slow\">Slow</kbd>",
+                        .fast => "<kbd class=\"slew fast\">Fast</kbd>",
+                    });
                 }
-                try writer.writeAll(options.get_names().get_mc_name(out_mcref));
-            }
-            try writer.writeAll(out_from_extra);
-            try end_cell(writer);
+                try end_cell(writer);
 
-            try begin_cell(writer, oe_options);
-            switch (mc_config.output.oe) {
-                .goe0 => try writer.writeAll("<kbd class=\"oe goe0\">GOE 0</kbd> <kbd class=\"oe pos\">Active High</kbd>"),
-                .goe1 => try writer.writeAll("<kbd class=\"oe goe1\">GOE 1</kbd> <kbd class=\"oe pos\">Active High</kbd>"),
-                .goe2 => try writer.writeAll("<kbd class=\"oe goe2\">GOE 2</kbd> <kbd class=\"oe pos\">Active High</kbd>"),
-                .goe3 => try writer.writeAll("<kbd class=\"oe goe3\">GOE 3</kbd> <kbd class=\"oe pos\">Active High</kbd>"),
-                .from_orm_active_high => {
-                    if (oe_mc_delta != 0) {
-                        try writer.print("<kbd class=\"oe routing\">+{}</kbd> ", .{ oe_mc_delta });
-                    }
-                    try writer.writeAll(options.get_names().get_mc_name(oe_mcref));
-                    try writer.writeAll(" <kbd class=\"oe from-orm\">PT</kbd> <kbd class=\"oe pos\">Active High</kbd>");
-                },
-                .from_orm_active_low => {
-                    if (oe_mc_delta != 0) {
-                        try writer.print("<kbd class=\"oe routing\">+{}</kbd> ", .{ oe_mc_delta });
-                    }
-                    try writer.writeAll(options.get_names().get_mc_name(oe_mcref));
-                    try writer.writeAll(" <kbd class=\"oe from-orm\">PT</kbd> <kbd class=\"oe neg\">Active Low</kbd>");
-                },
-                .output_only => try writer.writeAll("<kbd class=\"oe output-only\">Output</kbd>"),
-                .input_only => try writer.writeAll("<kbd class=\"oe input-only\">Input</kbd>"),
-            }
-            try end_cell(writer);
+                try begin_cell(writer, out_options);
+                if (mc_config.output.oe != .input_only) {
+                    try writer.writeAll(switch (mc_config.output.drive_type.?) {
+                        .push_pull => "<kbd class=\"drive push-pull\">TP</kbd>",
+                        .open_drain => "<kbd class=\"drive open-drain\">OD</kbd>",
+                    });
+                }
+                try end_cell(writer);
 
-            try begin_cell(writer, out_options);
-            if (mc_config.output.oe != .input_only) {
-                try writer.writeAll(switch (mc_config.output.slew_rate.?) {
-                    .slow => "<kbd class=\"slew slow\">Slow</kbd>",
-                    .fast => "<kbd class=\"slew fast\">Fast</kbd>",
-                });
-            }
-            try end_cell(writer);
-
-            try begin_cell(writer, out_options);
-            if (mc_config.output.oe != .input_only) {
-                try writer.writeAll(switch (mc_config.output.drive_type.?) {
-                    .push_pull => "<kbd class=\"drive push-pull\">TP</kbd>",
-                    .open_drain => "<kbd class=\"drive open-drain\">OD</kbd>",
-                });
-            }
-            try end_cell(writer);
-
-            try begin_cell(writer, cell_options);
-            if (mc_config.output.oe != .output_only) {
-                try write_input_threshold(writer, Device, mc_config.input.threshold.?);
-            }
-            try end_cell(writer);
-
-            if (@TypeOf(mc_config.input) == lc4k.Input_Config_ZE) {
                 try begin_cell(writer, cell_options);
                 if (mc_config.output.oe != .output_only) {
-                    try write_bus_maintenance(writer, mc_config.input.bus_maintenance.?);
+                    try write_input_threshold(writer, Device, mc_config.input.threshold.?);
                 }
                 try end_cell(writer);
 
-                try begin_cell(writer, cell_options);
-                try write_power_guard(writer, mc_config.input.power_guard.?);
-                try end_cell(writer);
-            } else {
-                try begin_cell(writer, cell_options);
-                if (mc_config.output.oe != .output_only) {
-                    try write_bus_maintenance(writer, data.config.default_bus_maintenance);
+                if (@TypeOf(mc_config.input) == lc4k.Input_Config_ZE) {
+                    try begin_cell(writer, cell_options);
+                    if (mc_config.output.oe != .output_only) {
+                        try write_bus_maintenance(writer, mc_config.input.bus_maintenance.?);
+                    }
+                    try end_cell(writer);
+
+                    try begin_cell(writer, cell_options);
+                    try write_power_guard(writer, mc_config.input.power_guard.?);
+                    try end_cell(writer);
+                } else {
+                    try begin_cell(writer, cell_options);
+                    if (mc_config.output.oe != .output_only) {
+                        try write_bus_maintenance(writer, data.config.default_bus_maintenance);
+                    }
+                    try end_cell(writer);
                 }
-                try end_cell(writer);
             }
 
             try end_row(writer);
