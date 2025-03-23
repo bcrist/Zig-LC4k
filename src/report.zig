@@ -25,6 +25,25 @@ const PT_Usage = enum {
     oe,
 };
 
+const Signal_Usage = enum (u8) {
+    input_reg = std.math.maxInt(u8) - 1,
+    orm = std.math.maxInt(u8),
+    _, // 0..n correspond to usage as a GI in GLB 0..n
+
+    pub fn init_glb(index: lc4k.GLB_Index) Signal_Usage {
+        std.debug.assert(index != @intFromEnum(Signal_Usage.input_reg));
+        std.debug.assert(index != @intFromEnum(Signal_Usage.orm));
+        return @enumFromInt(index);
+    }
+
+    pub fn glb_index(self: Signal_Usage) ?lc4k.GLB_Index {
+        return switch (self) {
+            .input_reg, .orm => null,
+            else => @intFromEnum(self),
+        };
+    }
+};
+
 fn Report_Data(comptime Device: type) type {
     const Signal = Device.Signal;
 
@@ -35,6 +54,7 @@ fn Report_Data(comptime Device: type) type {
         sum_routing: routing.Routing_Data,
         pts: [num_pts]lc4k.Product_Term(Signal),
         pt_usage: [num_pts]PT_Usage,
+        mc_usage: std.StaticBitSet(Device.num_mcs_per_glb),
         uses_bie: bool,
     };
 
@@ -48,6 +68,8 @@ fn Report_Data(comptime Device: type) type {
         disassembly_errors: std.ArrayList(disassembly.Disassembly_Error),
 
         glb: [Device.num_glbs]GLB_Report_Data = undefined,
+
+        signal_usage: std.EnumArray(Device.Signal, std.EnumSet(Signal_Usage)) = .initFill(.initEmpty()),
 
         num_gis_used: u16 = 0,
         num_pts_used: u16 = 0,
@@ -83,18 +105,20 @@ fn Report_Data(comptime Device: type) type {
                     .sum_routing = dis.sum_routing[glb],
                     .pts = undefined,
                     .pt_usage = undefined,
+                    .mc_usage = .initEmpty(),
                     .uses_bie = false,
                 };
 
-                for (dis.gi_routing[glb]) |maybe_grp| {
-                    if (maybe_grp) |grp| {
+                for (dis.gi_routing[glb]) |maybe_signal| {
+                    if (maybe_signal) |signal| {
                         self.num_gis_used += 1;
-                        switch (grp.kind()) {
-                            .io => ios_used.insert(grp),
-                            .mc => mcs_used.insert(grp),
-                            .clk => clocks_used.insert(grp),
-                            .in => inputs_used.insert(grp),
+                        switch (signal.kind()) {
+                            .io => ios_used.insert(signal),
+                            .mc => mcs_used.insert(signal),
+                            .clk => clocks_used.insert(signal),
+                            .in => inputs_used.insert(signal),
                         }
+                        self.signal_usage.getPtr(signal).insert(.init_glb(@intCast(glb)));
                     }
                 }
 
@@ -132,16 +156,27 @@ fn Report_Data(comptime Device: type) type {
                     }
 
                     if (mc_config.output.oe != .input_only) {
-                        if (Device.Signal.maybe_mc_pad(mcref)) |grp| {
-                            ios_used.insert(grp);
+                        if (Device.Signal.maybe_mc_pad(mcref)) |signal| {
+                            ios_used.insert(signal);
+                            self.signal_usage.getPtr(signal).insert(.orm);
                         }
 
                         const output_routing = if (Device.family == .zero_power_enhanced) mc_config.output.routing else mc_config.output.oe_routing;
-                        mcs_used.insert(output_routing.to_absolute(mcref));
+                        const output_source_mc = output_routing.to_absolute(mcref);
+                        mcs_used.insert(output_source_mc);
+
+                        self.signal_usage.getPtr(output_source_mc).insert(.orm);
                     }
 
                     switch (mc_config.logic) {
-                        .sum, .input_buffer, .sum_xor_input_buffer => {},
+                        .sum => {},
+                        .input_buffer, .sum_xor_input_buffer => {
+                            if (Device.Signal.maybe_mc_pad(mcref)) |signal| {
+                                self.signal_usage.getPtr(signal).insert(.input_reg);
+                            } else {
+                                // TODO should this be reported in disassembly errors?
+                            }
+                        },
                         .pt0, .sum_xor_pt0 => {
                             glb_data.pt_usage[mc * 5] = .xor;
                         },
@@ -284,6 +319,13 @@ fn Report_Data(comptime Device: type) type {
             self.num_inputs_used = @intCast(inputs_used.count());
             self.num_clocks_used = @intCast(clocks_used.count());
             self.num_mcs_used = @intCast(mcs_used.count());
+
+            var mcs_used_iter = mcs_used.iterator();
+            while (mcs_used_iter.next()) |signal| {
+                const mcref = signal.mc();
+
+                self.glb[mcref.glb].mc_usage.set(mcref.mc);
+            }
 
             return self;
         }
@@ -978,11 +1020,18 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
             };
 
             if (Device.Signal.maybe_mc_pad(mcref)) |pad| {
+                const usage = data.signal_usage.get(pad);
+
                 try begin_cell(writer, cell_options);
                 if (pad.maybe_pin()) |pi| try writer.writeAll(pi.id());
                 try end_cell(writer);
 
-                try begin_cell(writer, cell_options);
+                // I/O Name
+                var io_cell_options = cell_options;
+                if (usage.count() == 0) {
+                    io_cell_options.additional_classes = &.{ "unused" };
+                }
+                try begin_cell(writer, io_cell_options);
                 try writer.writeAll(options.get_names().get_signal_name(pad));
                 try end_cell(writer);
             } else {
@@ -992,11 +1041,29 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
                 try end_cell(writer);
             }
 
-            try begin_cell(writer, cell_options);
-            try writer.writeAll(options.get_names().get_signal_name(Device.Signal.mc_fb(mcref)));
-            try end_cell(writer);
+            {
+                // FB Name
+                const signal = Device.Signal.mc_fb(mcref);
+                const usage = data.signal_usage.get(signal);
 
-            try begin_cell(writer, cell_options);
+                var fb_name_cell_options = cell_options;
+                if (usage.count() == 0) {
+                    fb_name_cell_options.additional_classes = &.{ "unused" };
+                }
+
+                try begin_cell(writer, fb_name_cell_options);
+                try writer.writeAll(options.get_names().get_signal_name(signal));
+                try end_cell(writer);
+            }
+
+
+            var mc_cell_options = cell_options;
+            if (!data.glb[glb].mc_usage.isSet(mc)) {
+                mc_cell_options.additional_classes = &.{ "unused" };
+            }
+
+            // MC Name
+            try begin_cell(writer, mc_cell_options);
             try writer.writeAll(options.get_names().get_mc_name(mcref));
             try end_cell(writer);
 
@@ -1005,10 +1072,15 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
                 var temp_buf_3: [64]u8 = undefined;
                 const ca_selector = try std.fmt.bufPrint(&temp_buf_2, ".mc-{}", .{ ca });
                 const ca_class = try std.fmt.bufPrint(&temp_buf_3, "ca-depth-{} mc-{}", .{ ca_jumps, ca });
-                try begin_cell(writer, .{
+
+                var dest_cell_options: Cell_Options = .{
                     .class = ca_class,
                     .hover_selector = ca_selector,
-                });
+                };
+                if (!data.glb[glb].mc_usage.isSet(ca)) {
+                    dest_cell_options.additional_classes = &.{ "unused" };
+                }
+                try begin_cell(writer, dest_cell_options);
                 try writer.writeAll(options.get_names().get_mc_name(lc4k.MC_Ref.init(glb, ca)));
             } else {
                 try begin_cell(writer, .{});
@@ -1039,11 +1111,11 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
                     .same_as_oe, .self => {},
                 }
             }
-            try begin_cell(writer, cell_options);
+            try begin_cell(writer, mc_cell_options);
             try writer.print("{}", .{ sum_pts });
             try end_cell(writer);
 
-            try begin_cell(writer, cell_options);
+            try begin_cell(writer, mc_cell_options);
             try writer.writeAll(switch (mc_config.logic) {
                 .sum => |sp| switch (sp.polarity) {
                     .positive => "<kbd class=\"logic sum\">Sum</kbd>",
@@ -1062,7 +1134,7 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
             });
             try end_cell(writer);
 
-            try begin_cell(writer, cell_options);
+            try begin_cell(writer, mc_cell_options);
             try writer.writeAll(switch (mc_config.func) {
                 .combinational => "<kbd class=\"func comb\">Comb</kbd>",
                 .latch => "<kbd class=\"func latch\">Latch</kbd>",
@@ -1071,7 +1143,7 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
             });
             try end_cell(writer);
 
-            try begin_cell(writer, cell_options);
+            try begin_cell(writer, mc_cell_options);
             const clock_invert: ?bool = switch (mc_config.func) {
                 .combinational => null,
                 .latch, .t_ff, .d_ff => |reg_config| switch (reg_config.clock) {
@@ -1116,7 +1188,7 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
             }
             try end_cell(writer);
 
-            try begin_cell(writer, cell_options);
+            try begin_cell(writer, mc_cell_options);
             try writer.writeAll(switch (mc_config.func) {
                 .combinational => "",
                 .latch, .t_ff, .d_ff => |reg_config| switch (reg_config.ce) {
@@ -1133,7 +1205,7 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
             });
             try end_cell(writer);
 
-            try begin_cell(writer, cell_options);
+            try begin_cell(writer, mc_cell_options);
             switch (mc_config.func) {
                 .combinational => {},
                 .latch, .t_ff, .d_ff => |reg_config| {
@@ -1149,7 +1221,7 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
             }
             try end_cell(writer);
 
-            try begin_cell(writer, cell_options);
+            try begin_cell(writer, mc_cell_options);
             try writer.writeAll(switch (mc_config.func) {
                 .combinational => "",
                 .latch, .t_ff, .d_ff => |reg_config| switch (reg_config.async_source) {
@@ -1159,27 +1231,7 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
             });
             try end_cell(writer);
 
-            if (Device.Signal.maybe_mc_pad(mcref) == null) {
-                // Output columns:
-                try begin_cell(writer, .{}); // From
-                try end_cell(writer);
-
-                try begin_cell(writer, .{}); // OE
-                try end_cell(writer);
-
-                try begin_cell(writer, .{}); // Slew
-                try end_cell(writer);
-
-                try begin_cell(writer, .{}); // Drive
-                try end_cell(writer);
-
-                // Input columns:
-                try begin_cell(writer, .{}); // Threshold
-                try end_cell(writer);
-
-                try begin_cell(writer, .{}); // Term
-                try end_cell(writer);
-            } else {
+            if (Device.Signal.maybe_mc_pad(mcref)) |pad| {
                 var out_mcref = mcref;
                 var out_options = cell_options;
                 var out_mc_delta: usize = 0;
@@ -1190,6 +1242,8 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
                 var oe_options = cell_options;
                 var oe_mc_delta: usize = 0;
                 var temp_oe_buf: [64]u8 = undefined;
+
+                var in_options = cell_options;
 
                 if (Device.family == .zero_power_enhanced) {
                     out_mcref = mc_config.output.routing.to_absolute(mcref).mc();
@@ -1237,6 +1291,12 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
                 if (mc_config.output.oe == .input_only) {
                     out_options = .{};
                     oe_options = .{};
+                }
+
+                if (data.signal_usage.get(pad).count() == 0) {
+                    out_options.additional_classes = &.{ "unused" };
+                    oe_options.additional_classes = &.{ "unused" };
+                    in_options.additional_classes = &.{ "unused" };
                 }
 
                 try begin_cell(writer, out_options);
@@ -1292,29 +1352,49 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
                 }
                 try end_cell(writer);
 
-                try begin_cell(writer, cell_options);
+                try begin_cell(writer, in_options);
                 if (mc_config.output.oe != .output_only) {
                     try write_input_threshold(writer, Device, mc_config.input.threshold.?);
                 }
                 try end_cell(writer);
 
                 if (@TypeOf(mc_config.input) == lc4k.Input_Config_ZE) {
-                    try begin_cell(writer, cell_options);
+                    try begin_cell(writer, in_options);
                     if (mc_config.output.oe != .output_only) {
                         try write_bus_maintenance(writer, mc_config.input.bus_maintenance.?);
                     }
                     try end_cell(writer);
 
-                    try begin_cell(writer, cell_options);
+                    try begin_cell(writer, in_options);
                     try write_power_guard(writer, mc_config.input.power_guard.?);
                     try end_cell(writer);
                 } else {
-                    try begin_cell(writer, cell_options);
+                    try begin_cell(writer, in_options);
                     if (mc_config.output.oe != .output_only) {
                         try write_bus_maintenance(writer, data.config.default_bus_maintenance);
                     }
                     try end_cell(writer);
                 }
+            } else {
+                // Output columns:
+                try begin_cell(writer, .{}); // From
+                try end_cell(writer);
+
+                try begin_cell(writer, .{}); // OE
+                try end_cell(writer);
+
+                try begin_cell(writer, .{}); // Slew
+                try end_cell(writer);
+
+                try begin_cell(writer, .{}); // Drive
+                try end_cell(writer);
+
+                // Input columns:
+                try begin_cell(writer, .{}); // Threshold
+                try end_cell(writer);
+
+                try begin_cell(writer, .{}); // Term
+                try end_cell(writer);
             }
 
             try end_row(writer);
@@ -1656,13 +1736,19 @@ fn end_row(writer: std.io.AnyWriter) !void {
 
 const Cell_Options = struct {
     class: []const u8 = "",
+    additional_classes: []const []const u8 = &.{},
     hover_selector: []const u8 = "",
 };
 
 fn begin_cell(writer: std.io.AnyWriter, options: Cell_Options) !void {
     try writer.writeAll("<td");
-    if (options.class.len > 0) {
-        try writer.print(" class=\"{s}\"", .{ options.class });
+    if (options.class.len > 0 or options.additional_classes.len > 0) {
+        try writer.print(" class=\"{s}", .{ options.class });
+        for (options.additional_classes) |class| {
+            try writer.writeByte(' ');
+            try writer.writeAll(class);
+        }
+        try writer.writeByte('"');
     }
     if (options.hover_selector.len > 0) {
         try writer.print(" data-hover=\"{s}\"", .{ options.hover_selector });
