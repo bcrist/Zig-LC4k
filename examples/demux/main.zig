@@ -61,6 +61,6 @@ pub fn main() !void {
     var report_file = try std.fs.cwd().createFile("demux.html", .{});
     defer report_file.close();
     try Chip.write_report(7, results.jedec, report_file.writer(), .{
-        .assembly_errors = results.errors.items,
+        .errors = results.errors.items,
     });
 }

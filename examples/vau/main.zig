@@ -410,7 +410,7 @@ pub fn main() !void {
     try Chip.write_report(7, results.jedec, report_file.writer(), .{
         .design_name = "vau",
         .notes = "Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsigned) + 16b (signed) adder, with an overflow output and some preprocessing on the 16b input to allow it to be sourced from microcode or one of 3 locations within the instruction word.",
-        .assembly_errors = results.errors.items,
+        .errors = results.errors.items,
         .names = &names,
     });
 }

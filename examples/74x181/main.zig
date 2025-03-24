@@ -167,7 +167,7 @@ pub fn main() !void {
     try Chip.write_report(5, results.jedec, report_file.writer(), .{
         .design_name = "74x181",
         .notes = "An implementation of the once-venerable 74x181 4-bit ALU",
-        .assembly_errors = results.errors.items,
+        .errors = results.errors.items,
         .names = &names,
     });
 }

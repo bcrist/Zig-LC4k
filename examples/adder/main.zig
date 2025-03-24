@@ -149,7 +149,7 @@ pub fn main() !void {
     try Chip.write_report(7, results.jedec, report_file.writer(), .{
         .design_name = "adder",
         .notes = "A 16-bit carry lookahead adder",
-        .assembly_errors = results.errors.items,
+        .errors = results.errors.items,
         .names = &names,
     });
 }

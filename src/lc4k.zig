@@ -303,6 +303,10 @@ pub fn Output_Config(comptime Signal: type) type {
                 };
             }
         } = .same_as_oe,
+
+        pub fn output_routing(self: @This()) Output_Routing(Signal) {
+            return self.oe_routing;
+        }
     };
 }
 pub fn Output_Config_ZE(comptime Signal: type) type {
@@ -311,6 +315,10 @@ pub fn Output_Config_ZE(comptime Signal: type) type {
         drive_type: ?Drive_Type = null,
         oe: Output_Enable_Mode,
         routing: Output_Routing(Signal) = .{ .relative = 0 },
+
+        pub fn output_routing(self: @This()) Output_Routing(Signal) {
+            return self.routing;
+        }
     };
 }
 
@@ -493,6 +501,20 @@ pub fn Product_Term_With_Polarity(comptime Device_Signal: type) type {
         pt: Product_Term(Device_Signal),
         polarity: Polarity,
 
+        pub fn is_always(self: @This()) bool {
+            return switch (self.polarity) {
+                .positive => self.pt.is_always(),
+                .negative => self.pt.is_never(),
+            };
+        }
+
+        pub fn is_never(self: @This()) bool {
+            return switch (self.polarity) {
+                .positive => self.pt.is_never(),
+                .negative => self.pt.is_always(),
+            };
+        }
+
         pub fn debug(self: @This(), w: std.io.AnyWriter) !void {
             if (self.polarity == .negative) {
                 try w.writeAll("~(");
@@ -648,7 +670,7 @@ pub fn Factor(comptime Device_Signal: type) type {
         pub inline fn pt(comptime self: Self) Product_Term(Signal) {
             return comptime .{ .factors = &.{ self } };
         }
-        pub inline fn pt_indirect(self: *Self) Product_Term(Signal) {
+        pub inline fn pt_indirect(self: *const Self) Product_Term(Signal) {
             return .{ .factors = self[0..1] };
         }
         pub inline fn pt_alloc(self: Self, allocator: std.mem.Allocator) !Product_Term(Signal) {
@@ -1237,6 +1259,14 @@ pub fn Simulator(comptime Device: type) type {
 pub const Polarity = enum (u1) {
     negative = 0, // inverted / active low / falling edge clock
     positive = 1, // not inverted / active high / rising edge clock
+
+    pub fn invert(self: Polarity) Polarity {
+        return @enumFromInt(@intFromEnum(self) ^ 1);
+    }
+
+    pub fn xor(self: Polarity, other: Polarity) Polarity {
+        return @enumFromInt(@intFromEnum(self) ^ @intFromEnum(other) ^ 1);
+    }
 };
 
 pub const Bus_Maintenance = enum (u2) {

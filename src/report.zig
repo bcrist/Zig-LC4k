@@ -3,8 +3,9 @@ pub fn Write_Options(comptime Device: type) type {
         design_name: []const u8 = "",
         design_version: []const u8 = "",
         notes: []const u8 = "",
-        assembly_errors: []const assembly.Assembly_Error = &[_]assembly.Assembly_Error{},
+        errors: []const Config_Error = &[_]Config_Error{},
         names: ?*const Device.Names = null,
+        skip_timing: bool = false,
 
         pub fn get_names(self: @This()) *const Device.Names {
             return self.names orelse Device.get_names();
@@ -26,19 +27,21 @@ const PT_Usage = enum {
 };
 
 const Signal_Usage = enum (u8) {
-    input_reg = std.math.maxInt(u8) - 1,
-    orm = std.math.maxInt(u8),
+    input_reg = std.math.maxInt(u8) - 2,
+    orm = std.math.maxInt(u8) - 1,
+    output = std.math.maxInt(u8),
     _, // 0..n correspond to usage as a GI in GLB 0..n
 
     pub fn init_glb(index: lc4k.GLB_Index) Signal_Usage {
         std.debug.assert(index != @intFromEnum(Signal_Usage.input_reg));
         std.debug.assert(index != @intFromEnum(Signal_Usage.orm));
+        std.debug.assert(index != @intFromEnum(Signal_Usage.output));
         return @enumFromInt(index);
     }
 
     pub fn glb_index(self: Signal_Usage) ?lc4k.GLB_Index {
         return switch (self) {
-            .input_reg, .orm => null,
+            .input_reg, .orm, .output => null,
             else => @intFromEnum(self),
         };
     }
@@ -65,7 +68,7 @@ fn Report_Data(comptime Device: type) type {
     return struct {
         jed: JEDEC_Data,
         config: lc4k.Chip_Config(Device.device_type),
-        disassembly_errors: std.ArrayList(disassembly.Disassembly_Error),
+        disassembly_errors: std.ArrayList(Config_Error),
 
         glb: [Device.num_glbs]GLB_Report_Data = undefined,
 
@@ -158,10 +161,10 @@ fn Report_Data(comptime Device: type) type {
                     if (mc_config.output.oe != .input_only) {
                         if (Device.Signal.maybe_mc_pad(mcref)) |signal| {
                             ios_used.insert(signal);
-                            self.signal_usage.getPtr(signal).insert(.orm);
+                            self.signal_usage.getPtr(signal).insert(.output);
                         }
 
-                        const output_routing = if (Device.family == .zero_power_enhanced) mc_config.output.routing else mc_config.output.oe_routing;
+                        const output_routing = mc_config.output.output_routing();
                         const output_source_mc = output_routing.to_absolute(mcref);
                         mcs_used.insert(output_source_mc);
 
@@ -431,31 +434,12 @@ pub fn write(comptime Device: type, comptime speed_grade: comptime_int, file: JE
     }
     try end_section(writer);
 
-    if (options.assembly_errors.len > 0) {
+    if (options.errors.len > 0) {
         try begin_section(writer, "Assembly Errors", .{}, .{});
         try begin_table(writer);
         try table_header(writer, .{ "Error", "Details", "Context" });
-        for (options.assembly_errors) |err| {
-            try writer.print("<tr><td>{s}</td><td>{s}</td><td>", .{ @errorName(err.err), err.details });
-            if (err.glb) |glb| {
-                if (err.mc) |mc| {
-                    const mc_name = options.get_names().get_mc_name(lc4k.MC_Ref.init(glb, mc));
-                    try writer.print("<div>MC: {s}</div>", .{ mc_name });
-                } else {
-                    try writer.print("<div>GLB: {s}</div>", .{ options.get_names().get_glb_name(glb) });
-                    if (err.gi) |gi| {
-                        try writer.print("<div>GI: {}</div>", .{ gi });
-                    }
-                }
-            }
-            if (err.grp_ordinal) |grp_ordinal| {
-                const name = options.get_names().get_signal_name(@enumFromInt(grp_ordinal));
-                try writer.print("<div>Signal: {s}</div> ", .{ name });
-            }
-            // if (err.fuse) |fuse| {
-            //     try writer.print("({},{})", .{ fuse.row, fuse.col });
-            // }
-            try writer.writeAll("</td></tr>\n");
+        for (options.errors) |err| {
+            try write_error(writer, Device, err, options);
         }
         try end_table(writer);
         try end_section(writer);
@@ -466,33 +450,21 @@ pub fn write(comptime Device: type, comptime speed_grade: comptime_int, file: JE
         try begin_table(writer);
         try table_header(writer, .{ "Error", "Details", "Context" });
         for (data.disassembly_errors.items) |err| {
-            try writer.print("<tr><td>{s}</td><td>{s}</td><td>", .{ @errorName(err.err), err.details });
-            if (err.glb) |glb| {
-                if (err.mc) |mc| {
-                    const mc_name = options.get_names().get_mc_name(lc4k.MC_Ref.init(glb, mc));
-                    try writer.print("{s} ", .{ mc_name });
-                } else {
-                    try writer.print("GLB {s} ", .{ options.get_names().get_glb_name(glb) });
-                    if (err.gi) |gi| {
-                        try writer.print("GI {} ", .{ gi });
-                    }
-                }
-            }
-            if (err.fuse) |fuse| {
-                try writer.print("({},{})", .{ fuse.row, fuse.col });
-            }
-            try writer.writeAll("</td></tr>\n");
+            try write_error(writer, Device, err, options);
         }
         try end_table(writer);
         try end_section(writer);
     }
 
+    try write_equations(writer, Device, data, options);
     try write_globals_and_inputs(writer, Device, data, options);
     try write_macrocells(writer, Device, data, options);
     try write_product_terms(writer, Device, data, options);
     try write_glb_routing(writer, Device, data, options);
 
-    try write_timing(writer, Device, speed_grade, data, &timing_data, options);
+    if (!options.skip_timing) {
+        try write_timing(writer, Device, speed_grade, data, &timing_data, options);
+    }
 
     try writer.writeAll("<footer>\n");
     try writer.writeAll("Generated by <a href=\"https://github.com/bcrist/Zig-LC4k\">Zig-LC4k</a>\n");
@@ -504,6 +476,218 @@ pub fn write(comptime Device: type, comptime speed_grade: comptime_int, file: JE
     try writer.writeAll("</html>\n");
 }
 
+fn write_equations(writer: std.io.AnyWriter, comptime Device: type, data: Report_Data(Device), options: Write_Options(Device)) !void {
+    try begin_section(writer, "Equations", .{}, .{});
+
+    const eqn_options: Equation_Options = .{ .style = .ascii };
+
+    for (data.config.glb, 0..) |glb_config, glb| {
+        try begin_glb_section(writer, glb, options.get_names().get_glb_name(@intCast(glb)));
+
+        for (glb_config.mc, 0..) |mc_config, mc| {
+            const mcref = lc4k.MC_Ref.init(glb, mc);
+            const fb = Device.Signal.mc_fb(mcref);
+
+            if (data.signal_usage.get(fb).count() == 0) {
+                if (Device.Signal.maybe_mc_pad(mcref)) |pad| {
+                    if (!data.signal_usage.get(pad).contains(.output)) continue;
+                } else continue;
+            }
+
+            try writer.writeAll("<pre>");
+            try write_equation_comment(writer, "Macrocell {}", .{ mcref.mc });
+            try writer.writeByte('\n');
+
+            if (Device.Signal.maybe_mc_pad(mcref)) |pad| {
+                const oe = mc_config.output.oe;
+                if (oe != .output_only and oe != .input_only) {
+                    try write_signal_equation(writer, Device, pad, eqn_options.with_suffix(".OE"), options);
+                    try writer.writeAll(" = ");
+                    switch (oe) {
+                        .goe0 => try write_goe_equation(writer, Device, data, 0, data.config.goe0, eqn_options, options),
+                        .goe1 => try write_goe_equation(writer, Device, data, 1, data.config.goe1, eqn_options, options),
+                        .goe2 => try write_goe_equation(writer, Device, data, 2, data.config.goe2, eqn_options, options),
+                        .goe3 => try write_goe_equation(writer, Device, data, 3, data.config.goe3, eqn_options, options),
+                        .from_orm_active_high, .from_orm_active_low => {
+                            const oe_mcref = mc_config.output.output_routing().to_absolute(mcref).mc();
+                            if (data.config.glb[oe_mcref.glb].mc[oe_mcref.mc].pt4_oe) |pt| {
+                                const polarity: lc4k.Polarity = if (oe == .from_orm_active_low) .negative else .positive;
+                                try write_pt_equation(writer, Device, pt, eqn_options.apply_polarity(polarity), options);
+                            } else {
+                                try writer.writeAll("<abbr class=\"error\">undefined</abbr>");
+                            }
+                            try writer.writeByte(' ');
+                            try write_equation_comment(writer, "{s} PT4", .{ options.get_names().get_mc_name(oe_mcref) });
+                        },
+                        .output_only, .input_only => unreachable,
+                    }
+                    try writer.writeByte('\n');
+                }
+
+                if (oe != .input_only) {
+                    try write_signal_equation(writer, Device, pad, eqn_options, options);
+                    try writer.writeAll(" = ");
+
+                    if (Device.family == .zero_power_enhanced) {
+                        const oe_fb = mc_config.output.output_routing().to_absolute(mcref).fb();
+                        if (oe_fb != fb or mc_config.func != .combinational) {
+                            try write_signal_equation(writer, Device, oe_fb, eqn_options, options);
+                            try writer.writeByte('\n');
+                        }
+                    } else switch (mc_config.output.routing) {
+                        .same_as_oe => {
+                            const oe_fb = mc_config.output.output_routing().to_absolute(mcref).fb();
+                            if (oe_fb != fb or mc_config.func != .combinational) {
+                                try write_signal_equation(writer, Device, oe_fb, eqn_options, options);
+                                try writer.writeByte('\n');
+                            }
+                        },
+                        .self => {
+                            if (mc_config.func != .combinational) {
+                                try write_signal_equation(writer, Device, fb, eqn_options, options);
+                                try writer.writeByte('\n');
+                            }
+                        },
+                        .five_pt_fast_bypass => |sp| {
+                            try write_sum_with_polarity_equation(writer, Device, sp, eqn_options, options);
+                            try writer.writeByte('\n');
+                        },
+                    }
+                }
+            }
+
+            try write_signal_equation(writer, Device, fb, eqn_options.with_suffix(switch (mc_config.func) {
+                .combinational => "",
+                .d_ff, .latch => ".D",
+                .t_ff => ".T",
+            }), options);
+            try writer.writeAll(" = ");
+
+            switch (mc_config.logic) {
+                .pt0 => |ptp| try write_pt_with_polarity_equation(writer, Device, ptp, eqn_options, options),
+                .sum => |sp| try write_sum_with_polarity_equation(writer, Device, sp, eqn_options, options),
+                .sum_xor_pt0 => |sxpt| try write_xor_equation(writer, Device, sxpt.pt0, sxpt.sum, eqn_options.apply_polarity(sxpt.polarity), options),
+                .input_buffer => try write_signal_equation(writer, Device, Device.Signal.maybe_mc_pad(mcref), eqn_options, options),
+                .sum_xor_input_buffer => |sum| {
+                    if (Device.Signal.maybe_mc_pad(mcref)) |pad| {
+                        const input_buffer_factor = pad.when_high();
+                        try write_xor_equation(writer, Device, input_buffer_factor.pt_indirect(), sum, eqn_options, options);
+                    } else {
+                        try write_xor_equation(writer, Device, null, sum, eqn_options, options);
+                    }
+                },
+            }
+            try writer.writeByte('\n');
+            try write_reg_ctrl_equations(writer, Device, data, mcref, options);
+            try writer.writeAll("</pre>\n");
+        }
+
+        try end_section(writer);
+    }
+
+    try end_section(writer);
+}
+
+fn write_reg_ctrl_equations(writer: std.io.AnyWriter, comptime Device: type, data: Report_Data(Device), mcref: lc4k.MC_Ref, options: Write_Options(Device)) !void {
+    const mc_func = data.config.glb[mcref.glb].mc[mcref.mc].func;
+    const reg_config: lc4k.Register_Config(Device.Signal) = switch (mc_func) {
+        .combinational => return,
+        .latch, .d_ff, .t_ff => |reg_config| reg_config,
+    };
+    const fb = Device.Signal.mc_fb(mcref);
+    const eqn_options: Equation_Options = .{ .style = .ascii };
+
+    try write_signal_equation(writer, Device, fb, eqn_options.with_suffix(switch (mc_func) {
+        .combinational => unreachable,
+        .latch => ".LE",
+        .d_ff, .t_ff => ".CLK",
+    }), options);
+    try writer.writeAll(" = ");
+    switch (reg_config.clock) {
+        .none => try write_constant_equation(writer, false, .positive, false),
+        .pt1 => |ptp| try write_pt_with_polarity_equation(writer, Device, ptp, eqn_options, options),
+        .shared_pt_clock => {
+            try write_pt_with_polarity_equation(writer, Device, data.config.glb[mcref.glb].shared_pt_clock, eqn_options, options);
+            try writer.writeByte(' ');
+            try write_equation_comment(writer, "GLB {} ({s}) Shared PT Clock", .{ mcref.glb, options.get_names().get_glb_name(mcref.glb) });
+        },
+        .bclock0 => {
+            try write_block_clock_equation(writer, Device, data.config.glb[mcref.glb].bclock0, eqn_options, options);
+            try writer.writeByte(' ');
+            try write_equation_comment(writer, "GLB {} ({s}) BCLK {}", .{ mcref.glb, options.get_names().get_glb_name(mcref.glb), 0 });
+        },
+        .bclock1 => {
+            try write_block_clock_equation(writer, Device, data.config.glb[mcref.glb].bclock1, eqn_options, options);
+            try writer.writeByte(' ');
+            try write_equation_comment(writer, "GLB {} ({s}) BCLK {}", .{ mcref.glb, options.get_names().get_glb_name(mcref.glb), 1 });
+        },
+        .bclock2 => {
+            try write_block_clock_equation(writer, Device, data.config.glb[mcref.glb].bclock2, eqn_options, options);
+            try writer.writeByte(' ');
+            try write_equation_comment(writer, "GLB {} ({s}) BCLK {}", .{ mcref.glb, options.get_names().get_glb_name(mcref.glb), 2 });
+        },
+        .bclock3 => {
+            try write_block_clock_equation(writer, Device, data.config.glb[mcref.glb].bclock3, eqn_options, options);
+            try writer.writeByte(' ');
+            try write_equation_comment(writer, "GLB {} ({s}) BCLK {}", .{ mcref.glb, options.get_names().get_glb_name(mcref.glb), 3 });
+        },
+    }
+    try writer.writeByte('\n');
+
+    if (reg_config.ce != .always_active) {
+        try write_signal_equation(writer, Device, fb, eqn_options.with_suffix(switch (mc_func) {
+            .combinational => unreachable,
+            .latch => ".LE2",
+            .d_ff, .t_ff => ".CE",
+        }), options);
+        try writer.writeAll(" = ");
+        switch (reg_config.ce) {
+            .pt2 => |ptp| {
+                try write_pt_with_polarity_equation(writer, Device, ptp, eqn_options, options);
+            },
+            .shared_pt_clock => {
+                try write_pt_with_polarity_equation(writer, Device, data.config.glb[mcref.glb].shared_pt_clock, eqn_options, options);
+                try writer.writeByte(' ');
+                try write_equation_comment(writer, "GLB {} ({s}) Shared PT Clock", .{ mcref.glb, options.get_names().get_glb_name(mcref.glb) });
+            },
+            .always_active => unreachable,
+        }
+        try writer.writeByte('\n');
+    }
+
+    if (reg_config.init_source != .shared_pt_init or !data.config.glb[mcref.glb].shared_pt_init.is_never()) {
+        try write_signal_equation(writer, Device, fb, eqn_options.with_suffix(switch (reg_config.init_state) {
+            0 => ".AR",
+            1 => ".AP",
+        }), options);
+        try writer.writeAll(" = ");
+        switch (reg_config.init_source) {
+            .pt3_active_high => |pt| {
+                try write_pt_equation(writer, Device, pt, eqn_options, options);
+            },
+            .shared_pt_init => {
+                try write_pt_with_polarity_equation(writer, Device, data.config.glb[mcref.glb].shared_pt_init, eqn_options, options);
+                try writer.writeByte(' ');
+                try write_equation_comment(writer, "GLB {} ({s}) Shared PT Init", .{ mcref.glb, options.get_names().get_glb_name(mcref.glb) });
+            },
+        }
+        try writer.writeByte('\n');
+    }
+
+    if (reg_config.async_source != .none) {
+        try write_signal_equation(writer, Device, fb, eqn_options.with_suffix(switch (reg_config.init_state) {
+            0 => ".AP",
+            1 => ".AR",
+        }), options);
+        try writer.writeAll(" = ");
+        switch (reg_config.async_source) {
+            .none => unreachable,
+            .pt2_active_high => |pt| try write_pt_equation(writer, Device, pt, eqn_options, options),
+        }
+        try writer.writeByte('\n');
+    }
+}
+
 fn write_globals_and_inputs(writer: std.io.AnyWriter, comptime Device: type, data: Report_Data(Device), options: Write_Options(Device)) !void {
     try begin_section(writer, "Global Resources", .{}, .{});
 
@@ -512,10 +696,10 @@ fn write_globals_and_inputs(writer: std.io.AnyWriter, comptime Device: type, dat
 
     try table_header(writer, .{ "GOE", "Equation" });
 
-    try write_goe(writer, Device, false, 0, data.config.goe0, options);
-    try write_goe(writer, Device, true,  1, data.config.goe1, options);
-    try write_goe(writer, Device, false, 2, data.config.goe2, options);
-    try write_goe(writer, Device, true,  3, data.config.goe3, options);
+    try write_goe(writer, Device, data, 0, options, false);
+    try write_goe(writer, Device, data, 1, options, true);
+    try write_goe(writer, Device, data, 2, options, false);
+    try write_goe(writer, Device, data, 3, options, true);
 
     try end_table(writer);
     try end_section(writer);
@@ -618,7 +802,7 @@ fn write_globals_and_inputs(writer: std.io.AnyWriter, comptime Device: type, dat
     try end_section(writer);
 }
 
-fn write_goe(writer: std.io.AnyWriter, comptime Device: type, highlight: bool, goe_index: usize, goe_config: anytype, options: Write_Options(Device)) !void {
+fn write_goe(writer: std.io.AnyWriter, comptime Device: type, data: Report_Data(Device), goe_index: usize, options: Write_Options(Device), highlight: bool) !void {
     try begin_row(writer, .{ .highlight = highlight });
 
     try begin_cell(writer, .{});
@@ -626,63 +810,16 @@ fn write_goe(writer: std.io.AnyWriter, comptime Device: type, highlight: bool, g
     try end_cell(writer);
 
     try begin_cell(writer, .{ .class = "left" });
-    switch (@TypeOf(goe_config)) {
-        lc4k.GOE_Config_Bus_Or_Pin => switch (goe_config.source) {
-            .constant_high => try write_unused_goe_equation(writer, goe_config.polarity),
-            .input => try write_pin_goe_equation(writer, Device, goe_config.polarity, Device.oe_pins[goe_index], options),
-            .glb_shared_pt_enable => |glb| try write_bus_goe_equation(writer, goe_config.polarity, glb),
-        },
-        lc4k.GOE_Config_Bus => switch (goe_config.source) {
-            .constant_high => try write_unused_goe_equation(writer, goe_config.polarity),
-            .glb_shared_pt_enable => |glb| try write_bus_goe_equation(writer, goe_config.polarity, glb),
-        },
-        lc4k.GOE_Config_Pin => {
-            var oe_bus_index = goe_index;
-            if (goe_index >= Device.oe_bus_size) {
-                oe_bus_index -= 2;
-            }
-            try write_pin_goe_equation(writer, Device, goe_config.polarity, Device.oe_pins[oe_bus_index], options);
-        },
+    switch (goe_index) {
+        0 => try write_goe_equation(writer, Device, data, 0, data.config.goe0, .{}, options),
+        1 => try write_goe_equation(writer, Device, data, 1, data.config.goe1, .{}, options),
+        2 => try write_goe_equation(writer, Device, data, 2, data.config.goe2, .{}, options),
+        3 => try write_goe_equation(writer, Device, data, 3, data.config.goe3, .{}, options),
         else => unreachable,
     }
     try end_cell(writer);
 
     try end_row(writer);
-}
-
-fn write_bus_goe_equation(writer: std.io.AnyWriter, polarity: lc4k.Polarity, glb: usize) !void {
-    try writer.writeAll(switch (polarity) {
-        .positive => "<abbr>",
-        .negative => "<abbr><u>",
-    });
-
-    try writer.print("glb{}_shared_oe_pt", .{ glb });
-
-    try writer.writeAll(switch (polarity) {
-        .positive => "</abbr>",
-        .negative => "</u></abbr>",
-    });
-}
-
-fn write_unused_goe_equation(writer: std.io.AnyWriter, polarity: lc4k.Polarity) !void {
-    try writer.writeAll(switch (polarity) {
-        .positive => "<abbr>true</abbr>",
-        .negative => "<abbr>false</abbr>",
-    });
-}
-
-fn write_pin_goe_equation(writer: std.io.AnyWriter, comptime Device: type, polarity: lc4k.Polarity, pin: Device.Pin, options: Write_Options(Device)) !void {
-    try writer.writeAll(switch (polarity) {
-        .positive => "<abbr>",
-        .negative => "<abbr><u>",
-    });
-
-    try writer.writeAll(options.get_names().get_signal_name(pin.pad()));
-
-    try writer.writeAll(switch (polarity) {
-        .positive => "</abbr>",
-        .negative => "</u></abbr>",
-    });
 }
 
 fn write_block_clock(writer: std.io.AnyWriter, comptime Device: type, highlight: bool, bclk_index: usize, value: anytype, options: Write_Options(Device)) !void {
@@ -693,19 +830,7 @@ fn write_block_clock(writer: std.io.AnyWriter, comptime Device: type, highlight:
     try end_cell(writer);
 
     try begin_cell(writer, .{ .class = "left" });
-    const name = @tagName(value);
-    const grp: Device.Signal = switch (name[3]) {
-        '0' => .clk0,
-        '1' => .clk1,
-        '2' => .clk2,
-        '3' => .clk3,
-        else => unreachable,
-    };
-    if (std.mem.endsWith(u8, name, "_neg")) {
-        try writer.print("<abbr><u>{s}</u></abbr>", .{ options.get_names().get_signal_name(grp) });
-    } else {
-        try writer.print("<abbr>{s}</abbr>", .{ options.get_names().get_signal_name(grp) });
-    }
+    try write_block_clock_equation(writer, Device, value, .{}, options);
     try end_cell(writer);
 
     try end_row(writer);
@@ -815,7 +940,7 @@ fn write_product_terms(writer: std.io.AnyWriter, comptime Device: type, data: Re
                 try write_pt_usage(writer, glb_data.pt_usage[glb_pt_offset]);
                 try writer.writeAll("</td>");
 
-                try write_pt_equation(writer, Device, glb_data.pts[glb_pt_offset], options);
+                try write_pt_equation_wrapped(writer, Device, glb_data.pts[glb_pt_offset], options);
                 try end_row(writer);
             }
         }
@@ -824,14 +949,14 @@ fn write_product_terms(writer: std.io.AnyWriter, comptime Device: type, data: Re
         try writer.print("<td></td><td>{}</td><td>", .{ mc * 5 });
         try write_pt_usage(writer, glb_data.pt_usage[mc * 5]);
         try writer.writeAll("</td>");
-        try write_pt_equation(writer, Device, glb_data.pts[mc * 5], options);
+        try write_pt_equation_wrapped(writer, Device, glb_data.pts[mc * 5], options);
         try end_row(writer);
 
         try begin_row(writer, .{ .highlight = true });
         try writer.print("<td></td><td>{}</td><td>", .{ mc * 5 + 1 });
         try write_pt_usage(writer, glb_data.pt_usage[mc * 5 + 1]);
         try writer.writeAll("</td>");
-        try write_pt_equation(writer, Device, glb_data.pts[mc * 5 + 1], options);
+        try write_pt_equation_wrapped(writer, Device, glb_data.pts[mc * 5 + 1], options);
         try end_row(writer);
 
         try begin_row(writer, .{});
@@ -841,7 +966,7 @@ fn write_product_terms(writer: std.io.AnyWriter, comptime Device: type, data: Re
         }
         try write_pt_usage(writer, glb_data.pt_usage[mc * 5 + 2]);
         try writer.writeAll("</td>");
-        try write_pt_equation(writer, Device, glb_data.pts[mc * 5 + 2], options);
+        try write_pt_equation_wrapped(writer, Device, glb_data.pts[mc * 5 + 2], options);
         try end_row(writer);
 
         try end_table(writer);
@@ -865,36 +990,9 @@ fn write_pt_usage(writer: std.io.AnyWriter, usage: PT_Usage) !void {
     });
 }
 
-fn write_pt_equation(writer: std.io.AnyWriter, comptime Device: type, pt: lc4k.Product_Term(Device.Signal), options: Write_Options(Device)) !void {
+fn write_pt_equation_wrapped(writer: std.io.AnyWriter, comptime Device: type, pt: lc4k.Product_Term(Device.Signal), options: Write_Options(Device)) !void {
     try writer.writeAll("<td class=\"left\">");
-
-    var first = true;
-    for (pt.factors) |factor| {
-        if (first) {
-            first = false;
-        } else {
-            try writer.writeAll(" &middot; ");
-        }
-        switch (factor) {
-            .never => {
-                try writer.writeAll("<abbr>false</abbr>");
-            },
-            .always => {
-                try writer.writeAll("<abbr>true</abbr>");
-            },
-            .when_high => |grp| {
-                try writer.print("<abbr>{s}</abbr>", .{ options.get_names().get_signal_name(grp) });
-            },
-            .when_low => |grp| {
-                try writer.print("<abbr><u>{s}</u></abbr>", .{ options.get_names().get_signal_name(grp) });
-            },
-        }
-    }
-
-    if (first) {
-        try writer.writeAll("<abbr>true</abbr>");
-    }
-
+    try write_pt_equation(writer, Device, pt, .{}, options);
     try writer.writeAll("</td>");
 }
 
@@ -1642,7 +1740,254 @@ fn write_setup_hold_timing(writer: std.io.AnyWriter, comptime Device: type, comp
     }
 }
 
+fn write_error(writer: std.io.AnyWriter, comptime Device: type, err: Config_Error, options: Write_Options(Device)) !void {
+    try writer.print("<tr><td>{s}</td><td>{s}</td><td>", .{ @errorName(err.err), err.details });
+    if (err.glb) |glb| {
+        if (err.mc) |mc| {
+            const mc_name = options.get_names().get_mc_name(lc4k.MC_Ref.init(glb, mc));
+            try writer.print("<div>MC: {s}</div>", .{ mc_name });
+        } else {
+            try writer.print("<div>GLB: {s}</div>", .{ options.get_names().get_glb_name(glb) });
+            if (err.gi) |gi| {
+                try writer.print("<div>GI: {}</div>", .{ gi });
+            }
+        }
+    }
+    if (err.signal_ordinal) |signal_ordinal| {
+        const name = options.get_names().get_signal_name(@enumFromInt(signal_ordinal));
+        try writer.print("<div>Signal: {s}</div> ", .{ name });
+    }
+    if (err.fuse) |fuse| {
+        try writer.print("({},{})", .{ fuse.row, fuse.col });
+    }
+    try writer.writeAll("</td></tr>\n");
+
+}
+
+
 ////////////////////////////////////////////////////
+// Equations
+
+pub const Equation_Options = struct {
+    style: enum {
+        ascii,
+        pretty, // use <u></u> instead of ! when writing an active-low signal name, use middle dot instead of &.
+    } = .pretty,
+    polarity: lc4k.Polarity = .positive,
+    signal_suffix: []const u8 = "",
+
+    pub fn invert(self: Equation_Options) Equation_Options {
+        return .{
+            .style = self.style,
+            .polarity = self.polarity.invert(),
+            .signal_suffix = self.signal_suffix,
+        };
+    }
+
+    pub fn apply_polarity(self: Equation_Options, polarity: lc4k.Polarity) Equation_Options {
+        return .{
+            .style = self.style,
+            .polarity = self.polarity.xor(polarity),
+            .signal_suffix = self.signal_suffix,
+        };
+    }
+
+    pub fn with_suffix(self: Equation_Options, suffix: []const u8) Equation_Options {
+        std.debug.assert(self.signal_suffix.len == 0);
+        return .{
+            .style = self.style,
+            .polarity = self.polarity,
+            .signal_suffix = suffix,
+        };
+    }
+};
+
+fn write_equation_comment(writer: std.io.AnyWriter, comptime fmt: []const u8, args: anytype) !void {
+    try writer.print("<span class=\"comment\">// " ++ fmt ++ "</span>", args);
+}
+
+fn write_xor_equation(writer: std.io.AnyWriter, comptime Device: type, maybe_xor_pt: ?lc4k.Product_Term(Device.Signal), sum: []const lc4k.Product_Term(Device.Signal), eqn_options: Equation_Options, options: Write_Options(Device)) !void {
+    const sum_eqn_options = switch (eqn_options.polarity) {
+        .negative => eqn_options.invert(),
+        .positive => eqn_options,
+    };
+
+    if (sum.len != 1 or sum[0].factors.len > 1) {
+        try writer.writeByte('(');
+        try write_sum_equation(writer, Device, sum, sum_eqn_options, options);
+        if (sum.len > 1) try writer.writeAll("\n    ");
+        try writer.writeByte(')');
+    } else {
+        try write_sum_equation(writer, Device, sum, sum_eqn_options, options);
+    }
+
+    try writer.writeAll(" ^ ");
+
+    if (maybe_xor_pt) |xor_pt| {
+        if (xor_pt.factors.len > 1) {
+            try writer.writeByte('(');
+            try write_pt_equation(writer, Device, xor_pt, eqn_options, options);
+            try writer.writeByte(')');
+        } else {
+            try write_pt_equation(writer, Device, xor_pt, eqn_options, options);
+        }
+    } else {
+        try write_signal_equation(writer, Device, null, eqn_options, options);
+    }
+}
+
+fn write_sum_with_polarity_equation(writer: std.io.AnyWriter, comptime Device: type, sp: lc4k.Sum_With_Polarity(Device.Signal), eqn_options: Equation_Options, options: Write_Options(Device)) !void {
+    try write_sum_equation(writer, Device, sp.sum, eqn_options.apply_polarity(sp.polarity), options);
+}
+
+fn write_sum_equation(writer: std.io.AnyWriter, comptime Device: type, sum: []const lc4k.Product_Term(Device.Signal), eqn_options: Equation_Options, options: Write_Options(Device)) !void {
+    for (0.., sum) |i, pt| {
+        if (i > 0) {
+            try writer.writeAll(switch (eqn_options.polarity) {
+                .positive => switch (eqn_options.style) {
+                    .ascii => "\n        | ",
+                    .pretty => "\n        + ",
+                },
+                .negative => switch (eqn_options.style) {
+                    .ascii => "\n        &amp; ",
+                    .pretty => "\n        &middot; ",
+                },
+            });
+        }
+        if (eqn_options.polarity == .negative and pt.factors.len > 1) {
+            try writer.writeAll("(");
+            try write_pt_equation(writer, Device, pt, eqn_options, options);
+            try writer.writeAll(")");
+        } else {
+            try write_pt_equation(writer, Device, pt, eqn_options, options);
+        }
+    }
+
+    if (sum.len == 0) {
+        try write_constant_equation(writer, false, eqn_options.polarity, false);
+    }
+}
+
+fn write_pt_with_polarity_equation(writer: std.io.AnyWriter, comptime Device: type, ptp: lc4k.Product_Term_With_Polarity(Device.Signal), eqn_options: Equation_Options, options: Write_Options(Device)) !void {
+    try write_pt_equation(writer, Device, ptp.pt, eqn_options.apply_polarity(ptp.polarity), options);
+}
+
+fn write_pt_equation(writer: std.io.AnyWriter, comptime Device: type, pt: lc4k.Product_Term(Device.Signal), eqn_options: Equation_Options, options: Write_Options(Device)) !void {
+    for (0.., pt.factors) |i, factor| {
+        if (i > 0) switch (eqn_options.polarity) {
+            .positive => switch (eqn_options.style) {
+                .ascii => try writer.writeAll(" &amp; "),
+                .pretty => try writer.writeAll(" &middot; "),
+            },
+            .negative => switch (eqn_options.style) {
+                .ascii => try writer.writeAll(" | "),
+                .pretty => try writer.writeAll(" + "),
+            },
+        };
+        switch (factor) {
+            .never => try write_constant_equation(writer, false, eqn_options.polarity, false),
+            .always => try write_constant_equation(writer, true, eqn_options.polarity, false),
+            .when_high => |signal| try write_signal_equation(writer, Device, signal, eqn_options, options),
+            .when_low => |signal| try write_signal_equation(writer, Device, signal, eqn_options.invert(), options),
+        }
+    }
+
+    if (pt.factors.len == 0) {
+        try write_constant_equation(writer, true, eqn_options.polarity, false);
+    }
+}
+
+fn write_goe_equation(writer: std.io.AnyWriter, comptime Device: type, data: Report_Data(Device), goe_index: usize, goe_config: anytype, eqn_options: Equation_Options, options: Write_Options(Device)) !void {
+    switch (@TypeOf(goe_config)) {
+        lc4k.GOE_Config_Bus_Or_Pin => switch (goe_config.source) {
+            .constant_high => try write_constant_equation(writer, true, goe_config.polarity.xor(eqn_options.polarity), true),
+            .input => try write_pin_goe_equation(writer, Device, Device.oe_pins[goe_index], eqn_options.apply_polarity(goe_config.polarity), options),
+            .glb_shared_pt_enable => |glb| try write_bus_goe_equation(writer, Device, data, glb, eqn_options.apply_polarity(goe_config.polarity), options),
+        },
+        lc4k.GOE_Config_Bus => switch (goe_config.source) {
+            .constant_high => try write_constant_equation(writer, true, goe_config.polarity.xor(eqn_options.polarity), true),
+            .glb_shared_pt_enable => |glb| try write_bus_goe_equation(writer, Device, data, glb, eqn_options.apply_polarity(goe_config.polarity), options),
+        },
+        lc4k.GOE_Config_Pin => {
+            var oe_bus_index = goe_index;
+            if (goe_index >= Device.oe_bus_size) {
+                oe_bus_index -= 2;
+            }
+            try write_pin_goe_equation(writer, Device, Device.oe_pins[oe_bus_index], eqn_options.apply_polarity(goe_config.polarity), options);
+        },
+        else => unreachable,
+    }
+}
+
+fn write_bus_goe_equation(writer: std.io.AnyWriter, comptime Device: type, data: Report_Data(Device), glb: usize, eqn_options: Equation_Options, options: Write_Options(Device)) !void {
+    try write_pt_equation(writer, Device, data.config.glb[glb].shared_pt_enable, eqn_options, options);
+    try writer.print(" <span class=\"comment\">// GLB {} Shared OE PT</span>", .{ glb });
+}
+
+fn write_pin_goe_equation(writer: std.io.AnyWriter, comptime Device: type, pin: Device.Pin, eqn_options: Equation_Options, options: Write_Options(Device)) !void {
+    try write_signal_equation(writer, Device, pin.pad(), eqn_options, options);
+}
+
+fn write_block_clock_equation(writer: std.io.AnyWriter, comptime Device: type, value: anytype, eqn_options: Equation_Options, options: Write_Options(Device)) !void {
+    const signal, const polarity = res: {
+        const BClock = @TypeOf(value);
+        inline for (@typeInfo(BClock).@"enum".fields) |field| {
+            if (value == @field(BClock, field.name)) {
+                const signal: Device.Signal = comptime switch (field.name[3]) {
+                    '0' => .clk0,
+                    '1' => .clk1,
+                    '2' => .clk2,
+                    '3' => .clk3,
+                    else => unreachable,
+                };
+                const polarity: lc4k.Polarity = comptime if (std.mem.endsWith(u8, field.name, "_neg")) .negative else .positive;
+                break :res .{ signal, polarity };
+            }
+        }
+        unreachable;
+    };
+
+    try write_signal_equation(writer, Device, signal, eqn_options.apply_polarity(polarity), options);
+}
+
+fn write_signal_equation(writer: std.io.AnyWriter, comptime Device: type, maybe_signal: ?Device.Signal, eqn_options: Equation_Options, options: Write_Options(Device)) !void {
+    const attribs = if (maybe_signal == null) " class=\"error\"" else "";
+    switch (eqn_options.polarity) {
+        .positive => try writer.print("<abbr{s}>", .{ attribs }),
+        .negative => switch (eqn_options.style) {
+            .ascii => try writer.print("!<abbr{s}>", .{ attribs }),
+            .pretty => try writer.print("<abbr{s}><u>", .{ attribs }),
+        },
+    }
+
+    try writer.writeAll(if (maybe_signal) |signal| options.get_names().get_signal_name(signal) else "undefined");
+
+    if (eqn_options.signal_suffix.len > 0) {
+        try writer.writeAll("<span class=\"eqn_suffix\">");
+        try writer.writeAll(eqn_options.signal_suffix);
+        try writer.writeAll("</span>");
+    }
+
+    try writer.writeAll(switch (eqn_options.polarity) {
+        .positive => "</abbr>",
+        .negative => switch (eqn_options.style) {
+            .ascii => "</abbr>",
+            .pretty => "</u></abbr>",
+        },
+    });
+}
+
+fn write_constant_equation(writer: std.io.AnyWriter, value: bool, polarity: lc4k.Polarity, unused: bool) !void {
+    try writer.writeAll(if (unused) "<abbr class=\"unused\">" else "<abbr>");
+    try writer.writeAll(switch (@intFromBool(value) ^ @intFromEnum(polarity) ^ 1) {
+        0 => "false</abbr>",
+        1 => "true</abbr>",
+    });
+}
+
+
+////////////////////////////////////////////////////
+// Sections
 
 const Section_Options = struct {
     tier: usize = 1,
@@ -1787,6 +2132,7 @@ fn end_details(writer: std.io.AnyWriter) !void {
 const MC_Ref = lc4k.MC_Ref;
 const JEDEC_File = @import("JEDEC_File.zig");
 const JEDEC_Data = @import("JEDEC_Data.zig");
+const Config_Error = @import("Config_Error.zig");
 const naming = @import("naming.zig");
 const timing = @import("timing.zig");
 const assembly = @import("assembly.zig");

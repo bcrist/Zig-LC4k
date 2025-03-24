@@ -1,16 +1,6 @@
-pub const Assembly_Error = struct {
-    err: anyerror,
-    details: []const u8,
-    gi: ?lc4k.GI_Index = null,
-    glb: ?lc4k.GLB_Index = null,
-    mc: ?lc4k.MC_Index = null,
-    // mc_pt: ?u8 = null,
-    grp_ordinal: ?u16 = null,
-};
-
 pub const Assembly_Results = struct {
     jedec: JEDEC_File,
-    errors: std.ArrayList(Assembly_Error),
+    errors: std.ArrayList(Config_Error),
     error_arena: std.heap.ArenaAllocator, // used to store dynamically allocated error messages
 };
 
@@ -19,7 +9,7 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
         .jedec = JEDEC_File {
             .data = try JEDEC_Data.init_full(allocator, Device.jedec_dimensions),
         },
-        .errors = std.ArrayList(Assembly_Error).init(allocator),
+        .errors = std.ArrayList(Config_Error).init(allocator),
         .error_arena = std.heap.ArenaAllocator.init(allocator),
     };
 
@@ -253,19 +243,20 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
             }
 
             if (fuses.get_output_routing_range(Device, mcref)) |range| {
-                const oe_routing = if (Device.family == .zero_power_enhanced) mc_config.output.routing else mc_config.output.oe_routing;
+                const oe_routing = mc_config.output.output_routing();
                 const relative = oe_routing.to_relative(mcref) orelse rel: {
                     try results.errors.append(.{
                         .err = error.Invalid_Output_Routing,
                         .details = "Invalid target for ORM routing; target signal should be a macrocell feedback signal in the same GLB with a relative offset of +0 to +7",
                         .glb = mcref.glb,
                         .mc = mcref.mc,
-                        .grp_ordinal = @intFromEnum(oe_routing.absolute),
+                        .signal_ordinal = @intFromEnum(oe_routing.absolute),
                     });
                     break :rel 0;
                 };
                 write_field(&results.jedec.data, u3, relative, range);
                 switch (mc_config.output.oe) {
+                    .goe0, .goe1, .goe2, .goe3, .output_only, .input_only => {},
                     .from_orm_active_high, .from_orm_active_low => {
                         const absolute: u4 = @truncate(mcref.mc + relative);
                         if (glb_config.mc[absolute].pt4_oe == null) {
@@ -274,11 +265,10 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
                                 .details = "IO uses PT4 for OE, but it has not been configured",
                                 .glb = @intCast(glb),
                                 .mc = @intCast(absolute),
-                                .grp_ordinal = @intFromEnum(mcref.input(Device.Signal)),
+                                .signal_ordinal = @intFromEnum(mcref.input(Device.Signal)),
                             });
                         }
                     },
-                    else => {},
                 }
             }
 
@@ -483,7 +473,7 @@ fn write_pt_fuses(comptime Device: type, results: *Assembly_Results, glb: usize,
                     .details = "PT uses signal that isn't assigned to a GI in this GLB",
                     .glb = @intCast(glb),
                     .mc = if (glb_pt_offset < Device.num_mcs_per_glb * 5) @intCast(glb_pt_offset / 5) else null,
-                    .grp_ordinal = @intFromEnum(grp),
+                    .signal_ordinal = @intFromEnum(grp),
                 });
                 continue;
             };
@@ -518,5 +508,6 @@ const JEDEC_File = @import("JEDEC_File.zig");
 const JEDEC_Data = @import("JEDEC_Data.zig");
 const routing = @import("routing.zig");
 const fuses = @import("fuses.zig");
+const Config_Error = @import("Config_Error.zig");
 const lc4k = @import("lc4k.zig");
 const std = @import("std");

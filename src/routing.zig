@@ -47,7 +47,7 @@ pub fn route_generic_inputs(comptime Device: type, gi_signals: *[Device.num_gis_
                 .err = error.GI_Routing_Failed,
                 .details = "Could not find available GI for signal",
                 .glb = glb,
-                .grp_ordinal = @intFromEnum(signal_to_route),
+                .signal_ordinal = @intFromEnum(signal_to_route),
             });
         }
     };

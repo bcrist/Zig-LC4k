@@ -37,6 +37,7 @@ section {
 
 .inline {
     display: inline-block;
+    vertical-align: top;
 }
 
 table {
@@ -132,4 +133,12 @@ kbd.power-guard.disabled {
 
 .unused {
     opacity: 0.5;
+}
+
+.comment {
+    color: #5a5;
+}
+
+.error {
+    color: #a55;
 }

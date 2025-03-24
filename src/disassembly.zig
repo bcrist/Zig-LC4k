@@ -1,19 +1,9 @@
-pub const Disassembly_Error = struct {
-    err: anyerror,
-    details: []const u8,
-    fuse: ?Fuse = null,
-    gi: ?lc4k.GI_Index = null,
-    glb: ?lc4k.GLB_Index = null,
-    mc: ?lc4k.MC_Index = null,
-    // mc_pt: ?u8 = null,
-};
-
 pub fn Disassembly_Results(comptime Device: type) type {
     return struct {
         config: lc4k.Chip_Config(Device.device_type),
         gi_routing: [Device.num_glbs][Device.num_gis_per_glb]?Device.Signal,
         sum_routing: [Device.num_glbs]routing.Routing_Data,
-        errors: std.ArrayList(Disassembly_Error),
+        errors: std.ArrayList(Config_Error),
     };
 }
 
@@ -22,7 +12,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
         .config = .{},
         .gi_routing = .{ .{ null } ** Device.num_gis_per_glb } ** Device.num_glbs,
         .sum_routing = .{ routing.Routing_Data{} } ** Device.num_glbs,
-        .errors = std.ArrayList(Disassembly_Error).init(allocator),
+        .errors = std.ArrayList(Config_Error).init(allocator),
     };
 
     if (!file.data.extents.eql(Device.jedec_dimensions)) {
@@ -87,7 +77,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
         }
     }
 
-    // Program clock/input fuses
+    // clock/input fuses
     for (&results.config.clock, 0..) |*clock_config, clock_pin_index| {
         const pin = Device.clock_pins[clock_pin_index];
         const grp: Device.Signal = pin.pad();
@@ -479,6 +469,23 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                     .sum_xor_input_buffer => |*sum| sum.* = pts,
                 }
             }
+
+            switch (mc_config.output.oe) {
+                .goe0, .goe1, .goe2, .goe3, .output_only, .input_only => {},
+                .from_orm_active_high, .from_orm_active_low => {
+                    const oe_mcref = mc_config.output.output_routing().to_absolute(mcref).mc();
+                    std.debug.assert(oe_mcref.glb == glb);
+                    if (glb_config.mc[oe_mcref.mc].pt4_oe == null) {
+                        try results.errors.append(.{
+                            .err = error.PT_OE_Undefined,
+                            .details = "IO uses PT4 for OE, but PT4 is routed to sum",
+                            .glb = @intCast(glb),
+                            .mc = @intCast(oe_mcref.mc),
+                            .signal_ordinal = @intFromEnum(mcref.input(Device.Signal)),
+                        });
+                    }
+                },
+            }
         }
     }
 
@@ -699,6 +706,7 @@ const Product_Term = lc4k.Product_Term;
 const Factor = lc4k.Factor;
 const JEDEC_Data = @import("JEDEC_Data.zig");
 const JEDEC_File = @import("JEDEC_File.zig");
+const Config_Error = @import("Config_Error.zig");
 const Fuse = @import("Fuse.zig");
 const Fuse_Range = @import("Fuse_Range.zig");
 const assembly = @import("assembly.zig");
