@@ -41,6 +41,7 @@ section {
 
 .inline {
     display: inline-block;
+    vertical-align: top;
 }
 
 table {
@@ -133,6 +134,18 @@ kbd.power-guard.disabled {
 .details-root.show-details.details, .details-root.show-details .details {
     display: block;
 }
+
+.unused {
+    opacity: 0.5;
+}
+
+.comment {
+    color: #5a5;
+}
+
+.error {
+    color: #a55;
+}
 </style>
 </head>
 <body>
@@ -142,7 +155,7 @@ kbd.power-guard.disabled {
 <table class="inline">
 <tr><th>Device</th><td>LC4032ZE_TQFP48</td></tr>
 <tr><th>Speed Grade</th><td>7</td></tr>
-<tr><th>I/Os Used</th><td>23 / 36</td></tr>
+<tr><th>I/Os Used</th><td>23 / 32</td></tr>
 <tr><th>Clocks Used</th><td>0 / 4</td></tr>
 <tr><th>GIs Used</th><td>44 / 72</td></tr>
 <tr><th>PTs Used</th><td>99 / 166</td></tr>
@@ -150,6 +163,179 @@ kbd.power-guard.disabled {
 <tr><th>Macrocells Used</th><td>31 / 32</td></tr>
 <tr><th>Registers Used</th><td>0 / 32</td></tr>
 </table>
+</div>
+</section>
+<section>
+<h1>Equations</h1>
+<div>
+<section class="inline">
+<h3>GLB 0 (A)</h3>
+<div>
+<pre><span class="comment">// Macrocell 0</span>
+<abbr>mc_A0</abbr> = (<abbr>io_A0</abbr> &amp; !<abbr>io_A1</abbr>
+        | !<abbr>io_A0</abbr> &amp; <abbr>io_A1</abbr>
+    ) ^ <abbr>io_A2</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 1</span>
+<abbr>mc_A1</abbr> = (<abbr>io_A3</abbr> &amp; !<abbr>io_A4</abbr>
+        | !<abbr>io_A3</abbr> &amp; <abbr>io_A4</abbr>
+    ) ^ <abbr>io_A5</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 2</span>
+<abbr>mc_A2</abbr> = (<abbr>io_A6</abbr> &amp; !<abbr>io_A7</abbr>
+        | !<abbr>io_A6</abbr> &amp; <abbr>io_A7</abbr>
+    ) ^ <abbr>io_A8</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 3</span>
+<abbr>mc_A3</abbr> = (<abbr>io_A9</abbr> &amp; !<abbr>io_A10</abbr>
+        | !<abbr>io_A9</abbr> &amp; <abbr>io_A10</abbr>
+    ) ^ <abbr>io_A11</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 4</span>
+<abbr>mc_A4</abbr> = (<abbr>io_A12</abbr> &amp; !<abbr>io_A13</abbr>
+        | !<abbr>io_A12</abbr> &amp; <abbr>io_A13</abbr>
+    ) ^ <abbr>io_A14</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 5</span>
+<abbr>mc_A5</abbr> = (<abbr>io_A15</abbr> &amp; !<abbr>io_B15</abbr>
+        | !<abbr>io_A15</abbr> &amp; <abbr>io_B15</abbr>
+    ) ^ <abbr>io_B14</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 6</span>
+<abbr>mc_A6</abbr> = <abbr>io_A0</abbr> &amp; <abbr>io_A1</abbr>
+        | <abbr>io_A0</abbr> &amp; <abbr>io_A2</abbr>
+        | <abbr>io_A1</abbr> &amp; <abbr>io_A2</abbr>
+        | <abbr>io_A0</abbr> &amp; <abbr>io_A1</abbr> &amp; <abbr>io_A2</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 7</span>
+<abbr>mc_A7</abbr> = <abbr>io_A3</abbr> &amp; <abbr>io_A4</abbr>
+        | <abbr>io_A3</abbr> &amp; <abbr>io_A5</abbr>
+        | <abbr>io_A4</abbr> &amp; <abbr>io_A5</abbr>
+        | <abbr>io_A3</abbr> &amp; <abbr>io_A4</abbr> &amp; <abbr>io_A5</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 8</span>
+<abbr>mc_A8</abbr> = <abbr>io_A6</abbr> &amp; <abbr>io_A7</abbr>
+        | <abbr>io_A6</abbr> &amp; <abbr>io_A8</abbr>
+        | <abbr>io_A7</abbr> &amp; <abbr>io_A8</abbr>
+        | <abbr>io_A6</abbr> &amp; <abbr>io_A7</abbr> &amp; <abbr>io_A8</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 9</span>
+<abbr>mc_A9</abbr> = <abbr>io_A9</abbr> &amp; <abbr>io_A10</abbr>
+        | <abbr>io_A9</abbr> &amp; <abbr>io_A11</abbr>
+        | <abbr>io_A10</abbr> &amp; <abbr>io_A11</abbr>
+        | <abbr>io_A9</abbr> &amp; <abbr>io_A10</abbr> &amp; <abbr>io_A11</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 10</span>
+<abbr>mc_A10</abbr> = <abbr>io_A12</abbr> &amp; <abbr>io_A13</abbr>
+        | <abbr>io_A12</abbr> &amp; <abbr>io_A14</abbr>
+        | <abbr>io_A13</abbr> &amp; <abbr>io_A14</abbr>
+        | <abbr>io_A12</abbr> &amp; <abbr>io_A13</abbr> &amp; <abbr>io_A14</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 11</span>
+<abbr>mc_A11</abbr> = <abbr>io_A15</abbr> &amp; <abbr>io_B15</abbr>
+        | <abbr>io_A15</abbr> &amp; <abbr>io_B14</abbr>
+        | <abbr>io_B14</abbr> &amp; <abbr>io_B15</abbr>
+        | <abbr>io_A15</abbr> &amp; <abbr>io_B14</abbr> &amp; <abbr>io_B15</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 12</span>
+<abbr>mc_A12</abbr> = (<abbr>mc_A0</abbr> &amp; !<abbr>mc_A1</abbr>
+        | !<abbr>mc_A0</abbr> &amp; <abbr>mc_A1</abbr>
+    ) ^ <abbr>mc_A2</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 13</span>
+<abbr>mc_A13</abbr> = (<abbr>mc_A3</abbr> &amp; !<abbr>mc_A4</abbr>
+        | !<abbr>mc_A3</abbr> &amp; <abbr>mc_A4</abbr>
+    ) ^ <abbr>mc_A5</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 14</span>
+<abbr>mc_A14</abbr> = <abbr>mc_A0</abbr> &amp; <abbr>mc_A1</abbr>
+        | <abbr>mc_A0</abbr> &amp; <abbr>mc_A2</abbr>
+        | <abbr>mc_A1</abbr> &amp; <abbr>mc_A2</abbr>
+        | <abbr>mc_A0</abbr> &amp; <abbr>mc_A1</abbr> &amp; <abbr>mc_A2</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 15</span>
+<abbr>mc_A15</abbr> = <abbr>mc_A3</abbr> &amp; <abbr>mc_A4</abbr>
+        | <abbr>mc_A3</abbr> &amp; <abbr>mc_A5</abbr>
+        | <abbr>mc_A4</abbr> &amp; <abbr>mc_A5</abbr>
+        | <abbr>mc_A3</abbr> &amp; <abbr>mc_A4</abbr> &amp; <abbr>mc_A5</abbr>
+</pre>
+</div>
+</section>
+<section class="inline">
+<h3>GLB 1 (B)</h3>
+<div>
+<pre><span class="comment">// Macrocell 0</span>
+<abbr>io_B0</abbr> = <abbr>mc_B0</abbr> = <abbr>mc_A12</abbr> ^ <abbr>mc_A13</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 1</span>
+<abbr>io_B1</abbr> = <abbr>mc_B1</abbr> = (!<abbr>mc_A15</abbr> &amp; <abbr>mc_B11</abbr>
+        | <abbr>mc_A15</abbr> &amp; !<abbr>mc_B11</abbr>
+    ) ^ <abbr>mc_B10</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 2</span>
+<abbr>io_B2</abbr> = <abbr>mc_B2</abbr> = <abbr>mc_B8</abbr> ^ <abbr>mc_B7</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 3</span>
+<abbr>io_B3</abbr> = <abbr>mc_B3</abbr> = (<abbr>mc_B7</abbr> &amp; <abbr>mc_B8</abbr>) ^ <abbr>mc_B6</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 4</span>
+<abbr>io_B4</abbr> = <abbr>mc_B4</abbr> = <abbr>mc_B6</abbr> &amp; <abbr>mc_B7</abbr> &amp; <abbr>mc_B8</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 6</span>
+<abbr>mc_B6</abbr> = <abbr>mc_B9</abbr> &amp; <abbr>mc_B13</abbr>
+        | <abbr>mc_B9</abbr> &amp; <abbr>mc_B12</abbr>
+        | <abbr>mc_B12</abbr> &amp; <abbr>mc_B13</abbr>
+        | <abbr>mc_B9</abbr> &amp; <abbr>mc_B12</abbr> &amp; <abbr>mc_B13</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 7</span>
+<abbr>mc_B7</abbr> = (<abbr>mc_B9</abbr> &amp; !<abbr>mc_B13</abbr>
+        | !<abbr>mc_B9</abbr> &amp; <abbr>mc_B13</abbr>
+    ) ^ <abbr>mc_B12</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 8</span>
+<abbr>mc_B8</abbr> = <abbr>mc_A15</abbr> &amp; <abbr>mc_B11</abbr>
+        | <abbr>mc_B10</abbr> &amp; <abbr>mc_B11</abbr>
+        | <abbr>mc_A15</abbr> &amp; <abbr>mc_B10</abbr>
+        | <abbr>mc_A15</abbr> &amp; <abbr>mc_B10</abbr> &amp; <abbr>mc_B11</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 9</span>
+<abbr>mc_B9</abbr> = <abbr>mc_A14</abbr> &amp; <abbr>mc_B15</abbr>
+        | <abbr>mc_A14</abbr> &amp; <abbr>mc_B14</abbr>
+        | <abbr>mc_B14</abbr> &amp; <abbr>mc_B15</abbr>
+        | <abbr>mc_A14</abbr> &amp; <abbr>mc_B14</abbr> &amp; <abbr>mc_B15</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 10</span>
+<abbr>mc_B10</abbr> = (<abbr>mc_A14</abbr> &amp; !<abbr>mc_B15</abbr>
+        | !<abbr>mc_A14</abbr> &amp; <abbr>mc_B15</abbr>
+    ) ^ <abbr>mc_B14</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 11</span>
+<abbr>mc_B11</abbr> = <abbr>mc_A12</abbr> &amp; <abbr>mc_A13</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 12</span>
+<abbr>mc_B12</abbr> = <abbr>mc_A9</abbr> &amp; <abbr>mc_A10</abbr>
+        | <abbr>mc_A9</abbr> &amp; <abbr>mc_A11</abbr>
+        | <abbr>mc_A10</abbr> &amp; <abbr>mc_A11</abbr>
+        | <abbr>mc_A9</abbr> &amp; <abbr>mc_A10</abbr> &amp; <abbr>mc_A11</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 13</span>
+<abbr>mc_B13</abbr> = <abbr>mc_A6</abbr> &amp; <abbr>mc_A7</abbr>
+        | <abbr>mc_A6</abbr> &amp; <abbr>mc_A8</abbr>
+        | <abbr>mc_A7</abbr> &amp; <abbr>mc_A8</abbr>
+        | <abbr>mc_A6</abbr> &amp; <abbr>mc_A7</abbr> &amp; <abbr>mc_A8</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 14</span>
+<abbr>mc_B14</abbr> = (<abbr>mc_A9</abbr> &amp; !<abbr>mc_A10</abbr>
+        | !<abbr>mc_A9</abbr> &amp; <abbr>mc_A10</abbr>
+    ) ^ <abbr>mc_A11</abbr>
+</pre>
+<pre><span class="comment">// Macrocell 15</span>
+<abbr>mc_B15</abbr> = (<abbr>mc_A6</abbr> &amp; !<abbr>mc_A7</abbr>
+        | !<abbr>mc_A6</abbr> &amp; <abbr>mc_A7</abbr>
+    ) ^ <abbr>mc_A8</abbr>
+</pre>
+</div>
+</section>
 </div>
 </section>
 <section>
@@ -161,9 +347,9 @@ kbd.power-guard.disabled {
 <table>
 <tr class="header"><th>GOE</th><th>Equation</th></tr>
 <tr>
-<td><kbd class="oe goe-0">GOE 0</kbd></td><td class="left"><abbr>true</abbr></td></tr>
+<td><kbd class="oe goe-0">GOE 0</kbd></td><td class="left"><abbr class="unused">true</abbr></td></tr>
 <tr class="highlight">
-<td><kbd class="oe goe-1">GOE 1</kbd></td><td class="left"><abbr>true</abbr></td></tr>
+<td><kbd class="oe goe-1">GOE 1</kbd></td><td class="left"><abbr class="unused">true</abbr></td></tr>
 <tr>
 <td><kbd class="oe goe-2">GOE 2</kbd></td><td class="left"><abbr>io_A0</abbr></td></tr>
 <tr class="highlight">
@@ -176,13 +362,13 @@ kbd.power-guard.disabled {
 <div>
 <table>
 <tr class="header"><th>Pin</th><th>Signal</th><th>Threshold</th><th>Term</th><th>PG</th></tr>
-<tr>
+<tr class="unused">
 <td>43</td><td>clk0</td><td><kbd class="threshold high">&#8595;0.68&times;Vcc &#8593;0.79&times;Vcc</kbd></td><td><kbd class="maintenance keeper">Keeper</kbd></td><td><kbd class="power-guard disabled">Disabled</kbd></td></tr>
-<tr class="highlight">
+<tr class="highlight unused">
 <td>18</td><td>clk1</td><td><kbd class="threshold high">&#8595;0.68&times;Vcc &#8593;0.79&times;Vcc</kbd></td><td><kbd class="maintenance keeper">Keeper</kbd></td><td><kbd class="power-guard disabled">Disabled</kbd></td></tr>
-<tr>
+<tr class="unused">
 <td>19</td><td>clk2</td><td><kbd class="threshold high">&#8595;0.68&times;Vcc &#8593;0.79&times;Vcc</kbd></td><td><kbd class="maintenance keeper">Keeper</kbd></td><td><kbd class="power-guard disabled">Disabled</kbd></td></tr>
-<tr class="highlight">
+<tr class="highlight unused">
 <td>42</td><td>clk3</td><td><kbd class="threshold high">&#8595;0.68&times;Vcc &#8593;0.79&times;Vcc</kbd></td><td><kbd class="maintenance keeper">Keeper</kbd></td><td><kbd class="power-guard disabled">Disabled</kbd></td></tr>
 </table>
 </div>
@@ -192,13 +378,13 @@ kbd.power-guard.disabled {
 <div>
 <table>
 <tr class="header"><th>Block Clock</th><th>Equation</th></tr>
-<tr>
+<tr class="unused">
 <td><kbd class="clk bclk0">BCLK 0</kbd></td><td class="left"><abbr>clk0</abbr></td></tr>
-<tr class="highlight">
+<tr class="highlight unused">
 <td><kbd class="clk bclk1">BCLK 1</kbd></td><td class="left"><abbr>clk1</abbr></td></tr>
-<tr>
+<tr class="unused">
 <td><kbd class="clk bclk2">BCLK 2</kbd></td><td class="left"><abbr>clk2</abbr></td></tr>
-<tr class="highlight">
+<tr class="highlight unused">
 <td><kbd class="clk bclk3">BCLK 3</kbd></td><td class="left"><abbr>clk3</abbr></td></tr>
 </table>
 </div>
@@ -208,13 +394,13 @@ kbd.power-guard.disabled {
 <div>
 <table>
 <tr class="header"><th>Block Clock</th><th>Equation</th></tr>
-<tr>
+<tr class="unused">
 <td><kbd class="clk bclk0">BCLK 0</kbd></td><td class="left"><abbr>clk0</abbr></td></tr>
-<tr class="highlight">
+<tr class="highlight unused">
 <td><kbd class="clk bclk1">BCLK 1</kbd></td><td class="left"><abbr>clk1</abbr></td></tr>
-<tr>
+<tr class="unused">
 <td><kbd class="clk bclk2">BCLK 2</kbd></td><td class="left"><abbr>clk2</abbr></td></tr>
-<tr class="highlight">
+<tr class="highlight unused">
 <td><kbd class="clk bclk3">BCLK 3</kbd></td><td class="left"><abbr>clk3</abbr></td></tr>
 </table>
 </div>
@@ -285,23 +471,23 @@ kbd.power-guard.disabled {
 <tr>
 <td class="mc-4" data-hover=".mc-4">24</td><td class="mc-4" data-hover=".mc-4">io_B4</td><td class="mc-4" data-hover=".mc-4">mc_B4</td><td class="mc-4" data-hover=".mc-4">B4</td><td class="ca-depth-0 mc-4" data-hover=".mc-4">B4</td><td class="mc-4" data-hover=".mc-4">1</td><td class="mc-4" data-hover=".mc-4"><kbd class="logic sum">Sum</kbd></td><td class="mc-4" data-hover=".mc-4"><kbd class="func comb">Comb</kbd></td><td class="mc-4" data-hover=".mc-4"></td><td class="mc-4" data-hover=".mc-4"></td><td class="mc-4" data-hover=".mc-4"></td><td class="mc-4" data-hover=".mc-4"></td><td class="mc-4" data-hover=".mc-4">B4</td><td><kbd class="oe output-only">Output</kbd></td><td class="mc-4" data-hover=".mc-4"><kbd class="slew slow">Slow</kbd></td><td class="mc-4" data-hover=".mc-4"><kbd class="drive push-pull">TP</kbd></td><td class="mc-4" data-hover=".mc-4"></td><td class="mc-4" data-hover=".mc-4"></td><td class="mc-4" data-hover=".mc-4"><kbd class="power-guard disabled">Disabled</kbd></td></tr>
 <tr class="highlight">
-<td class="mc-5" data-hover=".mc-5">26</td><td class="mc-5" data-hover=".mc-5">io_B5</td><td class="mc-5" data-hover=".mc-5">mc_B5</td><td class="mc-5" data-hover=".mc-5">B5</td><td class="ca-depth-0 mc-5" data-hover=".mc-5">B5</td><td class="mc-5" data-hover=".mc-5">0</td><td class="mc-5" data-hover=".mc-5"><kbd class="logic sum">Sum</kbd></td><td class="mc-5" data-hover=".mc-5"><kbd class="func comb">Comb</kbd></td><td class="mc-5" data-hover=".mc-5"></td><td class="mc-5" data-hover=".mc-5"></td><td class="mc-5" data-hover=".mc-5"></td><td class="mc-5" data-hover=".mc-5"></td><td></td><td><kbd class="oe input-only">Input</kbd></td><td></td><td></td><td class="mc-5" data-hover=".mc-5"><kbd class="threshold high">&#8595;0.68&times;Vcc &#8593;0.79&times;Vcc</kbd></td><td class="mc-5" data-hover=".mc-5"><kbd class="maintenance keeper">Keeper</kbd></td><td class="mc-5" data-hover=".mc-5"><kbd class="power-guard disabled">Disabled</kbd></td></tr>
+<td class="mc-5" data-hover=".mc-5">26</td><td class="mc-5 unused" data-hover=".mc-5">io_B5</td><td class="mc-5 unused" data-hover=".mc-5">mc_B5</td><td class="mc-5 unused" data-hover=".mc-5">B5</td><td class="ca-depth-0 mc-5 unused" data-hover=".mc-5">B5</td><td class="mc-5 unused" data-hover=".mc-5">0</td><td class="mc-5 unused" data-hover=".mc-5"><kbd class="logic sum">Sum</kbd></td><td class="mc-5 unused" data-hover=".mc-5"><kbd class="func comb">Comb</kbd></td><td class="mc-5 unused" data-hover=".mc-5"></td><td class="mc-5 unused" data-hover=".mc-5"></td><td class="mc-5 unused" data-hover=".mc-5"></td><td class="mc-5 unused" data-hover=".mc-5"></td><td class=" unused"></td><td class=" unused"><kbd class="oe input-only">Input</kbd></td><td class=" unused"></td><td class=" unused"></td><td class="mc-5 unused" data-hover=".mc-5"><kbd class="threshold high">&#8595;0.68&times;Vcc &#8593;0.79&times;Vcc</kbd></td><td class="mc-5 unused" data-hover=".mc-5"><kbd class="maintenance keeper">Keeper</kbd></td><td class="mc-5 unused" data-hover=".mc-5"><kbd class="power-guard disabled">Disabled</kbd></td></tr>
 <tr>
-<td class="mc-6" data-hover=".mc-6">27</td><td class="mc-6" data-hover=".mc-6">io_B6</td><td class="mc-6" data-hover=".mc-6">mc_B6</td><td class="mc-6" data-hover=".mc-6">B6</td><td class="ca-depth-0 mc-6" data-hover=".mc-6">B6</td><td class="mc-6" data-hover=".mc-6">4</td><td class="mc-6" data-hover=".mc-6"><kbd class="logic sum">Sum</kbd></td><td class="mc-6" data-hover=".mc-6"><kbd class="func comb">Comb</kbd></td><td class="mc-6" data-hover=".mc-6"></td><td class="mc-6" data-hover=".mc-6"></td><td class="mc-6" data-hover=".mc-6"></td><td class="mc-6" data-hover=".mc-6"></td><td></td><td><kbd class="oe input-only">Input</kbd></td><td></td><td></td><td class="mc-6" data-hover=".mc-6"><kbd class="threshold high">&#8595;0.68&times;Vcc &#8593;0.79&times;Vcc</kbd></td><td class="mc-6" data-hover=".mc-6"><kbd class="maintenance keeper">Keeper</kbd></td><td class="mc-6" data-hover=".mc-6"><kbd class="power-guard disabled">Disabled</kbd></td></tr>
+<td class="mc-6" data-hover=".mc-6">27</td><td class="mc-6 unused" data-hover=".mc-6">io_B6</td><td class="mc-6" data-hover=".mc-6">mc_B6</td><td class="mc-6" data-hover=".mc-6">B6</td><td class="ca-depth-0 mc-6" data-hover=".mc-6">B6</td><td class="mc-6" data-hover=".mc-6">4</td><td class="mc-6" data-hover=".mc-6"><kbd class="logic sum">Sum</kbd></td><td class="mc-6" data-hover=".mc-6"><kbd class="func comb">Comb</kbd></td><td class="mc-6" data-hover=".mc-6"></td><td class="mc-6" data-hover=".mc-6"></td><td class="mc-6" data-hover=".mc-6"></td><td class="mc-6" data-hover=".mc-6"></td><td class=" unused"></td><td class=" unused"><kbd class="oe input-only">Input</kbd></td><td class=" unused"></td><td class=" unused"></td><td class="mc-6 unused" data-hover=".mc-6"><kbd class="threshold high">&#8595;0.68&times;Vcc &#8593;0.79&times;Vcc</kbd></td><td class="mc-6 unused" data-hover=".mc-6"><kbd class="maintenance keeper">Keeper</kbd></td><td class="mc-6 unused" data-hover=".mc-6"><kbd class="power-guard disabled">Disabled</kbd></td></tr>
 <tr class="highlight">
-<td class="mc-7" data-hover=".mc-7">28</td><td class="mc-7" data-hover=".mc-7">io_B7</td><td class="mc-7" data-hover=".mc-7">mc_B7</td><td class="mc-7" data-hover=".mc-7">B7</td><td class="ca-depth-0 mc-7" data-hover=".mc-7">B7</td><td class="mc-7" data-hover=".mc-7">2</td><td class="mc-7" data-hover=".mc-7"><kbd class="logic sum">Sum</kbd> <kbd class="logic xor-pt">XOR PT</kbd></td><td class="mc-7" data-hover=".mc-7"><kbd class="func comb">Comb</kbd></td><td class="mc-7" data-hover=".mc-7"></td><td class="mc-7" data-hover=".mc-7"></td><td class="mc-7" data-hover=".mc-7"></td><td class="mc-7" data-hover=".mc-7"></td><td></td><td><kbd class="oe input-only">Input</kbd></td><td></td><td></td><td class="mc-7" data-hover=".mc-7"><kbd class="threshold high">&#8595;0.68&times;Vcc &#8593;0.79&times;Vcc</kbd></td><td class="mc-7" data-hover=".mc-7"><kbd class="maintenance keeper">Keeper</kbd></td><td class="mc-7" data-hover=".mc-7"><kbd class="power-guard disabled">Disabled</kbd></td></tr>
+<td class="mc-7" data-hover=".mc-7">28</td><td class="mc-7 unused" data-hover=".mc-7">io_B7</td><td class="mc-7" data-hover=".mc-7">mc_B7</td><td class="mc-7" data-hover=".mc-7">B7</td><td class="ca-depth-0 mc-7" data-hover=".mc-7">B7</td><td class="mc-7" data-hover=".mc-7">2</td><td class="mc-7" data-hover=".mc-7"><kbd class="logic sum">Sum</kbd> <kbd class="logic xor-pt">XOR PT</kbd></td><td class="mc-7" data-hover=".mc-7"><kbd class="func comb">Comb</kbd></td><td class="mc-7" data-hover=".mc-7"></td><td class="mc-7" data-hover=".mc-7"></td><td class="mc-7" data-hover=".mc-7"></td><td class="mc-7" data-hover=".mc-7"></td><td class=" unused"></td><td class=" unused"><kbd class="oe input-only">Input</kbd></td><td class=" unused"></td><td class=" unused"></td><td class="mc-7 unused" data-hover=".mc-7"><kbd class="threshold high">&#8595;0.68&times;Vcc &#8593;0.79&times;Vcc</kbd></td><td class="mc-7 unused" data-hover=".mc-7"><kbd class="maintenance keeper">Keeper</kbd></td><td class="mc-7 unused" data-hover=".mc-7"><kbd class="power-guard disabled">Disabled</kbd></td></tr>
 <tr>
-<td class="mc-8" data-hover=".mc-8">31</td><td class="mc-8" data-hover=".mc-8">io_B8</td><td class="mc-8" data-hover=".mc-8">mc_B8</td><td class="mc-8" data-hover=".mc-8">B8</td><td class="ca-depth-0 mc-8" data-hover=".mc-8">B8</td><td class="mc-8" data-hover=".mc-8">4</td><td class="mc-8" data-hover=".mc-8"><kbd class="logic sum">Sum</kbd></td><td class="mc-8" data-hover=".mc-8"><kbd class="func comb">Comb</kbd></td><td class="mc-8" data-hover=".mc-8"></td><td class="mc-8" data-hover=".mc-8"></td><td class="mc-8" data-hover=".mc-8"></td><td class="mc-8" data-hover=".mc-8"></td><td></td><td><kbd class="oe input-only">Input</kbd></td><td></td><td></td><td class="mc-8" data-hover=".mc-8"><kbd class="threshold high">&#8595;0.68&times;Vcc &#8593;0.79&times;Vcc</kbd></td><td class="mc-8" data-hover=".mc-8"><kbd class="maintenance keeper">Keeper</kbd></td><td class="mc-8" data-hover=".mc-8"><kbd class="power-guard disabled">Disabled</kbd></td></tr>
+<td class="mc-8" data-hover=".mc-8">31</td><td class="mc-8 unused" data-hover=".mc-8">io_B8</td><td class="mc-8" data-hover=".mc-8">mc_B8</td><td class="mc-8" data-hover=".mc-8">B8</td><td class="ca-depth-0 mc-8" data-hover=".mc-8">B8</td><td class="mc-8" data-hover=".mc-8">4</td><td class="mc-8" data-hover=".mc-8"><kbd class="logic sum">Sum</kbd></td><td class="mc-8" data-hover=".mc-8"><kbd class="func comb">Comb</kbd></td><td class="mc-8" data-hover=".mc-8"></td><td class="mc-8" data-hover=".mc-8"></td><td class="mc-8" data-hover=".mc-8"></td><td class="mc-8" data-hover=".mc-8"></td><td class=" unused"></td><td class=" unused"><kbd class="oe input-only">Input</kbd></td><td class=" unused"></td><td class=" unused"></td><td class="mc-8 unused" data-hover=".mc-8"><kbd class="threshold high">&#8595;0.68&times;Vcc &#8593;0.79&times;Vcc</kbd></td><td class="mc-8 unused" data-hover=".mc-8"><kbd class="maintenance keeper">Keeper</kbd></td><td class="mc-8 unused" data-hover=".mc-8"><kbd class="power-guard disabled">Disabled</kbd></td></tr>
 <tr class="highlight">
-<td class="mc-9" data-hover=".mc-9">32</td><td class="mc-9" data-hover=".mc-9">io_B9</td><td class="mc-9" data-hover=".mc-9">mc_B9</td><td class="mc-9" data-hover=".mc-9">B9</td><td class="ca-depth-0 mc-9" data-hover=".mc-9">B9</td><td class="mc-9" data-hover=".mc-9">4</td><td class="mc-9" data-hover=".mc-9"><kbd class="logic sum">Sum</kbd></td><td class="mc-9" data-hover=".mc-9"><kbd class="func comb">Comb</kbd></td><td class="mc-9" data-hover=".mc-9"></td><td class="mc-9" data-hover=".mc-9"></td><td class="mc-9" data-hover=".mc-9"></td><td class="mc-9" data-hover=".mc-9"></td><td></td><td><kbd class="oe input-only">Input</kbd></td><td></td><td></td><td class="mc-9" data-hover=".mc-9"><kbd class="threshold high">&#8595;0.68&times;Vcc &#8593;0.79&times;Vcc</kbd></td><td class="mc-9" data-hover=".mc-9"><kbd class="maintenance keeper">Keeper</kbd></td><td class="mc-9" data-hover=".mc-9"><kbd class="power-guard disabled">Disabled</kbd></td></tr>
+<td class="mc-9" data-hover=".mc-9">32</td><td class="mc-9 unused" data-hover=".mc-9">io_B9</td><td class="mc-9" data-hover=".mc-9">mc_B9</td><td class="mc-9" data-hover=".mc-9">B9</td><td class="ca-depth-0 mc-9" data-hover=".mc-9">B9</td><td class="mc-9" data-hover=".mc-9">4</td><td class="mc-9" data-hover=".mc-9"><kbd class="logic sum">Sum</kbd></td><td class="mc-9" data-hover=".mc-9"><kbd class="func comb">Comb</kbd></td><td class="mc-9" data-hover=".mc-9"></td><td class="mc-9" data-hover=".mc-9"></td><td class="mc-9" data-hover=".mc-9"></td><td class="mc-9" data-hover=".mc-9"></td><td class=" unused"></td><td class=" unused"><kbd class="oe input-only">Input</kbd></td><td class=" unused"></td><td class=" unused"></td><td class="mc-9 unused" data-hover=".mc-9"><kbd class="threshold high">&#8595;0.68&times;Vcc &#8593;0.79&times;Vcc</kbd></td><td class="mc-9 unused" data-hover=".mc-9"><kbd class="maintenance keeper">Keeper</kbd></td><td class="mc-9 unused" data-hover=".mc-9"><kbd class="power-guard disabled">Disabled</kbd></td></tr>
 <tr>
-<td class="mc-10" data-hover=".mc-10">33</td><td class="mc-10" data-hover=".mc-10">io_B10</td><td class="mc-10" data-hover=".mc-10">mc_B10</td><td class="mc-10" data-hover=".mc-10">B10</td><td class="ca-depth-0 mc-10" data-hover=".mc-10">B10</td><td class="mc-10" data-hover=".mc-10">2</td><td class="mc-10" data-hover=".mc-10"><kbd class="logic sum">Sum</kbd> <kbd class="logic xor-pt">XOR PT</kbd></td><td class="mc-10" data-hover=".mc-10"><kbd class="func comb">Comb</kbd></td><td class="mc-10" data-hover=".mc-10"></td><td class="mc-10" data-hover=".mc-10"></td><td class="mc-10" data-hover=".mc-10"></td><td class="mc-10" data-hover=".mc-10"></td><td></td><td><kbd class="oe input-only">Input</kbd></td><td></td><td></td><td class="mc-10" data-hover=".mc-10"><kbd class="threshold high">&#8595;0.68&times;Vcc &#8593;0.79&times;Vcc</kbd></td><td class="mc-10" data-hover=".mc-10"><kbd class="maintenance keeper">Keeper</kbd></td><td class="mc-10" data-hover=".mc-10"><kbd class="power-guard disabled">Disabled</kbd></td></tr>
+<td class="mc-10" data-hover=".mc-10">33</td><td class="mc-10 unused" data-hover=".mc-10">io_B10</td><td class="mc-10" data-hover=".mc-10">mc_B10</td><td class="mc-10" data-hover=".mc-10">B10</td><td class="ca-depth-0 mc-10" data-hover=".mc-10">B10</td><td class="mc-10" data-hover=".mc-10">2</td><td class="mc-10" data-hover=".mc-10"><kbd class="logic sum">Sum</kbd> <kbd class="logic xor-pt">XOR PT</kbd></td><td class="mc-10" data-hover=".mc-10"><kbd class="func comb">Comb</kbd></td><td class="mc-10" data-hover=".mc-10"></td><td class="mc-10" data-hover=".mc-10"></td><td class="mc-10" data-hover=".mc-10"></td><td class="mc-10" data-hover=".mc-10"></td><td class=" unused"></td><td class=" unused"><kbd class="oe input-only">Input</kbd></td><td class=" unused"></td><td class=" unused"></td><td class="mc-10 unused" data-hover=".mc-10"><kbd class="threshold high">&#8595;0.68&times;Vcc &#8593;0.79&times;Vcc</kbd></td><td class="mc-10 unused" data-hover=".mc-10"><kbd class="maintenance keeper">Keeper</kbd></td><td class="mc-10 unused" data-hover=".mc-10"><kbd class="power-guard disabled">Disabled</kbd></td></tr>
 <tr class="highlight">
-<td class="mc-11" data-hover=".mc-11">34</td><td class="mc-11" data-hover=".mc-11">io_B11</td><td class="mc-11" data-hover=".mc-11">mc_B11</td><td class="mc-11" data-hover=".mc-11">B11</td><td class="ca-depth-0 mc-11" data-hover=".mc-11">B11</td><td class="mc-11" data-hover=".mc-11">1</td><td class="mc-11" data-hover=".mc-11"><kbd class="logic sum">Sum</kbd></td><td class="mc-11" data-hover=".mc-11"><kbd class="func comb">Comb</kbd></td><td class="mc-11" data-hover=".mc-11"></td><td class="mc-11" data-hover=".mc-11"></td><td class="mc-11" data-hover=".mc-11"></td><td class="mc-11" data-hover=".mc-11"></td><td></td><td><kbd class="oe input-only">Input</kbd></td><td></td><td></td><td class="mc-11" data-hover=".mc-11"><kbd class="threshold high">&#8595;0.68&times;Vcc &#8593;0.79&times;Vcc</kbd></td><td class="mc-11" data-hover=".mc-11"><kbd class="maintenance keeper">Keeper</kbd></td><td class="mc-11" data-hover=".mc-11"><kbd class="power-guard disabled">Disabled</kbd></td></tr>
+<td class="mc-11" data-hover=".mc-11">34</td><td class="mc-11 unused" data-hover=".mc-11">io_B11</td><td class="mc-11" data-hover=".mc-11">mc_B11</td><td class="mc-11" data-hover=".mc-11">B11</td><td class="ca-depth-0 mc-11" data-hover=".mc-11">B11</td><td class="mc-11" data-hover=".mc-11">1</td><td class="mc-11" data-hover=".mc-11"><kbd class="logic sum">Sum</kbd></td><td class="mc-11" data-hover=".mc-11"><kbd class="func comb">Comb</kbd></td><td class="mc-11" data-hover=".mc-11"></td><td class="mc-11" data-hover=".mc-11"></td><td class="mc-11" data-hover=".mc-11"></td><td class="mc-11" data-hover=".mc-11"></td><td class=" unused"></td><td class=" unused"><kbd class="oe input-only">Input</kbd></td><td class=" unused"></td><td class=" unused"></td><td class="mc-11 unused" data-hover=".mc-11"><kbd class="threshold high">&#8595;0.68&times;Vcc &#8593;0.79&times;Vcc</kbd></td><td class="mc-11 unused" data-hover=".mc-11"><kbd class="maintenance keeper">Keeper</kbd></td><td class="mc-11 unused" data-hover=".mc-11"><kbd class="power-guard disabled">Disabled</kbd></td></tr>
 <tr>
-<td class="mc-12" data-hover=".mc-12">38</td><td class="mc-12" data-hover=".mc-12">io_B12</td><td class="mc-12" data-hover=".mc-12">mc_B12</td><td class="mc-12" data-hover=".mc-12">B12</td><td class="ca-depth-0 mc-12" data-hover=".mc-12">B12</td><td class="mc-12" data-hover=".mc-12">4</td><td class="mc-12" data-hover=".mc-12"><kbd class="logic sum">Sum</kbd></td><td class="mc-12" data-hover=".mc-12"><kbd class="func comb">Comb</kbd></td><td class="mc-12" data-hover=".mc-12"></td><td class="mc-12" data-hover=".mc-12"></td><td class="mc-12" data-hover=".mc-12"></td><td class="mc-12" data-hover=".mc-12"></td><td></td><td><kbd class="oe input-only">Input</kbd></td><td></td><td></td><td class="mc-12" data-hover=".mc-12"><kbd class="threshold high">&#8595;0.68&times;Vcc &#8593;0.79&times;Vcc</kbd></td><td class="mc-12" data-hover=".mc-12"><kbd class="maintenance keeper">Keeper</kbd></td><td class="mc-12" data-hover=".mc-12"><kbd class="power-guard disabled">Disabled</kbd></td></tr>
+<td class="mc-12" data-hover=".mc-12">38</td><td class="mc-12 unused" data-hover=".mc-12">io_B12</td><td class="mc-12" data-hover=".mc-12">mc_B12</td><td class="mc-12" data-hover=".mc-12">B12</td><td class="ca-depth-0 mc-12" data-hover=".mc-12">B12</td><td class="mc-12" data-hover=".mc-12">4</td><td class="mc-12" data-hover=".mc-12"><kbd class="logic sum">Sum</kbd></td><td class="mc-12" data-hover=".mc-12"><kbd class="func comb">Comb</kbd></td><td class="mc-12" data-hover=".mc-12"></td><td class="mc-12" data-hover=".mc-12"></td><td class="mc-12" data-hover=".mc-12"></td><td class="mc-12" data-hover=".mc-12"></td><td class=" unused"></td><td class=" unused"><kbd class="oe input-only">Input</kbd></td><td class=" unused"></td><td class=" unused"></td><td class="mc-12 unused" data-hover=".mc-12"><kbd class="threshold high">&#8595;0.68&times;Vcc &#8593;0.79&times;Vcc</kbd></td><td class="mc-12 unused" data-hover=".mc-12"><kbd class="maintenance keeper">Keeper</kbd></td><td class="mc-12 unused" data-hover=".mc-12"><kbd class="power-guard disabled">Disabled</kbd></td></tr>
 <tr class="highlight">
-<td class="mc-13" data-hover=".mc-13">39</td><td class="mc-13" data-hover=".mc-13">io_B13</td><td class="mc-13" data-hover=".mc-13">mc_B13</td><td class="mc-13" data-hover=".mc-13">B13</td><td class="ca-depth-0 mc-13" data-hover=".mc-13">B13</td><td class="mc-13" data-hover=".mc-13">4</td><td class="mc-13" data-hover=".mc-13"><kbd class="logic sum">Sum</kbd></td><td class="mc-13" data-hover=".mc-13"><kbd class="func comb">Comb</kbd></td><td class="mc-13" data-hover=".mc-13"></td><td class="mc-13" data-hover=".mc-13"></td><td class="mc-13" data-hover=".mc-13"></td><td class="mc-13" data-hover=".mc-13"></td><td></td><td><kbd class="oe input-only">Input</kbd></td><td></td><td></td><td class="mc-13" data-hover=".mc-13"><kbd class="threshold high">&#8595;0.68&times;Vcc &#8593;0.79&times;Vcc</kbd></td><td class="mc-13" data-hover=".mc-13"><kbd class="maintenance keeper">Keeper</kbd></td><td class="mc-13" data-hover=".mc-13"><kbd class="power-guard disabled">Disabled</kbd></td></tr>
+<td class="mc-13" data-hover=".mc-13">39</td><td class="mc-13 unused" data-hover=".mc-13">io_B13</td><td class="mc-13" data-hover=".mc-13">mc_B13</td><td class="mc-13" data-hover=".mc-13">B13</td><td class="ca-depth-0 mc-13" data-hover=".mc-13">B13</td><td class="mc-13" data-hover=".mc-13">4</td><td class="mc-13" data-hover=".mc-13"><kbd class="logic sum">Sum</kbd></td><td class="mc-13" data-hover=".mc-13"><kbd class="func comb">Comb</kbd></td><td class="mc-13" data-hover=".mc-13"></td><td class="mc-13" data-hover=".mc-13"></td><td class="mc-13" data-hover=".mc-13"></td><td class="mc-13" data-hover=".mc-13"></td><td class=" unused"></td><td class=" unused"><kbd class="oe input-only">Input</kbd></td><td class=" unused"></td><td class=" unused"></td><td class="mc-13 unused" data-hover=".mc-13"><kbd class="threshold high">&#8595;0.68&times;Vcc &#8593;0.79&times;Vcc</kbd></td><td class="mc-13 unused" data-hover=".mc-13"><kbd class="maintenance keeper">Keeper</kbd></td><td class="mc-13 unused" data-hover=".mc-13"><kbd class="power-guard disabled">Disabled</kbd></td></tr>
 <tr>
 <td class="mc-14" data-hover=".mc-14">40</td><td class="mc-14" data-hover=".mc-14">io_B14</td><td class="mc-14" data-hover=".mc-14">mc_B14</td><td class="mc-14" data-hover=".mc-14">B14</td><td class="ca-depth-0 mc-14" data-hover=".mc-14">B14</td><td class="mc-14" data-hover=".mc-14">2</td><td class="mc-14" data-hover=".mc-14"><kbd class="logic sum">Sum</kbd> <kbd class="logic xor-pt">XOR PT</kbd></td><td class="mc-14" data-hover=".mc-14"><kbd class="func comb">Comb</kbd></td><td class="mc-14" data-hover=".mc-14"></td><td class="mc-14" data-hover=".mc-14"></td><td class="mc-14" data-hover=".mc-14"></td><td class="mc-14" data-hover=".mc-14"></td><td></td><td><kbd class="oe input-only">Input</kbd></td><td></td><td></td><td class="mc-14" data-hover=".mc-14"><kbd class="threshold high">&#8595;0.68&times;Vcc &#8593;0.79&times;Vcc</kbd></td><td class="mc-14" data-hover=".mc-14"><kbd class="maintenance keeper">Keeper</kbd></td><td class="mc-14" data-hover=".mc-14"><kbd class="power-guard disabled">Disabled</kbd></td></tr>
 <tr class="highlight">
