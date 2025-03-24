@@ -27,13 +27,15 @@ const PT_Usage = enum {
 };
 
 const Signal_Usage = enum (u8) {
-    input_reg = std.math.maxInt(u8) - 2,
+    input_reg = std.math.maxInt(u8) - 3,
+    bclk = std.math.maxInt(u8) - 2,
     orm = std.math.maxInt(u8) - 1,
     output = std.math.maxInt(u8),
     _, // 0..n correspond to usage as a GI in GLB 0..n
 
     pub fn init_glb(index: lc4k.GLB_Index) Signal_Usage {
         std.debug.assert(index != @intFromEnum(Signal_Usage.input_reg));
+        std.debug.assert(index != @intFromEnum(Signal_Usage.bclk));
         std.debug.assert(index != @intFromEnum(Signal_Usage.orm));
         std.debug.assert(index != @intFromEnum(Signal_Usage.output));
         return @enumFromInt(index);
@@ -41,7 +43,7 @@ const Signal_Usage = enum (u8) {
 
     pub fn glb_index(self: Signal_Usage) ?lc4k.GLB_Index {
         return switch (self) {
-            .input_reg, .orm, .output => null,
+            .input_reg, .bclk, .orm, .output => null,
             else => @intFromEnum(self),
         };
     }
@@ -59,6 +61,7 @@ fn Report_Data(comptime Device: type) type {
         pt_usage: [num_pts]PT_Usage,
         mc_usage: std.StaticBitSet(Device.num_mcs_per_glb),
         uses_bie: bool,
+        uses_bclk: [4]bool,
     };
 
     const shared_init_pt = Device.num_mcs_per_glb * 5 + 0;
@@ -100,8 +103,6 @@ fn Report_Data(comptime Device: type) type {
 
             var mcs_used = std.EnumSet(Signal) {};
             var ios_used = std.EnumSet(Signal) {};
-            var inputs_used = std.EnumSet(Signal) {};
-            var clocks_used = std.EnumSet(Signal) {};
             inline for (dis.config.glb, 0..) |glb_config, glb| {
                 var glb_data = GLB_Report_Data {
                     .gi_routing = dis.gi_routing[glb],
@@ -110,16 +111,15 @@ fn Report_Data(comptime Device: type) type {
                     .pt_usage = undefined,
                     .mc_usage = .initEmpty(),
                     .uses_bie = false,
+                    .uses_bclk = .{ false, false, false, false },
                 };
 
                 for (dis.gi_routing[glb]) |maybe_signal| {
                     if (maybe_signal) |signal| {
                         self.num_gis_used += 1;
                         switch (signal.kind()) {
-                            .io => ios_used.insert(signal),
+                            .io, .in, .clk => ios_used.insert(signal),
                             .mc => mcs_used.insert(signal),
-                            .clk => clocks_used.insert(signal),
-                            .in => inputs_used.insert(signal),
                         }
                         self.signal_usage.getPtr(signal).insert(.init_glb(@intCast(glb)));
                     }
@@ -153,11 +153,6 @@ fn Report_Data(comptime Device: type) type {
                         }
                     }
 
-                    if (mc_config.func != .combinational) {
-                        self.num_registers_used += 1;
-                        mcs_used.insert(Device.Signal.mc_fb(mcref));
-                    }
-
                     if (mc_config.output.oe != .input_only) {
                         if (Device.Signal.maybe_mc_pad(mcref)) |signal| {
                             ios_used.insert(signal);
@@ -188,24 +183,36 @@ fn Report_Data(comptime Device: type) type {
                     switch (mc_config.func) {
                         .combinational => {},
                         .latch, .t_ff, .d_ff => |reg_config| {
+                            if (reg_config.clock != .none) {
+                                self.num_registers_used += 1;
+                                mcs_used.insert(Device.Signal.mc_fb(mcref));
+                            }
                             switch (reg_config.clock) {
                                 .none => {},
-                                .bclock0 => clocks_used.insert(switch (glb_config.bclock0) {
-                                    .clk0_pos => .clk0,
-                                    .clk1_neg => .clk1,
-                                }),
-                                .bclock1 => clocks_used.insert(switch (glb_config.bclock1) {
-                                    .clk0_neg => .clk0,
-                                    .clk1_pos => .clk1,
-                                }),
-                                .bclock2 => clocks_used.insert(switch (glb_config.bclock2) {
-                                    .clk2_pos => .clk2,
-                                    .clk3_neg => .clk3,
-                                }),
-                                .bclock3 => clocks_used.insert(switch (glb_config.bclock3) {
-                                    .clk2_neg => .clk2,
-                                    .clk3_pos => .clk3,
-                                }),
+                                .bclock0 => {
+                                    const signal = glb_config.bclock0.pad();
+                                    glb_data.uses_bclk[0] = true;
+                                    ios_used.insert(signal);
+                                    self.signal_usage.getPtr(signal).insert(.bclk);
+                                },
+                                .bclock1 => {
+                                    const signal = glb_config.bclock1.pad();
+                                    glb_data.uses_bclk[1] = true;
+                                    ios_used.insert(signal);
+                                    self.signal_usage.getPtr(signal).insert(.bclk);
+                                },
+                                .bclock2 => {
+                                    const signal = glb_config.bclock2.pad();
+                                    glb_data.uses_bclk[2] = true;
+                                    ios_used.insert(signal);
+                                    self.signal_usage.getPtr(signal).insert(.bclk);
+                                },
+                                .bclock3 => {
+                                    const signal = glb_config.bclock3.pad();
+                                    glb_data.uses_bclk[3] = true;
+                                    ios_used.insert(signal);
+                                    self.signal_usage.getPtr(signal).insert(.bclk);
+                                },
                                 .shared_pt_clock => {
                                     glb_data.pt_usage[shared_clock_pt] = switch (glb_data.pt_usage[shared_clock_pt]) {
                                         .ce => .clock_and_ce,
@@ -312,15 +319,33 @@ fn Report_Data(comptime Device: type) type {
 
             for (Device.all_pins) |pin| {
                 switch (pin.info.func) {
-                    .io, .io_oe0, .io_oe1, .input, .clock
+                    .io, .io_oe0, .io_oe1,
                         => self.num_ios += 1,
+                    .input, .clock,
                     .no_connect, .gnd, .vcc_core, .vcco, .tck, .tms, .tdi, .tdo
                         => continue,
                 }
             }
+
+            var num_clocks_used: usize = 0;
+            for (Device.clock_pins) |pin| {
+                if (ios_used.contains(pin.pad())) {
+                    num_clocks_used += 1;
+                    ios_used.remove(pin.pad());
+                }
+            }
+
+            var num_inputs_used: usize = 0;
+            for (Device.input_pins) |pin| {
+                if (ios_used.contains(pin.pad())) {
+                    num_inputs_used += 1;
+                    ios_used.remove(pin.pad());
+                }
+            }
+
             self.num_ios_used = @intCast(ios_used.count());
-            self.num_inputs_used = @intCast(inputs_used.count());
-            self.num_clocks_used = @intCast(clocks_used.count());
+            self.num_inputs_used = @intCast(num_inputs_used);
+            self.num_clocks_used = @intCast(num_clocks_used);
             self.num_mcs_used = @intCast(mcs_used.count());
 
             var mcs_used_iter = mcs_used.iterator();
@@ -764,8 +789,8 @@ fn write_globals_and_inputs(writer: std.io.AnyWriter, comptime Device: type, dat
     for (Device.clock_pins, 0..) |pin, i| {
         const config = data.config.clock[i];
         switch (@TypeOf(config)) {
-            lc4k.Input_Config => try write_input_pin(writer, (n & 1) == 1, Device, pin, config.threshold.?, data.config.default_bus_maintenance, null, options),
-            lc4k.Input_Config_ZE => try write_input_pin(writer, (n & 1) == 1, Device, pin, config.threshold.?, config.bus_maintenance.?, config.power_guard.?, options),
+            lc4k.Input_Config => try write_input_pin(writer, (n & 1) == 1, Device, data, pin, config.threshold.?, data.config.default_bus_maintenance, null, options),
+            lc4k.Input_Config_ZE => try write_input_pin(writer, (n & 1) == 1, Device, data, pin, config.threshold.?, config.bus_maintenance.?, config.power_guard.?, options),
             else => unreachable,
         }
         n += 1;
@@ -774,8 +799,8 @@ fn write_globals_and_inputs(writer: std.io.AnyWriter, comptime Device: type, dat
     for (Device.input_pins, 0..) |pin, i| {
         const config = data.config.input[i];
         switch (@TypeOf(config)) {
-            lc4k.Input_Config => try write_input_pin(writer, (n & 1) == 1, Device, pin, config.threshold.?, data.config.default_bus_maintenance, null, options),
-            lc4k.Input_Config_ZE => try write_input_pin(writer, (n & 1) == 1, Device, pin, config.threshold.?, config.bus_maintenance.?, config.power_guard.?, options),
+            lc4k.Input_Config => try write_input_pin(writer, (n & 1) == 1, Device, data, pin, config.threshold.?, data.config.default_bus_maintenance, null, options),
+            lc4k.Input_Config_ZE => try write_input_pin(writer, (n & 1) == 1, Device, data, pin, config.threshold.?, config.bus_maintenance.?, config.power_guard.?, options),
             else => unreachable,
         }
         n += 1;
@@ -790,10 +815,10 @@ fn write_globals_and_inputs(writer: std.io.AnyWriter, comptime Device: type, dat
 
         try table_header(writer, .{ "Block Clock", "Equation" });
 
-        try write_block_clock(writer, Device, false, 0, glb_config.bclock0, options);
-        try write_block_clock(writer, Device, true,  1, glb_config.bclock1, options);
-        try write_block_clock(writer, Device, false, 2, glb_config.bclock2, options);
-        try write_block_clock(writer, Device, true,  3, glb_config.bclock3, options);
+        try write_block_clock(writer, Device, false, 0, glb_config.bclock0, data.glb[glb].uses_bclk[0], options);
+        try write_block_clock(writer, Device, true,  1, glb_config.bclock1, data.glb[glb].uses_bclk[1], options);
+        try write_block_clock(writer, Device, false, 2, glb_config.bclock2, data.glb[glb].uses_bclk[2], options);
+        try write_block_clock(writer, Device, true,  3, glb_config.bclock3, data.glb[glb].uses_bclk[3], options);
 
         try end_table(writer);
         try end_section(writer);
@@ -822,8 +847,11 @@ fn write_goe(writer: std.io.AnyWriter, comptime Device: type, data: Report_Data(
     try end_row(writer);
 }
 
-fn write_block_clock(writer: std.io.AnyWriter, comptime Device: type, highlight: bool, bclk_index: usize, value: anytype, options: Write_Options(Device)) !void {
-    try begin_row(writer, .{ .highlight = highlight });
+fn write_block_clock(writer: std.io.AnyWriter, comptime Device: type, highlight: bool, bclk_index: usize, value: anytype, used: bool, options: Write_Options(Device)) !void {
+    try begin_row(writer, .{
+        .class = if (used) "" else "unused",
+        .highlight = highlight,
+    });
 
     try begin_cell(writer, .{});
     try writer.print("<kbd class=\"clk bclk{}\">BCLK {}</kbd>", .{ bclk_index, bclk_index });
@@ -836,13 +864,20 @@ fn write_block_clock(writer: std.io.AnyWriter, comptime Device: type, highlight:
     try end_row(writer);
 }
 
-fn write_input_pin(writer: std.io.AnyWriter, highlight: bool, comptime Device: type, pin: Device.Pin,
+fn write_input_pin(
+    writer: std.io.AnyWriter,
+    highlight: bool,
+    comptime Device: type,
+    data: Report_Data(Device),
+    pin: Device.Pin,
     threshold: lc4k.Input_Threshold,
     bus_maintenance: lc4k.Bus_Maintenance,
     power_guard: ?lc4k.Power_Guard,
     options: Write_Options(Device),
 ) !void {
+    const signal: Device.Signal = @enumFromInt(pin.info.grp_ordinal.?);
     try begin_row(writer, .{
+        .class = if (data.signal_usage.get(signal).count() > 0) "" else "unused",
         .highlight = highlight,
     });
 
@@ -851,9 +886,7 @@ fn write_input_pin(writer: std.io.AnyWriter, highlight: bool, comptime Device: t
     try end_cell(writer);
 
     try begin_cell(writer, .{});
-    if (pin.info.grp_ordinal) |grp_ordinal| {
-        try writer.writeAll(options.get_names().get_signal_name(@enumFromInt(grp_ordinal)));
-    }
+    try writer.writeAll(options.get_names().get_signal_name(signal));
     try end_cell(writer);
 
     try begin_cell(writer, .{});

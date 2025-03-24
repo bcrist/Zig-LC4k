@@ -152,10 +152,78 @@ pub fn GLB_Config(comptime D: type) type {
         shared_pt_init: Product_Term_With_Polarity(D.Signal),
         shared_pt_clock: Product_Term_With_Polarity(D.Signal),
         shared_pt_enable: Product_Term(D.Signal),
-        bclock0: enum { clk0_pos, clk1_neg },
-        bclock1: enum { clk1_pos, clk0_neg },
-        bclock2: enum { clk2_pos, clk3_neg },
-        bclock3: enum { clk3_pos, clk2_neg },
+        bclock0: enum {
+            clk0_pos,
+            clk1_neg,
+
+            pub fn polarity(self: @This()) Polarity {
+                return switch (self) {
+                    .clk0_pos => .positive,
+                    .clk1_neg => .negative,
+                };
+            }
+
+            pub fn pad(self: @This()) D.Signal {
+                return switch (self) {
+                    .clk0_pos => .clk0,
+                    .clk1_neg => .clk1,
+                };
+            }
+        },
+        bclock1: enum {
+            clk1_pos,
+            clk0_neg,
+            
+            pub fn polarity(self: @This()) Polarity {
+                return switch (self) {
+                    .clk1_pos => .positive,
+                    .clk0_neg => .negative,
+                };
+            }
+
+            pub fn pad(self: @This()) D.Signal {
+                return switch (self) {
+                    .clk1_pos => .clk1,
+                    .clk0_neg => .clk0,
+                };
+            }
+        },
+        bclock2: enum {
+            clk2_pos,
+            clk3_neg,
+
+            pub fn polarity(self: @This()) Polarity {
+                return switch (self) {
+                    .clk2_pos => .positive,
+                    .clk3_neg => .negative,
+                };
+            }
+
+            pub fn pad(self: @This()) D.Signal {
+                return switch (self) {
+                    .clk2_pos => .clk2,
+                    .clk3_neg => .clk3,
+                };
+            }
+        },
+        bclock3: enum {
+            clk3_pos,
+            clk2_neg,
+
+            pub fn polarity(self: @This()) Polarity {
+                return switch (self) {
+                    .clk3_pos => .positive,
+                    .clk2_neg => .negative,
+                };
+            }
+
+            pub fn pad(self: @This()) D.Signal {
+                return switch (self) {
+                    .clk3_pos => .clk3,
+                    .clk2_neg => .clk2,
+                };
+            }
+        },
 
         const Self = @This();
 
