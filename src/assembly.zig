@@ -265,7 +265,7 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
                                 .details = "IO uses PT4 for OE, but it has not been configured",
                                 .glb = @intCast(glb),
                                 .mc = @intCast(absolute),
-                                .signal_ordinal = @intFromEnum(mcref.input(Device.Signal)),
+                                .signal_ordinal = @intFromEnum(mcref.pad(Device.Signal)),
                             });
                         }
                     },
@@ -432,17 +432,17 @@ fn write_goe_fuses(comptime Device: type, data: *JEDEC_Data, goe_config: anytype
 }
 
 fn write_dedicated_input_fuses(comptime Device: type, data: *JEDEC_Data, pin_info: lc4k.Pin_Info, config: *const Chip_Config(Device.device_type), input_config: anytype) void {
-    const grp: Device.Signal = @enumFromInt(pin_info.grp_ordinal.?);
+    const signal: Device.Signal = @enumFromInt(pin_info.signal_index.?);
 
     const threshold = input_config.threshold orelse config.default_input_threshold;
-    write_field(data, lc4k.Input_Threshold, threshold, Device.get_input_threshold_fuse(grp).range());
+    write_field(data, lc4k.Input_Threshold, threshold, Device.get_input_threshold_fuse(signal).range());
 
     if (@TypeOf(input_config) == lc4k.Input_Config_ZE) {
         const maintenance = input_config.bus_maintenance orelse config.default_bus_maintenance;
-        write_field(data, lc4k.Bus_Maintenance, maintenance, Device.getInputBus_MaintenanceRange(grp));
+        write_field(data, lc4k.Bus_Maintenance, maintenance, Device.getInputBus_MaintenanceRange(signal));
 
         const pgdf = input_config.power_guard orelse config.ext.default_power_guard;
-        write_field(data, lc4k.Power_Guard, pgdf, Device.getInputPower_GuardFuse(grp).range());
+        write_field(data, lc4k.Power_Guard, pgdf, Device.getInputPower_GuardFuse(signal).range());
     }
 }
 
@@ -455,10 +455,10 @@ fn write_pt_fuses(comptime Device: type, results: *Assembly_Results, glb: usize,
     for (pt.factors) |factor| switch (factor) {
         .always => {},
         .never => is_never = true,
-        .when_high, .when_low => |grp| {
-            const fuse = for (gi_signals, 0..) |maybe_grp, gi| {
-                if (maybe_grp) |gi_grp| {
-                    if (gi_grp == grp) {
+        .when_high, .when_low => |signal| {
+            const fuse = for (gi_signals, 0..) |maybe_gi_signal, gi| {
+                if (maybe_gi_signal) |gi_signal| {
+                    if (gi_signal == signal) {
                         const gi_fuses = range.sub_rows(gi * 2, 2); // should be exactly 2 fuses stacked vertically
                         if (factor == .when_low) {
                             break gi_fuses.max;
@@ -473,7 +473,7 @@ fn write_pt_fuses(comptime Device: type, results: *Assembly_Results, glb: usize,
                     .details = "PT uses signal that isn't assigned to a GI in this GLB",
                     .glb = @intCast(glb),
                     .mc = if (glb_pt_offset < Device.num_mcs_per_glb * 5) @intCast(glb_pt_offset / 5) else null,
-                    .signal_ordinal = @intFromEnum(grp),
+                    .signal_ordinal = @intFromEnum(signal),
                 });
                 continue;
             };

@@ -1,12 +1,12 @@
 pub fn add_signals_from_pt(comptime Device: type, gi_signals: *[Device.num_gis_per_glb]?Device.Signal, pt: lc4k.Product_Term(Device.Signal)) !void {
     for (pt.factors) |factor| switch (factor) {
         .always, .never => {},
-        .when_high, .when_low => |grp| {
-            for (gi_signals) |*existing_grp| {
-                if (existing_grp.* == null) {
-                    existing_grp.* = grp;
+        .when_high, .when_low => |signal| {
+            for (gi_signals) |*existing_gi_signal| {
+                if (existing_gi_signal.* == null) {
+                    existing_gi_signal.* = signal;
                     break;
-                } else if (existing_grp.* == grp) {
+                } else if (existing_gi_signal.* == signal) {
                     break;
                 }
             } else {
@@ -21,12 +21,12 @@ pub fn route_generic_inputs(comptime Device: type, gi_signals: *[Device.num_gis_
 
     @setEvalBranchQuota(2000);
 
-    const gi_options_by_grp: std.EnumMap(Device.Signal, []const u8) = Device.gi_options_by_grp;
+    const gi_options_by_signal: std.EnumMap(Device.Signal, []const u8) = Device.gi_options_by_signal;
     for (gi_signals) |maybe_signal| if (maybe_signal) |signal| {
         var signal_to_route = signal;
         var attempts: usize = 0;
         while (attempts < 1000) : (attempts += 1) {
-            const options = gi_options_by_grp.get(signal_to_route) orelse return error.Invalid_Signal;
+            const options = gi_options_by_signal.get(signal_to_route) orelse return error.Invalid_Signal;
             for (options) |option| {
                 if (routed[option] == null) {
                     routed[option] = signal_to_route;

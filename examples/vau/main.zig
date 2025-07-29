@@ -422,7 +422,6 @@ const add2 = Chip_Util.add2;
 const add3 = Chip_Util.add3;
 
 const Signal = Chip.Signal;
-const MC_Ref = lc4k.MC_Ref;
 
 const Chip_Util = util.Chip_Util(Chip);
 const util = @import("util");

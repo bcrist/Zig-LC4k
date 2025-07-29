@@ -10,6 +10,7 @@ function load_pins (device_name)
         clock = {},
         no_connect = {},
         gnd = {},
+        gndo = {},
         vcc_core = {},
         vcco = {},
         tck = {},
@@ -37,6 +38,11 @@ function load_pins (device_name)
         else
             local id, pin_type, bank, glb, mc, oe, clk
             id, pin_type, bank, glb, mc, oe, clk = line:match("^([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*)$")
+
+            if id == nil then
+                error("Found invalid line in " .. path .. ": " .. line)
+            end
+
             local safe_id = id
             if not safe_id:find('^%a') then
                 safe_id = '_' .. safe_id
@@ -49,16 +55,20 @@ function load_pins (device_name)
                 end
             end
             if clk ~= '' and pin_type ~= 'clock' then
-                error("Pins with a clock index must have type 'clock'!")
+                error("Pins with a clock index must have type 'clock'! (found " .. clk .. ")")
             end
             if clk == '' and pin_type == 'clock' then
                 error("Pins of type 'clock' must have an index!")
             end
 
+            if bank == '' then
+                bank = 'null'
+            end
+
             local pin = {
                 id = id,
                 safe_id = safe_id,
-                grp_name = '',
+                signal_name = '',
                 func = pin_type,
                 bank = bank,
                 glb = glb,
@@ -66,6 +76,14 @@ function load_pins (device_name)
                 oe = oe,
                 clk = clk,
             }
+
+            if pins[id] then
+                error(device_name .. ": Multiple pins with id " .. id)
+            end
+
+            if pins_by_type[pin_type] == nil then
+                error(device_name .. ": Invalid pin type: " .. pin_type)
+            end
 
             pins[id] = pin
             pins_by_type[pin_type][id] = pin
@@ -88,25 +106,27 @@ function load_pins (device_name)
             if pin_type == "io" then
                 dedup('glb'..glb..'_mc'..mc, id)
             end
+
+            ::continue::
         end
     end
 
     return pins, pins_by_type
 end
 
-function compute_grp_names (pins_by_type, pin_to_threshold_fuse)
+function compute_signal_names (pins_by_type, pin_to_threshold_fuse)
     for _, pin in pairs(pins_by_type.io) do
-        pin.grp_name = 'io_'..string.char(pin.glb + 65)..pin.mc
+        pin.signal_name = 'io_'..string.char(pin.glb + 65)..pin.mc
     end
     for _, pin in pairs(pins_by_type.io_oe0) do
-        pin.grp_name = 'io_'..string.char(pin.glb + 65)..pin.mc
+        pin.signal_name = 'io_'..string.char(pin.glb + 65)..pin.mc
     end
     for _, pin in pairs(pins_by_type.io_oe1) do
-        pin.grp_name = 'io_'..string.char(pin.glb + 65)..pin.mc
+        pin.signal_name = 'io_'..string.char(pin.glb + 65)..pin.mc
     end
 
     for _, pin in pairs(pins_by_type.clock) do
-        pin.grp_name = 'clk'..pin.clk
+        pin.signal_name = 'clk'..pin.clk
     end
 
     local threshold_fuse_to_input_pin = {}
@@ -117,7 +137,7 @@ function compute_grp_names (pins_by_type, pin_to_threshold_fuse)
     end
     local n = 0
     for _, pin in spairs(threshold_fuse_to_input_pin, natural_cmp) do
-        pin.grp_name = 'in'..n
+        pin.signal_name = 'in'..n
         n = n + 1
     end
 end

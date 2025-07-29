@@ -69,8 +69,8 @@ pub fn Chip_Config(comptime device_type: Device_Type) type {
 
     return struct {
         glb: [D.num_glbs] GLB_Config(D) = GLB_Config(D).init_all_unused(D.num_glbs),
-        clock: [D.clock_pins.len] Chip_Input_Config = [_]Chip_Input_Config { .{} } ** D.clock_pins.len,
-        input: [D.input_pins.len] Chip_Input_Config = [_]Chip_Input_Config { .{} } ** D.input_pins.len,
+        clock: [D.clock_pins.len] Chip_Input_Config = @splat(.{}),
+        input: [D.input_pins.len] Chip_Input_Config = @splat(.{}),
 
         goe0: GOE01_Config = .{},
         goe1: GOE01_Config = .{},
@@ -113,9 +113,9 @@ pub fn Chip_Config(comptime device_type: Device_Type) type {
             return &self.glb[mcref.glb].mc[mcref.mc];
         }
 
-        pub fn simulator(self: *const Self) Simulator(D) {
+        pub fn simulator(self: *const Self, maybe_rng: ?std.Random) Simulator(D) {
             var sim: Simulator(D) = .{ .chip = self };
-            sim.set_init_state();
+            sim.set_init_state(maybe_rng);
             return sim;
         }
 
@@ -730,8 +730,8 @@ pub fn Factor(comptime Device_Signal: type) type {
             return switch(self) {
                 .always => .never,
                 .never => .always,
-                .when_high => |grp| .{ .when_low = grp },
-                .when_low => |grp| .{ .when_high = grp },
+                .when_high => |signal| .{ .when_low = signal },
+                .when_low => |signal| .{ .when_high = signal },
             };
         }
 
@@ -795,7 +795,7 @@ pub const MC_Ref = struct {
         };
     }
 
-    pub fn input(self: MC_Ref, comptime Signal: type) Signal {
+    pub fn pad(self: MC_Ref, comptime Signal: type) Signal {
         return Signal.mc_pad(self);
     }
 
@@ -833,6 +833,7 @@ pub const Pin_Function = union(enum) {
     gnd,
     vcc_core,
     vcco,
+    gndo,
     tck,
     tms,
     tdi,
@@ -845,18 +846,20 @@ pub fn Pin(comptime Signal: type) type {
 
         const Self = @This();
 
-        pub fn init_io(pin_id: []const u8, grp: Signal) Self {
-            const mcref = grp.mc();
+        pub fn init_io(index: u16, pin_id: []const u8, bank: u1, signal: Signal) Self {
+            const mcref = signal.mc();
             return .{ .info = .{
                 .id = pin_id,
                 .func = .{ .io = mcref.mc },
                 .glb = mcref.glb,
-                .grp_ordinal = @intFromEnum(grp),
+                .signal_index = @intFromEnum(signal),
+                .all_pins_index = index,
+                .bank = bank,
             }};
         }
 
-        pub fn init_oe(pin_id: []const u8, grp: Signal, comptime oe_index: comptime_int) Self {
-            const mcref = grp.mc();
+        pub fn init_oe(index: u16, pin_id: []const u8, bank: u1, signal: Signal, comptime oe_index: comptime_int) Self {
+            const mcref = signal.mc();
             return .{ .info = .{
                 .id = pin_id,
                 .func = switch (oe_index) {
@@ -865,32 +868,40 @@ pub fn Pin(comptime Signal: type) type {
                     else => @compileError("Invalid OE index"),
                 },
                 .glb = mcref.glb,
-                .grp_ordinal = @intFromEnum(grp),
+                .signal_index = @intFromEnum(signal),
+                .all_pins_index = index,
+                .bank = bank,
             }};
         }
 
-        pub fn init_clk(pin_id: []const u8, grp: Signal, clock_index: Clock_Index, glb: GLB_Index) Self {
+        pub fn init_clk(index: u16, pin_id: []const u8, bank: u1, signal: Signal, clock_index: Clock_Index, glb: GLB_Index) Self {
             return .{ .info = .{
                 .id = pin_id,
                 .func = .{ .clock = clock_index },
                 .glb = glb,
-                .grp_ordinal = @intFromEnum(grp),
+                .signal_index = @intFromEnum(signal),
+                .all_pins_index = index,
+                .bank = bank,
             }};
         }
 
-        pub fn init_input(pin_id: []const u8, grp: Signal, glb: GLB_Index) Self {
+        pub fn init_input(index: u16, pin_id: []const u8, bank: u1, signal: Signal, glb: GLB_Index) Self {
             return .{ .info = .{
                 .id = pin_id,
                 .func = .input,
                 .glb = glb,
-                .grp_ordinal = @intFromEnum(grp),
+                .signal_index = @intFromEnum(signal),
+                .all_pins_index = index,
+                .bank = bank,
             }};
         }
 
-        pub fn init_misc(pin_id: []const u8, function: Pin_Function) Self {
+        pub fn init_misc(index: u16, pin_id: []const u8, bank: ?u1, function: Pin_Function) Self {
             return .{ .info = .{
                 .id = pin_id,
                 .func = function,
+                .all_pins_index = index,
+                .bank = bank,
             }};
         }
 
@@ -907,7 +918,7 @@ pub fn Pin(comptime Signal: type) type {
         }
 
         pub inline fn pad(self: Self) Signal {
-            return @enumFromInt(self.info.grp_ordinal.?);
+            return @enumFromInt(self.info.signal_index.?);
         }
 
         pub inline fn fb(self: Self) Signal {
@@ -915,11 +926,11 @@ pub fn Pin(comptime Signal: type) type {
         }
 
         pub inline fn when_high(self: Self) Factor(Signal) {
-            return .{ .when_high = @enumFromInt(self.info.grp_ordinal.?) };
+            return .{ .when_high = @enumFromInt(self.info.signal_index.?) };
         }
 
         pub inline fn when_low(self: Self) Factor(Signal) {
-            return .{ .when_low = @enumFromInt(self.info.grp_ordinal.?) };
+            return .{ .when_low = @enumFromInt(self.info.signal_index.?) };
         }
     };
 }
@@ -928,7 +939,9 @@ pub const Pin_Info = struct {
     id: []const u8, // pin number or ball location
     func: Pin_Function,
     glb: ?GLB_Index = null, // only meaningful when func is io, io_oe0, io_oe1, input, or clock
-    grp_ordinal: ?u16 = null, // use with @intToEnum(Signal, grp_ordinal)
+    signal_index: ?u16 = null, // use with @intToEnum(Signal, signal_index)
+    bank: ?u1,
+    all_pins_index: u16,
 
     pub inline fn mc(self: Pin_Info) ?MC_Ref {
         return if (self.glb) |glb| switch (self.func) {
@@ -960,28 +973,35 @@ pub fn Simulator(comptime Device: type) type {
             }
         }
 
-        pub fn set_init_state(self: *@This()) void {
+        pub fn set_init_state(self: *@This(), maybe_rng: ?std.Random) void {
+            if (maybe_rng) |rng| {
+                rng.bytes(std.mem.asBytes(&self.state.data.bits.masks));
+            } else {
+                self.state.data.bits = .initEmpty();
+            }
+
             for (self.chip.glb, 0..) |glb_config, glb| {
                 for (glb_config.mc, 0..) |mc_config, mc| {
-                    const mcref = MC_Ref.init(glb, mc);
-                    const fb_signal = mcref.fb(Signal);
-                    const init_state = switch (mc_config.func) {
-                        .combinational => false,
-                        .latch, .t_ff, .d_ff => |reg_config| reg_config.init_state == 1,
-                    };
-                    self.state.last_data.setPresent(fb_signal, init_state);
-                    self.state.data.setPresent(fb_signal, init_state);
+                    switch (mc_config.func) {
+                        .combinational => {},
+                        .latch, .t_ff, .d_ff => |reg_config| {
+                            const mcref = MC_Ref.init(glb, mc);
+                            const fb_signal = mcref.fb(Signal);
+                            self.state.data.setPresent(fb_signal, reg_config.init_state == 1);
+                        },
+                    }
                 }
             }
+
+            self.state.last_data = self.state.data;
         }
 
         const Simulate_Options = struct {
             max_iterations: usize = 100,
-            log_unstable: bool = true,
         };
 
         // Make sure you've updated any input signals before calling simulate!
-        pub fn simulate(self: *@This(), comptime options: Simulate_Options) bool {
+        pub fn simulate(self: *@This(), options: Simulate_Options) error{Unstable}!void {
             for (0..options.max_iterations) |_| {
                 var new_state = self.state;
                 new_state.last_data = new_state.data;
@@ -998,10 +1018,7 @@ pub fn Simulator(comptime Device: type) type {
                     return true;
                 }
                 self.state = new_state;
-            } else if (options.log_unstable) {
-                std.log.scoped(.lc4k).warn("Simulation state failed to settle after {} iterations (possible unstable/oscillating circuit?)", .{ options.max_iterations });
-                return false;
-            }
+            } else return error.Unstable;
         }
 
         fn update_all_macrocells(self: @This(), new_state: *State) void {
@@ -1227,7 +1244,7 @@ pub fn Simulator(comptime Device: type) type {
                     return true;
                 },
                 .input_buffer => {
-                    const signal = mc.input(Signal);
+                    const signal = mc.pad(Signal);
                     return self.state.data.contains(signal);
                 },
                 .pt0 => |pt| return evaluate_pt(self.state.data, pt),
@@ -1247,7 +1264,7 @@ pub fn Simulator(comptime Device: type) type {
                     return pt0 == sum;
                 },
                 .sum_xor_input_buffer => |pts| {
-                    const input_signal = mc.input(Signal);
+                    const input_signal = mc.pad(Signal);
                     const input = self.state.data.contains(input_signal);
                     const sum = for (pts) |pt| {
                         if (evaluate_pt(self.state.data, pt)) break true;
@@ -1459,8 +1476,8 @@ pub inline fn invert_gi_mapping(comptime Signal: type, comptime gi_mux_size: com
         @setEvalBranchQuota(10_000);
         var results: std.EnumMap(Signal, []const u8) = .{};
         for (mapping, 0..) |options, gi| {
-            for (options) |grp| {
-                results.put(grp, (results.get(grp) orelse &[_]u8 {}) ++ [_]u8 { gi });
+            for (options) |signal| {
+                results.put(signal, (results.get(signal) orelse &[_]u8 {}) ++ [_]u8 { gi });
             }
         }
         break :blk results;

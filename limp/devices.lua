@@ -82,7 +82,7 @@ device 'LC4128ZE_TQFP144'
 device 'LC4128ZE_ucBGA132'
 device 'LC4128ZE_csBGA144'
 
-grp_map = {
+device_map = {
     LC4032x_TQFP44    = "LC4032x_TQFP48",
     LC4032ZC_TQFP48   = "LC4032x_TQFP48",
     LC4032ZC_csBGA56  = "LC4032x_TQFP48",
@@ -112,7 +112,7 @@ local which = ...
 if not which then return end
 if not devices[which] then error "unsupported device" end
 local info = devices[which]
-local grp_device = grp_map[which]
+local base_device = device_map[which]
 include 'pins'
 include 'threshold'
 include 'goes'
@@ -123,29 +123,29 @@ local pin_to_threshold_fuse = load_input_threshold_fuses(which)
 local goes = load_goe_fuses(which)
 local zerohold = load_zerohold_fuse(which)
 
-compute_grp_names(info.pins_by_type, pin_to_threshold_fuse)
+compute_signal_names(info.pins_by_type, pin_to_threshold_fuse)
 
-info.grp_pins = info.pins;
-info.grp_pins_by_type = info.pins_by_type;
+info.base_pins = info.pins;
+info.base_pins_by_type = info.pins_by_type;
 
-if grp_device then
-    info.grp_pins, info.grp_pins_by_type = load_pins(grp_device)
-    local grp_pin_to_threshold_fuse, grp_threshold_fuse_to_pin = load_input_threshold_fuses(grp_device)
-    compute_grp_names(info.grp_pins_by_type, grp_pin_to_threshold_fuse)
+if base_device then
+    info.base_pins, info.base_pins_by_type = load_pins(base_device)
+    local base_pin_to_threshold_fuse, base_threshold_fuse_to_pin = load_input_threshold_fuses(base_device)
+    compute_signal_names(info.base_pins_by_type, base_pin_to_threshold_fuse)
 
     for _, pin in pairs(info.pins_by_type.input) do
         local threshold_fuse = pin_to_threshold_fuse[pin.id]
-        local grp_pin_id = grp_threshold_fuse_to_pin[threshold_fuse[1]..'_'..threshold_fuse[2]]
-        pin.grp_name = info.grp_pins[grp_pin_id].grp_name
+        local base_pin_id = base_threshold_fuse_to_pin[threshold_fuse[1]..'_'..threshold_fuse[2]]
+        pin.signal_name = info.base_pins[base_pin_id].signal_name
     end
 end
 
 local dedicated_inputs = {}
 for _, pin in pairs(info.pins_by_type.clock) do
-    dedicated_inputs[pin.grp_name] = pin
+    dedicated_inputs[pin.signal_name] = pin
 end
 for _, pin in pairs(info.pins_by_type.input) do
-    dedicated_inputs[pin.grp_name] = pin
+    dedicated_inputs[pin.signal_name] = pin
 end
 
 template([[
@@ -198,21 +198,21 @@ pub const osctimer = struct {
 ]])(info)
 end
 
-local pinned_grp_names = {}
+local pinned_signal_names = {}
 for _, pin in pairs(info.pins) do
-    if pin.grp_name and pin.grp_name ~= '' then
-        pinned_grp_names[pin.grp_name] = pin
+    if pin.signal_name and pin.signal_name ~= '' then
+        pinned_signal_names[pin.signal_name] = pin
     end
 end
-local grp_names = {}
-for _, pin in pairs(info.grp_pins) do
-    if pin.grp_name and pin.grp_name ~= '' then
-        grp_names[pin.grp_name] = pin
+local base_signal_names = {}
+for _, pin in pairs(info.base_pins) do
+    if pin.signal_name and pin.signal_name ~= '' then
+        base_signal_names[pin.signal_name] = pin
     end
 end
 for glb = 1, info.num_glbs do
     for mc = 0, 15 do
-        grp_names['mc_'..string.char(64 + glb)..mc] = {
+        base_signal_names['mc_'..string.char(64 + glb)..mc] = {
             glb = glb,
             mc = mc,
         }
@@ -221,9 +221,9 @@ end
 write(nl, [[pub const Signal = enum (u16) {]], indent)
 do
     local counter = 0
-    for grp_name, pin_or_mc in spairs(grp_names, natural_cmp) do
-        write(nl, grp_name, ' = ', counter, ',')
-        if pin_or_mc.func and pinned_grp_names[grp_name] == nil then
+    for signal_name, pin_or_mc in spairs(base_signal_names, natural_cmp) do
+        write(nl, signal_name, ' = ', counter, ',')
+        if pin_or_mc.func and pinned_signal_names[signal_name] == nil then
             write " // Unconnected internally"
         end
         counter = counter + 1
@@ -237,25 +237,23 @@ write [[
 do
     indent(2)
     local last_kind = nil
-    local first_grp_name = nil
-    local last_grp_name = nil
-    for grp_name in spairs(grp_names, natural_cmp) do
-        local kind = grp_name:sub(1,2)
+    local first_signal_name = nil
+    local last_signal_name = nil
+    for signal_name in spairs(base_signal_names, natural_cmp) do
+        local kind = signal_name:sub(1,2)
         if kind == 'cl' then kind = 'clk' end
         if kind ~= last_kind then
             if last_kind ~= nil then
-                write(nl, '@intFromEnum(Signal.', first_grp_name, ')...@intFromEnum(Signal.', last_grp_name, ') => .', last_kind, ',')
+                write(nl, '@intFromEnum(Signal.', first_signal_name, ')...@intFromEnum(Signal.', last_signal_name, ') => .', last_kind, ',')
             end
 
             last_kind = kind
-            first_grp_name = grp_name
-            last_grp_name = grp_name
-        else
-            last_grp_name = grp_name
+            first_signal_name = signal_name
         end
+        last_signal_name = signal_name
     end
     if last_kind ~= nil then
-        write(nl, '@intFromEnum(Signal.', first_grp_name, ')...@intFromEnum(Signal.', last_grp_name, ') => .', last_kind, ',')
+        write(nl, '@intFromEnum(Signal.', first_signal_name, ')...@intFromEnum(Signal.', last_signal_name, ') => .', last_kind, ',')
     end
     unindent(2)
 end
@@ -276,11 +274,11 @@ for glb = 1, info.num_glbs do
     repeat
         max_mc = max_mc - 1
         max_mc_name = 'io_'..glb_prefix..max_mc
-    until grp_names[max_mc_name]
+    until base_signal_names[max_mc_name]
 
     local all_mcs_have_ios = true
     for mc = 0, max_mc do
-        if grp_names['io_'..glb_prefix..mc] == nil then
+        if base_signal_names['io_'..glb_prefix..mc] == nil then
             all_mcs_have_ios = false
             break
         end
@@ -290,7 +288,7 @@ for glb = 1, info.num_glbs do
         write(nl, '@intFromEnum(Signal.io_', glb_prefix, '0)...@intFromEnum(Signal.io_', glb_prefix, max_mc, ') => .{ .glb = ', glb - 1, ', .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.io_', glb_prefix, '0)) },')
     else
         for mc = 0, max_mc do
-            if grp_names['io_'..glb_prefix..mc] then
+            if base_signal_names['io_'..glb_prefix..mc] then
                 write(nl, '@intFromEnum(Signal.io_', glb_prefix, mc, ') => .{ .glb = ', glb - 1, ', .mc = ', mc, ' },')
             end
         end
@@ -311,15 +309,15 @@ write [[
         return switch (self) {]]
 do
     indent(2)
-    local my_grp_names = {}
+    local my_signal_names = {}
     for _, pin in pairs(info.pins) do
-        if pin.grp_name and pin.grp_name ~= '' then
-            my_grp_names[pin.grp_name] = pin
+        if pin.signal_name and pin.signal_name ~= '' then
+            my_signal_names[pin.signal_name] = pin
         end
     end
-    for grp_name, pin in spairs(my_grp_names, natural_cmp) do
+    for signal_name, pin in spairs(my_signal_names, natural_cmp) do
         if pin.safe_id then
-            write(nl, '.', grp_name, ' => pins.', pin.safe_id, ',')
+            write(nl, '.', signal_name, ' => pins.', pin.safe_id, ',')
         end
     end
 
@@ -373,38 +371,6 @@ write [[
         return mc_io_signals[mcref.glb][mcref.mc].?;
     }
 };
-]]
--- write [[
--- pub const IO_Signal = enum (u16) {]]
--- indent()
--- do
---     local counter = 0
---     for grp_name, pin in spairs(grp_names, natural_cmp) do
---         if pin.func == 'io' or pin.func == 'io_oe0' or pin.func == 'io_oe1' then
---             write(nl, grp_name, ' = ', counter, ',')
---             counter = counter + 1
---         end
---     end
--- end
--- unindent()
--- write [[
-
-
---     pub fn from_signal(sig: Signal) ?IO_Signal {
---         return switch (sig) {
---             inline else => |s| return if (@hasField(IO_Signal, @tagName(s))) @field(IO_Signal, @tagName(s)) else null,
---         };
---     }
-
---     pub fn to_signal(self: IO_Signal) Signal {
---         return switch (self) {
---             inline else => |s| return @field(Signal, @tagName(s)),
---         };
---     }
-
--- };
--- ]]
-write [[
 
 pub const mc_feedback_signals = [num_glbs][num_mcs_per_glb]Signal {]]
 indent()
@@ -424,7 +390,7 @@ pub const mc_io_signals = [num_glbs][num_mcs_per_glb]?Signal {]])
         write(nl, '.{')
         for mc = 0, 15 do
             local name = 'io_'..string.char(64 + glb)..mc
-            if grp_names[name] then
+            if base_signal_names[name] then
                 write(' .', name, ',')
             else
                 write(' null,')
@@ -441,12 +407,12 @@ pub const gi_options = [num_gis_per_glb][gi_mux_size]Signal {]]
 
     indent()
     include 'grp'
-    gi_to_grp = load_gi_options(grp_device or which, info.grp_pins)
+    gi_to_signal = load_gi_options(base_device or which, info.base_pins)
     for gi = 0,35 do
-        local options = gi_to_grp[gi]
+        local options = gi_to_signal[gi]
         write(nl, '.{')
-        for _, grp in spairs(options, natural_cmp) do
-            write(' .', grp, ',')
+        for _, signal in spairs(options, natural_cmp) do
+            write(' .', signal, ',')
         end
         write ' },'
     end
@@ -456,13 +422,13 @@ pub const gi_options = [num_gis_per_glb][gi_mux_size]Signal {]]
 
 };
 
-pub const gi_options_by_grp = lc4k.invert_gi_mapping(Signal, gi_mux_size, &gi_options);
+pub const gi_options_by_signal = lc4k.invert_gi_mapping(Signal, gi_mux_size, &gi_options);
 
 ]]
 
-if grp_device then
+if base_device then
     write([[
-const base = @import("]], grp_device, [[.zig");
+const base = @import("]], base_device, [[.zig");
 pub const get_glb_range = base.get_glb_range;
 pub const get_gi_range = base.get_gi_range;
 pub const get_bclock_range = base.get_bclock_range;
@@ -604,7 +570,7 @@ pub fn getInputPower_GuardFuse(input: Signal) Fuse {
     indent(2)
     for _, pin in spairs(dedicated_inputs, natural_cmp) do
         local fuse = power_guard_fuses[pin.id]
-        write(nl, '.', pin.grp_name, ' => Fuse.init(', fuse[1], ', ', fuse[2], '),')
+        write(nl, '.', pin.signal_name, ' => Fuse.init(', fuse[1], ', ', fuse[2], '),')
     end
     unindent(2)
     write [[
@@ -619,7 +585,7 @@ pub fn getInputBus_MaintenanceRange(input: Signal) Fuse_Range {
     local fuse1, fuse2 = load_bus_maintenance_fuses(which)
     indent(2)
     for _, pin in spairs(dedicated_inputs, natural_cmp) do
-        write(nl, '.', pin.grp_name, ' => Fuse_Range.between(Fuse.init(', fuse1[pin.id][1], ', ', fuse1[pin.id][2],
+        write(nl, '.', pin.signal_name, ' => Fuse_Range.between(Fuse.init(', fuse1[pin.id][1], ', ', fuse1[pin.id][2],
                                                          '), Fuse.init(', fuse2[pin.id][1], ', ', fuse2[pin.id][2], ')),')
     end
     unindent(2)
@@ -657,7 +623,7 @@ pub fn get_input_threshold_fuse(input: Signal) Fuse {
     indent(2)
     for _, pin in spairs(dedicated_inputs, natural_cmp) do
         local fuse = pin_to_threshold_fuse[pin.id]
-        write(nl, '.', pin.grp_name, ' => Fuse.init(', fuse[1], ', ', fuse[2], '),')
+        write(nl, '.', pin.signal_name, ' => Fuse.init(', fuse[1], ', ', fuse[2], '),')
     end
     unindent(2)
     write [[
@@ -670,29 +636,32 @@ pub const pins = struct {]]
 
 local write_pin = template [[
 
-pub const `safe_id` = Pin.init_`init_suffix`("`id`", `...`);]]
+pub const `safe_id` = Pin.init_`init_suffix`(`index`, "`id`", `bank or 'null'`, `...`);]]
 
 indent()
+local all_pins_index = 0
 for _, pin in spairs(info.pins, natural_cmp) do
     local t
+    pin.index = all_pins_index
     if pin.func == 'io' then
         pin.init_suffix = 'io'
-        t = { '.', pin.grp_name }
+        t = { '.', pin.signal_name }
     elseif pin.func == 'io_oe0' or pin.func == 'io_oe1' then
         pin.init_suffix = 'oe'
-        t = { '.', pin.grp_name, ', ', pin.func:sub(6) }
+        t = { '.', pin.signal_name, ', ', pin.func:sub(6) }
     elseif pin.func == 'clock' then
         pin.init_suffix = 'clk'
-        t = { '.', pin.grp_name, ', ', pin.clk, ', ', pin.glb }
+        t = { '.', pin.signal_name, ', ', pin.clk, ', ', pin.glb }
     elseif pin.func == 'input' then
         pin.init_suffix = 'input'
-        t = { '.', pin.grp_name, ', ', pin.glb }
+        t = { '.', pin.signal_name, ', ', pin.glb }
     else
         pin.init_suffix = 'misc'
         t = { '.', pin.func }
     end
 
     write_pin(pin, table.unpack(t))
+    all_pins_index = all_pins_index + 1
 end
 unindent()
 
@@ -741,15 +710,95 @@ write([[
 
 pub const input_pins = [_]Pin {]])
 
-local function input_cmp (a, b)
-    local pa = info.pins_by_type.input[a]
-    local pb = info.pins_by_type.input[b]
-    return natural_cmp(pa.grp_name, pb.grp_name)
+local function index_cmp (a, b)
+    local pa = info.pins[a]
+    local pb = info.pins[b]
+    return natural_cmp(pa.index, pb.index)
 end
 
 indent()
-for _, pin in spairs(info.pins_by_type.input, input_cmp) do
+for _, pin in spairs(info.pins_by_type.input, index_cmp) do
     write(nl, 'pins.', pin.safe_id, ',')
+end
+unindent()
+
+write([[
+
+};
+
+pub const vcc_pins = [_]Pin {]])
+
+indent()
+for _, pin in spairs(info.pins_by_type.vcc_core, index_cmp) do
+    write(nl, 'pins.', pin.safe_id, ',')
+end
+unindent()
+
+write([[
+
+};
+
+pub const gnd_pins = [_]Pin {]])
+
+indent()
+for _, pin in spairs(info.pins_by_type.gnd, index_cmp) do
+    write(nl, 'pins.', pin.safe_id, ',')
+end
+unindent()
+
+write([[
+
+};
+
+pub const vcco_bank0_pins = [_]Pin {]])
+
+indent()
+for _, pin in spairs(info.pins_by_type.vcco, index_cmp) do
+    if pin.bank == '0' then
+        write(nl, 'pins.', pin.safe_id, ',')
+    end
+end
+unindent()
+
+write([[
+
+};
+
+pub const gnd_bank0_pins = [_]Pin {]])
+
+indent()
+for _, pin in spairs(info.pins_by_type.gndo, index_cmp) do
+    if pin.bank == '0' then
+        write(nl, 'pins.', pin.safe_id, ',')
+    end
+end
+unindent()
+
+write([[
+
+};
+
+pub const vcco_bank1_pins = [_]Pin {]])
+
+indent()
+for _, pin in spairs(info.pins_by_type.vcco, index_cmp) do
+    if pin.bank == '1' then
+        write(nl, 'pins.', pin.safe_id, ',')
+    end
+end
+unindent()
+
+write([[
+
+};
+
+pub const gnd_bank1_pins = [_]Pin {]])
+
+indent()
+for _, pin in spairs(info.pins_by_type.gndo, index_cmp) do
+    if pin.bank == '1' then
+        write(nl, 'pins.', pin.safe_id, ',')
+    end
 end
 unindent()
 
@@ -759,8 +808,14 @@ write([[
 
 pub const all_pins = [_]Pin {]])
 
+local function all_pins_cmp (a, b)
+    local pa = info.pins[a]
+    local pb = info.pins[b]
+    return natural_cmp(pa.index, pb.index)
+end
+
 indent()
-for _, pin in spairs(info.pins, natural_cmp) do
+for _, pin in spairs(info.pins, all_pins_cmp) do
     write(nl, 'pins.', pin.safe_id, ',')
 end
 unindent()

@@ -80,32 +80,32 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
     // clock/input fuses
     for (&results.config.clock, 0..) |*clock_config, clock_pin_index| {
         const pin = Device.clock_pins[clock_pin_index];
-        const grp: Device.Signal = pin.pad();
+        const signal: Device.Signal = pin.pad();
 
-        const threshold_range = Device.get_input_threshold_fuse(grp).range();
+        const threshold_range = Device.get_input_threshold_fuse(signal).range();
         clock_config.threshold = read_field(file.data, lc4k.Input_Threshold, threshold_range);
 
         if (@TypeOf(clock_config) == *lc4k.Input_Config_ZE) {
-            const maintenance_range = Device.getInputBus_MaintenanceRange(grp);
+            const maintenance_range = Device.getInputBus_MaintenanceRange(signal);
             clock_config.bus_maintenance = read_field(file.data, lc4k.Bus_Maintenance, maintenance_range);
 
-            const pgdf_range = Device.getInputPower_GuardFuse(grp).range();
+            const pgdf_range = Device.getInputPower_GuardFuse(signal).range();
             clock_config.power_guard = read_field(file.data, lc4k.Power_Guard, pgdf_range);
         }
     }
 
     for (&results.config.input, 0..) |*input_config, input_pin_index| {
         const pin = Device.input_pins[input_pin_index];
-        const grp: Device.Signal = pin.pad();
+        const signal: Device.Signal = pin.pad();
 
-        const threshold_range = Device.get_input_threshold_fuse(grp).range();
+        const threshold_range = Device.get_input_threshold_fuse(signal).range();
         input_config.threshold = read_field(file.data, lc4k.Input_Threshold, threshold_range);
 
         if (@TypeOf(input_config) == *lc4k.Input_Config_ZE) {
-            const maintenance_range = Device.getInputBus_MaintenanceRange(grp);
+            const maintenance_range = Device.getInputBus_MaintenanceRange(signal);
             input_config.bus_maintenance = read_field(file.data, lc4k.Bus_Maintenance, maintenance_range);
 
-            const pgdf_range = Device.getInputPower_GuardFuse(grp).range();
+            const pgdf_range = Device.getInputPower_GuardFuse(signal).range();
             input_config.power_guard = read_field(file.data, lc4k.Power_Guard, pgdf_range);
         }
     }
@@ -121,7 +121,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
             const gi_fuses = Device.get_gi_range(glb, gi);
             std.debug.assert(options.len == gi_fuses.count());
             var fuse_iter = gi_fuses.iterator();
-            for (options) |grp| {
+            for (options) |signal| {
                 const fuse = fuse_iter.next().?;
                 if (!file.data.is_set(fuse)) {
                     if (results.gi_routing[glb][gi]) |_| {
@@ -133,7 +133,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                             .glb = @intCast(glb),
                         });
                     } else {
-                        results.gi_routing[glb][gi] = grp;
+                        results.gi_routing[glb][gi] = signal;
                     }
                 }
             }
@@ -481,7 +481,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                             .details = "IO uses PT4 for OE, but PT4 is routed to sum",
                             .glb = @intCast(glb),
                             .mc = @intCast(oe_mcref.mc),
-                            .signal_ordinal = @intFromEnum(mcref.input(Device.Signal)),
+                            .signal_ordinal = @intFromEnum(mcref.pad(Device.Signal)),
                         });
                     }
                 },
@@ -561,7 +561,7 @@ pub fn read_pt_fuses(
 
     var factor_index: usize = 0;
     fuse_iter = range.iterator();
-    for (gi_signals, 0..) |maybe_grp, gi| {
+    for (gi_signals, 0..) |maybe_gi_signal, gi| {
         const active_high_fuse = fuse_iter.next().?;
         const active_low_fuse = fuse_iter.next().?;
 
@@ -569,11 +569,11 @@ pub fn read_pt_fuses(
         const when_low = !jed.is_set(active_low_fuse);
 
         if (when_high != when_low) {
-            if (maybe_grp) |grp| {
+            if (maybe_gi_signal) |gi_signal| {
                 if (when_high) {
-                    factors[factor_index] = .{ .when_high = grp };
+                    factors[factor_index] = .{ .when_high = gi_signal };
                 } else {
-                    factors[factor_index] = .{ .when_low = grp };
+                    factors[factor_index] = .{ .when_low = gi_signal };
                 }
             } else if (maybe_results) |results| {
                 try results.errors.append(.{

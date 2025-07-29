@@ -1,4 +1,4 @@
-//[[!! include('devices', 'LC4064ZE_csBGA64') !! 594 ]]
+//[[!! include('devices', 'LC4064ZE_csBGA64') !! 620 ]]
 //[[ ################# !! GENERATED CODE -- DO NOT MODIFY !! ################# ]]
 const std = @import("std");
 const lc4k = @import("../lc4k.zig");
@@ -363,7 +363,7 @@ pub const gi_options = [num_gis_per_glb][gi_mux_size]Signal {
     .{ .io_A15, .io_A11, .mc_A10, .io_A5, .mc_A3, .mc_B0, .in3, .io_C11, .in5, .io_D7, .mc_C3, .mc_D1, },
 };
 
-pub const gi_options_by_grp = lc4k.invert_gi_mapping(Signal, gi_mux_size, &gi_options);
+pub const gi_options_by_signal = lc4k.invert_gi_mapping(Signal, gi_mux_size, &gi_options);
 
 const base = @import("LC4064x_TQFP100.zig");
 pub const get_glb_range = base.get_glb_range;
@@ -443,70 +443,70 @@ pub fn get_input_threshold_fuse(input: Signal) Fuse {
 }
 
 pub const pins = struct {
-    pub const A1 = Pin.init_io("A1", .io_A6);
-    pub const A2 = Pin.init_io("A2", .io_A4);
-    pub const A3 = Pin.init_io("A3", .io_A2);
-    pub const A4 = Pin.init_clk("A4", .clk3, 3, 3);
-    pub const A5 = Pin.init_io("A5", .io_D2);
-    pub const A6 = Pin.init_io("A6", .io_D4);
-    pub const A7 = Pin.init_io("A7", .io_D6);
-    pub const A8 = Pin.init_io("A8", .io_D7);
-    pub const B1 = Pin.init_io("B1", .io_A8);
-    pub const B2 = Pin.init_misc("B2", .tdi);
-    pub const B3 = Pin.init_io("B3", .io_A1);
-    pub const B4 = Pin.init_oe("B4", .io_A0, 0);
-    pub const B5 = Pin.init_oe("B5", .io_D0, 1);
-    pub const B6 = Pin.init_io("B6", .io_D3);
-    pub const B7 = Pin.init_io("B7", .io_D5);
-    pub const B8 = Pin.init_misc("B8", .tdo);
-    pub const C1 = Pin.init_io("C1", .io_A11);
-    pub const C2 = Pin.init_io("C2", .io_A10);
-    pub const C3 = Pin.init_io("C3", .io_A12);
-    pub const C4 = Pin.init_clk("C4", .clk0, 0, 0);
-    pub const C5 = Pin.init_io("C5", .io_D10);
-    pub const C6 = Pin.init_misc("C6", .vcco);
-    pub const C7 = Pin.init_io("C7", .io_D9);
-    pub const C8 = Pin.init_io("C8", .io_D8);
-    pub const D1 = Pin.init_io("D1", .io_B15);
-    pub const D2 = Pin.init_io("D2", .io_B14);
-    pub const D3 = Pin.init_io("D3", .io_B12);
-    pub const D4 = Pin.init_misc("D4", .gnd);
-    pub const D5 = Pin.init_misc("D5", .vcc_core);
-    pub const D6 = Pin.init_misc("D6", .vcco);
-    pub const D7 = Pin.init_io("D7", .io_D12);
-    pub const D8 = Pin.init_io("D8", .io_D11);
-    pub const E1 = Pin.init_io("E1", .io_B13);
-    pub const E2 = Pin.init_io("E2", .io_B10);
-    pub const E3 = Pin.init_misc("E3", .vcco);
-    pub const E4 = Pin.init_misc("E4", .vcc_core);
-    pub const E5 = Pin.init_misc("E5", .gnd);
-    pub const E6 = Pin.init_io("E6", .io_D13);
-    pub const E7 = Pin.init_io("E7", .io_D14);
-    pub const E8 = Pin.init_io("E8", .io_D15);
-    pub const F1 = Pin.init_io("F1", .io_B11);
-    pub const F2 = Pin.init_io("F2", .io_B8);
-    pub const F3 = Pin.init_io("F3", .io_B2);
-    pub const F4 = Pin.init_misc("F4", .vcco);
-    pub const F5 = Pin.init_io("F5", .io_C0);
-    pub const F6 = Pin.init_io("F6", .io_C5);
-    pub const F7 = Pin.init_io("F7", .io_C10);
-    pub const F8 = Pin.init_io("F8", .io_C12);
-    pub const G1 = Pin.init_io("G1", .io_B9);
-    pub const G2 = Pin.init_io("G2", .io_B6);
-    pub const G3 = Pin.init_io("G3", .io_B3);
-    pub const G4 = Pin.init_clk("G4", .clk1, 1, 1);
-    pub const G5 = Pin.init_io("G5", .io_C1);
-    pub const G6 = Pin.init_io("G6", .io_C2);
-    pub const G7 = Pin.init_io("G7", .io_C8);
-    pub const G8 = Pin.init_io("G8", .io_C11);
-    pub const H1 = Pin.init_misc("H1", .tck);
-    pub const H2 = Pin.init_io("H2", .io_B5);
-    pub const H3 = Pin.init_io("H3", .io_B4);
-    pub const H4 = Pin.init_io("H4", .io_B0);
-    pub const H5 = Pin.init_clk("H5", .clk2, 2, 2);
-    pub const H6 = Pin.init_io("H6", .io_C4);
-    pub const H7 = Pin.init_io("H7", .io_C6);
-    pub const H8 = Pin.init_misc("H8", .tms);
+    pub const A1 = Pin.init_io(0, "A1", 0, .io_A6);
+    pub const A2 = Pin.init_io(1, "A2", 0, .io_A4);
+    pub const A3 = Pin.init_io(2, "A3", 0, .io_A2);
+    pub const A4 = Pin.init_clk(3, "A4", 1, .clk3, 3, 3);
+    pub const A5 = Pin.init_io(4, "A5", 1, .io_D2);
+    pub const A6 = Pin.init_io(5, "A6", 1, .io_D4);
+    pub const A7 = Pin.init_io(6, "A7", 1, .io_D6);
+    pub const A8 = Pin.init_io(7, "A8", 1, .io_D7);
+    pub const B1 = Pin.init_io(8, "B1", 0, .io_A8);
+    pub const B2 = Pin.init_misc(9, "B2", null, .tdi);
+    pub const B3 = Pin.init_io(10, "B3", 0, .io_A1);
+    pub const B4 = Pin.init_oe(11, "B4", 0, .io_A0, 0);
+    pub const B5 = Pin.init_oe(12, "B5", 1, .io_D0, 1);
+    pub const B6 = Pin.init_io(13, "B6", 1, .io_D3);
+    pub const B7 = Pin.init_io(14, "B7", 1, .io_D5);
+    pub const B8 = Pin.init_misc(15, "B8", null, .tdo);
+    pub const C1 = Pin.init_io(16, "C1", 0, .io_A11);
+    pub const C2 = Pin.init_io(17, "C2", 0, .io_A10);
+    pub const C3 = Pin.init_io(18, "C3", 0, .io_A12);
+    pub const C4 = Pin.init_clk(19, "C4", 0, .clk0, 0, 0);
+    pub const C5 = Pin.init_io(20, "C5", 1, .io_D10);
+    pub const C6 = Pin.init_misc(21, "C6", 1, .vcco);
+    pub const C7 = Pin.init_io(22, "C7", 1, .io_D9);
+    pub const C8 = Pin.init_io(23, "C8", 1, .io_D8);
+    pub const D1 = Pin.init_io(24, "D1", 0, .io_B15);
+    pub const D2 = Pin.init_io(25, "D2", 0, .io_B14);
+    pub const D3 = Pin.init_io(26, "D3", 0, .io_B12);
+    pub const D4 = Pin.init_misc(27, "D4", null, .gnd);
+    pub const D5 = Pin.init_misc(28, "D5", null, .vcc_core);
+    pub const D6 = Pin.init_misc(29, "D6", 1, .vcco);
+    pub const D7 = Pin.init_io(30, "D7", 1, .io_D12);
+    pub const D8 = Pin.init_io(31, "D8", 1, .io_D11);
+    pub const E1 = Pin.init_io(32, "E1", 0, .io_B13);
+    pub const E2 = Pin.init_io(33, "E2", 0, .io_B10);
+    pub const E3 = Pin.init_misc(34, "E3", 0, .vcco);
+    pub const E4 = Pin.init_misc(35, "E4", null, .vcc_core);
+    pub const E5 = Pin.init_misc(36, "E5", null, .gnd);
+    pub const E6 = Pin.init_io(37, "E6", 1, .io_D13);
+    pub const E7 = Pin.init_io(38, "E7", 1, .io_D14);
+    pub const E8 = Pin.init_io(39, "E8", 1, .io_D15);
+    pub const F1 = Pin.init_io(40, "F1", 0, .io_B11);
+    pub const F2 = Pin.init_io(41, "F2", 0, .io_B8);
+    pub const F3 = Pin.init_io(42, "F3", 0, .io_B2);
+    pub const F4 = Pin.init_misc(43, "F4", 0, .vcco);
+    pub const F5 = Pin.init_io(44, "F5", 1, .io_C0);
+    pub const F6 = Pin.init_io(45, "F6", 1, .io_C5);
+    pub const F7 = Pin.init_io(46, "F7", 1, .io_C10);
+    pub const F8 = Pin.init_io(47, "F8", 1, .io_C12);
+    pub const G1 = Pin.init_io(48, "G1", 0, .io_B9);
+    pub const G2 = Pin.init_io(49, "G2", 0, .io_B6);
+    pub const G3 = Pin.init_io(50, "G3", 0, .io_B3);
+    pub const G4 = Pin.init_clk(51, "G4", 0, .clk1, 1, 1);
+    pub const G5 = Pin.init_io(52, "G5", 1, .io_C1);
+    pub const G6 = Pin.init_io(53, "G6", 1, .io_C2);
+    pub const G7 = Pin.init_io(54, "G7", 1, .io_C8);
+    pub const G8 = Pin.init_io(55, "G8", 1, .io_C11);
+    pub const H1 = Pin.init_misc(56, "H1", null, .tck);
+    pub const H2 = Pin.init_io(57, "H2", 0, .io_B5);
+    pub const H3 = Pin.init_io(58, "H3", 0, .io_B4);
+    pub const H4 = Pin.init_io(59, "H4", 0, .io_B0);
+    pub const H5 = Pin.init_clk(60, "H5", 1, .clk2, 2, 2);
+    pub const H6 = Pin.init_io(61, "H6", 1, .io_C4);
+    pub const H7 = Pin.init_io(62, "H7", 1, .io_C6);
+    pub const H8 = Pin.init_misc(63, "H8", null, .tms);
 };
 
 pub const clock_pins = [_]Pin {
@@ -522,6 +522,32 @@ pub const oe_pins = [_]Pin {
 };
 
 pub const input_pins = [_]Pin {
+};
+
+pub const vcc_pins = [_]Pin {
+    pins.D5,
+    pins.E4,
+};
+
+pub const gnd_pins = [_]Pin {
+    pins.D4,
+    pins.E5,
+};
+
+pub const vcco_bank0_pins = [_]Pin {
+    pins.E3,
+    pins.F4,
+};
+
+pub const gnd_bank0_pins = [_]Pin {
+};
+
+pub const vcco_bank1_pins = [_]Pin {
+    pins.C6,
+    pins.D6,
+};
+
+pub const gnd_bank1_pins = [_]Pin {
 };
 
 pub const all_pins = [_]Pin {

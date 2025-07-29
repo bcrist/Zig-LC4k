@@ -875,7 +875,7 @@ fn write_input_pin(
     power_guard: ?lc4k.Power_Guard,
     options: Write_Options(Device),
 ) !void {
-    const signal: Device.Signal = @enumFromInt(pin.info.grp_ordinal.?);
+    const signal: Device.Signal = pin.pad();
     try begin_row(writer, .{
         .class = if (data.signal_usage.get(signal).count() > 0) "" else "unused",
         .highlight = highlight,
@@ -1048,17 +1048,17 @@ fn write_glb_routing(writer: std.io.AnyWriter, comptime Device: type, data: Repo
             try begin_row(writer, .{ .highlight = (gi & 1) == 1 });
 
             try writer.print("<td>{}</td>", .{ gi });
-            for (gi_options) |grp| {
+            for (gi_options) |signal| {
                 const fuse = fuse_iter.next().?;
                 var mark: []const u8 = "";
                 if (data.jed.get(fuse) == 0) {
                     mark = "&#9679;";
-                    active = grp;
+                    active = signal;
                 }
-                try writer.print("<td class=\"fuse\" title=\"{s}\">{s}</td>", .{ options.get_names().get_signal_name(grp), mark });
+                try writer.print("<td class=\"fuse\" title=\"{s}\">{s}</td>", .{ options.get_names().get_signal_name(signal), mark });
             }
 
-            if (active) |grp| {
+            if (active) |signal| {
                 var fanout: usize = 0;
                 const pt_range = Device.get_glb_range(glb).sub_rows(gi * 2, 2);
                 var col: usize = 0;
@@ -1067,7 +1067,7 @@ fn write_glb_routing(writer: std.io.AnyWriter, comptime Device: type, data: Repo
                         fanout += 1;
                     }
                 }
-                try writer.print("<td>{s}</td><td>{}</td>", .{ options.get_names().get_signal_name(grp), fanout });
+                try writer.print("<td>{s}</td><td>{}</td>", .{ options.get_names().get_signal_name(signal), fanout });
             } else {
                 try writer.writeAll("<td></td><td></td>");
             }
@@ -1580,14 +1580,14 @@ fn write_timing(writer: std.io.AnyWriter, comptime Device: type, comptime speed:
 fn write_timing_for_target(writer: std.io.AnyWriter, comptime Device: type, comptime speed: comptime_int, target: timing.Node, data: Report_Data(Device), timing_data: *timing.Analyzer(Device, speed), options: Write_Options(Device), highlight: bool) !?timing.Path {
     var shortest_path: ?timing.Path = null;
 
-    for (std.enums.values(Device.Signal)) |grp| {
-        const source: timing.Node = switch (grp.kind()) {
-            .io, .in, .clk => .{ .pad = @intFromEnum(grp) },
-            .mc => .{ .mcq = grp.mc() },
+    for (std.enums.values(Device.Signal)) |signal| {
+        const source: timing.Node = switch (signal.kind()) {
+            .io, .in, .clk => .{ .pad = @intFromEnum(signal) },
+            .mc => .{ .mcq = signal.mc() },
         };
 
         if (source == .mcq) {
-            const mcref = grp.mc();
+            const mcref = signal.mc();
             switch(data.config.glb[mcref.glb].mc[mcref.mc].func) {
                 .combinational, .latch => continue,
                 .t_ff, .d_ff => {},
@@ -1648,11 +1648,11 @@ fn write_setup_hold_timing(writer: std.io.AnyWriter, comptime Device: type, comp
     const clk_path = try timing_data.get_critical_path(.{ .source = clk_source, .dest = .{ .mc_clk = clk_mcref }});
     const hold_path = try timing_data.get_critical_path(.{ .source = clk_source, .dest = hold });
 
-    for (std.enums.values(Device.Signal)) |grp| {
-        const source: timing.Node = switch (grp.kind()) {
-            .io, .in, .clk => .{ .pad = @intFromEnum(grp) },
+    for (std.enums.values(Device.Signal)) |signal| {
+        const source: timing.Node = switch (signal.kind()) {
+            .io, .in, .clk => .{ .pad = @intFromEnum(signal) },
             .mc => source: {
-                const mcref = grp.mc();
+                const mcref = signal.mc();
                 switch(data.config.glb[mcref.glb].mc[mcref.mc].func) {
                     .combinational => continue,
                     .latch, .t_ff, .d_ff => {

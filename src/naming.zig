@@ -58,9 +58,9 @@ pub fn Names(comptime Device: type) type {
             }
 
             inline for (@typeInfo(Pins).@"struct".decls) |decl| {
-                if (@field(Pins, decl.name).info.grp_ordinal) |ordinal| {
+                if (@field(Pins, decl.name).info.signal_index) |signal_index| {
                     const name = if (comptime std.mem.startsWith(u8, decl.name, "_")) "pin" ++ decl.name else "pin_" ++ decl.name;
-                    self.add_bus_name(&.{ @enumFromInt(ordinal) }, name) catch unreachable;
+                    self.add_bus_name(&.{ @enumFromInt(signal_index) }, name) catch unreachable;
                 }
             }
 
