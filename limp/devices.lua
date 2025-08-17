@@ -449,7 +449,6 @@ pub fn get_glb_range(glb: usize) Fuse_Range {
         writeln('return jedec_dimensions.sub_columns(', 83 + gi_cols, ' * index + ', gi_cols, ', 83);', unindent)
     end
     write [[
-
 }
 
 pub fn get_gi_range(glb: usize, gi: usize) Fuse_Range {
@@ -469,10 +468,12 @@ pub fn get_gi_range(glb: usize, gi: usize) Fuse_Range {
 
 pub fn get_bclock_range(glb: usize) Fuse_Range {
     ]]
-    if info.gi_mux_size == 19 then
+    if info.num_glbs == 8 then
         writeln('var index = num_glbs - glb - 1;', indent)
-        writeln('index = @as(u1, @truncate((index >> 1) ^ index));')
+        writeln('index = @as(u1, @truncate((index >> 1) ^ index)) ^ 1;')
         writeln('return get_glb_range(glb).sub_rows(79, 4).sub_columns(82 * index, 1);', unindent)
+    elseif info.num_glbs == 4 then
+        writeln('return get_glb_range(glb).sub_rows(79, 4).sub_columns(if (glb < 2) 0 else 82, 1);')
     else
         writeln('return get_glb_range(glb).sub_rows(79, 4).sub_columns(0, 1);')
     end

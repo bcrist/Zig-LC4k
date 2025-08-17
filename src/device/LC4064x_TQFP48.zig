@@ -1,4 +1,4 @@
-//[[!! include('devices', 'LC4064x_TQFP48') !! 535 ]]
+//[[!! include('devices', 'LC4064x_TQFP48') !! 534 ]]
 //[[ ################# !! GENERATED CODE -- DO NOT MODIFY !! ################# ]]
 const std = @import("std");
 const lc4k = @import("../lc4k.zig");
@@ -336,7 +336,6 @@ pub fn get_glb_range(glb: usize) Fuse_Range {
     std.debug.assert(glb < num_glbs);
     const index = num_glbs - glb - 1;
     return jedec_dimensions.sub_columns(88 * index + 5, 83);
-
 }
 
 pub fn get_gi_range(glb: usize, gi: usize) Fuse_Range {
@@ -345,7 +344,7 @@ pub fn get_gi_range(glb: usize, gi: usize) Fuse_Range {
 }
 
 pub fn get_bclock_range(glb: usize) Fuse_Range {
-    return get_glb_range(glb).sub_rows(79, 4).sub_columns(0, 1);
+    return get_glb_range(glb).sub_rows(79, 4).sub_columns(if (glb < 2) 0 else 82, 1);
 }
 
 pub fn get_goe_polarity_fuse(goe: usize) Fuse {

@@ -1,4 +1,4 @@
-//[[!! include('devices', 'LC4128V_TQFP144') !! 1023 ]]
+//[[!! include('devices', 'LC4128V_TQFP144') !! 1022 ]]
 //[[ ################# !! GENERATED CODE -- DO NOT MODIFY !! ################# ]]
 const std = @import("std");
 const lc4k = @import("../lc4k.zig");
@@ -605,7 +605,6 @@ pub fn get_glb_range(glb: usize) Fuse_Range {
     var index = num_glbs - glb - 1;
     index ^= @as(u1, @truncate(index >> 1));
     return jedec_dimensions.sub_columns(83 * index + gi_mux_size * (index / 2 + 1), 83);
-
 }
 
 pub fn get_gi_range(glb: usize, gi: usize) Fuse_Range {
@@ -618,7 +617,7 @@ pub fn get_gi_range(glb: usize, gi: usize) Fuse_Range {
 
 pub fn get_bclock_range(glb: usize) Fuse_Range {
     var index = num_glbs - glb - 1;
-    index = @as(u1, @truncate((index >> 1) ^ index));
+    index = @as(u1, @truncate((index >> 1) ^ index)) ^ 1;
     return get_glb_range(glb).sub_rows(79, 4).sub_columns(82 * index, 1);
 }
 

@@ -1,4 +1,4 @@
-//[[!! include('devices', 'LC4032x_TQFP48') !! 465 ]]
+//[[!! include('devices', 'LC4032x_TQFP48') !! 464 ]]
 //[[ ################# !! GENERATED CODE -- DO NOT MODIFY !! ################# ]]
 const std = @import("std");
 const lc4k = @import("../lc4k.zig");
@@ -268,7 +268,6 @@ pub fn get_glb_range(glb: usize) Fuse_Range {
     std.debug.assert(glb < num_glbs);
     const index = num_glbs - glb - 1;
     return jedec_dimensions.sub_columns(86 * index + 3, 83);
-
 }
 
 pub fn get_gi_range(glb: usize, gi: usize) Fuse_Range {
