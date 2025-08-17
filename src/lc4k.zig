@@ -113,6 +113,10 @@ pub fn Chip_Config(comptime device_type: Device_Type) type {
             return &self.glb[mcref.glb].mc[mcref.mc];
         }
 
+        pub fn propagate_names(self: *const Self, arena: std.mem.Allocator, names: *Names) !void {
+            try names.propagate_names(arena, self);
+        }
+
         pub fn simulator(self: *const Self, maybe_rng: ?std.Random) Simulator(D) {
             var sim: Simulator(D) = .{ .chip = self };
             sim.set_init_state(maybe_rng);

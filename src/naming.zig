@@ -220,6 +220,46 @@ pub fn Names(comptime Device: type) type {
             });
         }
 
+        pub fn propagate_names(self: *Self, arena: std.mem.Allocator, chip: *const lc4k.Chip_Config(Device.device_type)) !void {
+            // Based on ORM routing, give names to any MC feedback signals that are routed to named I/O signals
+            // Macrocell name lookup will automatically look at feedback signal names, so no need to propagate that,
+            for (0..Device.num_glbs) |glb| {
+                for (0..Device.num_mcs_per_glb) |mc| {
+                    const mcref: lc4k.MC_Ref = .init(glb, mc);
+                    const pad = Device.Signal.maybe_mc_pad(mcref) orelse continue;
+
+                    if (!self.signal_names.contains(pad)) continue;
+
+                    const out = chip.mc_const(mcref).output;
+
+                    if (out.oe == .input_only) continue;
+
+                    const pad_name = self.get_signal_name(pad);
+
+                    if (Device.family != .zero_power_enhanced) {
+                        switch (out.routing) {
+                            .same_as_oe => {},
+                            .five_pt_fast_bypass => continue,
+                            .self => {
+                                const fb = Device.Signal.mc_fb(mcref);
+                                if (self.signal_names.contains(fb)) continue;
+
+                                const new_name = try std.mem.concat(arena, u8, &.{ pad_name, "$" });
+                                try self.add_signal_name(fb, new_name);
+                                continue;
+                            },
+                        }
+                    }
+
+                    const source_fb = out.output_routing().to_absolute(mcref);
+                    if (self.signal_names.contains(source_fb)) continue;
+
+                    const new_name = try std.mem.concat(arena, u8, &.{ pad_name, "$" });
+                    try self.add_signal_name(source_fb, new_name);
+                }
+            }
+        }
+
         pub fn debug(self: Self, w: std.io.AnyWriter) !void {
             if (self.constant_lookup.count() > 0) {
                 try w.writeAll("\nConstants:\n");
@@ -310,13 +350,10 @@ pub fn Names(comptime Device: type) type {
                 if (std.mem.endsWith(u8, name, ".fb")) {
                     return name[0 .. name.len - 3];
                 }
-                return name;
-            }
-
-            if (Signal.maybe_mc_pad(mc)) |signal| {
-                if (self.signal_names.get(signal)) |name| {
-                    return name;
+                if (std.mem.endsWith(u8, name, "$")) {
+                    return name[0 .. name.len - 1];
                 }
+                return name;
             }
 
             if (self.fallback) |fallback| {
@@ -332,8 +369,10 @@ pub fn Names(comptime Device: type) type {
             }
 
             if (self.signal_lookup.get(name)) |signal| {
-                if (signal.maybe_mc()) |mcref| {
-                    return mcref;
+                if (signal.kind() == .mc) {
+                    if (signal.maybe_mc()) |mcref| {
+                        return mcref;
+                    }
                 }
             }
 
