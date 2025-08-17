@@ -204,7 +204,7 @@ pub fn Names(comptime Device: type) type {
             self.signal_lookup.putAssumeCapacityNoClobber(name, signal);
         }
 
-        pub fn add_bus_name(self: *Self, comptime signals: []const Signal, name: []const u8) !void {
+        pub fn add_bus_name(self: *Self, signals: []const Signal, name: []const u8) !void {
             if (self.bus_lookup.contains(name)) return error.Duplicate_Name;
             try self.bus_lookup.ensureUnusedCapacity(self.gpa, 1);
             self.bus_lookup.putAssumeCapacityNoClobber(name, signals);
@@ -244,7 +244,7 @@ pub fn Names(comptime Device: type) type {
                                 const fb = Device.Signal.mc_fb(mcref);
                                 if (self.signal_names.contains(fb)) continue;
 
-                                const new_name = try std.mem.concat(arena, u8, &.{ pad_name, "$" });
+                                const new_name = try std.mem.concat(arena, u8, &.{ "$", pad_name });
                                 try self.add_signal_name(fb, new_name);
                                 continue;
                             },
@@ -254,9 +254,57 @@ pub fn Names(comptime Device: type) type {
                     const source_fb = out.output_routing().to_absolute(mcref);
                     if (self.signal_names.contains(source_fb)) continue;
 
-                    const new_name = try std.mem.concat(arena, u8, &.{ pad_name, "$" });
+                    const new_name = try std.mem.concat(arena, u8, &.{ "$", pad_name });
                     try self.add_signal_name(source_fb, new_name);
                 }
+            }
+
+            // Find bus names that contain at least one pad signal with a corresponding feedback signal
+            const Bus = struct {
+                name: []const u8,
+                signals: []const Device.Signal,
+            };
+            var new_buses: std.ArrayListUnmanaged(Bus) = try .initCapacity(arena, self.bus_lookup.size);
+            defer new_buses.deinit(arena);
+            var iter = self.bus_lookup.iterator();
+            while (iter.next()) |entry| {
+                const name = entry.key_ptr.*;
+                if (std.mem.startsWith(u8, name, "$")) continue;
+                    
+                const fb_signals = try arena.dupe(Device.Signal, entry.value_ptr.*);
+                for (fb_signals) |*signal| {
+                    if (signal.kind() != .io) continue;
+                    const mcref = signal.mc();
+                    const pad = signal.*;
+
+                    if (!self.signal_names.contains(pad)) continue;
+
+                    const out = chip.mc_const(mcref).output;
+
+                    if (out.oe == .input_only) continue;
+
+                    if (Device.family != .zero_power_enhanced) {
+                        switch (out.routing) {
+                            .same_as_oe => {},
+                            .five_pt_fast_bypass => continue,
+                            .self => {
+                                signal.* = Device.Signal.mc_fb(mcref);
+                                continue;
+                            },
+                        }
+                    }
+                    
+                    signal.* = out.output_routing().to_absolute(mcref);
+                }
+
+                new_buses.appendAssumeCapacity(.{
+                    .name = try std.mem.concat(arena, u8, &.{ "$", name }),
+                    .signals = fb_signals,
+                });
+            }
+
+            for (new_buses.items) |bus| {
+                try self.add_bus_name(bus.signals, bus.name);
             }
         }
 
@@ -374,6 +422,53 @@ pub fn Names(comptime Device: type) type {
                         return mcref;
                     }
                 }
+            }
+
+            if (name.len <= 250) {
+                var buf: [256]u8 = undefined;
+
+                const fb_name = std.fmt.bufPrint(&buf, "{s}.fb", .{ name }) catch unreachable;
+                if (self.signal_lookup.get(fb_name)) |signal| {
+                    if (signal.kind() == .mc) {
+                        if (signal.maybe_mc()) |mcref| {
+                            return mcref;
+                        }
+                    }
+                }
+
+                const cash_name = std.fmt.bufPrint(&buf, "${s}", .{ name }) catch unreachable;
+                if (self.signal_lookup.get(cash_name)) |signal| {
+                    if (signal.kind() == .mc) {
+                        if (signal.maybe_mc()) |mcref| {
+                            return mcref;
+                        }
+                    }
+                }
+            } else {
+                var temp: std.ArrayList(u8) = .init(self.gpa);
+                defer temp.deinit();
+
+                if (temp.writer().print("{s}.fb", .{ name })) {
+                    if (self.signal_lookup.get(temp.items)) |signal| {
+                        if (signal.kind() == .mc) {
+                            if (signal.maybe_mc()) |mcref| {
+                                return mcref;
+                            }
+                        }
+                    }
+                } else |_| {}
+
+                temp.clearRetainingCapacity();
+
+                if (temp.writer().print("${s}", .{ name })) {
+                    if (self.signal_lookup.get(temp.items)) |signal| {
+                        if (signal.kind() == .mc) {
+                            if (signal.maybe_mc()) |mcref| {
+                                return mcref;
+                            }
+                        }
+                    }
+                } else |_| {}
             }
 
             if (self.fallback) |fallback| {
