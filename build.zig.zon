@@ -1,7 +1,7 @@
 .{
     .name = .lc4k,
     .fingerprint = 0x7b6fa9f9423b1ee5,
-    .version = "0.2.0",
+    .version = "0.2.1",
     .minimum_zig_version = "0.14.1",
     .paths = .{
         "src",

@@ -1150,19 +1150,95 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
                 .hover_selector = mc_class,
             };
 
-            if (Device.Signal.maybe_mc_pad(mcref)) |pad| {
-                const usage = data.signal_usage.get(pad);
+            var out_mcref = mcref;
+            var out_options = cell_options;
+            var out_mc_delta: usize = 0;
+            var out_from_extra: []const u8 = "";
+            var temp_out_buf: [64]u8 = undefined;
 
-                try begin_cell(writer, cell_options);
+            var oe_mcref = mcref;
+            var oe_options = cell_options;
+            var oe_mc_delta: usize = 0;
+            var temp_oe_buf: [64]u8 = undefined;
+
+            var io_options: Cell_Options = undefined;
+            var in_options: Cell_Options = undefined;
+
+            if (Device.Signal.maybe_mc_pad(mcref)) |pad| {
+                if (Device.family == .zero_power_enhanced) {
+                    out_mcref = mc_config.output.routing.to_absolute(mcref).mc();
+                    out_mc_delta = mc_config.output.routing.to_relative(mcref) orelse 0;
+
+                    const out_mc_class = try std.fmt.bufPrint(&temp_out_buf, ".mc-{}", .{ out_mcref.mc });
+                    out_options = Cell_Options {
+                        .class = out_mc_class[1..],
+                        .hover_selector = out_mc_class,
+                    };
+
+                    oe_options = switch (mc_config.output.oe) {
+                        .from_orm_active_high, .from_orm_active_low => out_options,
+                        else => .{},
+                    };
+                    oe_mcref = out_mcref;
+                    oe_mc_delta = out_mc_delta;
+                } else {
+                    oe_mcref = mc_config.output.oe_routing.to_absolute(mcref).mc();
+                    oe_mc_delta = mc_config.output.oe_routing.to_relative(mcref) orelse 0;
+
+                    const oe_mc_class = try std.fmt.bufPrint(&temp_oe_buf, ".mc-{}", .{ oe_mcref.mc });
+                    oe_options = Cell_Options {
+                        .class = oe_mc_class[1..],
+                        .hover_selector = oe_mc_class,
+                    };
+
+                    switch (mc_config.output.routing.mode()) {
+                        .same_as_oe => {
+                            out_mcref = oe_mcref;
+                            out_mc_delta = oe_mc_delta;
+                            out_options = oe_options;
+                        },
+                        .self => {},
+                        .five_pt_fast_bypass => out_from_extra = " <kbd class=\"out fast\">Fast-Bypass</kbd>",
+                        .five_pt_fast_bypass_inverted => out_from_extra = " <kbd class=\"out fast\">Fast-Bypass</kbd> <kbd class=\"out invert\">Invert</kbd>",
+                    }
+
+                    switch (mc_config.output.oe) {
+                        .from_orm_active_high, .from_orm_active_low => {},
+                        else => oe_options = .{},
+                    }
+                }
+
+                io_options = out_options;
+                in_options = out_options;
+
+                switch (mc_config.output.oe) {
+                    .input_only => {
+                        out_options = .{};
+                        oe_options = .{};
+                    },
+                    .output_only => {
+                        in_options = .{};
+                    },
+                    else => {},
+                }
+
+                if (data.signal_usage.get(pad).count() == 0) {
+                    out_options = .{
+                        .additional_classes = &.{ "unused" }
+                    };
+                    oe_options = out_options;
+                    io_options = out_options;
+                    in_options = out_options;
+                }
+            }
+
+            if (Device.Signal.maybe_mc_pad(mcref)) |pad| {
+                try begin_cell(writer, io_options);
                 if (pad.maybe_pin()) |pi| try writer.writeAll(pi.id());
                 try end_cell(writer);
 
                 // I/O Name
-                var io_cell_options = cell_options;
-                if (usage.count() == 0) {
-                    io_cell_options.additional_classes = &.{ "unused" };
-                }
-                try begin_cell(writer, io_cell_options);
+                try begin_cell(writer, io_options);
                 try writer.writeAll(options.get_names().get_signal_name(pad));
                 try end_cell(writer);
             } else {
@@ -1362,74 +1438,7 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
             });
             try end_cell(writer);
 
-            if (Device.Signal.maybe_mc_pad(mcref)) |pad| {
-                var out_mcref = mcref;
-                var out_options = cell_options;
-                var out_mc_delta: usize = 0;
-                var out_from_extra: []const u8 = "";
-                var temp_out_buf: [64]u8 = undefined;
-
-                var oe_mcref = mcref;
-                var oe_options = cell_options;
-                var oe_mc_delta: usize = 0;
-                var temp_oe_buf: [64]u8 = undefined;
-
-                var in_options = cell_options;
-
-                if (Device.family == .zero_power_enhanced) {
-                    out_mcref = mc_config.output.routing.to_absolute(mcref).mc();
-                    out_mc_delta = mc_config.output.routing.to_relative(mcref) orelse 0;
-
-                    const out_mc_class = try std.fmt.bufPrint(&temp_out_buf, ".mc-{}", .{ out_mcref.mc });
-                    out_options = Cell_Options {
-                        .class = out_mc_class[1..],
-                        .hover_selector = out_mc_class,
-                    };
-
-                    oe_options = switch (mc_config.output.oe) {
-                        .from_orm_active_high, .from_orm_active_low => out_options,
-                        else => .{},
-                    };
-                    oe_mcref = out_mcref;
-                    oe_mc_delta = out_mc_delta;
-                } else {
-                    oe_mcref = mc_config.output.oe_routing.to_absolute(mcref).mc();
-                    oe_mc_delta = mc_config.output.oe_routing.to_relative(mcref) orelse 0;
-
-                    const oe_mc_class = try std.fmt.bufPrint(&temp_oe_buf, ".mc-{}", .{ oe_mcref.mc });
-                    oe_options = Cell_Options {
-                        .class = oe_mc_class[1..],
-                        .hover_selector = oe_mc_class,
-                    };
-
-                    switch (mc_config.output.routing.mode()) {
-                        .same_as_oe => {
-                            out_mcref = oe_mcref;
-                            out_mc_delta = oe_mc_delta;
-                            out_options = oe_options;
-                        },
-                        .self => {},
-                        .five_pt_fast_bypass => out_from_extra = " <kbd class=\"out fast\">Fast-Bypass</kbd>",
-                        .five_pt_fast_bypass_inverted => out_from_extra = " <kbd class=\"out fast\">Fast-Bypass</kbd> <kbd class=\"out invert\">Invert</kbd>",
-                    }
-
-                    switch (mc_config.output.oe) {
-                        .from_orm_active_high, .from_orm_active_low => {},
-                        else => oe_options = .{},
-                    }
-                }
-
-                if (mc_config.output.oe == .input_only) {
-                    out_options = .{};
-                    oe_options = .{};
-                }
-
-                if (data.signal_usage.get(pad).count() == 0) {
-                    out_options.additional_classes = &.{ "unused" };
-                    oe_options.additional_classes = &.{ "unused" };
-                    in_options.additional_classes = &.{ "unused" };
-                }
-
+            if (Device.Signal.maybe_mc_pad(mcref)) |_| {
                 try begin_cell(writer, out_options);
                 if (mc_config.output.oe != .input_only) {
                     if (out_mc_delta != 0) {
