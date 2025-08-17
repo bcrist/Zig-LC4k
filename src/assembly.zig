@@ -1,10 +1,15 @@
+pub const Assembly_Options = struct {
+    // when set, only the first 4 GIs are programmed to 0's for a PT that's supposed to be always false
+    use_lattice_false_pt: bool = false,
+};
+
 pub const Assembly_Results = struct {
     jedec: JEDEC_File,
     errors: std.ArrayList(Config_Error),
     error_arena: std.heap.ArenaAllocator, // used to store dynamically allocated error messages
 };
 
-pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), allocator: std.mem.Allocator) !Assembly_Results {
+pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), allocator: std.mem.Allocator, options: Assembly_Options) !Assembly_Results {
     var results = Assembly_Results {
         .jedec = JEDEC_File {
             .data = try JEDEC_Data.init_full(allocator, Device.jedec_dimensions),
@@ -90,10 +95,10 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
                             const glb_pt_offset = mc * 5 + pt_index;
                             if (next_sum_pt < sp.sum.len) {
                                 const pt = sp.sum[next_sum_pt];
-                                try write_pt_fuses(Device, &results, glb, glb_pt_offset, &gi_routing, pt);
+                                try write_pt_fuses(Device, &results, glb, glb_pt_offset, &gi_routing, pt, options);
                                 next_sum_pt += 1;
                             } else if (!lc4k.is_sum_always(sp.sum)) {
-                                try write_pt_fuses(Device, &results, glb, glb_pt_offset, &gi_routing, Product_Term(Device.Signal).never());
+                                try write_pt_fuses(Device, &results, glb, glb_pt_offset, &gi_routing, Product_Term(Device.Signal).never(), options);
                             }
                         }
                         if (next_sum_pt < sp.sum.len and !lc4k.is_sum_always(sp.sum)) {
@@ -120,10 +125,10 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
                 while (pt_iter.next()) |glb_pt_offset| {
                     if (next_sum_pt < sum_pts.len) {
                         const pt = sum_pts[next_sum_pt];
-                        try write_pt_fuses(Device, &results, glb, glb_pt_offset, &gi_routing, pt);
+                        try write_pt_fuses(Device, &results, glb, glb_pt_offset, &gi_routing, pt, options);
                         next_sum_pt += 1;
                     } else if (!lc4k.is_sum_always(sum_pts)) {
-                        try write_pt_fuses(Device, &results, glb, glb_pt_offset, &gi_routing, Product_Term(Device.Signal).never());
+                        try write_pt_fuses(Device, &results, glb, glb_pt_offset, &gi_routing, Product_Term(Device.Signal).never(), options);
                     }
                 }
                 if (next_sum_pt < sum_pts.len and !lc4k.is_sum_always(sum_pts)) {
@@ -140,14 +145,14 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
             var special_pt: usize = 0;
             while (special_pt < 5) : (special_pt += 1) {
                 if (get_special_pt(Device, mc_config, special_pt)) |pt| {
-                    try write_pt_fuses(Device, &results, glb, mc * 5 + special_pt, &gi_routing, pt);
+                    try write_pt_fuses(Device, &results, glb, mc * 5 + special_pt, &gi_routing, pt, options);
                 }
             }
         }
 
-        try write_pt_fuses(Device, &results, glb, 80, &gi_routing, glb_config.shared_pt_init.pt);
-        try write_pt_fuses(Device, &results, glb, 81, &gi_routing, glb_config.shared_pt_clock.pt);
-        try write_pt_fuses(Device, &results, glb, 82, &gi_routing, glb_config.shared_pt_enable);
+        try write_pt_fuses(Device, &results, glb, 80, &gi_routing, glb_config.shared_pt_init.pt, options);
+        try write_pt_fuses(Device, &results, glb, 81, &gi_routing, glb_config.shared_pt_clock.pt, options);
+        try write_pt_fuses(Device, &results, glb, 82, &gi_routing, glb_config.shared_pt_enable, options);
 
         // Program MC-slice configuration fuses (Replace default/unset parameters with the defaults)
         for (glb_config.mc, 0..) |mc_config, mc| {
@@ -301,10 +306,10 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
 
             if (@TypeOf(mc_config.input) == lc4k.Input_Config_ZE) {
                 const value = mc_config.input.bus_maintenance orelse config.default_bus_maintenance;
-                write_field(&results.jedec.data, lc4k.Bus_Maintenance, value, fuses.get_bus_maintenance_range(Device, mcref));
+                write_field(&results.jedec.data, lc4k.Bus_Maintenance, value, fuses.get_bus_maintenance_range(Device, mcref).?);
 
                 const pgdf = mc_config.input.power_guard orelse config.ext.default_power_guard;
-                write_field(&results.jedec.data, lc4k.Power_Guard, pgdf, fuses.get_power_guard_range(Device, mcref));
+                write_field(&results.jedec.data, lc4k.Power_Guard, pgdf, fuses.get_power_guard_range(Device, mcref).?);
             }
         }
 
@@ -334,10 +339,10 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
     if (Device.family == .zero_power_enhanced) {
 
         if (config.ext.osctimer) |osctimer| {
-            results.jedec.data.put_range(Device.getOscTimerEnableRange(), 0);
-            write_field(&results.jedec.data, lc4k.Timer_Divisor, osctimer.timer_divisor, Device.getTimerDivRange());
-            results.jedec.data.put(Device.getOscOutFuse(), @intFromBool(!osctimer.enable_osc_out_and_disable));
-            results.jedec.data.put(Device.getTimerOutFuse(), @intFromBool(!osctimer.enable_timer_out_and_reset));
+            results.jedec.data.put_range(Device.get_osctimer_enable_range(), 0);
+            write_field(&results.jedec.data, lc4k.Timer_Divisor, osctimer.timer_divisor, Device.get_timer_div_range());
+            results.jedec.data.put(Device.get_osc_out_fuse(), @intFromBool(!osctimer.enable_osc_out_and_disable));
+            results.jedec.data.put(Device.get_timer_out_fuse(), @intFromBool(!osctimer.enable_timer_out_and_reset));
         }
     } else {
         write_field(&results.jedec.data, lc4k.Bus_Maintenance, config.default_bus_maintenance, Device.get_global_bus_maintenance_range());
@@ -410,13 +415,13 @@ fn write_goe_fuses(comptime Device: type, data: *JEDEC_Data, goe_config: anytype
     switch (@TypeOf(goe_config)) {
         lc4k.GOE_Config_Bus_Or_Pin => switch (goe_config.source) {
             .input => {
-                data.put(Device.get_goe_source_fuse(goe_index), 0);
+                data.put(Device.get_goe_source_fuse(goe_index).?, 0);
             },
             .constant_high => {
-                data.put(Device.get_goe_source_fuse(goe_index), 1);
+                data.put(Device.get_goe_source_fuse(goe_index).?, 1);
             },
             .glb_shared_pt_enable => |glb| {
-                data.put(Device.get_goe_source_fuse(goe_index), 1);
+                data.put(Device.get_goe_source_fuse(goe_index).?, 1);
                 write_field(data, u1, 0, fuses.get_shared_enable_to_oe_bus_range(Device, glb).sub_rows(goe_index, 1));
             },
         },
@@ -435,18 +440,18 @@ fn write_dedicated_input_fuses(comptime Device: type, data: *JEDEC_Data, pin_inf
     const signal: Device.Signal = @enumFromInt(pin_info.signal_index.?);
 
     const threshold = input_config.threshold orelse config.default_input_threshold;
-    write_field(data, lc4k.Input_Threshold, threshold, Device.get_input_threshold_fuse(signal).range());
+    write_field(data, lc4k.Input_Threshold, threshold, Device.get_input_threshold_fuse(signal).?.range());
 
     if (@TypeOf(input_config) == lc4k.Input_Config_ZE) {
         const maintenance = input_config.bus_maintenance orelse config.default_bus_maintenance;
-        write_field(data, lc4k.Bus_Maintenance, maintenance, Device.getInputBus_MaintenanceRange(signal));
+        write_field(data, lc4k.Bus_Maintenance, maintenance, Device.get_input_bus_maintenance_range(signal).?);
 
         const pgdf = input_config.power_guard orelse config.ext.default_power_guard;
-        write_field(data, lc4k.Power_Guard, pgdf, Device.getInputPower_GuardFuse(signal).range());
+        write_field(data, lc4k.Power_Guard, pgdf, Device.get_input_power_guard_fuse(signal).?.range());
     }
 }
 
-fn write_pt_fuses(comptime Device: type, results: *Assembly_Results, glb: usize, glb_pt_offset: usize, gi_signals: *[Device.num_gis_per_glb]?Device.Signal, pt: Product_Term(Device.Signal)) !void {
+fn write_pt_fuses(comptime Device: type, results: *Assembly_Results, glb: usize, glb_pt_offset: usize, gi_signals: *[Device.num_gis_per_glb]?Device.Signal, pt: Product_Term(Device.Signal), options: Assembly_Options) !void {
     if (pt.is_always()) return;
 
     const range = fuses.get_pt_range(Device, glb, glb_pt_offset);
@@ -456,15 +461,10 @@ fn write_pt_fuses(comptime Device: type, results: *Assembly_Results, glb: usize,
         .always => {},
         .never => is_never = true,
         .when_high, .when_low => |signal| {
-            const fuse = for (gi_signals, 0..) |maybe_gi_signal, gi| {
+            const gi_fuses = for (gi_signals, 0..) |maybe_gi_signal, gi| {
                 if (maybe_gi_signal) |gi_signal| {
                     if (gi_signal == signal) {
-                        const gi_fuses = range.sub_rows(gi * 2, 2); // should be exactly 2 fuses stacked vertically
-                        if (factor == .when_low) {
-                            break gi_fuses.max;
-                        } else {
-                            break gi_fuses.min;
-                        }
+                        break range.sub_rows(gi * 2, 2); // should be exactly 2 fuses stacked vertically
                     }
                 }
             } else {
@@ -477,14 +477,23 @@ fn write_pt_fuses(comptime Device: type, results: *Assembly_Results, glb: usize,
                 });
                 continue;
             };
+
+            const fuse = if (factor == .when_low) gi_fuses.max else gi_fuses.min;
+            const other_fuse = if (factor == .when_low) gi_fuses.min else gi_fuses.max;
             results.jedec.data.put(fuse, 0);
+            if (results.jedec.data.get(other_fuse) == 0) {
+                is_never = true;
+            }
         },
     };
 
-    // TODO check for PT factors that should have been turned into .never?
-
     if (is_never) {
-        results.jedec.data.put_range(range.sub_rows(0, Device.num_gis_per_glb * 2), 0);
+        if (options.use_lattice_false_pt) {
+            results.jedec.data.put_range(range, 1);
+            results.jedec.data.put_range(range.sub_rows(0, 8), 0);
+        } else {
+            results.jedec.data.put_range(range, 0);
+        }
     }
 }
 

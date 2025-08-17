@@ -18,6 +18,8 @@ pub fn Names(comptime Device: type) type {
 
         constant_lookup: std.StringHashMapUnmanaged(Literal) = .empty,
 
+        allow_multiple_names: bool = false, // set to true to allow multiple names to refer to the same signal/MC/etc.
+
         const Self = @This();
 
         pub fn init(allocator: std.mem.Allocator) Self {
@@ -161,35 +163,44 @@ pub fn Names(comptime Device: type) type {
         }
 
         pub fn add_glb_name(self: *Self, glb: GLB_Index, name: []const u8) !void {
-            if (self.glb_names.contains(glb)) return error.Already_Named;
-            if (self.glb_lookup.contains(name)) return error.Duplicate_Name;
-
             try self.glb_names.ensureUnusedCapacity(self.gpa, 1);
             try self.glb_lookup.ensureUnusedCapacity(self.gpa, 1);
 
-            self.glb_names.putAssumeCapacityNoClobber(glb, name);
+            if (self.glb_lookup.contains(name)) return error.Duplicate_Name;
+            if (self.glb_names.contains(glb)) {
+                if (!self.allow_multiple_names) return error.Already_Named;
+            } else {
+                self.glb_names.putAssumeCapacityNoClobber(glb, name);
+            }
+
             self.glb_lookup.putAssumeCapacityNoClobber(name, glb);
         }
 
         pub fn add_mc_name(self: *Self, mc: MC_Ref, name: []const u8) !void {
-            if (self.macrocell_names.contains(mc)) return error.Already_Named;
-            if (self.macrocell_lookup.contains(name)) return error.Duplicate_Name;
-
             try self.macrocell_names.ensureUnusedCapacity(self.gpa, 1);
             try self.macrocell_lookup.ensureUnusedCapacity(self.gpa, 1);
 
-            self.macrocell_names.putAssumeCapacityNoClobber(mc, name);
+            if (self.macrocell_lookup.contains(name)) return error.Duplicate_Name;
+            if (self.macrocell_names.contains(mc)) {
+                if (!self.allow_multiple_names) return error.Already_Named;
+            } else {
+                self.macrocell_names.putAssumeCapacityNoClobber(mc, name);
+            }
+
             self.macrocell_lookup.putAssumeCapacityNoClobber(name, mc);
         }
 
         pub fn add_signal_name(self: *Self, signal: Signal, name: []const u8) !void {
-            if (self.signal_names.contains(signal)) return error.Already_Named;
-            if (self.signal_lookup.contains(name)) return error.Duplicate_Name;
-
             try self.signal_names.ensureUnusedCapacity(self.gpa, 1);
             try self.signal_lookup.ensureUnusedCapacity(self.gpa, 1);
 
-            self.signal_names.putAssumeCapacityNoClobber(signal, name);
+            if (self.signal_lookup.contains(name)) return error.Duplicate_Name;
+            if (self.signal_names.contains(signal)) {
+                if (!self.allow_multiple_names) return error.Already_Named;
+            } else {
+                self.signal_names.putAssumeCapacity(signal, name);
+            }
+
             self.signal_lookup.putAssumeCapacityNoClobber(name, signal);
         }
 

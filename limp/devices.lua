@@ -501,7 +501,7 @@ pub fn get_goe_polarity_fuse(goe: usize) Fuse {
     };
 }
 
-pub fn get_goe_source_fuse(goe: usize) Fuse {
+pub fn get_goe_source_fuse(goe: usize) ?Fuse {
     return switch (goe) {]]
 
     indent(2)
@@ -515,7 +515,7 @@ pub fn get_goe_source_fuse(goe: usize) Fuse {
 
     write([[
 
-        else => unreachable,
+        else => null,
     };
 }
 
@@ -543,27 +543,27 @@ if info.family == 'zero_power_enhanced' then
     end
 
     write([[
-pub fn getOscTimerEnableRange() Fuse_Range {
+pub fn get_osctimer_enable_range() Fuse_Range {
     return Fuse_Range.between(
         Fuse.init(]],min[1],', ',min[2],[[),
         Fuse.init(]],max[1],', ',max[2],[[),
     );
 }
 
-pub fn getOscOutFuse() Fuse {
+pub fn get_osc_out_fuse() Fuse {
     return Fuse.init(]],osctimer.osc_out[1],', ',osctimer.osc_out[2],[[);
 }
 
-pub fn getTimerOutFuse() Fuse {
+pub fn get_timer_out_fuse() Fuse {
     return Fuse.init(]],osctimer.timer_out[1],', ',osctimer.timer_out[2],[[);
 }
 
-pub fn getTimerDivRange() Fuse_Range {
+pub fn get_timer_div_range() Fuse_Range {
     return Fuse.init(]], osctimer.timer_div[1][1], ', ', osctimer.timer_div[1][2], [[)
         .range().expand_to_contain(Fuse.init(]], osctimer.timer_div[2][1], ', ', osctimer.timer_div[2][2], [[));
 }
 
-pub fn getInputPower_GuardFuse(input: Signal) Fuse {
+pub fn get_input_power_guard_fuse(input: Signal) ?Fuse {
     return switch (input) {]])
     include 'power_guard'
     local power_guard_fuses = load_power_guard_fuses(which)
@@ -575,11 +575,11 @@ pub fn getInputPower_GuardFuse(input: Signal) Fuse {
     unindent(2)
     write [[
 
-        else => unreachable,
+        else => null,
     };
 }
 
-pub fn getInputBus_MaintenanceRange(input: Signal) Fuse_Range {
+pub fn get_input_bus_maintenance_range(input: Signal) ?Fuse_Range {
     return switch (input) {]]
     include 'bus_maintenance'
     local fuse1, fuse2 = load_bus_maintenance_fuses(which)
@@ -591,7 +591,7 @@ pub fn getInputBus_MaintenanceRange(input: Signal) Fuse_Range {
     unindent(2)
     write [[
 
-        else => unreachable,
+        else => null,
     };
 }
 ]]
@@ -599,10 +599,10 @@ else
     include 'global_bus_maintenance'
     local f0, f1, extra = load_global_bus_maintenance_fuses(which)
     write([[
-
 pub fn get_global_bus_maintenance_range() Fuse_Range {
     return Fuse.init(]], f0[1], ', ', f0[2], [[).range().expand_to_contain(Fuse.init(]], f1[1], ', ', f1[2], [[));
 }
+
 pub fn get_extra_float_input_fuses() []const Fuse {
     return &.{]])
     indent(2)
@@ -618,7 +618,7 @@ pub fn get_extra_float_input_fuses() []const Fuse {
 end
 write [[
 
-pub fn get_input_threshold_fuse(input: Signal) Fuse {
+pub fn get_input_threshold_fuse(input: Signal) ?Fuse {
     return switch (input) {]]
     indent(2)
     for _, pin in spairs(dedicated_inputs, natural_cmp) do
@@ -628,7 +628,7 @@ pub fn get_input_threshold_fuse(input: Signal) Fuse {
     unindent(2)
     write [[
 
-        else => unreachable,
+        else => null,
     };
 }
 

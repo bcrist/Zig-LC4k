@@ -407,8 +407,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                             return try self.append_to_parent(source, .{ .mc_clk = mcref }, dest, "tHT", visited, Timing.tHT);
                         },
                         .d_ff => {
-                            const is_input_register = !self.jedec.is_set(fuses.get_input_bypass_range(D, mcref).min);
-                            if (is_input_register) {
+                            if (disassembly.read_input_bypass(D, self.jedec, mcref)) {
                                 const is_ptclk = switch (disassembly.read_clock_source(D, self.jedec, mcref)) {
                                     .shared_pt_clock, .pt1_positive, .pt1_negative => true,
                                     .none, .bclock0, .bclock1, .bclock2, .bclock3 => false,
@@ -464,8 +463,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                             }
                         },
                         .d_ff => {
-                            const is_input_register = !self.jedec.is_set(fuses.get_input_bypass_range(D, mcref).min);
-                            if (is_input_register) {
+                            if (disassembly.read_input_bypass(D, self.jedec, mcref)) {
                                 if (is_ptclk) {
                                     return try self.append_to_parent(source, .{ .mcd = mcref }, dest, "tSIR_PT", visited, Timing.tSIR_PT);
                                 } else {
@@ -486,12 +484,12 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                     var buf: [2]Path = undefined;
                     var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
 
-                    if (!self.jedec.is_set(fuses.get_input_bypass_range(D, mcref).min)) {
+                    if (disassembly.read_input_bypass(D, self.jedec, mcref)) {
                         const delay = Timing.tINREG + self.tINDIO();
                         if (try self.maybe_append_to_parent(source, .{ .in = @intFromEnum(D.Signal.mc_pad(mcref)) }, dest, "tINREG", visited, delay)) |path| {
                             options.appendAssumeCapacity(path);
                         }
-                    } else if (!self.jedec.is_set(fuses.get_pt0_xor_range(D, mcref).min)) {
+                    } else if (disassembly.read_pt0_xor(D, self.jedec, mcref)) {
                         if (try self.maybe_append_to_parent(source, .{ .pt = .{ .mcref = mcref, .pt = 0 }}, dest, "tMCELL", visited, Timing.tMCELL)) |path| {
                             options.appendAssumeCapacity(path);
                         }
@@ -558,7 +556,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                     var buf: [5]Path = undefined;
                     var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
 
-                    if (self.jedec.is_set(fuses.get_pt0_xor_range(D, mcref).min)) {
+                    if (!disassembly.read_pt0_xor(D, self.jedec, mcref)) {
                         if (try self.maybe_find_critical_path(source, .{ .pt = .{ .mcref = mcref, .pt = 0 }}, visited)) |path| {
                             options.appendAssumeCapacity(path);
                         }
@@ -699,7 +697,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
             } else {
                 switch (goe) {
                     0, 1 => {
-                        if (self.jedec.is_set(D.get_goe_source_fuse(goe))) {
+                        if (self.jedec.is_set(D.get_goe_source_fuse(goe).?)) {
                             return switch (goe) {
                                 0 => self.append_to_parent(source, .igoe0, dest, "tGPTOE", visited, Timing.tGPTOE),
                                 1 => self.append_to_parent(source, .igoe1, dest, "tGPTOE", visited, Timing.tGPTOE),

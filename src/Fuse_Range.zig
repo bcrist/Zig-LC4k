@@ -1,12 +1,10 @@
 min: Fuse,
 max: Fuse,
 
-pub fn init_empty() Fuse_Range {
-    return .{
-        .min = Fuse.init(1, 1),
-        .max = Fuse.init(0, 0),
-    };
-}
+pub const empty: Fuse_Range = .{
+    .min = Fuse.init(1, 1),
+    .max = Fuse.init(0, 0),
+};
 
 pub fn init(what: anytype) Fuse_Range {
     const T = @TypeOf(what);
@@ -31,7 +29,7 @@ pub fn init(what: anytype) Fuse_Range {
 
 pub fn init_from_dimensions(w: usize, h: usize) Fuse_Range {
     if (w == 0 or h == 0) {
-        return init_empty();
+        return empty;
     }
     return .{
         .min = Fuse.init(0, 0),

@@ -134,7 +134,7 @@ pub fn main() !void {
     defer lp.arena.deinit();
     var chip = try configure_chip(&lp);
 
-    const results = try chip.assemble(lp.arena.allocator());
+    const results = try chip.assemble(lp.arena.allocator(), .{});
 
     var jed_file = try std.fs.cwd().createFile("adder.jed", .{});
     defer jed_file.close();

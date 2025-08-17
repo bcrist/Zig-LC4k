@@ -26,6 +26,20 @@ pub fn get_macrocell_range(comptime Device: type, mcref: MC_Ref) Fuse_Range {
     };
 }
 
+pub fn get_macrocell_range_without_io(comptime Device: type, mcref: MC_Ref) Fuse_Range {
+    return get_macrocell_range(Device, mcref).sub_rows(0, 17);
+}
+
+// N.B. does not include PGDF bits; use get_power_guard_range for Device.family == .zero_power_enhanced
+pub fn get_io_range(comptime Device: type, mcref: MC_Ref) ?Fuse_Range {
+    if (Device.jedec_dimensions.height() == 95) {
+        if ((mcref.mc & 1) == 1) return null;
+        return get_macrocell_range(Device, mcref).sub_rows(17, 6).expand_columns(1);
+    } else {
+        return get_macrocell_range(Device, mcref).sub_rows(17, 11);
+    }
+}
+
 pub fn get_pt0_xor_range(comptime Device: type, mcref: MC_Ref) Fuse_Range {
     return get_macrocell_range(Device, mcref).sub_rows(0, 1);
 }
@@ -112,8 +126,9 @@ pub fn get_output_enable_source_range(comptime Device: type, mcref: MC_Ref) ?Fus
     }
 }
 
-pub fn get_bus_maintenance_range(comptime Device: type, mcref: MC_Ref) Fuse_Range {
-    std.debug.assert(Device.family == .zero_power_enhanced);
+pub fn get_bus_maintenance_range(comptime Device: type, mcref: MC_Ref) ?Fuse_Range {
+    if (Device.family != .zero_power_enhanced) return null;
+    std.debug.assert(Device.jedec_dimensions.height() != 95);
     return get_macrocell_range(Device, mcref).sub_rows(23, 2);
 }
 
@@ -153,8 +168,8 @@ pub fn get_input_threshold_range(comptime Device: type, mcref: MC_Ref) ?Fuse_Ran
     }
 }
 
-pub fn get_power_guard_range(comptime Device: type, mcref: MC_Ref) Fuse_Range {
-    std.debug.assert(Device.family == .zero_power_enhanced);
+pub fn get_power_guard_range(comptime Device: type, mcref: MC_Ref) ?Fuse_Range {
+    if (Device.family != .zero_power_enhanced) return null;
     const range = Device.get_glb_range(mcref.glb).sub_rows(Device.jedec_dimensions.max.row, 1);
     return range.sub_columns(mcref.mc * 5 + 3, 1);
 }

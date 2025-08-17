@@ -27,9 +27,9 @@ pub fn init_diff(allocator: std.mem.Allocator, a: JEDEC_Data, b: JEDEC_Data) !JE
     return result;
 }
 
-pub fn deinit(self: *JEDEC_Data) void {
-    self.raw.deinit();
-    self.extents = Fuse_Range.init_empty();
+pub fn deinit(self: *JEDEC_Data, allocator: std.mem.Allocator) void {
+    self.raw.deinit(allocator);
+    self.extents = .empty;
 }
 
 pub fn clone(self: JEDEC_Data, allocator: std.mem.Allocator, range: Fuse_Range) error{OutOfMemory}!JEDEC_Data {

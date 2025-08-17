@@ -322,7 +322,7 @@ fn Report_Data(comptime Device: type) type {
                     .io, .io_oe0, .io_oe1,
                         => self.num_ios += 1,
                     .input, .clock,
-                    .no_connect, .gnd, .vcc_core, .vcco, .tck, .tms, .tdi, .tdo
+                    .no_connect, .gnd, .gndo, .vcc_core, .vcco, .tck, .tms, .tdi, .tdo
                         => continue,
                 }
             }
@@ -629,7 +629,7 @@ fn write_reg_ctrl_equations(writer: std.io.AnyWriter, comptime Device: type, dat
     }), options);
     try writer.writeAll(" = ");
     switch (reg_config.clock) {
-        .none => try write_constant_equation(writer, false, .positive, false),
+        .none => try write_constant_equation(writer, false, .positive, eqn_options.style, false),
         .pt1 => |ptp| try write_pt_with_polarity_equation(writer, Device, ptp, eqn_options, options),
         .shared_pt_clock => {
             try write_pt_with_polarity_equation(writer, Device, data.config.glb[mcref.glb].shared_pt_clock, eqn_options, options);
@@ -1801,11 +1801,14 @@ fn write_error(writer: std.io.AnyWriter, comptime Device: type, err: Config_Erro
 ////////////////////////////////////////////////////
 // Equations
 
+pub const Equation_Style = enum {
+    console, // ascii, formatted for console I/O
+    ascii, // ascii, formatted with HTML
+    pretty, // use <u></u> instead of ! when writing an active-low signal name, use middle dot instead of &.
+};
+
 pub const Equation_Options = struct {
-    style: enum {
-        ascii,
-        pretty, // use <u></u> instead of ! when writing an active-low signal name, use middle dot instead of &.
-    } = .pretty,
+    style: Equation_Style = .pretty,
     polarity: lc4k.Polarity = .positive,
     signal_suffix: []const u8 = "",
 
@@ -1878,10 +1881,12 @@ fn write_sum_equation(writer: std.io.AnyWriter, comptime Device: type, sum: []co
         if (i > 0) {
             try writer.writeAll(switch (eqn_options.polarity) {
                 .positive => switch (eqn_options.style) {
+                    .console => "\n        | ",
                     .ascii => "\n        | ",
                     .pretty => "\n        + ",
                 },
                 .negative => switch (eqn_options.style) {
+                    .console => "\n        & ",
                     .ascii => "\n        &amp; ",
                     .pretty => "\n        &middot; ",
                 },
@@ -1897,7 +1902,7 @@ fn write_sum_equation(writer: std.io.AnyWriter, comptime Device: type, sum: []co
     }
 
     if (sum.len == 0) {
-        try write_constant_equation(writer, false, eqn_options.polarity, false);
+        try write_constant_equation(writer, false, eqn_options.polarity, eqn_options.style, false);
     }
 }
 
@@ -1905,40 +1910,42 @@ fn write_pt_with_polarity_equation(writer: std.io.AnyWriter, comptime Device: ty
     try write_pt_equation(writer, Device, ptp.pt, eqn_options.apply_polarity(ptp.polarity), options);
 }
 
-fn write_pt_equation(writer: std.io.AnyWriter, comptime Device: type, pt: lc4k.Product_Term(Device.Signal), eqn_options: Equation_Options, options: Write_Options(Device)) !void {
+pub fn write_pt_equation(writer: std.io.AnyWriter, comptime Device: type, pt: lc4k.Product_Term(Device.Signal), eqn_options: Equation_Options, options: Write_Options(Device)) !void {
     for (0.., pt.factors) |i, factor| {
         if (i > 0) switch (eqn_options.polarity) {
             .positive => switch (eqn_options.style) {
+                .console => try writer.writeAll(" & "),
                 .ascii => try writer.writeAll(" &amp; "),
                 .pretty => try writer.writeAll(" &middot; "),
             },
             .negative => switch (eqn_options.style) {
+                .console => try writer.writeAll(" | "),
                 .ascii => try writer.writeAll(" | "),
                 .pretty => try writer.writeAll(" + "),
             },
         };
         switch (factor) {
-            .never => try write_constant_equation(writer, false, eqn_options.polarity, false),
-            .always => try write_constant_equation(writer, true, eqn_options.polarity, false),
+            .never => try write_constant_equation(writer, false, eqn_options.polarity, eqn_options.style, false),
+            .always => try write_constant_equation(writer, true, eqn_options.polarity, eqn_options.style, false),
             .when_high => |signal| try write_signal_equation(writer, Device, signal, eqn_options, options),
             .when_low => |signal| try write_signal_equation(writer, Device, signal, eqn_options.invert(), options),
         }
     }
 
     if (pt.factors.len == 0) {
-        try write_constant_equation(writer, true, eqn_options.polarity, false);
+        try write_constant_equation(writer, true, eqn_options.polarity, eqn_options.style, false);
     }
 }
 
 fn write_goe_equation(writer: std.io.AnyWriter, comptime Device: type, data: Report_Data(Device), goe_index: usize, goe_config: anytype, eqn_options: Equation_Options, options: Write_Options(Device)) !void {
     switch (@TypeOf(goe_config)) {
         lc4k.GOE_Config_Bus_Or_Pin => switch (goe_config.source) {
-            .constant_high => try write_constant_equation(writer, true, goe_config.polarity.xor(eqn_options.polarity), true),
+            .constant_high => try write_constant_equation(writer, true, goe_config.polarity.xor(eqn_options.polarity), eqn_options.style, true),
             .input => try write_pin_goe_equation(writer, Device, Device.oe_pins[goe_index], eqn_options.apply_polarity(goe_config.polarity), options),
             .glb_shared_pt_enable => |glb| try write_bus_goe_equation(writer, Device, data, glb, eqn_options.apply_polarity(goe_config.polarity), options),
         },
         lc4k.GOE_Config_Bus => switch (goe_config.source) {
-            .constant_high => try write_constant_equation(writer, true, goe_config.polarity.xor(eqn_options.polarity), true),
+            .constant_high => try write_constant_equation(writer, true, goe_config.polarity.xor(eqn_options.polarity), eqn_options.style, true),
             .glb_shared_pt_enable => |glb| try write_bus_goe_equation(writer, Device, data, glb, eqn_options.apply_polarity(goe_config.polarity), options),
         },
         lc4k.GOE_Config_Pin => {
@@ -1986,36 +1993,66 @@ fn write_block_clock_equation(writer: std.io.AnyWriter, comptime Device: type, v
 fn write_signal_equation(writer: std.io.AnyWriter, comptime Device: type, maybe_signal: ?Device.Signal, eqn_options: Equation_Options, options: Write_Options(Device)) !void {
     const attribs = if (maybe_signal == null) " class=\"error\"" else "";
     switch (eqn_options.polarity) {
-        .positive => try writer.print("<abbr{s}>", .{ attribs }),
+        .positive => switch (eqn_options.style) {
+            .console => {},
+            .ascii, .pretty => try writer.print("<abbr{s}>", .{ attribs }),
+        },
         .negative => switch (eqn_options.style) {
+            .console => try writer.writeByte('!'),
             .ascii => try writer.print("!<abbr{s}>", .{ attribs }),
             .pretty => try writer.print("<abbr{s}><u>", .{ attribs }),
         },
     }
 
-    try writer.writeAll(if (maybe_signal) |signal| options.get_names().get_signal_name(signal) else "undefined");
-
-    if (eqn_options.signal_suffix.len > 0) {
-        try writer.writeAll("<span class=\"eqn_suffix\">");
-        try writer.writeAll(eqn_options.signal_suffix);
-        try writer.writeAll("</span>");
+    if (maybe_signal) |signal| {
+        try writer.writeAll(options.get_names().get_signal_name(signal));
+    } else {
+        try writer.writeAll("undefined");
     }
 
-    try writer.writeAll(switch (eqn_options.polarity) {
-        .positive => "</abbr>",
-        .negative => switch (eqn_options.style) {
-            .ascii => "</abbr>",
-            .pretty => "</u></abbr>",
+    if (eqn_options.signal_suffix.len > 0) {
+        switch (eqn_options.style) {
+            .console => try console.Style.apply(.{ .fg = .green }, writer),
+            .ascii, .pretty => try writer.writeAll("<span class=\"eqn_suffix\">"),
+        }
+        try writer.writeAll(eqn_options.signal_suffix);
+        switch (eqn_options.style) {
+            .console => try console.Style.apply(.{}, writer),
+            .ascii, .pretty => try writer.writeAll("</span>"),
+        }
+    }
+
+    switch (eqn_options.polarity) {
+        .positive => switch (eqn_options.style) {
+            .console => {},
+            .ascii, .pretty => try writer.writeAll("</abbr>"),
         },
-    });
+        .negative => switch (eqn_options.style) {
+            .console => {},
+            .ascii => try writer.writeAll("</abbr>"),
+            .pretty => try writer.writeAll("</u></abbr>"),
+        },
+    }
 }
 
-fn write_constant_equation(writer: std.io.AnyWriter, value: bool, polarity: lc4k.Polarity, unused: bool) !void {
-    try writer.writeAll(if (unused) "<abbr class=\"unused\">" else "<abbr>");
-    try writer.writeAll(switch (@intFromBool(value) ^ @intFromEnum(polarity) ^ 1) {
-        0 => "false</abbr>",
-        1 => "true</abbr>",
-    });
+fn write_constant_equation(writer: std.io.AnyWriter, value: bool, polarity: lc4k.Polarity, style: Equation_Style, unused: bool) !void {
+    switch (style) {
+        .console => {
+            if (unused) try console.Style.apply(.{ .fg = .bright_black }, writer);
+            try writer.writeAll(switch (@intFromBool(value) ^ @intFromEnum(polarity) ^ 1) {
+                0 => "false",
+                1 => "true",
+            });
+            if (unused) try console.Style.apply(.{}, writer);
+        },
+        .ascii, .pretty => {
+            try writer.writeAll(if (unused) "<abbr class=\"unused\">" else "<abbr>");
+            try writer.writeAll(switch (@intFromBool(value) ^ @intFromEnum(polarity) ^ 1) {
+                0 => "false</abbr>",
+                1 => "true</abbr>",
+            });
+        },
+    }
 }
 
 
@@ -2173,4 +2210,5 @@ const disassembly = @import("disassembly.zig");
 const routing = @import("routing.zig");
 const fuses = @import("fuses.zig");
 const lc4k = @import("lc4k.zig");
+const console = @import("console");
 const std = @import("std");

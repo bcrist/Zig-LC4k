@@ -285,9 +285,9 @@ pub fn get_goe_polarity_fuse(goe: usize) Fuse {
     };
 }
 
-pub fn get_goe_source_fuse(goe: usize) Fuse {
+pub fn get_goe_source_fuse(goe: usize) ?Fuse {
     return switch (goe) {
-        else => unreachable,
+        else => null,
     };
 }
 
@@ -295,53 +295,53 @@ pub fn get_zero_hold_time_fuse() Fuse {
     return Fuse.init(87, 171);
 }
 
-pub fn getOscTimerEnableRange() Fuse_Range {
+pub fn get_osctimer_enable_range() Fuse_Range {
     return Fuse_Range.between(
         Fuse.init(91, 168),
         Fuse.init(92, 168),
     );
 }
 
-pub fn getOscOutFuse() Fuse {
+pub fn get_osc_out_fuse() Fuse {
     return Fuse.init(93, 170);
 }
 
-pub fn getTimerOutFuse() Fuse {
+pub fn get_timer_out_fuse() Fuse {
     return Fuse.init(93, 169);
 }
 
-pub fn getTimerDivRange() Fuse_Range {
+pub fn get_timer_div_range() Fuse_Range {
     return Fuse.init(92, 169)
         .range().expand_to_contain(Fuse.init(92, 170));
 }
 
-pub fn getInputPower_GuardFuse(input: Signal) Fuse {
+pub fn get_input_power_guard_fuse(input: Signal) ?Fuse {
     return switch (input) {
         .clk0 => Fuse.init(87, 168),
         .clk1 => Fuse.init(88, 168),
         .clk2 => Fuse.init(89, 168),
         .clk3 => Fuse.init(90, 168),
-        else => unreachable,
+        else => null,
     };
 }
 
-pub fn getInputBus_MaintenanceRange(input: Signal) Fuse_Range {
+pub fn get_input_bus_maintenance_range(input: Signal) ?Fuse_Range {
     return switch (input) {
         .clk0 => Fuse_Range.between(Fuse.init(85, 171), Fuse.init(86, 171)),
         .clk1 => Fuse_Range.between(Fuse.init(85, 170), Fuse.init(86, 170)),
         .clk2 => Fuse_Range.between(Fuse.init(85, 169), Fuse.init(86, 169)),
         .clk3 => Fuse_Range.between(Fuse.init(85, 168), Fuse.init(86, 168)),
-        else => unreachable,
+        else => null,
     };
 }
 
-pub fn get_input_threshold_fuse(input: Signal) Fuse {
+pub fn get_input_threshold_fuse(input: Signal) ?Fuse {
     return switch (input) {
         .clk0 => Fuse.init(95, 168),
         .clk1 => Fuse.init(95, 169),
         .clk2 => Fuse.init(95, 170),
         .clk3 => Fuse.init(95, 171),
-        else => unreachable,
+        else => null,
     };
 }
 

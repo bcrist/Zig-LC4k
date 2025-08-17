@@ -595,11 +595,11 @@ pub fn get_goe_polarity_fuse(goe: usize) Fuse {
     };
 }
 
-pub fn get_goe_source_fuse(goe: usize) Fuse {
+pub fn get_goe_source_fuse(goe: usize) ?Fuse {
     return switch (goe) {
         0 => Fuse.init(88, 101),
         1 => Fuse.init(89, 101),
-        else => unreachable,
+        else => null,
     };
 }
 
@@ -607,27 +607,27 @@ pub fn get_zero_hold_time_fuse() Fuse {
     return Fuse.init(87, 101);
 }
 
-pub fn getOscTimerEnableRange() Fuse_Range {
+pub fn get_osctimer_enable_range() Fuse_Range {
     return Fuse_Range.between(
         Fuse.init(91, 98),
         Fuse.init(92, 98),
     );
 }
 
-pub fn getOscOutFuse() Fuse {
+pub fn get_osc_out_fuse() Fuse {
     return Fuse.init(93, 100);
 }
 
-pub fn getTimerOutFuse() Fuse {
+pub fn get_timer_out_fuse() Fuse {
     return Fuse.init(93, 99);
 }
 
-pub fn getTimerDivRange() Fuse_Range {
+pub fn get_timer_div_range() Fuse_Range {
     return Fuse.init(92, 99)
         .range().expand_to_contain(Fuse.init(92, 100));
 }
 
-pub fn getInputPower_GuardFuse(input: Signal) Fuse {
+pub fn get_input_power_guard_fuse(input: Signal) ?Fuse {
     return switch (input) {
         .clk0 => Fuse.init(87, 98),
         .clk1 => Fuse.init(88, 98),
@@ -639,11 +639,11 @@ pub fn getInputPower_GuardFuse(input: Signal) Fuse {
         .io_F14 => Fuse.init(99, 359),
         .io_G0 => Fuse.init(99, 104),
         .io_H14 => Fuse.init(99, 91),
-        else => unreachable,
+        else => null,
     };
 }
 
-pub fn getInputBus_MaintenanceRange(input: Signal) Fuse_Range {
+pub fn get_input_bus_maintenance_range(input: Signal) ?Fuse_Range {
     return switch (input) {
         .clk0 => Fuse_Range.between(Fuse.init(85, 101), Fuse.init(86, 101)),
         .clk1 => Fuse_Range.between(Fuse.init(85, 100), Fuse.init(86, 100)),
@@ -655,11 +655,11 @@ pub fn getInputBus_MaintenanceRange(input: Signal) Fuse_Range {
         .io_F14 => Fuse_Range.between(Fuse.init(95, 361), Fuse.init(96, 361)),
         .io_G0 => Fuse_Range.between(Fuse.init(95, 106), Fuse.init(96, 106)),
         .io_H14 => Fuse_Range.between(Fuse.init(95, 93), Fuse.init(96, 93)),
-        else => unreachable,
+        else => null,
     };
 }
 
-pub fn get_input_threshold_fuse(input: Signal) Fuse {
+pub fn get_input_threshold_fuse(input: Signal) ?Fuse {
     return switch (input) {
         .clk0 => Fuse.init(94, 98),
         .clk1 => Fuse.init(94, 99),
@@ -671,7 +671,7 @@ pub fn get_input_threshold_fuse(input: Signal) Fuse {
         .io_F14 => Fuse.init(99, 361),
         .io_G0 => Fuse.init(99, 106),
         .io_H14 => Fuse.init(99, 93),
-        else => unreachable,
+        else => null,
     };
 }
 

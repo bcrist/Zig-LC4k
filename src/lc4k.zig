@@ -119,8 +119,8 @@ pub fn Chip_Config(comptime device_type: Device_Type) type {
             return sim;
         }
 
-        pub fn assemble(self: Self, allocator: std.mem.Allocator) !assembly.Assembly_Results {
-            return assembly.assemble(D, self, allocator);
+        pub fn assemble(self: Self, allocator: std.mem.Allocator, options: assembly.Assembly_Options) !assembly.Assembly_Results {
+            return assembly.assemble(D, self, allocator, options);
         }
 
         pub fn disassemble(allocator: std.mem.Allocator, file: JEDEC_File) !disassembly.Disassembly_Results(D) {
@@ -143,6 +143,94 @@ pub fn Chip_Config(comptime device_type: Device_Type) type {
             const any_writer = if (@hasDecl(@TypeOf(writer), "any")) writer.any() else writer;
             return report.write(D, speed_grade, file, any_writer, options);
         }
+        pub fn write_diff_summary(temp: std.mem.Allocator, a: JEDEC_File, b: JEDEC_File, writer: anytype, options: diff.Write_Options(D)) !void {
+            const any_writer = if (@hasDecl(@TypeOf(writer), "any")) writer.any() else writer;
+            return diff.write(temp, D, a, b, any_writer, options);
+        }
+    };
+}
+
+pub fn BClock0_Config(comptime Signal: type) type {
+    return enum {
+        clk0_pos,
+        clk1_neg,
+
+        pub fn polarity(self: @This()) Polarity {
+            return switch (self) {
+                .clk0_pos => .positive,
+                .clk1_neg => .negative,
+            };
+        }
+
+        pub fn pad(self: @This()) Signal {
+            return switch (self) {
+                .clk0_pos => .clk0,
+                .clk1_neg => .clk1,
+            };
+        }
+    };
+}
+
+pub fn BClock1_Config(comptime Signal: type) type {
+    return enum {
+        clk1_pos,
+        clk0_neg,
+        
+        pub fn polarity(self: @This()) Polarity {
+            return switch (self) {
+                .clk1_pos => .positive,
+                .clk0_neg => .negative,
+            };
+        }
+
+        pub fn pad(self: @This()) Signal {
+            return switch (self) {
+                .clk1_pos => .clk1,
+                .clk0_neg => .clk0,
+            };
+        }
+    };
+}
+
+pub fn BClock2_Config(comptime Signal: type) type {
+    return enum {
+        clk2_pos,
+        clk3_neg,
+
+        pub fn polarity(self: @This()) Polarity {
+            return switch (self) {
+                .clk2_pos => .positive,
+                .clk3_neg => .negative,
+            };
+        }
+
+        pub fn pad(self: @This()) Signal {
+            return switch (self) {
+                .clk2_pos => .clk2,
+                .clk3_neg => .clk3,
+            };
+        }
+    };
+}
+
+pub fn BClock3_Config(comptime Signal: type) type {
+    return enum {
+        clk3_pos,
+        clk2_neg,
+
+        pub fn polarity(self: @This()) Polarity {
+            return switch (self) {
+                .clk3_pos => .positive,
+                .clk2_neg => .negative,
+            };
+        }
+
+        pub fn pad(self: @This()) Signal {
+            return switch (self) {
+                .clk3_pos => .clk3,
+                .clk2_neg => .clk2,
+            };
+        }
     };
 }
 
@@ -152,78 +240,10 @@ pub fn GLB_Config(comptime D: type) type {
         shared_pt_init: Product_Term_With_Polarity(D.Signal),
         shared_pt_clock: Product_Term_With_Polarity(D.Signal),
         shared_pt_enable: Product_Term(D.Signal),
-        bclock0: enum {
-            clk0_pos,
-            clk1_neg,
-
-            pub fn polarity(self: @This()) Polarity {
-                return switch (self) {
-                    .clk0_pos => .positive,
-                    .clk1_neg => .negative,
-                };
-            }
-
-            pub fn pad(self: @This()) D.Signal {
-                return switch (self) {
-                    .clk0_pos => .clk0,
-                    .clk1_neg => .clk1,
-                };
-            }
-        },
-        bclock1: enum {
-            clk1_pos,
-            clk0_neg,
-            
-            pub fn polarity(self: @This()) Polarity {
-                return switch (self) {
-                    .clk1_pos => .positive,
-                    .clk0_neg => .negative,
-                };
-            }
-
-            pub fn pad(self: @This()) D.Signal {
-                return switch (self) {
-                    .clk1_pos => .clk1,
-                    .clk0_neg => .clk0,
-                };
-            }
-        },
-        bclock2: enum {
-            clk2_pos,
-            clk3_neg,
-
-            pub fn polarity(self: @This()) Polarity {
-                return switch (self) {
-                    .clk2_pos => .positive,
-                    .clk3_neg => .negative,
-                };
-            }
-
-            pub fn pad(self: @This()) D.Signal {
-                return switch (self) {
-                    .clk2_pos => .clk2,
-                    .clk3_neg => .clk3,
-                };
-            }
-        },
-        bclock3: enum {
-            clk3_pos,
-            clk2_neg,
-
-            pub fn polarity(self: @This()) Polarity {
-                return switch (self) {
-                    .clk3_pos => .positive,
-                    .clk2_neg => .negative,
-                };
-            }
-
-            pub fn pad(self: @This()) D.Signal {
-                return switch (self) {
-                    .clk3_pos => .clk3,
-                    .clk2_neg => .clk2,
-                };
-            }
-        },
+        bclock0: BClock0_Config(D.Signal),
+        bclock1: BClock1_Config(D.Signal),
+        bclock2: BClock2_Config(D.Signal),
+        bclock3: BClock3_Config(D.Signal),
 
         const Self = @This();
 
@@ -1015,7 +1035,7 @@ pub fn Simulator(comptime Device: type) type {
 
                 if (new_state.data.eql(self.state.data) and new_state.oe.eql(self.state.oe)) {
                     self.state = new_state;
-                    return true;
+                    return;
                 }
                 self.state = new_state;
             } else return error.Unstable;
@@ -1120,7 +1140,7 @@ pub fn Simulator(comptime Device: type) type {
             };
 
             const oe_state = switch (@TypeOf(config)) {
-                GOE_Config_Pin => self.state.data.contains(Device.oe_pins[goe].pad()),
+                GOE_Config_Pin => self.state.data.contains(Device.oe_pins[goe - 2].pad()),
                 GOE_Config_Bus => switch (config.source) {
                     .constant_high => true,
                     .glb_shared_pt_enable => |glb| evaluate_pt(self.state.data, self.chip.glb[glb].shared_pt_enable),
@@ -1172,8 +1192,8 @@ pub fn Simulator(comptime Device: type) type {
             return switch (reg_config.init_source) {
                 .pt3_active_high => |pt| evaluate_pt(self.state.data, pt),
                 .shared_pt_init => switch (self.chip.glb[mc.glb].shared_pt_init.polarity) {
-                    .positive => |pt| evaluate_pt(self.state.data, pt),
-                    .negative => |pt| !evaluate_pt(self.state.data, pt),
+                    .positive => evaluate_pt(self.state.data, self.chip.glb[mc.glb].shared_pt_init.pt),
+                    .negative => !evaluate_pt(self.state.data, self.chip.glb[mc.glb].shared_pt_init.pt),
                 },
             };
         }
@@ -1187,11 +1207,13 @@ pub fn Simulator(comptime Device: type) type {
 
         fn evaluate_clock(self: @This(), func: Macrocell_Function, reg_config: Register_Config(Signal), mc: MC_Ref) bool {
             switch (reg_config.ce) {
-                .pt2_active_high => |pt| if (!evaluate_pt(self.state.data, pt)) return false,
-                .pt2_active_low => |pt| if (evaluate_pt(self.state.data, pt)) return false,
-                .shared_pt_clock => switch (self.chip.glb[mc.glb].shared_pt_clock) {
-                    .positive => |pt| if (!evaluate_pt(self.state.data, pt)) return false,
-                    .negative => |pt| if (evaluate_pt(self.state.data, pt)) return false,
+                .pt2 => |ptp| switch (ptp.polarity) {
+                    .positive => if (!evaluate_pt(self.state.data, ptp.pt)) return false,
+                    .negative => if (evaluate_pt(self.state.data, ptp.pt)) return false,
+                },
+                .shared_pt_clock => switch (self.chip.glb[mc.glb].shared_pt_clock.polarity) {
+                    .positive => if (!evaluate_pt(self.state.data, self.chip.glb[mc.glb].shared_pt_clock.pt)) return false,
+                    .negative => if (evaluate_pt(self.state.data, self.chip.glb[mc.glb].shared_pt_clock.pt)) return false,
                 },
                 .always_active => {},
             }
@@ -1204,12 +1226,14 @@ pub fn Simulator(comptime Device: type) type {
         fn evaluate_clock_state(self: @This(), data: std.EnumSet(Signal), reg_config: Register_Config(Signal), mc: MC_Ref) bool {
             return switch (reg_config.clock) {
                 .none => return false,
-                .shared_pt_clock => switch (self.chip.glb[mc.glb].shared_pt_clock) {
-                    .positive => |pt| evaluate_pt(data, pt),
-                    .negative => |pt| !evaluate_pt(data, pt),
+                .shared_pt_clock => switch (self.chip.glb[mc.glb].shared_pt_clock.polarity) {
+                    .positive => evaluate_pt(data, self.chip.glb[mc.glb].shared_pt_clock.pt),
+                    .negative => !evaluate_pt(data, self.chip.glb[mc.glb].shared_pt_clock.pt),
                 },
-                .pt1_positive => |pt| evaluate_pt(data, pt),
-                .pt1_negative => |pt| !evaluate_pt(data, pt),
+                .pt1 => |ptp| switch (ptp.polarity) {
+                    .positive => evaluate_pt(data, ptp.pt),
+                    .negative => !evaluate_pt(data, ptp.pt),
+                },
                 .bclock0 => switch (self.chip.glb[mc.glb].bclock0) {
                     .clk0_pos => data.contains(.clk0),
                     .clk1_neg => !data.contains(.clk1),
@@ -1231,37 +1255,37 @@ pub fn Simulator(comptime Device: type) type {
 
         fn evaluate_mc_data(self: @This(), mc: MC_Ref) bool {
             switch (self.chip.mc_const(mc).logic) {
-                .sum => |pts| {
-                    for (pts) |pt| {
-                        if (evaluate_pt(self.state.data, pt)) return true;
-                    }
-                    return false;
-                },
-                .sum_inverted => |pts| {
-                    for (pts) |pt| {
-                        if (evaluate_pt(self.state.data, pt)) return false;
-                    }
-                    return true;
+                .sum => |sp| switch (sp.polarity) {
+                    .positive => {
+                        for (sp.sum) |pt| {
+                            if (evaluate_pt(self.state.data, pt)) return true;
+                        }
+                        return false;
+                    },
+                    .negative => {
+                        for (sp.sum) |pt| {
+                            if (evaluate_pt(self.state.data, pt)) return false;
+                        }
+                        return true;
+                    },
                 },
                 .input_buffer => {
                     const signal = mc.pad(Signal);
                     return self.state.data.contains(signal);
                 },
-                .pt0 => |pt| return evaluate_pt(self.state.data, pt),
-                .pt0_inverted => |pt| return !evaluate_pt(self.state.data, pt),
+                .pt0 => |ptp| switch (ptp.polarity) {
+                    .positive => return evaluate_pt(self.state.data, ptp.pt),
+                    .negative => return !evaluate_pt(self.state.data, ptp.pt),
+                },
                 .sum_xor_pt0 => |sum_xor_pt0| {
                     const pt0 = evaluate_pt(self.state.data, sum_xor_pt0.pt0);
                     const sum = for (sum_xor_pt0.sum) |pt| {
                         if (evaluate_pt(self.state.data, pt)) break true;
                     } else false;
-                    return pt0 != sum;
-                },
-                .sum_xor_pt0_inverted => |sum_xor_pt0| {
-                    const pt0 = evaluate_pt(self.state.data, sum_xor_pt0.pt0);
-                    const sum = for (sum_xor_pt0.sum) |pt| {
-                        if (evaluate_pt(self.state.data, pt)) break true;
-                    } else false;
-                    return pt0 == sum;
+                    return switch (sum_xor_pt0.polarity) {
+                        .positive => pt0 != sum,
+                        .negative => pt0 == sum,
+                    };
                 },
                 .sum_xor_input_buffer => |pts| {
                     const input_signal = mc.pad(Signal);
@@ -1506,4 +1530,5 @@ const assembly = @import("assembly.zig");
 const disassembly = @import("disassembly.zig");
 const routing = @import("routing.zig");
 const report = @import("report.zig");
+const diff = @import("diff.zig");
 const std = @import("std");

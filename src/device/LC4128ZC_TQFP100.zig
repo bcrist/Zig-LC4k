@@ -589,11 +589,11 @@ pub fn get_goe_polarity_fuse(goe: usize) Fuse {
     };
 }
 
-pub fn get_goe_source_fuse(goe: usize) Fuse {
+pub fn get_goe_source_fuse(goe: usize) ?Fuse {
     return switch (goe) {
         0 => Fuse.init(88, 101),
         1 => Fuse.init(89, 101),
-        else => unreachable,
+        else => null,
     };
 }
 
@@ -601,10 +601,10 @@ pub fn get_zero_hold_time_fuse() Fuse {
     return Fuse.init(87, 101);
 }
 
-
 pub fn get_global_bus_maintenance_range() Fuse_Range {
     return Fuse.init(85, 101).range().expand_to_contain(Fuse.init(86, 101));
 }
+
 pub fn get_extra_float_input_fuses() []const Fuse {
     return &.{
         Fuse.init(92, 24),
@@ -636,7 +636,7 @@ pub fn get_extra_float_input_fuses() []const Fuse {
     };
 }
 
-pub fn get_input_threshold_fuse(input: Signal) Fuse {
+pub fn get_input_threshold_fuse(input: Signal) ?Fuse {
     return switch (input) {
         .clk0 => Fuse.init(94, 98),
         .clk1 => Fuse.init(94, 99),
@@ -648,7 +648,7 @@ pub fn get_input_threshold_fuse(input: Signal) Fuse {
         .io_F14 => Fuse.init(99, 361),
         .io_G0 => Fuse.init(99, 106),
         .io_H14 => Fuse.init(99, 93),
-        else => unreachable,
+        else => null,
     };
 }
 

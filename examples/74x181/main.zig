@@ -152,7 +152,7 @@ pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
 
-    const results = try chip.assemble(arena.allocator());
+    const results = try chip.assemble(arena.allocator(), .{});
 
     var jed_file = try std.fs.cwd().createFile("74x181.jed", .{});
     defer jed_file.close();
