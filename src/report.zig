@@ -1215,6 +1215,7 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
                     .input_only => {
                         out_options = .{};
                         oe_options = .{};
+                        io_options = .{};
                     },
                     .output_only => {
                         in_options = .{};
