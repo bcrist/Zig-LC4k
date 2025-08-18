@@ -398,8 +398,8 @@ pub fn Names(comptime Device: type) type {
                 if (std.mem.endsWith(u8, name, ".fb")) {
                     return name[0 .. name.len - 3];
                 }
-                if (std.mem.endsWith(u8, name, "$")) {
-                    return name[0 .. name.len - 1];
+                if (std.mem.startsWith(u8, name, "$")) {
+                    return name[1..];
                 }
                 return name;
             }
