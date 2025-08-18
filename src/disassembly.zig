@@ -10,8 +10,8 @@ pub fn Disassembly_Results(comptime Device: type) type {
 pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JEDEC_File) !Disassembly_Results(Device) {
     var results = Disassembly_Results(Device) {
         .config = .{},
-        .gi_routing = .{ .{ null } ** Device.num_gis_per_glb } ** Device.num_glbs,
-        .sum_routing = .{ routing.Routing_Data{} } ** Device.num_glbs,
+        .gi_routing = @splat(@splat(null)),
+        .sum_routing = @splat(.{}),
         .errors = std.ArrayList(Config_Error).init(allocator),
     };
 

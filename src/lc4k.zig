@@ -249,6 +249,8 @@ pub fn GLB_Config(comptime D: type) type {
         bclock2: BClock2_Config(D.Signal),
         bclock3: BClock3_Config(D.Signal),
 
+        forced_gi_routing: [D.num_gis_per_glb]?D.Signal = @splat(null),
+
         const Self = @This();
 
         pub fn init_all_unused(comptime num_glbs: comptime_int) [num_glbs]Self { comptime {

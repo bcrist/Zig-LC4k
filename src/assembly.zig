@@ -23,7 +23,7 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
 
     for (config.glb, 0..) |glb_config, glb| {
         // Compile list of signals needed in this GLB:
-        var gi_routing = [_]?Device.Signal { null } ** Device.num_gis_per_glb;
+        var gi_routing: [Device.num_gis_per_glb]?Device.Signal = @splat(null);
         try routing.add_signals_from_pt(Device, &gi_routing, glb_config.shared_pt_init.pt);
         try routing.add_signals_from_pt(Device, &gi_routing, glb_config.shared_pt_clock.pt);
         try routing.add_signals_from_pt(Device, &gi_routing, glb_config.shared_pt_enable);
@@ -68,7 +68,7 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
         }
 
         // Route signals to specific GI fuses:
-        try routing.route_generic_inputs(Device, &gi_routing, rnd, @intCast(glb), &results);
+        gi_routing = try routing.route_generic_inputs(Device, &gi_routing, glb_config.forced_gi_routing, rnd, @intCast(glb), &results);
         for (gi_routing, 0..) |maybe_signal, gi| if (maybe_signal) |signal| {
             const option_index = std.mem.indexOfScalar(Device.Signal, &Device.gi_options[gi], signal).?;
             const range = Device.get_gi_range(glb, gi);

@@ -754,7 +754,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
             var buf: [D.num_gis_per_glb]Path = undefined;
             var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
 
-            var gi_signals = [_]?D.Signal { null } ** D.num_gis_per_glb;
+            var gi_signals: [D.num_gis_per_glb]?D.Signal = @splat(null);
             for (0.., D.gi_options, &gi_signals) |gi, gi_options, *signal| {
                 const gi_fuses = D.get_gi_range(glb, gi);
                 var fuse_iter = gi_fuses.iterator();

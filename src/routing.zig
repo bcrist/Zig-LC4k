@@ -16,13 +16,47 @@ pub fn add_signals_from_pt(comptime Device: type, gi_signals: *[Device.num_gis_p
     };
 }
 
-pub fn route_generic_inputs(comptime Device: type, gi_signals: *[Device.num_gis_per_glb]?Device.Signal, rnd: std.Random, glb: lc4k.GLB_Index, results: *assembly.Assembly_Results) !void {
-    var routed = [_]?Device.Signal { null } ** Device.num_gis_per_glb;
+pub fn route_generic_inputs(comptime Device: type, signals_to_route: []?Device.Signal, forced_gi_routing: [Device.num_gis_per_glb]?Device.Signal, rnd: std.Random, glb: lc4k.GLB_Index, results: *assembly.Assembly_Results) ![Device.num_gis_per_glb]?Device.Signal {
+    var routed_signals: std.EnumSet(Device.Signal) = .initEmpty();
+
+    var forced = forced_gi_routing;
+    
+    for (0.., forced_gi_routing) |gi, maybe_signal| if (maybe_signal) |signal| {
+        if (routed_signals.contains(signal)) {
+            try results.errors.append(.{
+                .err = error.Invalid_GI_Routing,
+                .details = "Signal appears in multiple forced GI slots",
+                .glb = glb,
+                .gi = @intCast(gi),
+                .signal_ordinal = @intFromEnum(signal),
+            });
+            forced[gi] = null;
+            continue;
+        }
+
+        if (std.mem.indexOfScalar(Device.Signal, &Device.gi_options[gi], signal) == null) {
+            try results.errors.append(.{
+                .err = error.Invalid_GI_Routing,
+                .details = "Attempted to force signal into a GI slot that it is not allowed in",
+                .glb = glb,
+                .gi = @intCast(gi),
+                .signal_ordinal = @intFromEnum(signal),
+            });
+            forced[gi] = null;
+            continue;
+        }
+
+        routed_signals.insert(signal);
+    };
+
+    var routed = forced;
 
     @setEvalBranchQuota(2000);
 
     const gi_options_by_signal: std.EnumMap(Device.Signal, []const u8) = Device.gi_options_by_signal;
-    for (gi_signals) |maybe_signal| if (maybe_signal) |signal| {
+    for (signals_to_route) |maybe_signal| if (maybe_signal) |signal| {
+        if (routed_signals.contains(signal)) continue;
+
         var signal_to_route = signal;
         var attempts: usize = 0;
         while (attempts < 1000) : (attempts += 1) {
@@ -30,15 +64,20 @@ pub fn route_generic_inputs(comptime Device: type, gi_signals: *[Device.num_gis_
             for (options) |option| {
                 if (routed[option] == null) {
                     routed[option] = signal_to_route;
+                    routed_signals.insert(signal_to_route);
                     //std.debug.print("GI {} is now {}\n", .{ option, signal_to_route });
                     break;
                 }
             } else {
                 const index_to_replace = options[rnd.intRangeLessThan(usize, 0, options.len)];
-                const temp = routed[index_to_replace].?;
-                routed[index_to_replace] = signal_to_route;
-                //std.debug.print("GI {} is now {}; replaced {}\n", .{ index_to_replace, signal_to_route, temp });
-                signal_to_route = temp;
+                if (forced[index_to_replace] == null) {
+                    const temp = routed[index_to_replace].?;
+                    routed[index_to_replace] = signal_to_route;
+                    routed_signals.insert(signal_to_route);
+                    //std.debug.print("GI {} is now {}; replaced {}\n", .{ index_to_replace, signal_to_route, temp });
+                    signal_to_route = temp;
+                    routed_signals.remove(signal_to_route);
+                }
                 continue;
             }
             break;
@@ -52,7 +91,7 @@ pub fn route_generic_inputs(comptime Device: type, gi_signals: *[Device.num_gis_
         }
     };
 
-    gi_signals.* = routed;
+    return routed;
 }
 
 pub const Cluster_Router = struct {
@@ -71,10 +110,10 @@ pub const Cluster_Router = struct {
 
         var self = Cluster_Router {
             .glb = glb,
-            .cluster_size = [_]u8 { 0 } ** 16,
-            .sum_size = [_]u8 { 0 } ** 16,
-            .forced_cluster_routing = [_]?Cluster_Routing { null } ** 16,
-            .forced_wide_routing = [_]?Wide_Routing { null } ** 16,
+            .cluster_size = @splat(0),
+            .sum_size = @splat(0),
+            .forced_cluster_routing = @splat(null),
+            .forced_wide_routing = @splat(null),
             .open_heap = undefined,
             .open_set = std.AutoHashMap(u48, void).init(allocator),
             .closed_set = std.AutoHashMap(u48, void).init(allocator),
@@ -446,7 +485,7 @@ const Compact_Routing_Data = packed struct (u48) {
     }
 
     pub fn get_available_pts(self: Compact_Routing_Data, cluster_size: [16]u8) [16]u16 {
-        var available_pts = [_]u16 { 0 } ** 16;
+        var available_pts: [16]u16 = @splat(0);
         for (cluster_size, 0..) |size, cluster| {
             available_pts[get_ca_for_cluster(cluster, self.get_cluster_routing(cluster)).?] += size;
         }
@@ -462,7 +501,7 @@ const Compact_Routing_Data = packed struct (u48) {
 
     pub fn compute_score(self: Compact_Routing_Data, cluster_size: [16]u8, sum_size: [16]u8) Routing_Score {
         var score = Routing_Score { .success = 0, .weighted = 0 };
-        var available_pts = [_]u16 { 0 } ** 16;
+        var available_pts: [16]u16 = @splat(0);
         for (cluster_size, 0..) |size, cluster| {
             const routing = self.get_cluster_routing(cluster);
             available_pts[get_ca_for_cluster(cluster, routing).?] += size;
@@ -525,8 +564,8 @@ const Compact_Routing_Data = packed struct (u48) {
 };
 
 pub const Routing_Data = struct {
-    cluster: [16]Cluster_Routing = .{ .self } ** 16,
-    wide: [16]Wide_Routing = .{ .self } ** 16,
+    cluster: [16]Cluster_Routing = @splat(.self),
+    wide: [16]Wide_Routing = @splat(.self),
 
     fn init(compact: Compact_Routing_Data) Routing_Data {
         var self: Routing_Data = undefined;
