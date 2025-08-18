@@ -1162,7 +1162,7 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
             var temp_oe_buf: [64]u8 = undefined;
 
             var io_options: Cell_Options = undefined;
-            var in_options: Cell_Options = undefined;
+            var in_options: Cell_Options = .{};
 
             if (Device.Signal.maybe_mc_pad(mcref)) |pad| {
                 if (Device.family == .zero_power_enhanced) {
@@ -1209,19 +1209,11 @@ fn write_macrocells(writer: std.io.AnyWriter, comptime Device: type, data: Repor
                 }
 
                 io_options = out_options;
-                in_options = out_options;
 
-                switch (mc_config.output.oe) {
-                    .input_only => {
-                        out_options = .{};
-                        oe_options = .{};
-                        io_options = .{};
-                        in_options = .{};
-                    },
-                    .output_only => {
-                        in_options = .{};
-                    },
-                    else => {},
+                if (mc_config.output.oe == .input_only) {
+                    out_options = .{};
+                    oe_options = .{};
+                    io_options = .{};
                 }
 
                 if (data.signal_usage.get(pad).count() == 0) {
