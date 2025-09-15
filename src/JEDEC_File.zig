@@ -28,7 +28,7 @@ const JEDEC_Field_Iterator = struct {
             const cmd = std.mem.trimLeft(u8, self.remaining[0..end], " \t\r\n");
             self.remaining = self.remaining[end + 1 ..];
             if (cmd.len == 0) {
-                try std.io.getStdErr().writer().writeAll("Ignoring empty field\n");
+                log.warn("Ignoring empty field", .{});
             } else switch (cmd[0]) {
                 'Q' => {
                     if (cmd.len >= 2) {
@@ -38,7 +38,7 @@ const JEDEC_Field_Iterator = struct {
                             else => {} // fall through
                         }
                     }
-                    try std.io.getStdErr().writer().print("Ignoring unsupported field: {s}\n", .{ cmd });
+                    log.warn("Ignoring unsupported field: {s}", .{ cmd });
                 },
                 'N' => return JEDEC_Field { .cmd = .note, .extra = cmd[1..] },
                 'G' => return JEDEC_Field { .cmd = .security, .extra = cmd[1..] },
@@ -48,7 +48,7 @@ const JEDEC_Field_Iterator = struct {
                 'U' => return JEDEC_Field { .cmd = .usercode, .extra = cmd[1..] },
                 'C' => return JEDEC_Field { .cmd = .checksum, .extra = cmd[1..] },
                 else => {
-                    try std.io.getStdErr().writer().print("Ignoring unsupported field: {s}\n", .{ cmd });
+                    log.warn("Ignoring unsupported field: {s}", .{ cmd });
                 },
             }
         }
@@ -80,13 +80,13 @@ pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: [
                 if (actual_height) |h| {
                     const expected = h * width;
                     if (qf != expected) {
-                        try std.io.getStdErr().writer().print("Expected fuse count to be exactly {}, but found {}\n", .{ expected, qf });
+                        log.err("Expected fuse count to be exactly {}, but found {}", .{ expected, qf });
                         return error.Incorrect_Fuse_Count;
                     }
                 } else {
                     const h = qf / width;
                     if (h * width != qf) {
-                        try std.io.getStdErr().writer().print("Expected fuse count to be a multiple of {}, but found {}\n", .{ width, qf });
+                        log.err("Expected fuse count to be a multiple of {}, but found {}", .{ width, qf });
                         return error.Incorrect_Fuse_Count;
                     }
                     actual_height = h;
@@ -131,7 +131,7 @@ pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: [
                     if (actual_height) |h| {
                         data = try JEDEC_Data.init(allocator, Fuse_Range.init_from_dimensions(width, h), default orelse 1);
                     } else {
-                        try std.io.getStdErr().writer().writeAll("Expected QF command before L or K command\n");
+                        log.err("Expected QF command before L or K command", .{});
                         return error.Malformed_JEDEC_File;
                     }
                 }
@@ -154,7 +154,7 @@ pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: [
         }
 
         if (found_checksum != computed_checksum) {
-            try std.io.getStdErr().writer().print("File checksum mismatch; file specifies {X:0>4} but computed {X:0>4}\n", .{ found_checksum, computed_checksum });
+            log.err("File checksum mismatch; file specifies {X:0>4} but computed {X:0>4}", .{ found_checksum, computed_checksum });
             return error.CorruptedJEDEC_File;
         }
     }
@@ -163,7 +163,7 @@ pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: [
         if (fuse_checksum) |found_checksum| {
             const computed_checksum = s.checksum();
             if (found_checksum != computed_checksum) {
-                try std.io.getStdErr().writer().print("Fuse checksum mismatch; file specifies {X:0>4} but computed {X:0>4}\n", .{ found_checksum, computed_checksum });
+                log.err("Fuse checksum mismatch; file specifies {X:0>4} but computed {X:0>4}", .{ found_checksum, computed_checksum });
                 return error.CorruptedJEDEC_File;
             }
         }
@@ -175,7 +175,7 @@ pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: [
             .pin_count = pin_count,
         };
     } else {
-        try std.io.getStdErr().writer().writeAll("Expected at least one L or K command\n");
+        log.err("Expected at least one L or K command", .{});
         return error.Malformed_JEDEC_File;
     }
 }
@@ -336,6 +336,8 @@ pub fn write(self: JEDEC_File, device_type: device.Type, writer: *std.io.Writer,
 
     try writer.print("{X:0>4}{s}", .{ checksum_writer.hasher.sum, options.line_ending });
 }
+
+const log = std.log.scoped(.jedec_file);
 
 const JEDEC_File = @This();
 
