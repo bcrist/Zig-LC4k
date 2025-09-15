@@ -2,7 +2,7 @@
     .name = .lc4k,
     .fingerprint = 0x7b6fa9f9423b1ee5,
     .version = "0.2.3",
-    .minimum_zig_version = "0.14.1",
+    .minimum_zig_version = "0.15.1",
     .paths = .{
         "src",
         "build.zig",
@@ -11,12 +11,12 @@
     },
     .dependencies = .{
         .console_helper = .{
-            .url = "git+https://github.com/bcrist/Zig-ConsoleHelper#32b5e5e57554cdf549da81e7808a5fb37fd12154",
-            .hash = "console_helper-0.3.1-19g4EyVCAABN800zgOQeVtcgyuI1mqdn0p__Uyn7OZVH",
+            .url = "git+https://github.com/bcrist/zig-consolehelper#6b662a6f9294657855eb652f5506eeee645738a7",
+            .hash = "console_helper-0.3.1-19g4EypEAACdbhJI9ZkRAXTR7xOalHE2rMiLlqa0zf9N",
         },
         .limp = .{
-            .url = "git+https://github.com/bcrist/limp#00416cf2cb4681c23533e0e804dc13c573a6eb28",
-            .hash = "limp-0.2.11-RgAsz7l1DwCs9TF_4CAtEdFGyugwd90u9EYN75E4KPor",
+            .url = "git+https://github.com/bcrist/limp#9ce429bf22e908a458e8c16481699a898e66d780",
+            .hash = "limp-0.2.12-RgAsz0V6DwCHr8Vg8JDJwToznh0B8UhD1UlJUe_UhLkI",
             .lazy = true,
         },
         .re4k = .{

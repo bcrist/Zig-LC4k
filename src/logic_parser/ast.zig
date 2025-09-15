@@ -752,11 +752,11 @@ pub fn Ast(comptime Device: type) type {
             }
         }
 
-        pub fn debug(self: *Self, w: std.io.AnyWriter) !void {
+        pub fn debug(self: *Self, w: *std.io.Writer) !void {
             const slice = self.nodes.slice();
             try self.debug_node(slice, self.root, 0, w);
         }
-        fn debug_node(self: *Self, slice: std.MultiArrayList(Node).Slice, maybe_node: ?Node.ID, indent: usize, w: std.io.AnyWriter) !void {
+        fn debug_node(self: *Self, slice: std.MultiArrayList(Node).Slice, maybe_node: ?Node.ID, indent: usize, w: *std.io.Writer) !void {
             if (maybe_node) |node| {
                 const node_index = @intFromEnum(node);
                 const kind = slice.items(.kind)[node_index];
@@ -801,11 +801,11 @@ pub fn Ast(comptime Device: type) type {
                         try w.writeAll(":\n");
                         const new_indent = indent + 1;
 
-                        try w.writeByteNTimes(' ', new_indent * 3);
+                        try w.splatByteAll(' ', new_indent * 3);
                         try w.writeAll("[0] ");
                         try self.debug_node(slice, data.binary.lhs, new_indent, w);
 
-                        try w.writeByteNTimes(' ', new_indent * 3);
+                        try w.splatByteAll(' ', new_indent * 3);
                         try w.writeAll("[1] ");
                         try self.debug_node(slice, data.binary.rhs, new_indent, w);
                     },
@@ -815,7 +815,7 @@ pub fn Ast(comptime Device: type) type {
                         const children = self.extra_children.items[data.nary.offset..][0..data.nary.len];
 
                         for (children, 0..) |child, i| {
-                            try w.writeByteNTimes(' ', new_indent * 3);
+                            try w.splatByteAll(' ', new_indent * 3);
                             try w.print("[{d}] ", .{ i });
                             try self.debug_node(slice, child, new_indent, w);
                         }
@@ -1583,8 +1583,10 @@ pub fn Ast(comptime Device: type) type {
 
 
         pub fn report_node_error_fmt(gpa: std.mem.Allocator, slice: std.MultiArrayList(Node).Slice, eqn: []const u8, node: Node.ID, comptime format: []const u8, args: anytype) void {
-            const w = std.io.getStdErr().writer();
-            w.writeAll(" \n") catch {};
+            var buf: [64]u8 = undefined;
+            var w = std.fs.File.stderr().writer(&buf);
+            w.interface.writeAll(" \n") catch {};
+
             const node_index = @intFromEnum(node);
             const offset = slice.items(.begin_token_offset)[node_index];
             const end_token_offset = slice.items(.end_token_offset)[node_index];
@@ -1593,15 +1595,17 @@ pub fn Ast(comptime Device: type) type {
             defer gpa.free(msg);
             console.print_context(eqn, &.{
                 .{ .offset = offset, .len = len, .note = msg },
-            }, w, 160, .{}) catch {};
+            }, &w.interface, 160, .{}) catch {};
+            w.interface.flush() catch {};
         }
 
         pub fn report_node_error_fmt_2(gpa: std.mem.Allocator, slice: std.MultiArrayList(Node).Slice, eqn: []const u8,
             node: Node.ID, comptime format: []const u8, args: anytype,
             node2: Node.ID, comptime format2: []const u8, args2: anytype,
         ) void {
-            const w = std.io.getStdErr().writer();
-            w.writeAll(" \n") catch {};
+            var buf: [64]u8 = undefined;
+            var w = std.fs.File.stderr().writer(&buf);
+            w.interface.writeAll(" \n") catch {};
 
             const node_index = @intFromEnum(node);
             const offset = slice.items(.begin_token_offset)[node_index];
@@ -1620,7 +1624,8 @@ pub fn Ast(comptime Device: type) type {
             console.print_context(eqn, &.{
                 .{ .offset = offset, .len = len, .note = msg },
                 .{ .offset = offset2, .len = len2, .note = msg2, .style = .{ .fg = .yellow }, .note_style = .{ .fg = .yellow } },
-            }, w, 160, .{}) catch {};
+            }, &w.interface, 160, .{}) catch {};
+            w.interface.flush() catch {};
         }
 
         pub fn report_node_error_fmt_3(gpa: std.mem.Allocator, slice: std.MultiArrayList(Node).Slice, eqn: []const u8,
@@ -1628,8 +1633,9 @@ pub fn Ast(comptime Device: type) type {
             node2: Node.ID, comptime format2: []const u8, args2: anytype,
             node3: Node.ID, comptime format3: []const u8, args3: anytype,
         ) void {
-            const w = std.io.getStdErr().writer();
-            w.writeAll(" \n") catch {};
+            var buf: [64]u8 = undefined;
+            var w = std.fs.File.stderr().writer(&buf);
+            w.interface.writeAll(" \n") catch {};
 
             const node_index = @intFromEnum(node);
             const offset = slice.items(.begin_token_offset)[node_index];
@@ -1656,24 +1662,28 @@ pub fn Ast(comptime Device: type) type {
                 .{ .offset = offset, .len = len, .note = msg, .style = .{ .fg = .yellow }, .note_style = .{ .fg = .yellow } },
                 .{ .offset = offset2, .len = len2, .note = msg2 },
                 .{ .offset = offset3, .len = len3, .note = msg3 },
-            }, w, 160, .{}) catch {};
+            }, &w.interface, 160, .{}) catch {};
+            w.interface.flush() catch {};
         }
 
         pub fn report_token_error(eqn: []const u8, token_offset: u32, msg: []const u8) void {
-            const w = std.io.getStdErr().writer();
-            w.writeAll(" \n") catch {};
+            var buf: [64]u8 = undefined;
+            var w = std.fs.File.stderr().writer(&buf);
+            w.interface.writeAll(" \n") catch {};
             console.print_context(eqn, &.{
                 .{
                     .offset = token_offset,
                     .len = token_span(eqn, token_offset).len,
                     .note = msg,
                 },
-            }, w, 160, .{}) catch {};
+            }, &w.interface, 160, .{}) catch {};
+            w.interface.flush() catch {};
         }
 
         pub fn report_token_error_2(eqn: []const u8, token_offset: u32, msg: []const u8, note_token_offset: u32, note: []const u8) void {
-            const w = std.io.getStdErr().writer();
-            w.writeAll(" \n") catch {};
+            var buf: [64]u8 = undefined;
+            var w = std.fs.File.stderr().writer(&buf);
+            w.interface.writeAll(" \n") catch {};
             console.print_context(eqn, &.{
                 .{
                     .offset = token_offset,
@@ -1687,7 +1697,8 @@ pub fn Ast(comptime Device: type) type {
                     .style = .{ .fg = .yellow },
                     .note_style = .{ .fg = .yellow },
                 },
-            }, w, 160, .{}) catch {};
+            }, &w.interface, 160, .{}) catch {};
+            w.interface.flush() catch {};
         }
     };
 }

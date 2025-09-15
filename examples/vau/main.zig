@@ -145,6 +145,7 @@ pub const g16 = Signal.mc_B13;
 pub fn main() !void {
     var chip = Chip {};
     var names = Chip.Names.init(gpa.allocator());
+    @setEvalBranchQuota(10000);
     try names.add_names(@This(), .{});
 
     std.debug.assert(clk == Signal.clk0);
@@ -397,18 +398,11 @@ pub fn main() !void {
 
     const results = try chip.assemble(arena.allocator(), .{});
 
-    var jed_file = try std.fs.cwd().createFile("vau.jed", .{});
-    defer jed_file.close();
-    try Chip.write_jed(results.jedec, jed_file.writer(), .{});
-
-    var svf_file = try std.fs.cwd().createFile("vau.svf", .{});
-    defer svf_file.close();
-    try Chip.write_svf(results.jedec, svf_file.writer(), .{});
-
-    var report_file = try std.fs.cwd().createFile("vau.html", .{});
-    defer report_file.close();
-    try Chip.write_report(7, results.jedec, report_file.writer(), .{
-        .design_name = "vau",
+    const design_name = "vau";
+    try Chip.write_jed_file(results.jedec, design_name ++ ".jed", .{});
+    try Chip.write_svf_file(results.jedec, design_name ++ ".svf", .{});
+    try Chip.write_report_file(5, results.jedec, design_name ++ ".html", .{
+        .design_name = design_name,
         .notes = "Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsigned) + 16b (signed) adder, with an overflow output and some preprocessing on the 16b input to allow it to be sourced from microcode or one of 3 locations within the instruction word.",
         .errors = results.errors.items,
         .names = &names,

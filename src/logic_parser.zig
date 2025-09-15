@@ -32,7 +32,10 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
             const num_pts = p.ir_data.count_pts(ir_optimized);
             if (num_pts > 1) {
                 Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only 1 is allowed.", .{ num_pts });
-                try p.ir_data.debug(ir_optimized, 0, false, std.io.getStdErr().writer().any());
+                var buf: [64]u8 = undefined;
+                var w = std.fs.File.stderr().writer(&buf);
+                p.ir_data.debug(ir_optimized, 0, false, &w.interface) catch {};
+                w.interface.flush() catch {};
                 return error.TooManyProductTerms;
             }
 
@@ -68,7 +71,10 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
             }
 
             Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only 1 is allowed.", .{ @min(num_pts, num_pts_inverted) });
-            try p.ir_data.debug(if (num_pts_inverted < num_pts) ir_inverted else ir_optimized, 0, false, std.io.getStdErr().writer().any());
+            var buf: [64]u8 = undefined;
+            var w = std.fs.File.stderr().writer(&buf);
+            p.ir_data.debug(if (num_pts_inverted < num_pts) ir_inverted else ir_optimized, 0, false, &w.interface) catch {};
+            w.interface.flush() catch {};
             return error.TooManyProductTerms;
         }
 
@@ -86,7 +92,10 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                     num_pts,
                     p.options.max_product_terms,
                 });
-                try p.ir_data.debug(ir_optimized, 0, false, std.io.getStdErr().writer().any());
+                var buf: [64]u8 = undefined;
+                var w = std.fs.File.stderr().writer(&buf);
+                p.ir_data.debug(ir_optimized, 0, false, &w.interface) catch {};
+                w.interface.flush() catch {};
                 return error.TooManyProductTerms;
             }
             const pts = try allocator.alloc(PT, num_pts);
@@ -119,7 +128,10 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                     num_pts,
                     p.options.max_product_terms,
                 });
-                try p.ir_data.debug(best_ir, 0, false, std.io.getStdErr().writer().any());
+                var buf: [64]u8 = undefined;
+                var w = std.fs.File.stderr().writer(&buf);
+                p.ir_data.debug(best_ir, 0, false, &w.interface) catch {};
+                w.interface.flush() catch {};
                 return error.TooManyProductTerms;
             }
             const allocator = self.arena.allocator();
@@ -330,7 +342,10 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                     best_ir_pts,
                     options.max_product_terms,
                 });
-                try ir_data.debug(best_ir, 0, false, std.io.getStdErr().writer().any());
+                var buf: [64]u8 = undefined;
+                var w = std.fs.File.stderr().writer(&buf);
+                ir_data.debug(best_ir, 0, false, &w.interface) catch {};
+                w.interface.flush() catch {};
                 return error.TooManyProductTerms;
             }
 

@@ -135,21 +135,56 @@ pub fn Chip_Config(comptime device_type: Device_Type) type {
             return JEDEC_File.parse(allocator, D.jedec_dimensions.width(), D.jedec_dimensions.height(), text);
         }
 
-        pub fn write_jed(file: JEDEC_File, writer: anytype, options: JEDEC_File.Write_Options) !void {
-            const any_writer = if (@hasDecl(@TypeOf(writer), "any")) writer.any() else writer;
-            return file.write(D.device_type, any_writer, options);
+        pub fn write_jed_file(file: JEDEC_File, path: []const u8, options: JEDEC_File.Write_Options) !void {
+            var f = try std.fs.cwd().createFile(path, .{});
+            defer f.close();
+
+            var buf: [4096]u8 = undefined;
+            var writer = f.writer(&buf);
+            try write_jed(file, &writer.interface, options);
+            try writer.interface.flush();
         }
-        pub fn write_svf(file: JEDEC_File, writer: anytype, options: svf.Write_Options) !void {
-            const any_writer = if (@hasDecl(@TypeOf(writer), "any")) writer.any() else writer;
-            return svf.write(D, file, any_writer, options);
+        pub fn write_jed(file: JEDEC_File, writer: *std.io.Writer, options: JEDEC_File.Write_Options) !void {
+            return file.write(D.device_type, writer, options);
         }
-        pub fn write_report(speed_grade: comptime_int, file: JEDEC_File, writer: anytype, options: report.Write_Options(D)) !void {
-            const any_writer = if (@hasDecl(@TypeOf(writer), "any")) writer.any() else writer;
-            return report.write(D, speed_grade, file, any_writer, options);
+
+        pub fn write_svf_file(file: JEDEC_File, path: []const u8, options: svf.Write_Options) !void {
+            var f = try std.fs.cwd().createFile(path, .{});
+            defer f.close();
+
+            var buf: [4096]u8 = undefined;
+            var writer = f.writer(&buf);
+            try write_svf(file, &writer.interface, options);
+            try writer.interface.flush();
         }
-        pub fn write_diff_summary(temp: std.mem.Allocator, a: JEDEC_File, b: JEDEC_File, writer: anytype, options: diff.Write_Options(D)) !void {
-            const any_writer = if (@hasDecl(@TypeOf(writer), "any")) writer.any() else writer;
-            return diff.write(temp, D, a, b, any_writer, options);
+        pub fn write_svf(file: JEDEC_File, writer: *std.io.Writer, options: svf.Write_Options) !void {
+            return svf.write(D, file, writer, options);
+        }
+
+        pub fn write_report_file(speed_grade: comptime_int, file: JEDEC_File, path: []const u8, options: report.Write_Options(D)) !void {
+            var f = try std.fs.cwd().createFile(path, .{});
+            defer f.close();
+
+            var buf: [4096]u8 = undefined;
+            var writer = f.writer(&buf);
+            try write_report(speed_grade, file, &writer.interface, options);
+            try writer.interface.flush();
+        }
+        pub fn write_report(speed_grade: comptime_int, file: JEDEC_File, writer: *std.io.Writer, options: report.Write_Options(D)) !void {
+            return report.write(D, speed_grade, file, writer, options);
+        }
+
+        pub fn write_diff_summary_file(temp: std.mem.Allocator, a: JEDEC_File, b: JEDEC_File, path: []const u8, options: diff.Write_Options(D)) !void {
+            var f = try std.fs.cwd().createFile(path, .{});
+            defer f.close();
+
+            var buf: [4096]u8 = undefined;
+            var writer = f.writer(&buf);
+            try write_report(temp, a, b, &writer.interface, options);
+            try writer.interface.flush();
+        }
+        pub fn write_diff_summary(temp: std.mem.Allocator, a: JEDEC_File, b: JEDEC_File, writer: *std.io.Writer, options: diff.Write_Options(D)) !void {
+            return diff.write(temp, D, a, b, writer, options);
         }
     };
 }
@@ -302,7 +337,7 @@ pub fn Macrocell_Logic(comptime Signal: type) type {
         input_buffer,
         sum_xor_input_buffer: []const Product_Term(Signal), // TODO test this; datasheet's schematic of MC implies it is, but timing model implies it isn't.
 
-        pub fn debug(self: @This(), w: std.io.AnyWriter) !void {
+        pub fn debug(self: @This(), w: *std.io.Writer) !void {
             switch (self) {
                 .pt0 => |ptp| try ptp.debug(w),
                 .sum => |sp| try sp.debug(w),
@@ -487,7 +522,7 @@ pub fn Sum_XOR_PT0(comptime Signal: type) type {
         pt0: Product_Term(Signal),
         polarity: Polarity,
 
-        pub fn debug(self: @This(), w: std.io.AnyWriter) !void {
+        pub fn debug(self: @This(), w: *std.io.Writer) !void {
             if (self.polarity == .negative) {
                 try w.writeByte('~');
             }
@@ -568,7 +603,7 @@ pub fn Sum_With_Polarity(comptime Device_Signal: type) type {
         sum: []const Product_Term(Device_Signal),
         polarity: Polarity,
 
-        pub fn debug(self: @This(), w: std.io.AnyWriter) !void {
+        pub fn debug(self: @This(), w: *std.io.Writer) !void {
             if (self.polarity == .negative) {
                 try w.writeAll("~(");
             }
@@ -609,7 +644,7 @@ pub fn Product_Term_With_Polarity(comptime Device_Signal: type) type {
             };
         }
 
-        pub fn debug(self: @This(), w: std.io.AnyWriter) !void {
+        pub fn debug(self: @This(), w: *std.io.Writer) !void {
             if (self.polarity == .negative) {
                 try w.writeAll("~(");
                 try self.pt.debug(w);
@@ -724,7 +759,7 @@ pub fn Product_Term(comptime Device_Signal: type) type {
             return pt;
         }
 
-        pub fn debug(self: Self, w: std.io.AnyWriter) !void {
+        pub fn debug(self: Self, w: *std.io.Writer) !void {
             if (self.factors.len == 0) {
                 try w.writeAll("1");
                 return;
@@ -771,7 +806,7 @@ pub fn Factor(comptime Device_Signal: type) type {
             return .{ .factors = try allocator.dupe(Self, self.pt_indirect().factors) };
         }
 
-        pub fn debug(self: Self, w: std.io.AnyWriter) !void {
+        pub fn debug(self: Self, w: *std.io.Writer) !void {
             switch (self) {
                 .always => try w.writeAll("1"),
                 .never => try w.writeAll("0"),
@@ -1348,8 +1383,7 @@ pub fn Simulator(comptime Device: type) type {
 
         fn test_print_signals(prefix: []const u8, signals: []const Signal, maybe_names: ?*const Device.Names) void {
             var buf: [2048]u8 = undefined;
-            var stream = std.io.fixedBufferStream(&buf);
-            const w = stream.writer();
+            var w = std.io.Writer.fixed(&buf);
 
             w.writeAll(prefix) catch {};
 
@@ -1363,9 +1397,9 @@ pub fn Simulator(comptime Device: type) type {
             }
 
             if (@inComptime()) {
-                @compileError(stream.getWritten());
+                @compileError(w.buffered());
             } else if (std.testing.backend_can_print) {
-                std.debug.print("{s}", .{ stream.getWritten() });
+                std.debug.print("{s}", .{ w.buffered() });
             }
         }
     };

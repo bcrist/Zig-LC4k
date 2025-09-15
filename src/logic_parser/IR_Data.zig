@@ -36,7 +36,7 @@ pub fn get(self: IR_Data, id: IR.ID) IR {
     return self.lookup.keys()[id.raw()];
 }
 
-pub fn debug(self: IR_Data, id: IR.ID, indent: usize, include_ids: bool, w: std.io.AnyWriter) anyerror!void {
+pub fn debug(self: IR_Data, id: IR.ID, indent: usize, include_ids: bool, w: *std.io.Writer) anyerror!void {
     const ir = self.get(id);
     if (include_ids) {
         try w.print("${} {s}", .{ @intFromEnum(id), @tagName(ir) });
@@ -64,7 +64,7 @@ pub fn debug(self: IR_Data, id: IR.ID, indent: usize, include_ids: bool, w: std.
     }
 }
 
-fn debug_binary(self: IR_Data, kind: IR.Tag, first_index: usize, id: IR.ID, indent: usize, include_ids: bool, w: std.io.AnyWriter) anyerror!usize {
+fn debug_binary(self: IR_Data, kind: IR.Tag, first_index: usize, id: IR.ID, indent: usize, include_ids: bool, w: *std.io.Writer) anyerror!usize {
     const ir = self.get(id);
     if (ir == kind) {
         const bin = switch (ir) {
@@ -76,7 +76,7 @@ fn debug_binary(self: IR_Data, kind: IR.Tag, first_index: usize, id: IR.ID, inde
         index = try self.debug_binary(kind, index, bin.rhs, indent, include_ids, w);
         return index;
     } else {
-        try w.writeByteNTimes(' ', indent * 3);
+        try w.splatByteAll(' ', indent * 3);
         try w.print("[{}] ", .{ first_index });
         try self.debug(id, indent, include_ids, w);
         return first_index + 1;

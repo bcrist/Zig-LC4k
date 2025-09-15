@@ -136,18 +136,11 @@ pub fn main() !void {
 
     const results = try chip.assemble(lp.arena.allocator(), .{});
 
-    var jed_file = try std.fs.cwd().createFile("adder.jed", .{});
-    defer jed_file.close();
-    try Chip.write_jed(results.jedec, jed_file.writer(), .{});
-
-    var svf_file = try std.fs.cwd().createFile("adder.svf", .{});
-    defer svf_file.close();
-    try Chip.write_svf(results.jedec, svf_file.writer(), .{});
-
-    var report_file = try std.fs.cwd().createFile("adder.html", .{});
-    defer report_file.close();
-    try Chip.write_report(7, results.jedec, report_file.writer(), .{
-        .design_name = "adder",
+    const design_name = "adder";
+    try Chip.write_jed_file(results.jedec, design_name ++ ".jed", .{});
+    try Chip.write_svf_file(results.jedec, design_name ++ ".svf", .{});
+    try Chip.write_report_file(5, results.jedec, design_name ++ ".html", .{
+        .design_name = design_name,
         .notes = "A 16-bit carry lookahead adder",
         .errors = results.errors.items,
         .names = &names,

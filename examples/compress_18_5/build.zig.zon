@@ -2,7 +2,7 @@
     .name = .compress_18_5,
     .fingerprint = 0x2ed65bd75c5379f7,
     .version = "0.0.1",
-    .minimum_zig_version = "0.14.0",
+    .minimum_zig_version = "0.15.1",
     .paths = .{""},
     .dependencies = .{
         .lc4k = .{ .path = "../.." },

@@ -2,7 +2,7 @@
     .name = .gray_code,
     .fingerprint = 0xdd80c2e89e3c71ef,
     .version = "0.0.1",
-    .minimum_zig_version = "0.14.0",
+    .minimum_zig_version = "0.15.1",
     .paths = .{""},
     .dependencies = .{
         .lc4k = .{ .path = "../.." },

@@ -233,11 +233,11 @@ fn test_parse(comptime Device: type, names: *const Device.Names, eqn: []const u8
     var ast = try lp.Ast(Device).parse(std.testing.allocator, names, eqn);
     defer ast.deinit();
 
-    var temp = std.ArrayList(u8).init(std.testing.allocator);
+    var temp = std.io.Writer.Allocating.init(std.testing.allocator);
     defer temp.deinit();
 
-    try ast.debug(temp.writer().any());
-    try std.testing.expectEqualStrings(expected, temp.items);
+    try ast.debug(&temp.writer);
+    try std.testing.expectEqualStrings(expected, temp.written());
 }
 
 test "typechecking" {
@@ -434,11 +434,11 @@ fn test_bit_widths(comptime Device: type, names: *const Device.Names, eqn: []con
 
     _ = try ast.infer_and_check_max_bit(.{});
 
-    var temp = std.ArrayList(u8).init(std.testing.allocator);
+    var temp = std.io.Writer.Allocating.init(std.testing.allocator);
     defer temp.deinit();
 
-    try ast.debug(temp.writer().any());
-    try std.testing.expectEqualStrings(expected, temp.items);
+    try ast.debug(&temp.writer);
+    try std.testing.expectEqualStrings(expected, temp.written());
 }
 
 test "build IR" {
@@ -786,11 +786,11 @@ fn test_build_ir(comptime Device: type, names: *const Device.Names, eqn: []const
         ir_id = try ir_data.normalize(ir_id, options);
     }
 
-    var temp = std.ArrayList(u8).init(std.testing.allocator);
+    var temp = std.io.Writer.Allocating.init(std.testing.allocator);
     defer temp.deinit();
 
-    try ir_data.debug(ir_id, 0, false, temp.writer().any());
-    try std.testing.expectEqualStrings(expected, temp.items);
+    try ir_data.debug(ir_id, 0, false, &temp.writer);
+    try std.testing.expectEqualStrings(expected, temp.written());
 }
 
 test "Logic_Parser" {

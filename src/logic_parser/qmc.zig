@@ -2,9 +2,10 @@ pub const Minterm = struct {
     v: u32,
     dc: u32 = 0,
 
-    pub fn format(self: Minterm, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
-        _ = fmt;
-
+    pub fn format(self: Minterm, writer: *std.io.Writer) !void {
+        self.formatNumber(writer, .{});
+    }
+    pub fn formatNumber(self: Minterm, writer: std.io.Writer, options: std.fmt.Number) !void {
         const v: std.StaticBitSet(32) = .{ .mask = self.v };
         const dc: std.StaticBitSet(32) = .{ .mask = self.dc };
 
@@ -62,10 +63,10 @@ pub fn optimize(data: *IR_Data, sum: IR.ID, dc_sum: ?IR.ID, max_signals: u5) !IR
     }
 
     // convert IR to minterms
-    var minterms: std.ArrayList(Minterm) = .init(data.gpa);
-    var dc_minterms: std.ArrayList(Minterm) = .init(data.gpa);
-    defer minterms.deinit();
-    defer dc_minterms.deinit();
+    var minterms: std.ArrayList(Minterm) = .empty;
+    var dc_minterms: std.ArrayList(Minterm) = .empty;
+    defer minterms.deinit(data.gpa);
+    defer dc_minterms.deinit(data.gpa);
 
     {
         var signal_states: std.DynamicBitSetUnmanaged = try .initEmpty(data.gpa, max_signal_ordinal + 1);
@@ -80,20 +81,20 @@ pub fn optimize(data: *IR_Data, sum: IR.ID, dc_sum: ?IR.ID, max_signals: u5) !IR
 
             if (dc_sum) |dc| {
                 if (data.evaluate(dc, signal_states) == 1) {
-                    try dc_minterms.append(.{ .v = minterm_v });
+                    try dc_minterms.append(data.gpa, .{ .v = minterm_v });
                     continue;
                 }
             }
 
             if (data.evaluate(sum, signal_states) == 1) {
-                try minterms.append(.{ .v = minterm_v });
+                try minterms.append(data.gpa, .{ .v = minterm_v });
             }
         }
     }
 
     const num_minterms_excluding_dcs = minterms.items.len;
-    try minterms.appendSlice(dc_minterms.items);
-    dc_minterms.clearAndFree();
+    try minterms.appendSlice(data.gpa, dc_minterms.items);
+    dc_minterms.clearAndFree(data.gpa);
 
     const prime_implicants = try compute_prime_implicants(data.gpa, minterms.items);
     defer data.gpa.free(prime_implicants);
@@ -139,7 +140,7 @@ pub fn compute_prime_implicants(gpa: std.mem.Allocator, minterms: []const Minter
 
     var remaining_minterms: std.ArrayList(Minterm) = try .initCapacity(gpa, minterms.len);
     remaining_minterms.appendSliceAssumeCapacity(minterms);
-    defer remaining_minterms.deinit();
+    defer remaining_minterms.deinit(gpa);
 
     var merged_minterms: std.DynamicBitSet = try .initEmpty(gpa, minterms.len);
     defer merged_minterms.deinit();
@@ -165,7 +166,7 @@ pub fn compute_prime_implicants(gpa: std.mem.Allocator, minterms: []const Minter
         }
 
         remaining_minterms.clearRetainingCapacity();
-        try remaining_minterms.appendSlice(possible_prime_implicants.keys());
+        try remaining_minterms.appendSlice(gpa, possible_prime_implicants.keys());
         possible_prime_implicants.clearRetainingCapacity();
 
         merged_minterms.toggleSet(merged_minterms); // clear all bits

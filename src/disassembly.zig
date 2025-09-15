@@ -3,7 +3,7 @@ pub fn Disassembly_Results(comptime Device: type) type {
         config: lc4k.Chip_Config(Device.device_type),
         gi_routing: [Device.num_glbs][Device.num_gis_per_glb]?Device.Signal,
         sum_routing: [Device.num_glbs]routing.Routing_Data,
-        errors: std.ArrayList(Config_Error),
+        errors: std.array_list.Managed(Config_Error),
     };
 }
 
@@ -12,7 +12,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
         .config = .{},
         .gi_routing = @splat(@splat(null)),
         .sum_routing = @splat(.{}),
-        .errors = std.ArrayList(Config_Error).init(allocator),
+        .errors = .init(allocator),
     };
 
     if (!file.data.extents.eql(Device.jedec_dimensions)) {

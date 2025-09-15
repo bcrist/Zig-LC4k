@@ -1,6 +1,6 @@
 <html>
 <head>
-<title>CPLD Design Report</title>
+<title>CPLD Design Report: priority_encoder</title>
 <style>
 body {
     background: #111;
@@ -153,8 +153,9 @@ kbd.power-guard.disabled {
 <h1>Design Summary</h1>
 <div>
 <table class="inline">
+<tr><th>Design Name</th><td>priority_encoder</td></tr>
 <tr><th>Device</th><td>LC4032ZE_TQFP48</td></tr>
-<tr><th>Speed Grade</th><td>7</td></tr>
+<tr><th>Speed Grade</th><td>5</td></tr>
 <tr><th>I/Os Used</th><td>21 / 32</td></tr>
 <tr><th>Clocks Used</th><td>0 / 4</td></tr>
 <tr><th>GIs Used</th><td>16 / 72</td></tr>
@@ -930,12 +931,12 @@ kbd.power-guard.disabled {
 <div class="details">B0 mcq</div>
 <div class="details">B0 orm</div>
 <div class="details">B0 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[1] pad<div class="details">in[1] pad</div>
@@ -950,12 +951,12 @@ kbd.power-guard.disabled {
 <div class="details">B0 mcq</div>
 <div class="details">B0 orm</div>
 <div class="details">B0 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[2] pad<div class="details">in[2] pad</div>
@@ -970,12 +971,12 @@ kbd.power-guard.disabled {
 <div class="details">B0 mcq</div>
 <div class="details">B0 orm</div>
 <div class="details">B0 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[3] pad<div class="details">in[3] pad</div>
@@ -990,12 +991,12 @@ kbd.power-guard.disabled {
 <div class="details">B0 mcq</div>
 <div class="details">B0 orm</div>
 <div class="details">B0 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[4] pad<div class="details">in[4] pad</div>
@@ -1010,12 +1011,12 @@ kbd.power-guard.disabled {
 <div class="details">B0 mcq</div>
 <div class="details">B0 orm</div>
 <div class="details">B0 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[5] pad<div class="details">in[5] pad</div>
@@ -1030,12 +1031,12 @@ kbd.power-guard.disabled {
 <div class="details">B0 mcq</div>
 <div class="details">B0 orm</div>
 <div class="details">B0 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[6] pad<div class="details">in[6] pad</div>
@@ -1050,12 +1051,12 @@ kbd.power-guard.disabled {
 <div class="details">B0 mcq</div>
 <div class="details">B0 orm</div>
 <div class="details">B0 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[7] pad<div class="details">in[7] pad</div>
@@ -1070,12 +1071,12 @@ kbd.power-guard.disabled {
 <div class="details">B0 mcq</div>
 <div class="details">B0 orm</div>
 <div class="details">B0 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[8] pad<div class="details">in[8] pad</div>
@@ -1090,12 +1091,12 @@ kbd.power-guard.disabled {
 <div class="details">B0 mcq</div>
 <div class="details">B0 orm</div>
 <div class="details">B0 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[9] pad<div class="details">in[9] pad</div>
@@ -1110,12 +1111,12 @@ kbd.power-guard.disabled {
 <div class="details">B0 mcq</div>
 <div class="details">B0 orm</div>
 <div class="details">B0 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[10] pad<div class="details">in[10] pad</div>
@@ -1130,12 +1131,12 @@ kbd.power-guard.disabled {
 <div class="details">B0 mcq</div>
 <div class="details">B0 orm</div>
 <div class="details">B0 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[11] pad<div class="details">in[11] pad</div>
@@ -1150,12 +1151,12 @@ kbd.power-guard.disabled {
 <div class="details">B0 mcq</div>
 <div class="details">B0 orm</div>
 <div class="details">B0 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[12] pad<div class="details">in[12] pad</div>
@@ -1170,12 +1171,12 @@ kbd.power-guard.disabled {
 <div class="details">B0 mcq</div>
 <div class="details">B0 orm</div>
 <div class="details">B0 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[13] pad<div class="details">in[13] pad</div>
@@ -1190,12 +1191,12 @@ kbd.power-guard.disabled {
 <div class="details">B0 mcq</div>
 <div class="details">B0 orm</div>
 <div class="details">B0 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[14] pad<div class="details">in[14] pad</div>
@@ -1210,12 +1211,12 @@ kbd.power-guard.disabled {
 <div class="details">B0 mcq</div>
 <div class="details">B0 orm</div>
 <div class="details">B0 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[15] pad<div class="details">in[15] pad</div>
@@ -1230,12 +1231,12 @@ kbd.power-guard.disabled {
 <div class="details">B0 mcq</div>
 <div class="details">B0 orm</div>
 <div class="details">B0 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[0] pad<div class="details">in[0] pad</div>
@@ -1250,12 +1251,12 @@ kbd.power-guard.disabled {
 <div class="details">B2 mcq</div>
 <div class="details">B2 orm</div>
 <div class="details">B2 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[1] pad<div class="details">in[1] pad</div>
@@ -1270,12 +1271,12 @@ kbd.power-guard.disabled {
 <div class="details">B2 mcq</div>
 <div class="details">B2 orm</div>
 <div class="details">B2 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[2] pad<div class="details">in[2] pad</div>
@@ -1290,12 +1291,12 @@ kbd.power-guard.disabled {
 <div class="details">B2 mcq</div>
 <div class="details">B2 orm</div>
 <div class="details">B2 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[3] pad<div class="details">in[3] pad</div>
@@ -1310,12 +1311,12 @@ kbd.power-guard.disabled {
 <div class="details">B2 mcq</div>
 <div class="details">B2 orm</div>
 <div class="details">B2 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[4] pad<div class="details">in[4] pad</div>
@@ -1330,12 +1331,12 @@ kbd.power-guard.disabled {
 <div class="details">B2 mcq</div>
 <div class="details">B2 orm</div>
 <div class="details">B2 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[5] pad<div class="details">in[5] pad</div>
@@ -1350,12 +1351,12 @@ kbd.power-guard.disabled {
 <div class="details">B2 mcq</div>
 <div class="details">B2 orm</div>
 <div class="details">B2 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[6] pad<div class="details">in[6] pad</div>
@@ -1370,12 +1371,12 @@ kbd.power-guard.disabled {
 <div class="details">B2 mcq</div>
 <div class="details">B2 orm</div>
 <div class="details">B2 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[7] pad<div class="details">in[7] pad</div>
@@ -1390,12 +1391,12 @@ kbd.power-guard.disabled {
 <div class="details">B2 mcq</div>
 <div class="details">B2 orm</div>
 <div class="details">B2 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[8] pad<div class="details">in[8] pad</div>
@@ -1410,12 +1411,12 @@ kbd.power-guard.disabled {
 <div class="details">B2 mcq</div>
 <div class="details">B2 orm</div>
 <div class="details">B2 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[9] pad<div class="details">in[9] pad</div>
@@ -1430,12 +1431,12 @@ kbd.power-guard.disabled {
 <div class="details">B2 mcq</div>
 <div class="details">B2 orm</div>
 <div class="details">B2 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[10] pad<div class="details">in[10] pad</div>
@@ -1450,12 +1451,12 @@ kbd.power-guard.disabled {
 <div class="details">B2 mcq</div>
 <div class="details">B2 orm</div>
 <div class="details">B2 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[11] pad<div class="details">in[11] pad</div>
@@ -1470,12 +1471,12 @@ kbd.power-guard.disabled {
 <div class="details">B2 mcq</div>
 <div class="details">B2 orm</div>
 <div class="details">B2 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[12] pad<div class="details">in[12] pad</div>
@@ -1490,12 +1491,12 @@ kbd.power-guard.disabled {
 <div class="details">B2 mcq</div>
 <div class="details">B2 orm</div>
 <div class="details">B2 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[13] pad<div class="details">in[13] pad</div>
@@ -1510,12 +1511,12 @@ kbd.power-guard.disabled {
 <div class="details">B2 mcq</div>
 <div class="details">B2 orm</div>
 <div class="details">B2 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[14] pad<div class="details">in[14] pad</div>
@@ -1530,12 +1531,12 @@ kbd.power-guard.disabled {
 <div class="details">B2 mcq</div>
 <div class="details">B2 orm</div>
 <div class="details">B2 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[15] pad<div class="details">in[15] pad</div>
@@ -1550,12 +1551,12 @@ kbd.power-guard.disabled {
 <div class="details">B2 mcq</div>
 <div class="details">B2 orm</div>
 <div class="details">B2 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[0] pad<div class="details">in[0] pad</div>
@@ -1570,12 +1571,12 @@ kbd.power-guard.disabled {
 <div class="details">B4 mcq</div>
 <div class="details">B4 orm</div>
 <div class="details">B4 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[1] pad<div class="details">in[1] pad</div>
@@ -1590,12 +1591,12 @@ kbd.power-guard.disabled {
 <div class="details">B4 mcq</div>
 <div class="details">B4 orm</div>
 <div class="details">B4 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[2] pad<div class="details">in[2] pad</div>
@@ -1610,12 +1611,12 @@ kbd.power-guard.disabled {
 <div class="details">B4 mcq</div>
 <div class="details">B4 orm</div>
 <div class="details">B4 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[3] pad<div class="details">in[3] pad</div>
@@ -1630,12 +1631,12 @@ kbd.power-guard.disabled {
 <div class="details">B4 mcq</div>
 <div class="details">B4 orm</div>
 <div class="details">B4 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[4] pad<div class="details">in[4] pad</div>
@@ -1650,12 +1651,12 @@ kbd.power-guard.disabled {
 <div class="details">B4 mcq</div>
 <div class="details">B4 orm</div>
 <div class="details">B4 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[5] pad<div class="details">in[5] pad</div>
@@ -1670,12 +1671,12 @@ kbd.power-guard.disabled {
 <div class="details">B4 mcq</div>
 <div class="details">B4 orm</div>
 <div class="details">B4 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[6] pad<div class="details">in[6] pad</div>
@@ -1690,12 +1691,12 @@ kbd.power-guard.disabled {
 <div class="details">B4 mcq</div>
 <div class="details">B4 orm</div>
 <div class="details">B4 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[7] pad<div class="details">in[7] pad</div>
@@ -1710,12 +1711,12 @@ kbd.power-guard.disabled {
 <div class="details">B4 mcq</div>
 <div class="details">B4 orm</div>
 <div class="details">B4 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[8] pad<div class="details">in[8] pad</div>
@@ -1730,12 +1731,12 @@ kbd.power-guard.disabled {
 <div class="details">B4 mcq</div>
 <div class="details">B4 orm</div>
 <div class="details">B4 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[9] pad<div class="details">in[9] pad</div>
@@ -1750,12 +1751,12 @@ kbd.power-guard.disabled {
 <div class="details">B4 mcq</div>
 <div class="details">B4 orm</div>
 <div class="details">B4 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[10] pad<div class="details">in[10] pad</div>
@@ -1770,12 +1771,12 @@ kbd.power-guard.disabled {
 <div class="details">B4 mcq</div>
 <div class="details">B4 orm</div>
 <div class="details">B4 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[11] pad<div class="details">in[11] pad</div>
@@ -1790,12 +1791,12 @@ kbd.power-guard.disabled {
 <div class="details">B4 mcq</div>
 <div class="details">B4 orm</div>
 <div class="details">B4 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[12] pad<div class="details">in[12] pad</div>
@@ -1810,12 +1811,12 @@ kbd.power-guard.disabled {
 <div class="details">B4 mcq</div>
 <div class="details">B4 orm</div>
 <div class="details">B4 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[13] pad<div class="details">in[13] pad</div>
@@ -1830,12 +1831,12 @@ kbd.power-guard.disabled {
 <div class="details">B4 mcq</div>
 <div class="details">B4 orm</div>
 <div class="details">B4 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[14] pad<div class="details">in[14] pad</div>
@@ -1850,12 +1851,12 @@ kbd.power-guard.disabled {
 <div class="details">B4 mcq</div>
 <div class="details">B4 orm</div>
 <div class="details">B4 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[15] pad<div class="details">in[15] pad</div>
@@ -1870,12 +1871,12 @@ kbd.power-guard.disabled {
 <div class="details">B4 mcq</div>
 <div class="details">B4 orm</div>
 <div class="details">B4 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[0] pad<div class="details">in[0] pad</div>
@@ -1890,12 +1891,12 @@ kbd.power-guard.disabled {
 <div class="details">B6 mcq</div>
 <div class="details">B6 orm</div>
 <div class="details">B6 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[1] pad<div class="details">in[1] pad</div>
@@ -1910,12 +1911,12 @@ kbd.power-guard.disabled {
 <div class="details">B6 mcq</div>
 <div class="details">B6 orm</div>
 <div class="details">B6 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[2] pad<div class="details">in[2] pad</div>
@@ -1930,12 +1931,12 @@ kbd.power-guard.disabled {
 <div class="details">B6 mcq</div>
 <div class="details">B6 orm</div>
 <div class="details">B6 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[3] pad<div class="details">in[3] pad</div>
@@ -1950,12 +1951,12 @@ kbd.power-guard.disabled {
 <div class="details">B6 mcq</div>
 <div class="details">B6 orm</div>
 <div class="details">B6 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[4] pad<div class="details">in[4] pad</div>
@@ -1970,12 +1971,12 @@ kbd.power-guard.disabled {
 <div class="details">B6 mcq</div>
 <div class="details">B6 orm</div>
 <div class="details">B6 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[5] pad<div class="details">in[5] pad</div>
@@ -1990,12 +1991,12 @@ kbd.power-guard.disabled {
 <div class="details">B6 mcq</div>
 <div class="details">B6 orm</div>
 <div class="details">B6 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[6] pad<div class="details">in[6] pad</div>
@@ -2010,12 +2011,12 @@ kbd.power-guard.disabled {
 <div class="details">B6 mcq</div>
 <div class="details">B6 orm</div>
 <div class="details">B6 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[7] pad<div class="details">in[7] pad</div>
@@ -2030,12 +2031,12 @@ kbd.power-guard.disabled {
 <div class="details">B6 mcq</div>
 <div class="details">B6 orm</div>
 <div class="details">B6 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[8] pad<div class="details">in[8] pad</div>
@@ -2050,12 +2051,12 @@ kbd.power-guard.disabled {
 <div class="details">B6 mcq</div>
 <div class="details">B6 orm</div>
 <div class="details">B6 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[9] pad<div class="details">in[9] pad</div>
@@ -2070,12 +2071,12 @@ kbd.power-guard.disabled {
 <div class="details">B6 mcq</div>
 <div class="details">B6 orm</div>
 <div class="details">B6 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[10] pad<div class="details">in[10] pad</div>
@@ -2090,12 +2091,12 @@ kbd.power-guard.disabled {
 <div class="details">B6 mcq</div>
 <div class="details">B6 orm</div>
 <div class="details">B6 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[11] pad<div class="details">in[11] pad</div>
@@ -2110,12 +2111,12 @@ kbd.power-guard.disabled {
 <div class="details">B6 mcq</div>
 <div class="details">B6 orm</div>
 <div class="details">B6 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[12] pad<div class="details">in[12] pad</div>
@@ -2130,12 +2131,12 @@ kbd.power-guard.disabled {
 <div class="details">B6 mcq</div>
 <div class="details">B6 orm</div>
 <div class="details">B6 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[13] pad<div class="details">in[13] pad</div>
@@ -2150,12 +2151,12 @@ kbd.power-guard.disabled {
 <div class="details">B6 mcq</div>
 <div class="details">B6 orm</div>
 <div class="details">B6 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[14] pad<div class="details">in[14] pad</div>
@@ -2170,12 +2171,12 @@ kbd.power-guard.disabled {
 <div class="details">B6 mcq</div>
 <div class="details">B6 orm</div>
 <div class="details">B6 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>in[15] pad<div class="details">in[15] pad</div>
@@ -2190,12 +2191,12 @@ kbd.power-guard.disabled {
 <div class="details">B6 mcq</div>
 <div class="details">B6 orm</div>
 <div class="details">B6 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[0] pad<div class="details">in[0] pad</div>
@@ -2210,12 +2211,12 @@ kbd.power-guard.disabled {
 <div class="details">B8 mcq</div>
 <div class="details">B8 orm</div>
 <div class="details">B8 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[1] pad<div class="details">in[1] pad</div>
@@ -2230,12 +2231,12 @@ kbd.power-guard.disabled {
 <div class="details">B8 mcq</div>
 <div class="details">B8 orm</div>
 <div class="details">B8 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[2] pad<div class="details">in[2] pad</div>
@@ -2250,12 +2251,12 @@ kbd.power-guard.disabled {
 <div class="details">B8 mcq</div>
 <div class="details">B8 orm</div>
 <div class="details">B8 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[3] pad<div class="details">in[3] pad</div>
@@ -2270,12 +2271,12 @@ kbd.power-guard.disabled {
 <div class="details">B8 mcq</div>
 <div class="details">B8 orm</div>
 <div class="details">B8 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[4] pad<div class="details">in[4] pad</div>
@@ -2290,12 +2291,12 @@ kbd.power-guard.disabled {
 <div class="details">B8 mcq</div>
 <div class="details">B8 orm</div>
 <div class="details">B8 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[5] pad<div class="details">in[5] pad</div>
@@ -2310,12 +2311,12 @@ kbd.power-guard.disabled {
 <div class="details">B8 mcq</div>
 <div class="details">B8 orm</div>
 <div class="details">B8 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[6] pad<div class="details">in[6] pad</div>
@@ -2330,12 +2331,12 @@ kbd.power-guard.disabled {
 <div class="details">B8 mcq</div>
 <div class="details">B8 orm</div>
 <div class="details">B8 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[7] pad<div class="details">in[7] pad</div>
@@ -2350,12 +2351,12 @@ kbd.power-guard.disabled {
 <div class="details">B8 mcq</div>
 <div class="details">B8 orm</div>
 <div class="details">B8 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[8] pad<div class="details">in[8] pad</div>
@@ -2370,12 +2371,12 @@ kbd.power-guard.disabled {
 <div class="details">B8 mcq</div>
 <div class="details">B8 orm</div>
 <div class="details">B8 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[9] pad<div class="details">in[9] pad</div>
@@ -2390,12 +2391,12 @@ kbd.power-guard.disabled {
 <div class="details">B8 mcq</div>
 <div class="details">B8 orm</div>
 <div class="details">B8 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[10] pad<div class="details">in[10] pad</div>
@@ -2410,12 +2411,12 @@ kbd.power-guard.disabled {
 <div class="details">B8 mcq</div>
 <div class="details">B8 orm</div>
 <div class="details">B8 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[11] pad<div class="details">in[11] pad</div>
@@ -2430,12 +2431,12 @@ kbd.power-guard.disabled {
 <div class="details">B8 mcq</div>
 <div class="details">B8 orm</div>
 <div class="details">B8 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[12] pad<div class="details">in[12] pad</div>
@@ -2450,12 +2451,12 @@ kbd.power-guard.disabled {
 <div class="details">B8 mcq</div>
 <div class="details">B8 orm</div>
 <div class="details">B8 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[13] pad<div class="details">in[13] pad</div>
@@ -2470,12 +2471,12 @@ kbd.power-guard.disabled {
 <div class="details">B8 mcq</div>
 <div class="details">B8 orm</div>
 <div class="details">B8 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[14] pad<div class="details">in[14] pad</div>
@@ -2490,12 +2491,12 @@ kbd.power-guard.disabled {
 <div class="details">B8 mcq</div>
 <div class="details">B8 orm</div>
 <div class="details">B8 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>in[15] pad<div class="details">in[15] pad</div>
@@ -2510,12 +2511,12 @@ kbd.power-guard.disabled {
 <div class="details">B8 mcq</div>
 <div class="details">B8 orm</div>
 <div class="details">B8 out</div>
-</td><td>8.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">0.5 ns (tPDi)</div>
+</td><td>6.8 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">0.45 ns (tPDi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 </table>
 </div>

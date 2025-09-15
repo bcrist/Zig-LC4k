@@ -1,6 +1,6 @@
 <html>
 <head>
-<title>CPLD Design Report</title>
+<title>CPLD Design Report: counter1</title>
 <style>
 body {
     background: #111;
@@ -153,8 +153,9 @@ kbd.power-guard.disabled {
 <h1>Design Summary</h1>
 <div>
 <table class="inline">
+<tr><th>Design Name</th><td>counter1</td></tr>
 <tr><th>Device</th><td>LC4032ZE_TQFP48</td></tr>
-<tr><th>Speed Grade</th><td>7</td></tr>
+<tr><th>Speed Grade</th><td>5</td></tr>
 <tr><th>I/Os Used</th><td>9 / 32</td></tr>
 <tr><th>Clocks Used</th><td>1 / 4</td></tr>
 <tr><th>GIs Used</th><td>8 / 72</td></tr>
@@ -931,18 +932,18 @@ kbd.power-guard.disabled {
 <div class="details">B3 mcq</div>
 <div class="details">B3 orm</div>
 <div class="details">B3 out</div>
-</td><td>5.5 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">0.75 ns (tCOi)</div>
+</td><td>4.8 ns<div class="details">1.95 ns (tGCLK_IN)</div>
+<div class="details">0.45 ns (tCOi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>B3 mcq<div class="details">B3 mcq</div>
 <div class="details">B3 orm</div>
 </td><td>B3 out<div class="details">B3 orm</div>
 <div class="details">B3 out</div>
-</td><td>2.6 ns<div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+</td><td>2.4 ns<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>io_B0 pad<div class="details">io_B0 pad</div>
@@ -953,10 +954,10 @@ kbd.power-guard.disabled {
 <div class="details">igoe0</div>
 <div class="details">B3 out_oe</div>
 <div class="details">B3 out_en</div>
-</td><td>11.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">3.4 ns (tGPTOE)</div>
-<div class="details">3.7 ns (tEN)</div>
+</td><td>11 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">4.2 ns (tGPTOE)</div>
+<div class="details">3.5 ns (tEN)</div>
 </td></tr>
 <tr class="details-root">
 <td>io_B0 pad<div class="details">io_B0 pad</div>
@@ -967,15 +968,15 @@ kbd.power-guard.disabled {
 <div class="details">igoe0</div>
 <div class="details">B3 out_oe</div>
 <div class="details">B3 out_dis</div>
-</td><td>10.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">3.4 ns (tGPTOE)</div>
-<div class="details">2.7 ns (tDIS)</div>
+</td><td>10 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">4.2 ns (tGPTOE)</div>
+<div class="details">2.5 ns (tDIS)</div>
 </td></tr>
 <tr class="details-root">
 <td>clk2 pad<div class="details">clk2 pad</div>
 </td><td>B3 mc_clk<div class="details">B3 mc_clk</div>
-</td><td>2.15 ns<div class="details">2.15 ns (tGCLK_IN)</div>
+</td><td>1.95 ns<div class="details">1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>clk2 pad<div class="details">clk2 pad</div>
@@ -986,18 +987,18 @@ kbd.power-guard.disabled {
 <div class="details">B4 mcq</div>
 <div class="details">B4 orm</div>
 <div class="details">B4 out</div>
-</td><td>5.5 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">0.75 ns (tCOi)</div>
+</td><td>4.8 ns<div class="details">1.95 ns (tGCLK_IN)</div>
+<div class="details">0.45 ns (tCOi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>B4 mcq<div class="details">B4 mcq</div>
 <div class="details">B4 orm</div>
 </td><td>B4 out<div class="details">B4 orm</div>
 <div class="details">B4 out</div>
-</td><td>2.6 ns<div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+</td><td>2.4 ns<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>io_B0 pad<div class="details">io_B0 pad</div>
@@ -1008,10 +1009,10 @@ kbd.power-guard.disabled {
 <div class="details">igoe0</div>
 <div class="details">B4 out_oe</div>
 <div class="details">B4 out_en</div>
-</td><td>11.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">3.4 ns (tGPTOE)</div>
-<div class="details">3.7 ns (tEN)</div>
+</td><td>11 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">4.2 ns (tGPTOE)</div>
+<div class="details">3.5 ns (tEN)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>io_B0 pad<div class="details">io_B0 pad</div>
@@ -1022,15 +1023,15 @@ kbd.power-guard.disabled {
 <div class="details">igoe0</div>
 <div class="details">B4 out_oe</div>
 <div class="details">B4 out_dis</div>
-</td><td>10.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">3.4 ns (tGPTOE)</div>
-<div class="details">2.7 ns (tDIS)</div>
+</td><td>10 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">4.2 ns (tGPTOE)</div>
+<div class="details">2.5 ns (tDIS)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>clk2 pad<div class="details">clk2 pad</div>
 </td><td>B4 mc_clk<div class="details">B4 mc_clk</div>
-</td><td>2.15 ns<div class="details">2.15 ns (tGCLK_IN)</div>
+</td><td>1.95 ns<div class="details">1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>B3 mc_clk<div class="details">B3 mc_clk</div>
@@ -1045,32 +1046,12 @@ kbd.power-guard.disabled {
 <div class="details">B4 mcd</div>
 <div class="details">B4 Setup</div>
 <div class="details">B4 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="highlight details-root">
-<td>B3 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B4 mc_clk</div>
-<div class="details">B3 mc_clk</div>
-<div class="details">B3 mcq</div>
-<div class="details">B3 fb</div>
-<div class="details">B4 mc_ca</div>
-</td><td>B4 Hold<div class="details">B4 mc_clk</div>
-<div class="details">B4 Hold</div>
-<div class="details">B3 mcq</div>
-<div class="details">B3 fb</div>
-<div class="details">B4 mc_ca</div>
-<div class="details">B4 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="details-root">
 <td>clk2 pad<div class="details">clk2 pad</div>
@@ -1081,18 +1062,18 @@ kbd.power-guard.disabled {
 <div class="details">B5 mcq</div>
 <div class="details">B5 orm</div>
 <div class="details">B5 out</div>
-</td><td>5.5 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">0.75 ns (tCOi)</div>
+</td><td>4.8 ns<div class="details">1.95 ns (tGCLK_IN)</div>
+<div class="details">0.45 ns (tCOi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>B5 mcq<div class="details">B5 mcq</div>
 <div class="details">B5 orm</div>
 </td><td>B5 out<div class="details">B5 orm</div>
 <div class="details">B5 out</div>
-</td><td>2.6 ns<div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+</td><td>2.4 ns<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>io_B0 pad<div class="details">io_B0 pad</div>
@@ -1103,10 +1084,10 @@ kbd.power-guard.disabled {
 <div class="details">igoe0</div>
 <div class="details">B5 out_oe</div>
 <div class="details">B5 out_en</div>
-</td><td>11.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">3.4 ns (tGPTOE)</div>
-<div class="details">3.7 ns (tEN)</div>
+</td><td>11 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">4.2 ns (tGPTOE)</div>
+<div class="details">3.5 ns (tEN)</div>
 </td></tr>
 <tr class="details-root">
 <td>io_B0 pad<div class="details">io_B0 pad</div>
@@ -1117,15 +1098,15 @@ kbd.power-guard.disabled {
 <div class="details">igoe0</div>
 <div class="details">B5 out_oe</div>
 <div class="details">B5 out_dis</div>
-</td><td>10.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">3.4 ns (tGPTOE)</div>
-<div class="details">2.7 ns (tDIS)</div>
+</td><td>10 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">4.2 ns (tGPTOE)</div>
+<div class="details">2.5 ns (tDIS)</div>
 </td></tr>
 <tr class="details-root">
 <td>clk2 pad<div class="details">clk2 pad</div>
 </td><td>B5 mc_clk<div class="details">B5 mc_clk</div>
-</td><td>2.15 ns<div class="details">2.15 ns (tGCLK_IN)</div>
+</td><td>1.95 ns<div class="details">1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="details-root">
 <td>B3 mc_clk<div class="details">B3 mc_clk</div>
@@ -1140,32 +1121,12 @@ kbd.power-guard.disabled {
 <div class="details">B5 mcd</div>
 <div class="details">B5 Setup</div>
 <div class="details">B5 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="details-root">
-<td>B3 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B5 mc_clk</div>
-<div class="details">B3 mc_clk</div>
-<div class="details">B3 mcq</div>
-<div class="details">B3 fb</div>
-<div class="details">B5 mc_ca</div>
-</td><td>B5 Hold<div class="details">B5 mc_clk</div>
-<div class="details">B5 Hold</div>
-<div class="details">B3 mcq</div>
-<div class="details">B3 fb</div>
-<div class="details">B5 mc_ca</div>
-<div class="details">B5 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="details-root">
 <td>B4 mc_clk<div class="details">B4 mc_clk</div>
@@ -1180,32 +1141,12 @@ kbd.power-guard.disabled {
 <div class="details">B5 mcd</div>
 <div class="details">B5 Setup</div>
 <div class="details">B5 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="details-root">
-<td>B4 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B5 mc_clk</div>
-<div class="details">B4 mc_clk</div>
-<div class="details">B4 mcq</div>
-<div class="details">B4 fb</div>
-<div class="details">B5 mc_ca</div>
-</td><td>B5 Hold<div class="details">B5 mc_clk</div>
-<div class="details">B5 Hold</div>
-<div class="details">B4 mcq</div>
-<div class="details">B4 fb</div>
-<div class="details">B5 mc_ca</div>
-<div class="details">B5 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>clk2 pad<div class="details">clk2 pad</div>
@@ -1216,18 +1157,18 @@ kbd.power-guard.disabled {
 <div class="details">B6 mcq</div>
 <div class="details">B6 orm</div>
 <div class="details">B6 out</div>
-</td><td>5.5 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">0.75 ns (tCOi)</div>
+</td><td>4.8 ns<div class="details">1.95 ns (tGCLK_IN)</div>
+<div class="details">0.45 ns (tCOi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>B6 mcq<div class="details">B6 mcq</div>
 <div class="details">B6 orm</div>
 </td><td>B6 out<div class="details">B6 orm</div>
 <div class="details">B6 out</div>
-</td><td>2.6 ns<div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+</td><td>2.4 ns<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>io_B0 pad<div class="details">io_B0 pad</div>
@@ -1238,10 +1179,10 @@ kbd.power-guard.disabled {
 <div class="details">igoe0</div>
 <div class="details">B6 out_oe</div>
 <div class="details">B6 out_en</div>
-</td><td>11.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">3.4 ns (tGPTOE)</div>
-<div class="details">3.7 ns (tEN)</div>
+</td><td>11 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">4.2 ns (tGPTOE)</div>
+<div class="details">3.5 ns (tEN)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>io_B0 pad<div class="details">io_B0 pad</div>
@@ -1252,15 +1193,15 @@ kbd.power-guard.disabled {
 <div class="details">igoe0</div>
 <div class="details">B6 out_oe</div>
 <div class="details">B6 out_dis</div>
-</td><td>10.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">3.4 ns (tGPTOE)</div>
-<div class="details">2.7 ns (tDIS)</div>
+</td><td>10 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">4.2 ns (tGPTOE)</div>
+<div class="details">2.5 ns (tDIS)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>clk2 pad<div class="details">clk2 pad</div>
 </td><td>B6 mc_clk<div class="details">B6 mc_clk</div>
-</td><td>2.15 ns<div class="details">2.15 ns (tGCLK_IN)</div>
+</td><td>1.95 ns<div class="details">1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>B3 mc_clk<div class="details">B3 mc_clk</div>
@@ -1275,32 +1216,12 @@ kbd.power-guard.disabled {
 <div class="details">B6 mcd</div>
 <div class="details">B6 Setup</div>
 <div class="details">B6 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="highlight details-root">
-<td>B3 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B6 mc_clk</div>
-<div class="details">B3 mc_clk</div>
-<div class="details">B3 mcq</div>
-<div class="details">B3 fb</div>
-<div class="details">B6 mc_ca</div>
-</td><td>B6 Hold<div class="details">B6 mc_clk</div>
-<div class="details">B6 Hold</div>
-<div class="details">B3 mcq</div>
-<div class="details">B3 fb</div>
-<div class="details">B6 mc_ca</div>
-<div class="details">B6 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>B4 mc_clk<div class="details">B4 mc_clk</div>
@@ -1315,32 +1236,12 @@ kbd.power-guard.disabled {
 <div class="details">B6 mcd</div>
 <div class="details">B6 Setup</div>
 <div class="details">B6 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="highlight details-root">
-<td>B4 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B6 mc_clk</div>
-<div class="details">B4 mc_clk</div>
-<div class="details">B4 mcq</div>
-<div class="details">B4 fb</div>
-<div class="details">B6 mc_ca</div>
-</td><td>B6 Hold<div class="details">B6 mc_clk</div>
-<div class="details">B6 Hold</div>
-<div class="details">B4 mcq</div>
-<div class="details">B4 fb</div>
-<div class="details">B6 mc_ca</div>
-<div class="details">B6 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>B5 mc_clk<div class="details">B5 mc_clk</div>
@@ -1355,32 +1256,12 @@ kbd.power-guard.disabled {
 <div class="details">B6 mcd</div>
 <div class="details">B6 Setup</div>
 <div class="details">B6 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="highlight details-root">
-<td>B5 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B6 mc_clk</div>
-<div class="details">B5 mc_clk</div>
-<div class="details">B5 mcq</div>
-<div class="details">B5 fb</div>
-<div class="details">B6 mc_ca</div>
-</td><td>B6 Hold<div class="details">B6 mc_clk</div>
-<div class="details">B6 Hold</div>
-<div class="details">B5 mcq</div>
-<div class="details">B5 fb</div>
-<div class="details">B6 mc_ca</div>
-<div class="details">B6 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="details-root">
 <td>clk2 pad<div class="details">clk2 pad</div>
@@ -1391,18 +1272,18 @@ kbd.power-guard.disabled {
 <div class="details">B7 mcq</div>
 <div class="details">B7 orm</div>
 <div class="details">B7 out</div>
-</td><td>5.5 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">0.75 ns (tCOi)</div>
+</td><td>4.8 ns<div class="details">1.95 ns (tGCLK_IN)</div>
+<div class="details">0.45 ns (tCOi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>B7 mcq<div class="details">B7 mcq</div>
 <div class="details">B7 orm</div>
 </td><td>B7 out<div class="details">B7 orm</div>
 <div class="details">B7 out</div>
-</td><td>2.6 ns<div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+</td><td>2.4 ns<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>io_B0 pad<div class="details">io_B0 pad</div>
@@ -1413,10 +1294,10 @@ kbd.power-guard.disabled {
 <div class="details">igoe0</div>
 <div class="details">B7 out_oe</div>
 <div class="details">B7 out_en</div>
-</td><td>11.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">3.4 ns (tGPTOE)</div>
-<div class="details">3.7 ns (tEN)</div>
+</td><td>11 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">4.2 ns (tGPTOE)</div>
+<div class="details">3.5 ns (tEN)</div>
 </td></tr>
 <tr class="details-root">
 <td>io_B0 pad<div class="details">io_B0 pad</div>
@@ -1427,15 +1308,15 @@ kbd.power-guard.disabled {
 <div class="details">igoe0</div>
 <div class="details">B7 out_oe</div>
 <div class="details">B7 out_dis</div>
-</td><td>10.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">3.4 ns (tGPTOE)</div>
-<div class="details">2.7 ns (tDIS)</div>
+</td><td>10 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">4.2 ns (tGPTOE)</div>
+<div class="details">2.5 ns (tDIS)</div>
 </td></tr>
 <tr class="details-root">
 <td>clk2 pad<div class="details">clk2 pad</div>
 </td><td>B7 mc_clk<div class="details">B7 mc_clk</div>
-</td><td>2.15 ns<div class="details">2.15 ns (tGCLK_IN)</div>
+</td><td>1.95 ns<div class="details">1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="details-root">
 <td>B3 mc_clk<div class="details">B3 mc_clk</div>
@@ -1450,32 +1331,12 @@ kbd.power-guard.disabled {
 <div class="details">B7 mcd</div>
 <div class="details">B7 Setup</div>
 <div class="details">B7 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="details-root">
-<td>B3 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B7 mc_clk</div>
-<div class="details">B3 mc_clk</div>
-<div class="details">B3 mcq</div>
-<div class="details">B3 fb</div>
-<div class="details">B7 mc_ca</div>
-</td><td>B7 Hold<div class="details">B7 mc_clk</div>
-<div class="details">B7 Hold</div>
-<div class="details">B3 mcq</div>
-<div class="details">B3 fb</div>
-<div class="details">B7 mc_ca</div>
-<div class="details">B7 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="details-root">
 <td>B4 mc_clk<div class="details">B4 mc_clk</div>
@@ -1490,32 +1351,12 @@ kbd.power-guard.disabled {
 <div class="details">B7 mcd</div>
 <div class="details">B7 Setup</div>
 <div class="details">B7 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="details-root">
-<td>B4 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B7 mc_clk</div>
-<div class="details">B4 mc_clk</div>
-<div class="details">B4 mcq</div>
-<div class="details">B4 fb</div>
-<div class="details">B7 mc_ca</div>
-</td><td>B7 Hold<div class="details">B7 mc_clk</div>
-<div class="details">B7 Hold</div>
-<div class="details">B4 mcq</div>
-<div class="details">B4 fb</div>
-<div class="details">B7 mc_ca</div>
-<div class="details">B7 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="details-root">
 <td>B5 mc_clk<div class="details">B5 mc_clk</div>
@@ -1530,32 +1371,12 @@ kbd.power-guard.disabled {
 <div class="details">B7 mcd</div>
 <div class="details">B7 Setup</div>
 <div class="details">B7 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="details-root">
-<td>B5 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B7 mc_clk</div>
-<div class="details">B5 mc_clk</div>
-<div class="details">B5 mcq</div>
-<div class="details">B5 fb</div>
-<div class="details">B7 mc_ca</div>
-</td><td>B7 Hold<div class="details">B7 mc_clk</div>
-<div class="details">B7 Hold</div>
-<div class="details">B5 mcq</div>
-<div class="details">B5 fb</div>
-<div class="details">B7 mc_ca</div>
-<div class="details">B7 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="details-root">
 <td>B6 mc_clk<div class="details">B6 mc_clk</div>
@@ -1570,32 +1391,12 @@ kbd.power-guard.disabled {
 <div class="details">B7 mcd</div>
 <div class="details">B7 Setup</div>
 <div class="details">B7 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="details-root">
-<td>B6 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B7 mc_clk</div>
-<div class="details">B6 mc_clk</div>
-<div class="details">B6 mcq</div>
-<div class="details">B6 fb</div>
-<div class="details">B7 mc_ca</div>
-</td><td>B7 Hold<div class="details">B7 mc_clk</div>
-<div class="details">B7 Hold</div>
-<div class="details">B6 mcq</div>
-<div class="details">B6 fb</div>
-<div class="details">B7 mc_ca</div>
-<div class="details">B7 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>clk2 pad<div class="details">clk2 pad</div>
@@ -1606,18 +1407,18 @@ kbd.power-guard.disabled {
 <div class="details">B8 mcq</div>
 <div class="details">B8 orm</div>
 <div class="details">B8 out</div>
-</td><td>5.5 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">0.75 ns (tCOi)</div>
+</td><td>4.8 ns<div class="details">1.95 ns (tGCLK_IN)</div>
+<div class="details">0.45 ns (tCOi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>B8 mcq<div class="details">B8 mcq</div>
 <div class="details">B8 orm</div>
 </td><td>B8 out<div class="details">B8 orm</div>
 <div class="details">B8 out</div>
-</td><td>2.6 ns<div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+</td><td>2.4 ns<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>io_B0 pad<div class="details">io_B0 pad</div>
@@ -1628,10 +1429,10 @@ kbd.power-guard.disabled {
 <div class="details">igoe0</div>
 <div class="details">B8 out_oe</div>
 <div class="details">B8 out_en</div>
-</td><td>11.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">3.4 ns (tGPTOE)</div>
-<div class="details">3.7 ns (tEN)</div>
+</td><td>11 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">4.2 ns (tGPTOE)</div>
+<div class="details">3.5 ns (tEN)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>io_B0 pad<div class="details">io_B0 pad</div>
@@ -1642,15 +1443,15 @@ kbd.power-guard.disabled {
 <div class="details">igoe0</div>
 <div class="details">B8 out_oe</div>
 <div class="details">B8 out_dis</div>
-</td><td>10.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">3.4 ns (tGPTOE)</div>
-<div class="details">2.7 ns (tDIS)</div>
+</td><td>10 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">4.2 ns (tGPTOE)</div>
+<div class="details">2.5 ns (tDIS)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>clk2 pad<div class="details">clk2 pad</div>
 </td><td>B8 mc_clk<div class="details">B8 mc_clk</div>
-</td><td>2.15 ns<div class="details">2.15 ns (tGCLK_IN)</div>
+</td><td>1.95 ns<div class="details">1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>B3 mc_clk<div class="details">B3 mc_clk</div>
@@ -1665,32 +1466,12 @@ kbd.power-guard.disabled {
 <div class="details">B8 mcd</div>
 <div class="details">B8 Setup</div>
 <div class="details">B8 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="highlight details-root">
-<td>B3 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B8 mc_clk</div>
-<div class="details">B3 mc_clk</div>
-<div class="details">B3 mcq</div>
-<div class="details">B3 fb</div>
-<div class="details">B8 mc_ca</div>
-</td><td>B8 Hold<div class="details">B8 mc_clk</div>
-<div class="details">B8 Hold</div>
-<div class="details">B3 mcq</div>
-<div class="details">B3 fb</div>
-<div class="details">B8 mc_ca</div>
-<div class="details">B8 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>B4 mc_clk<div class="details">B4 mc_clk</div>
@@ -1705,32 +1486,12 @@ kbd.power-guard.disabled {
 <div class="details">B8 mcd</div>
 <div class="details">B8 Setup</div>
 <div class="details">B8 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="highlight details-root">
-<td>B4 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B8 mc_clk</div>
-<div class="details">B4 mc_clk</div>
-<div class="details">B4 mcq</div>
-<div class="details">B4 fb</div>
-<div class="details">B8 mc_ca</div>
-</td><td>B8 Hold<div class="details">B8 mc_clk</div>
-<div class="details">B8 Hold</div>
-<div class="details">B4 mcq</div>
-<div class="details">B4 fb</div>
-<div class="details">B8 mc_ca</div>
-<div class="details">B8 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>B5 mc_clk<div class="details">B5 mc_clk</div>
@@ -1745,32 +1506,12 @@ kbd.power-guard.disabled {
 <div class="details">B8 mcd</div>
 <div class="details">B8 Setup</div>
 <div class="details">B8 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="highlight details-root">
-<td>B5 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B8 mc_clk</div>
-<div class="details">B5 mc_clk</div>
-<div class="details">B5 mcq</div>
-<div class="details">B5 fb</div>
-<div class="details">B8 mc_ca</div>
-</td><td>B8 Hold<div class="details">B8 mc_clk</div>
-<div class="details">B8 Hold</div>
-<div class="details">B5 mcq</div>
-<div class="details">B5 fb</div>
-<div class="details">B8 mc_ca</div>
-<div class="details">B8 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>B6 mc_clk<div class="details">B6 mc_clk</div>
@@ -1785,32 +1526,12 @@ kbd.power-guard.disabled {
 <div class="details">B8 mcd</div>
 <div class="details">B8 Setup</div>
 <div class="details">B8 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="highlight details-root">
-<td>B6 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B8 mc_clk</div>
-<div class="details">B6 mc_clk</div>
-<div class="details">B6 mcq</div>
-<div class="details">B6 fb</div>
-<div class="details">B8 mc_ca</div>
-</td><td>B8 Hold<div class="details">B8 mc_clk</div>
-<div class="details">B8 Hold</div>
-<div class="details">B6 mcq</div>
-<div class="details">B6 fb</div>
-<div class="details">B8 mc_ca</div>
-<div class="details">B8 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>B7 mc_clk<div class="details">B7 mc_clk</div>
@@ -1825,32 +1546,12 @@ kbd.power-guard.disabled {
 <div class="details">B8 mcd</div>
 <div class="details">B8 Setup</div>
 <div class="details">B8 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="highlight details-root">
-<td>B7 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B8 mc_clk</div>
-<div class="details">B7 mc_clk</div>
-<div class="details">B7 mcq</div>
-<div class="details">B7 fb</div>
-<div class="details">B8 mc_ca</div>
-</td><td>B8 Hold<div class="details">B8 mc_clk</div>
-<div class="details">B8 Hold</div>
-<div class="details">B7 mcq</div>
-<div class="details">B7 fb</div>
-<div class="details">B8 mc_ca</div>
-<div class="details">B8 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="details-root">
 <td>clk2 pad<div class="details">clk2 pad</div>
@@ -1861,18 +1562,18 @@ kbd.power-guard.disabled {
 <div class="details">B9 mcq</div>
 <div class="details">B9 orm</div>
 <div class="details">B9 out</div>
-</td><td>5.5 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">0.75 ns (tCOi)</div>
+</td><td>4.8 ns<div class="details">1.95 ns (tGCLK_IN)</div>
+<div class="details">0.45 ns (tCOi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>B9 mcq<div class="details">B9 mcq</div>
 <div class="details">B9 orm</div>
 </td><td>B9 out<div class="details">B9 orm</div>
 <div class="details">B9 out</div>
-</td><td>2.6 ns<div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+</td><td>2.4 ns<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="details-root">
 <td>io_B0 pad<div class="details">io_B0 pad</div>
@@ -1883,10 +1584,10 @@ kbd.power-guard.disabled {
 <div class="details">igoe0</div>
 <div class="details">B9 out_oe</div>
 <div class="details">B9 out_en</div>
-</td><td>11.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">3.4 ns (tGPTOE)</div>
-<div class="details">3.7 ns (tEN)</div>
+</td><td>11 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">4.2 ns (tGPTOE)</div>
+<div class="details">3.5 ns (tEN)</div>
 </td></tr>
 <tr class="details-root">
 <td>io_B0 pad<div class="details">io_B0 pad</div>
@@ -1897,15 +1598,15 @@ kbd.power-guard.disabled {
 <div class="details">igoe0</div>
 <div class="details">B9 out_oe</div>
 <div class="details">B9 out_dis</div>
-</td><td>10.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">3.4 ns (tGPTOE)</div>
-<div class="details">2.7 ns (tDIS)</div>
+</td><td>10 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">4.2 ns (tGPTOE)</div>
+<div class="details">2.5 ns (tDIS)</div>
 </td></tr>
 <tr class="details-root">
 <td>clk2 pad<div class="details">clk2 pad</div>
 </td><td>B9 mc_clk<div class="details">B9 mc_clk</div>
-</td><td>2.15 ns<div class="details">2.15 ns (tGCLK_IN)</div>
+</td><td>1.95 ns<div class="details">1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="details-root">
 <td>B3 mc_clk<div class="details">B3 mc_clk</div>
@@ -1920,32 +1621,12 @@ kbd.power-guard.disabled {
 <div class="details">B9 mcd</div>
 <div class="details">B9 Setup</div>
 <div class="details">B9 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="details-root">
-<td>B3 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B9 mc_clk</div>
-<div class="details">B3 mc_clk</div>
-<div class="details">B3 mcq</div>
-<div class="details">B3 fb</div>
-<div class="details">B9 mc_ca</div>
-</td><td>B9 Hold<div class="details">B9 mc_clk</div>
-<div class="details">B9 Hold</div>
-<div class="details">B3 mcq</div>
-<div class="details">B3 fb</div>
-<div class="details">B9 mc_ca</div>
-<div class="details">B9 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="details-root">
 <td>B4 mc_clk<div class="details">B4 mc_clk</div>
@@ -1960,32 +1641,12 @@ kbd.power-guard.disabled {
 <div class="details">B9 mcd</div>
 <div class="details">B9 Setup</div>
 <div class="details">B9 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="details-root">
-<td>B4 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B9 mc_clk</div>
-<div class="details">B4 mc_clk</div>
-<div class="details">B4 mcq</div>
-<div class="details">B4 fb</div>
-<div class="details">B9 mc_ca</div>
-</td><td>B9 Hold<div class="details">B9 mc_clk</div>
-<div class="details">B9 Hold</div>
-<div class="details">B4 mcq</div>
-<div class="details">B4 fb</div>
-<div class="details">B9 mc_ca</div>
-<div class="details">B9 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="details-root">
 <td>B5 mc_clk<div class="details">B5 mc_clk</div>
@@ -2000,32 +1661,12 @@ kbd.power-guard.disabled {
 <div class="details">B9 mcd</div>
 <div class="details">B9 Setup</div>
 <div class="details">B9 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="details-root">
-<td>B5 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B9 mc_clk</div>
-<div class="details">B5 mc_clk</div>
-<div class="details">B5 mcq</div>
-<div class="details">B5 fb</div>
-<div class="details">B9 mc_ca</div>
-</td><td>B9 Hold<div class="details">B9 mc_clk</div>
-<div class="details">B9 Hold</div>
-<div class="details">B5 mcq</div>
-<div class="details">B5 fb</div>
-<div class="details">B9 mc_ca</div>
-<div class="details">B9 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="details-root">
 <td>B6 mc_clk<div class="details">B6 mc_clk</div>
@@ -2040,32 +1681,12 @@ kbd.power-guard.disabled {
 <div class="details">B9 mcd</div>
 <div class="details">B9 Setup</div>
 <div class="details">B9 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="details-root">
-<td>B6 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B9 mc_clk</div>
-<div class="details">B6 mc_clk</div>
-<div class="details">B6 mcq</div>
-<div class="details">B6 fb</div>
-<div class="details">B9 mc_ca</div>
-</td><td>B9 Hold<div class="details">B9 mc_clk</div>
-<div class="details">B9 Hold</div>
-<div class="details">B6 mcq</div>
-<div class="details">B6 fb</div>
-<div class="details">B9 mc_ca</div>
-<div class="details">B9 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="details-root">
 <td>B7 mc_clk<div class="details">B7 mc_clk</div>
@@ -2080,32 +1701,12 @@ kbd.power-guard.disabled {
 <div class="details">B9 mcd</div>
 <div class="details">B9 Setup</div>
 <div class="details">B9 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="details-root">
-<td>B7 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B9 mc_clk</div>
-<div class="details">B7 mc_clk</div>
-<div class="details">B7 mcq</div>
-<div class="details">B7 fb</div>
-<div class="details">B9 mc_ca</div>
-</td><td>B9 Hold<div class="details">B9 mc_clk</div>
-<div class="details">B9 Hold</div>
-<div class="details">B7 mcq</div>
-<div class="details">B7 fb</div>
-<div class="details">B9 mc_ca</div>
-<div class="details">B9 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="details-root">
 <td>B8 mc_clk<div class="details">B8 mc_clk</div>
@@ -2120,32 +1721,12 @@ kbd.power-guard.disabled {
 <div class="details">B9 mcd</div>
 <div class="details">B9 Setup</div>
 <div class="details">B9 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="details-root">
-<td>B8 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B9 mc_clk</div>
-<div class="details">B8 mc_clk</div>
-<div class="details">B8 mcq</div>
-<div class="details">B8 fb</div>
-<div class="details">B9 mc_ca</div>
-</td><td>B9 Hold<div class="details">B9 mc_clk</div>
-<div class="details">B9 Hold</div>
-<div class="details">B8 mcq</div>
-<div class="details">B8 fb</div>
-<div class="details">B9 mc_ca</div>
-<div class="details">B9 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>clk2 pad<div class="details">clk2 pad</div>
@@ -2156,18 +1737,18 @@ kbd.power-guard.disabled {
 <div class="details">B10 mcq</div>
 <div class="details">B10 orm</div>
 <div class="details">B10 out</div>
-</td><td>5.5 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">0.75 ns (tCOi)</div>
+</td><td>4.8 ns<div class="details">1.95 ns (tGCLK_IN)</div>
+<div class="details">0.45 ns (tCOi)</div>
 <div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>B10 mcq<div class="details">B10 mcq</div>
 <div class="details">B10 orm</div>
 </td><td>B10 out<div class="details">B10 orm</div>
 <div class="details">B10 out</div>
-</td><td>2.6 ns<div class="details">0.3 ns (tORP)</div>
-<div class="details">2.3 ns (tBUF)</div>
+</td><td>2.4 ns<div class="details">0.3 ns (tORP)</div>
+<div class="details">2.1 ns (tBUF)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>io_B0 pad<div class="details">io_B0 pad</div>
@@ -2178,10 +1759,10 @@ kbd.power-guard.disabled {
 <div class="details">igoe0</div>
 <div class="details">B10 out_oe</div>
 <div class="details">B10 out_en</div>
-</td><td>11.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">3.4 ns (tGPTOE)</div>
-<div class="details">3.7 ns (tEN)</div>
+</td><td>11 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">4.2 ns (tGPTOE)</div>
+<div class="details">3.5 ns (tEN)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>io_B0 pad<div class="details">io_B0 pad</div>
@@ -2192,15 +1773,15 @@ kbd.power-guard.disabled {
 <div class="details">igoe0</div>
 <div class="details">B10 out_oe</div>
 <div class="details">B10 out_dis</div>
-</td><td>10.5 ns<div class="details">1.9 ns (tIN)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">3.4 ns (tGPTOE)</div>
-<div class="details">2.7 ns (tDIS)</div>
+</td><td>10 ns<div class="details">1.05 ns (tIN)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">4.2 ns (tGPTOE)</div>
+<div class="details">2.5 ns (tDIS)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>clk2 pad<div class="details">clk2 pad</div>
 </td><td>B10 mc_clk<div class="details">B10 mc_clk</div>
-</td><td>2.15 ns<div class="details">2.15 ns (tGCLK_IN)</div>
+</td><td>1.95 ns<div class="details">1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>B3 mc_clk<div class="details">B3 mc_clk</div>
@@ -2215,32 +1796,12 @@ kbd.power-guard.disabled {
 <div class="details">B10 mcd</div>
 <div class="details">B10 Setup</div>
 <div class="details">B10 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="highlight details-root">
-<td>B3 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B10 mc_clk</div>
-<div class="details">B3 mc_clk</div>
-<div class="details">B3 mcq</div>
-<div class="details">B3 fb</div>
-<div class="details">B10 mc_ca</div>
-</td><td>B10 Hold<div class="details">B10 mc_clk</div>
-<div class="details">B10 Hold</div>
-<div class="details">B3 mcq</div>
-<div class="details">B3 fb</div>
-<div class="details">B10 mc_ca</div>
-<div class="details">B10 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>B4 mc_clk<div class="details">B4 mc_clk</div>
@@ -2255,32 +1816,12 @@ kbd.power-guard.disabled {
 <div class="details">B10 mcd</div>
 <div class="details">B10 Setup</div>
 <div class="details">B10 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="highlight details-root">
-<td>B4 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B10 mc_clk</div>
-<div class="details">B4 mc_clk</div>
-<div class="details">B4 mcq</div>
-<div class="details">B4 fb</div>
-<div class="details">B10 mc_ca</div>
-</td><td>B10 Hold<div class="details">B10 mc_clk</div>
-<div class="details">B10 Hold</div>
-<div class="details">B4 mcq</div>
-<div class="details">B4 fb</div>
-<div class="details">B10 mc_ca</div>
-<div class="details">B10 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>B5 mc_clk<div class="details">B5 mc_clk</div>
@@ -2295,32 +1836,12 @@ kbd.power-guard.disabled {
 <div class="details">B10 mcd</div>
 <div class="details">B10 Setup</div>
 <div class="details">B10 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="highlight details-root">
-<td>B5 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B10 mc_clk</div>
-<div class="details">B5 mc_clk</div>
-<div class="details">B5 mcq</div>
-<div class="details">B5 fb</div>
-<div class="details">B10 mc_ca</div>
-</td><td>B10 Hold<div class="details">B10 mc_clk</div>
-<div class="details">B10 Hold</div>
-<div class="details">B5 mcq</div>
-<div class="details">B5 fb</div>
-<div class="details">B10 mc_ca</div>
-<div class="details">B10 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>B6 mc_clk<div class="details">B6 mc_clk</div>
@@ -2335,32 +1856,12 @@ kbd.power-guard.disabled {
 <div class="details">B10 mcd</div>
 <div class="details">B10 Setup</div>
 <div class="details">B10 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="highlight details-root">
-<td>B6 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B10 mc_clk</div>
-<div class="details">B6 mc_clk</div>
-<div class="details">B6 mcq</div>
-<div class="details">B6 fb</div>
-<div class="details">B10 mc_ca</div>
-</td><td>B10 Hold<div class="details">B10 mc_clk</div>
-<div class="details">B10 Hold</div>
-<div class="details">B6 mcq</div>
-<div class="details">B6 fb</div>
-<div class="details">B10 mc_ca</div>
-<div class="details">B10 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>B7 mc_clk<div class="details">B7 mc_clk</div>
@@ -2375,32 +1876,12 @@ kbd.power-guard.disabled {
 <div class="details">B10 mcd</div>
 <div class="details">B10 Setup</div>
 <div class="details">B10 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="highlight details-root">
-<td>B7 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B10 mc_clk</div>
-<div class="details">B7 mc_clk</div>
-<div class="details">B7 mcq</div>
-<div class="details">B7 fb</div>
-<div class="details">B10 mc_ca</div>
-</td><td>B10 Hold<div class="details">B10 mc_clk</div>
-<div class="details">B10 Hold</div>
-<div class="details">B7 mcq</div>
-<div class="details">B7 fb</div>
-<div class="details">B10 mc_ca</div>
-<div class="details">B10 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>B8 mc_clk<div class="details">B8 mc_clk</div>
@@ -2415,32 +1896,12 @@ kbd.power-guard.disabled {
 <div class="details">B10 mcd</div>
 <div class="details">B10 Setup</div>
 <div class="details">B10 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="highlight details-root">
-<td>B8 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B10 mc_clk</div>
-<div class="details">B8 mc_clk</div>
-<div class="details">B8 mcq</div>
-<div class="details">B8 fb</div>
-<div class="details">B10 mc_ca</div>
-</td><td>B10 Hold<div class="details">B10 mc_clk</div>
-<div class="details">B10 Hold</div>
-<div class="details">B8 mcq</div>
-<div class="details">B8 fb</div>
-<div class="details">B10 mc_ca</div>
-<div class="details">B10 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 <tr class="highlight details-root">
 <td>B9 mc_clk<div class="details">B9 mc_clk</div>
@@ -2455,32 +1916,12 @@ kbd.power-guard.disabled {
 <div class="details">B10 mcd</div>
 <div class="details">B10 Setup</div>
 <div class="details">B10 mc_clk</div>
-</td><td>3.85 ns<div class="details">0.75 ns (tCOi)</div>
-<div class="details">0.3 ns (tFBK)</div>
-<div class="details">2.5 ns (tROUTE)</div>
-<div class="details">1 ns (tMCELL)</div>
-<div class="details">1.45 ns (tST)</div>
-<div class="details">-2.15 ns (tGCLK_IN)</div>
-</td></tr>
-<tr class="highlight details-root">
-<td>B9 mc_clk<div class="details">clk2 pad</div>
-<div class="details">B10 mc_clk</div>
-<div class="details">B9 mc_clk</div>
-<div class="details">B9 mcq</div>
-<div class="details">B9 fb</div>
-<div class="details">B10 mc_ca</div>
-</td><td>B10 Hold<div class="details">B10 mc_clk</div>
-<div class="details">B10 Hold</div>
-<div class="details">B9 mcq</div>
-<div class="details">B9 fb</div>
-<div class="details">B10 mc_ca</div>
-<div class="details">B10 mcd</div>
-</td><td>0.85 ns<div class="details">2.15 ns (tGCLK_IN)</div>
-<div class="details">3.25 ns (tHT)</div>
-<div class="details">-0.75 ns (tCOi)</div>
-<div class="details">-0.3 ns (tFBK)</div>
-<div class="details">-2.5 ns (tROUTE)</div>
-<div class="details">-1 ns (tMCELL)</div>
+</td><td>3.25 ns<div class="details">0.45 ns (tCOi)</div>
+<div class="details">0.75 ns (tFBK)</div>
+<div class="details">2.25 ns (tROUTE)</div>
+<div class="details">0.65 ns (tMCELL)</div>
+<div class="details">1.1 ns (tST)</div>
+<div class="details">-1.95 ns (tGCLK_IN)</div>
 </td></tr>
 </table>
 </div>

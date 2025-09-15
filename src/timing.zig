@@ -58,7 +58,7 @@ pub const Node = union (enum) {
     out_en: lc4k.MC_Ref,
     out_dis: lc4k.MC_Ref,
 
-    pub fn write_name(self: Node, writer: std.io.AnyWriter, comptime Device: type, names: *const naming.Names(Device)) !void {
+    pub fn write_name(self: Node, writer: *std.io.Writer, comptime Device: type, names: *const naming.Names(Device)) !void {
         switch (self) {
             .pad, .in, .grp => |signal_index| {
                 const signal: Device.Signal = @enumFromInt(signal_index);

@@ -5,7 +5,7 @@ pub const Assembly_Options = struct {
 
 pub const Assembly_Results = struct {
     jedec: JEDEC_File,
-    errors: std.ArrayList(Config_Error),
+    errors: std.array_list.Managed(Config_Error),
     error_arena: std.heap.ArenaAllocator, // used to store dynamically allocated error messages
 };
 
@@ -14,8 +14,8 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
         .jedec = JEDEC_File {
             .data = try JEDEC_Data.init_full(allocator, Device.jedec_dimensions),
         },
-        .errors = std.ArrayList(Config_Error).init(allocator),
-        .error_arena = std.heap.ArenaAllocator.init(allocator),
+        .errors = .init(allocator),
+        .error_arena = .init(allocator),
     };
 
     var prng = std.Random.Xoroshiro128.init(0x0416_fff9_140b_a135); // random but consistent seed

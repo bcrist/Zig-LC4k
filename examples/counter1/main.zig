@@ -47,17 +47,11 @@ pub fn main() !void {
 
     const results = try chip.assemble(arena.allocator(), .{});
 
-    var jed_file = try std.fs.cwd().createFile("counter1.jed", .{});
-    defer jed_file.close();
-    try Chip.write_jed(results.jedec, jed_file.writer(), .{});
-
-    var svf_file = try std.fs.cwd().createFile("counter1.svf", .{});
-    defer svf_file.close();
-    try Chip.write_svf(results.jedec, svf_file.writer(), .{});
-
-    var report_file = try std.fs.cwd().createFile("counter1.html", .{});
-    defer report_file.close();
-    try Chip.write_report(7, results.jedec, report_file.writer(), .{
+    const design_name = "counter1";
+    try Chip.write_jed_file(results.jedec, design_name ++ ".jed", .{});
+    try Chip.write_svf_file(results.jedec, design_name ++ ".svf", .{});
+    try Chip.write_report_file(5, results.jedec, design_name ++ ".html", .{
+        .design_name = design_name,
         .errors = results.errors.items,
     });
 }
