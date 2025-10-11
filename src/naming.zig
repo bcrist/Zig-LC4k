@@ -141,7 +141,11 @@ pub fn Names(comptime Device: type) type {
                     },
                     .pointer => |info| {
                         if (info.size != .slice) {
-                            @compileError("Unexpected type: " ++ @typeName(T) ++ " for " ++ options.prefix ++ options.name ++ options.suffix);
+                            if (@typeInfo(info.child) == .array) {
+                                return self.add_names(what.*, options);
+                            } else {
+                                @compileError("Unexpected type: " ++ @typeName(T) ++ " for " ++ options.prefix ++ options.name ++ options.suffix);
+                            }
                         }
                         inline for (0.., what) |i, elem| {
                             try self.add_names(elem, .{
@@ -152,6 +156,86 @@ pub fn Names(comptime Device: type) type {
                         }
                         if (info.child == Signal) {
                             try self.add_bus_name(what, options.prefix ++ options.name ++ options.suffix);
+                        }
+                    },
+                    .int => {
+                        try self.add_constant(what, options.prefix ++ options.name ++ options.suffix);
+                    },
+                    else => @compileError("Unexpected type: " ++ @typeName(T) ++ " for " ++ options.prefix ++ options.name ++ options.suffix), 
+                },
+            }
+        }
+
+        pub fn add_names_alloc(self: *Self, arena: std.mem.Allocator, what: anytype, comptime options: Add_Names_Options) !void {
+            const T = @TypeOf(what);
+            switch (T) {
+                GLB_Index => try self.add_glb_name(what, options.prefix ++ options.name ++ options.suffix),
+                MC_Ref => try self.add_mc_name(what, options.prefix ++ options.name ++ options.suffix),
+                Signal => try self.add_signal_name(what, options.prefix ++ options.name ++ options.suffix),
+                type => {
+                    const name_is_suffix = comptime std.mem.startsWith(u8, options.name, ".");
+                    const prefix = options.prefix ++ if (name_is_suffix) "" else options.name ++ if (options.name.len > 0) "." else "";
+                    const suffix = if (name_is_suffix) options.name ++ options.suffix else options.suffix;
+
+                    const decls = switch (@typeInfo(what)) {
+                        .@"struct" => |info| info.decls,
+                        .@"union" => |info| info.decls,
+                        else => @compileError("Expected struct or union type; found " ++ @typeName(what)),
+                    };
+
+                    inline for (decls) |decl| {
+                        if (@typeInfo(@TypeOf(@field(what, decl.name))) != .@"fn") {
+                            try self.add_names(@field(what, decl.name), .{
+                                .prefix = prefix,
+                                .name = decl.name,
+                                .suffix = suffix,
+                            });
+                        }
+                    }
+                },
+                else => switch (@typeInfo(T)) {
+                    .@"struct" => |struct_info| {
+                        const name_is_suffix = comptime std.mem.startsWith(u8, options.name, ".");
+                        const prefix = options.prefix ++ if (name_is_suffix) "" else options.name ++ if (options.name.len > 0) "." else "";
+                        const suffix = if (name_is_suffix) options.name ++ options.suffix else options.suffix;
+
+                        inline for (struct_info.fields) |field| {
+                            try self.add_names_alloc(arena, @field(what, field.name), .{
+                                .prefix = prefix,
+                                .name = field.name,
+                                .suffix = suffix,
+                            });
+                        }
+                    },
+                    .array => |info| {
+                        inline for (0.., what) |i, elem| {
+                            try self.add_names_alloc(arena, elem, .{
+                                .prefix = options.prefix,
+                                .name = std.fmt.comptimePrint("{s}[{}]", .{ options.name, i }),
+                                .suffix = options.suffix,
+                            });
+                        }
+                        if (info.child == Signal) {
+                            try self.add_bus_name_alloc(arena, &what, options.prefix ++ options.name ++ options.suffix);
+                        }
+                    },
+                    .pointer => |info| {
+                        if (info.size != .slice) {
+                            if (@typeInfo(info.child) == .array) {
+                                return self.add_names_alloc(arena, what.*, options);
+                            } else {
+                                @compileError("Unexpected type: " ++ @typeName(T) ++ " for " ++ options.prefix ++ options.name ++ options.suffix);
+                            }
+                        }
+                        inline for (0.., what) |i, elem| {
+                            try self.add_names_alloc(arena, elem, .{
+                                .prefix = options.prefix,
+                                .name = std.fmt.comptimePrint("{s}[{}]", .{ options.name, i }),
+                                .suffix = options.suffix,
+                            });
+                        }
+                        if (info.child == Signal) {
+                            try self.add_bus_name_alloc(arena, &what, options.prefix ++ options.name ++ options.suffix);
                         }
                     },
                     .int => {
@@ -208,6 +292,11 @@ pub fn Names(comptime Device: type) type {
             if (self.bus_lookup.contains(name)) return error.Duplicate_Name;
             try self.bus_lookup.ensureUnusedCapacity(self.gpa, 1);
             self.bus_lookup.putAssumeCapacityNoClobber(name, signals);
+        }
+
+        pub fn add_bus_name_alloc(self: *Self, arena: std.mem.Allocator, signals: []const Signal, name: []const u8) !void {
+            const copied_signals = try arena.dupe(Signal, signals);
+            try self.add_bus_name(copied_signals, name);
         }
 
         pub fn add_constant(self: *Self, constant: anytype, name: []const u8) !void {
@@ -315,9 +404,9 @@ pub fn Names(comptime Device: type) type {
                 while (constant_iter.next()) |entry| {
                     const constant = entry.value_ptr.*;
                     const constant_bits: std.StaticBitSet(64) = .{ .mask = constant.value };
-                    try w.print("   {s}: {}'0b", .{ entry.key_ptr.*, constant.bits });
-                    for (0..constant.bits) |i| {
-                        try w.writeByte(if (constant_bits.isSet(constant.bits - i - 1)) "1" else "0");
+                    try w.print("   {s}: {}'0b", .{ entry.key_ptr.*, constant.max_bit_index });
+                    for (0..constant.max_bit_index) |i| {
+                        try w.writeByte(if (constant_bits.isSet(constant.max_bit_index - i - 1)) '1' else '0');
                     }
                     try w.writeByte('\n');
                 }

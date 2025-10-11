@@ -146,8 +146,11 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
         }
 
         pub fn logic(self: *Self, equation: []const u8, extra: anytype) !Logic {
+            var names_arena = std.heap.ArenaAllocator.init(self.gpa);
+            defer names_arena.deinit();
+
             const options = parse_options(extra);
-            var names = try self.parse_extra_names(extra);
+            var names = try self.parse_extra_names(names_arena.allocator(), extra);
             defer names.deinit();
 
             var ast = try Ast(Device).parse(self.gpa, &names, equation);
@@ -175,8 +178,11 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
         }
         
         pub fn assign_logic(self: *Self, chip: *lc4k.Chip_Config(Device.device_type), mc_signals: []const Device.Signal, equation: []const u8, extra: anytype) !void {
+            var names_arena = std.heap.ArenaAllocator.init(self.gpa);
+            defer names_arena.deinit();
+
             const options = parse_options(extra);
-            var names = try self.parse_extra_names(extra);
+            var names = try self.parse_extra_names(names_arena.allocator(), extra);
             defer names.deinit();
 
             var ast = try Ast(Device).parse(self.gpa, &names, equation);
@@ -397,8 +403,11 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
         };
 
         fn process_single_bit(self: *Self, equation: []const u8, extra: anytype) !Process_Single_Bit_Results {
+            var names_arena = std.heap.ArenaAllocator.init(self.gpa);
+            defer names_arena.deinit();
+
             const options = parse_options(extra);
-            var names = try self.parse_extra_names(extra);
+            var names = try self.parse_extra_names(names_arena.allocator(), extra);
             defer names.deinit();
 
             const opt_signal_limit = if (options.optimize) self.optimization_signal_limit else 0;
@@ -453,7 +462,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
             return options;
         }
 
-        fn parse_extra_names(self: *Self, extra: anytype) !Names {
+        fn parse_extra_names(self: *Self, temp_arena: std.mem.Allocator, extra: anytype) !Names {
             var names: Names = .{
                 .gpa = self.gpa,
                 .fallback = self.names,
@@ -462,7 +471,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
 
             inline for (@typeInfo(@TypeOf(extra)).@"struct".fields) |field| {
                 if (comptime !std.mem.eql(u8, field.name, "dont_care") and !std.mem.eql(u8, field.name, "max_product_terms") and !std.mem.eql(u8, field.name, "optimize")) {
-                    try names.add_names(@field(extra, field.name), .{ .name = field.name });
+                    try names.add_names_alloc(temp_arena, @field(extra, field.name), .{ .name = field.name });
                 }
             }
 
