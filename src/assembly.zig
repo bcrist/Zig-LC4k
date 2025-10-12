@@ -1,6 +1,7 @@
 pub const Assembly_Options = struct {
     // when set, only the first 4 GIs are programmed to 0's for a PT that's supposed to be always false
     use_lattice_false_pt: bool = false,
+    max_gi_routing_attempts_per_signal: usize = 1000,
 };
 
 pub const Assembly_Results = struct {
@@ -69,7 +70,7 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
         }
 
         // Route signals to specific GI fuses:
-        gi_routing = try routing.route_generic_inputs(Device, &gi_routing, glb_config.forced_gi_routing, rnd, @intCast(glb), &results);
+        gi_routing = try routing.route_generic_inputs(Device, &gi_routing, glb_config.forced_gi_routing, rnd, @intCast(glb), &results, options.max_gi_routing_attempts_per_signal);
         for (gi_routing, 0..) |maybe_signal, gi| if (maybe_signal) |signal| {
             const option_index = std.mem.indexOfScalar(Device.Signal, &Device.gi_options[gi], signal).?;
             const range = Device.get_gi_range(glb, gi);

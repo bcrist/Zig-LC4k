@@ -1,4 +1,4 @@
-pub fn route_generic_inputs(comptime Device: type, signals_to_route: []?Device.Signal, forced_gi_routing: [Device.num_gis_per_glb]?Device.Signal, rnd: std.Random, glb: lc4k.GLB_Index, results: *assembly.Assembly_Results) ![Device.num_gis_per_glb]?Device.Signal {
+pub fn route_generic_inputs(comptime Device: type, signals_to_route: []?Device.Signal, forced_gi_routing: [Device.num_gis_per_glb]?Device.Signal, rnd: std.Random, glb: lc4k.GLB_Index, results: *assembly.Assembly_Results, max_attempts: usize) ![Device.num_gis_per_glb]?Device.Signal {
     var routed_signals: std.EnumSet(Device.Signal) = .initEmpty();
 
     var forced = forced_gi_routing;
@@ -41,7 +41,7 @@ pub fn route_generic_inputs(comptime Device: type, signals_to_route: []?Device.S
 
         var signal_to_route = signal;
         var attempts: usize = 0;
-        while (attempts < 1000) : (attempts += 1) {
+        while (attempts < max_attempts) : (attempts += 1) {
             const options = gi_options_by_signal.get(signal_to_route) orelse return error.Invalid_Signal;
             for (options) |option| {
                 if (routed[option] == null) {
