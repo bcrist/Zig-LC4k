@@ -377,7 +377,7 @@ pub fn Macrocell_Config(comptime family: Device_Family, comptime Signal: type) t
         wide_sum_routing: ?Wide_Routing = null,
         logic: Macrocell_Logic(Signal),
         func: union(Macrocell_Function) {
-            combinational: void,
+            combinational,
             latch: Register_Config(Signal),
             t_ff: Register_Config(Signal),
             d_ff: Register_Config(Signal),
@@ -493,7 +493,7 @@ pub const GOE_Config_Pin = struct {
 pub const GOE_Config_Bus = struct {
     polarity: Polarity = .positive,
     source: union(enum) {
-        constant_high: void,
+        constant_high,
         glb_shared_pt_enable: GLB_Index,
     } = .constant_high,
 };
@@ -501,8 +501,8 @@ pub const GOE_Config_Bus = struct {
 pub const GOE_Config_Bus_Or_Pin = struct {
     polarity: Polarity = .positive,
     source: union(enum) {
-        constant_high: void,
-        input: void,
+        constant_high,
+        input,
         glb_shared_pt_enable: GLB_Index,
     } = .constant_high,
 };
@@ -1204,7 +1204,7 @@ pub fn Simulator(comptime Device: type) type {
             if (Device.family == .zero_power_enhanced) {
                 new_state_data.setPresent(io_signal, new_state_data.contains(output_config.routing.to_absolute(mcref)));
             } else {
-                std.debug.assert(@TypeOf(output_config) == Output_Config);
+                std.debug.assert(@TypeOf(output_config) == Output_Config(Signal));
                 switch (output_config.routing) {
                     .same_as_oe => {
                         new_state_data.setPresent(io_signal, new_state_data.contains(output_config.oe_routing.to_absolute(mcref)));
@@ -1213,17 +1213,14 @@ pub fn Simulator(comptime Device: type) type {
                         const fb_signal = mcref.fb(Signal);
                         new_state_data.setPresent(io_signal, new_state_data.contains(fb_signal));
                     },
-                    .five_pt_fast_bypass => |pts| {
-                        const result = for (pts) |pt| {
+                    .five_pt_fast_bypass => |sp| {
+                        const result = for (sp.sum) |pt| {
                             if (evaluate_pt(self.state.data, pt)) break true;
                         } else false;
-                        new_state_data.setPresent(io_signal, result);
-                    },
-                    .five_pt_fast_bypass_inverted => |pts| {
-                        const result = for (pts) |pt| {
-                            if (evaluate_pt(self.state.data, pt)) break true;
-                        } else false;
-                        new_state_data.setPresent(io_signal, !result);
+                        new_state_data.setPresent(io_signal, switch (sp.polarity) {
+                            .positive => result,
+                            .negative => !result,
+                        });
                     },
                 }
             }
@@ -1351,9 +1348,7 @@ pub fn Simulator(comptime Device: type) type {
             return true;
         }
 
-        pub fn expect_signal_state(self: @This(), signals: []const Signal, expected_state: usize, names: ?*const Device.Names) !void {
-            errdefer test_print_signals("For signals:\n", signals, names);
-
+        pub fn read_signal_state(self: @This(), signals: []const Signal) usize {
             var actual_state: usize = 0;
             var bit: usize = 1;
             for (signals) |signal| {
@@ -1362,13 +1357,15 @@ pub fn Simulator(comptime Device: type) type {
                 }
                 bit = @shlExact(bit, 1);
             }
-
-            try std.testing.expectEqual(expected_state, actual_state);
+            return actual_state;
         }
-        
-        pub fn expect_oe_state(self: @This(), signals: []const Signal, expected_state: usize, names: ?*const Device.Names) !void {
-            errdefer test_print_signals("For output enables:\n", signals, names);
 
+        pub fn expect_signal_state(self: @This(), signals: []const Signal, expected_state: usize, names: ?*const Device.Names) !void {
+            errdefer test_print_signals("For signals:\n", signals, names);
+            try std.testing.expectEqual(expected_state, self.read_signal_state(signals));
+        }
+
+        pub fn read_oe_state(self: @This(), signals: []const Signal) usize {
             var actual_state: usize = 0;
             var bit: usize = 1;
             for (signals) |signal| {
@@ -1377,8 +1374,12 @@ pub fn Simulator(comptime Device: type) type {
                 }
                 bit = @shlExact(bit, 1);
             }
-
-            try std.testing.expectEqual(expected_state, actual_state);
+            return actual_state;
+        }
+        
+        pub fn expect_oe_state(self: @This(), signals: []const Signal, expected_state: usize, names: ?*const Device.Names) !void {
+            errdefer test_print_signals("For output enables:\n", signals, names);
+            try std.testing.expectEqual(expected_state, self.read_oe_state(signals));
         }
 
         fn test_print_signals(prefix: []const u8, signals: []const Signal, maybe_names: ?*const Device.Names) void {
