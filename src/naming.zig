@@ -449,8 +449,12 @@ pub fn Names(comptime Device: type) type {
             }
 
             if (self.fallback) |fallback| {
-                try w.writeAll("\nFallback:\n");
-                try fallback.debug(w);
+                if (fallback == Device.get_names()) {
+                    try w.writeAll("\n(Default Fallback)\n");
+                } else {
+                    try w.writeAll("\nFallback:\n");
+                    try fallback.debug(w);
+                }
             }
         }
 

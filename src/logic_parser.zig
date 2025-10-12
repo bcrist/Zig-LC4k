@@ -263,7 +263,9 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
             switch (ir_data.get(ir)) {
                 .xor => |raw_xor_bin| {
                     const lhs, const rhs = bin: {
-                        const xor_bin = ir_data.get(try ir_data.normalize(ir, .{})).xor;
+                        // TODO: investigate why zig seems to miscompile this sometimes if the ir_data.normalize() call is embedded in the ir_data.get() expression :scary:
+                        const temp = try ir_data.normalize(ir, .{});
+                        const xor_bin = ir_data.get(temp).xor;
                         break :bin .{
                             try qmc.optimize(ir_data, xor_bin.lhs, dc_ir, optimization_signal_limit),
                             try qmc.optimize(ir_data, xor_bin.rhs, dc_ir, optimization_signal_limit),
