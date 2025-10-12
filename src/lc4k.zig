@@ -1025,9 +1025,20 @@ pub fn Simulator(comptime Device: type) type {
         chip: *const Chip_Config(Device.device_type),
         state: State = .{},
 
+        pub fn set_input_high(self: *@This(), signal: Signal) void {
+            std.debug.assert(signal.kind() != .mc);
+            self.state.data.insert(signal);
+        }
+
+        pub fn set_input_low(self: *@This(), signal: Signal) void {
+            std.debug.assert(signal.kind() != .mc);
+            self.state.data.remove(signal);
+        }
+
         pub fn set_inputs(self: *@This(), signals: []const Signal, value: usize) void {
             var remaining_value = value;
             for (signals) |signal| {
+                std.debug.assert(signal.kind() != .mc);
                 const bit: u1 = @truncate(remaining_value);
                 remaining_value >>= 1;
                 self.state.data.setPresent(signal, bit == 1);
