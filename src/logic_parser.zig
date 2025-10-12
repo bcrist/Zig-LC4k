@@ -2,6 +2,7 @@ pub const Options = struct {
     max_product_terms: u8 = 80,
     optimize: bool = false,
     dont_care: []const u8 = "",
+    debug: bool = false,
 };
 
 pub fn Logic_Parser(comptime Device_Struct: type) type {
@@ -29,6 +30,16 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
             const ir_normalized = try p.ir_data.normalize(p.ir, .{ .max_xor_depth = 0 });
             const ir_optimized = try qmc.optimize(&p.ir_data, ir_normalized, p.dc_ir, p.opt_signal_limit);
 
+            if (p.options.debug) {
+                var buf: [64]u8 = undefined;
+                var stderr = std.fs.File.stderr().writer(&buf);
+                try stderr.interface.writeAll("Normalized:\n");
+                try p.ir_data.debug(ir_normalized, 0, false, &stderr.interface);
+                try stderr.interface.writeAll("Optimized:\n");
+                try p.ir_data.debug(ir_optimized, 0, false, &stderr.interface);
+                try stderr.interface.flush();
+            }
+
             const num_pts = p.ir_data.count_pts(ir_optimized);
             if (num_pts > 1) {
                 Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only 1 is allowed.", .{ num_pts });
@@ -48,6 +59,16 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
 
             const ir_normalized = try p.ir_data.normalize(p.ir, .{ .max_xor_depth = 0 });
             const ir_optimized = try qmc.optimize(&p.ir_data, ir_normalized, p.dc_ir, p.opt_signal_limit);
+
+            if (p.options.debug) {
+                var buf: [64]u8 = undefined;
+                var stderr = std.fs.File.stderr().writer(&buf);
+                try stderr.interface.writeAll("Normalized:\n");
+                try p.ir_data.debug(ir_normalized, 0, false, &stderr.interface);
+                try stderr.interface.writeAll("Optimized:\n");
+                try p.ir_data.debug(ir_optimized, 0, false, &stderr.interface);
+                try stderr.interface.flush();
+            }
 
             const num_pts = p.ir_data.count_pts(ir_optimized);
             if (num_pts == 1) {
@@ -84,7 +105,17 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
 
             const ir_normalized = try p.ir_data.normalize(p.ir, .{ .max_xor_depth = 0 });
             const ir_optimized = try qmc.optimize(&p.ir_data, ir_normalized, p.dc_ir, p.opt_signal_limit);
-                
+            
+            if (p.options.debug) {
+                var buf: [64]u8 = undefined;
+                var stderr = std.fs.File.stderr().writer(&buf);
+                try stderr.interface.writeAll("Normalized:\n");
+                try p.ir_data.debug(ir_normalized, 0, false, &stderr.interface);
+                try stderr.interface.writeAll("Optimized:\n");
+                try p.ir_data.debug(ir_optimized, 0, false, &stderr.interface);
+                try stderr.interface.flush();
+            }
+
             const allocator = self.arena.allocator();
             const num_pts = p.ir_data.count_pts(ir_optimized);
             if (num_pts > p.options.max_product_terms) {
@@ -122,6 +153,20 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
             const num_pts_inverted = p.ir_data.count_pts(ir_inverted);
             const num_pts = @min(num_pts_not_inverted, num_pts_inverted);
             const best_ir = if (num_pts_inverted < num_pts_not_inverted) ir_inverted else ir_optimized;
+
+            if (p.options.debug) {
+                var buf: [64]u8 = undefined;
+                var stderr = std.fs.File.stderr().writer(&buf);
+                try stderr.interface.writeAll("Normalized:\n");
+                try p.ir_data.debug(ir_normalized, 0, false, &stderr.interface);
+                try stderr.interface.writeAll("Optimized:\n");
+                try p.ir_data.debug(ir_optimized, 0, false, &stderr.interface);
+                try stderr.interface.writeAll("Inverted:\n");
+                try p.ir_data.debug(ir_inverted, 0, false, &stderr.interface);
+                try stderr.interface.writeAll("Best:\n");
+                try p.ir_data.debug(best_ir, 0, false, &stderr.interface);
+                try stderr.interface.flush();
+            }
 
             if (num_pts > p.options.max_product_terms) {
                 Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only {} are allowed.", .{
@@ -259,24 +304,34 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                 best_ir_kind = .sum;
                 best_ir_polarity = .negative;
             }
+            
+            if (options.debug) {
+                var buf: [64]u8 = undefined;
+                var stderr = std.fs.File.stderr().writer(&buf);
+                try stderr.interface.writeAll("Normalized:\n");
+                try ir_data.debug(ir, 0, false, &stderr.interface);
+                try stderr.interface.writeAll("Sum (Optimized):\n");
+                try ir_data.debug(ir_sum, 0, false, &stderr.interface);
+                try stderr.interface.writeAll("Sum Inverted (Optimized):\n");
+                try ir_data.debug(ir_sum_inverted, 0, false, &stderr.interface);
+                try stderr.interface.flush();
+            }
 
             switch (ir_data.get(ir)) {
-                .xor => |raw_xor_bin| {
-                    const lhs, const rhs = bin: {
-                        // TODO: investigate why zig seems to miscompile this sometimes if the ir_data.normalize() call is embedded in the ir_data.get() expression :scary:
-                        const temp = try ir_data.normalize(ir, .{});
-                        const xor_bin = ir_data.get(temp).xor;
-                        break :bin .{
-                            try qmc.optimize(ir_data, xor_bin.lhs, dc_ir, optimization_signal_limit),
-                            try qmc.optimize(ir_data, xor_bin.rhs, dc_ir, optimization_signal_limit),
-                        };
+                .xor => {
+                    const normalized = try ir_data.normalize(ir, .{});
+                    const xor_bin = ir_data.get(normalized).xor;
+
+                    const lhs, const rhs = .{
+                        try qmc.optimize(ir_data, xor_bin.lhs, dc_ir, optimization_signal_limit),
+                        try qmc.optimize(ir_data, xor_bin.rhs, dc_ir, optimization_signal_limit),
                     };
                     const lhs_pts = ir_data.count_pts(lhs);
                     const rhs_pts = ir_data.count_pts(rhs);
 
                     const lhs_inverted, const rhs_inverted = bin: {
-                        const lhs_inverted = try ir_data.normalize(try ir_data.make_complement(raw_xor_bin.lhs), .{ .max_xor_depth = 0 });
-                        const rhs_inverted = try ir_data.normalize(try ir_data.make_complement(raw_xor_bin.rhs), .{ .max_xor_depth = 0 });
+                        const lhs_inverted = try ir_data.normalize(try ir_data.make_complement(xor_bin.lhs), .{ .max_xor_depth = 0 });
+                        const rhs_inverted = try ir_data.normalize(try ir_data.make_complement(xor_bin.rhs), .{ .max_xor_depth = 0 });
                         break :bin .{
                             try qmc.optimize(ir_data, lhs_inverted, dc_ir, optimization_signal_limit),
                             try qmc.optimize(ir_data, rhs_inverted, dc_ir, optimization_signal_limit),
@@ -284,6 +339,20 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                     };
                     const lhs_inverted_pts = ir_data.count_pts(lhs_inverted);
                     const rhs_inverted_pts = ir_data.count_pts(rhs_inverted);
+
+                    if (options.debug) {
+                        var buf: [64]u8 = undefined;
+                        var stderr = std.fs.File.stderr().writer(&buf);
+                        try stderr.interface.writeAll("XOR LHS:\n   ");
+                        try ir_data.debug(lhs, 1, false, &stderr.interface);
+                        try stderr.interface.writeAll("XOR RHS:\n   ");
+                        try ir_data.debug(rhs, 1, false, &stderr.interface);
+                        try stderr.interface.writeAll("XOR LHS Inverted:\n   ");
+                        try ir_data.debug(lhs_inverted, 1, false, &stderr.interface);
+                        try stderr.interface.writeAll("XOR RHS Inverted:\n   ");
+                        try ir_data.debug(rhs_inverted, 1, false, &stderr.interface);
+                        try stderr.interface.flush();
+                    }
 
                     if (lhs_pts == 1) {
                         if (rhs_pts + 1 < best_ir_pts) {
@@ -343,6 +412,14 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                     }
                 },
                 else => {}
+            }
+
+            if (options.debug) {
+                var buf: [64]u8 = undefined;
+                var stderr = std.fs.File.stderr().writer(&buf);
+                try stderr.interface.print("Best ({t}):\n", .{ best_ir_kind });
+                try ir_data.debug(best_ir, 0, false, &stderr.interface);
+                try stderr.interface.flush();
             }
 
             if (best_ir_pts > options.max_product_terms) {
@@ -461,6 +538,10 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                 options.dont_care = extra.dont_care;
             }
 
+            if (@hasField(T, "debug")) {
+                options.debug = true;
+            }
+
             return options;
         }
 
@@ -472,7 +553,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
             errdefer names.deinit();
 
             inline for (@typeInfo(@TypeOf(extra)).@"struct".fields) |field| {
-                if (comptime !std.mem.eql(u8, field.name, "dont_care") and !std.mem.eql(u8, field.name, "max_product_terms") and !std.mem.eql(u8, field.name, "optimize")) {
+                if (comptime !std.mem.eql(u8, field.name, "dont_care") and !std.mem.eql(u8, field.name, "max_product_terms") and !std.mem.eql(u8, field.name, "optimize") and !std.mem.eql(u8, field.name, "debug")) {
                     try names.add_names_alloc(temp_arena, @field(extra, field.name), .{ .name = field.name });
                 }
             }
