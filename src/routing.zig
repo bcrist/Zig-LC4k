@@ -1,22 +1,3 @@
-pub fn add_signals_from_pt(comptime Device: type, glb: lc4k.GLB_Index, gi_signals: *[Device.num_gis_per_glb]?Device.Signal, pt: lc4k.Product_Term(Device.Signal)) !void {
-    for (pt.factors) |factor| switch (factor) {
-        .always, .never => {},
-        .when_high, .when_low => |signal| {
-            for (gi_signals) |*existing_gi_signal| {
-                if (existing_gi_signal.* == null) {
-                    existing_gi_signal.* = signal;
-                    break;
-                } else if (existing_gi_signal.* == signal) {
-                    break;
-                }
-            } else {
-                log.err("Too many signals in GLB {}", .{ glb });
-                return error.TooManySignalsInGLB;
-            }
-        },
-    };
-}
-
 pub fn route_generic_inputs(comptime Device: type, signals_to_route: []?Device.Signal, forced_gi_routing: [Device.num_gis_per_glb]?Device.Signal, rnd: std.Random, glb: lc4k.GLB_Index, results: *assembly.Assembly_Results) ![Device.num_gis_per_glb]?Device.Signal {
     var routed_signals: std.EnumSet(Device.Signal) = .initEmpty();
 
@@ -688,8 +669,6 @@ pub fn get_ca_destination(source_ca: usize, routing: Wide_Routing) usize {
     };
     return @mod(maybe_oob_ca, 16);
 }
-
-const log = std.log.scoped(.lc4k_routing);
 
 const Cluster_Routing = lc4k.Cluster_Routing;
 const Wide_Routing = lc4k.Wide_Routing;
