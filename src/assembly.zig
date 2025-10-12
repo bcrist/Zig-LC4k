@@ -21,32 +21,33 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
     var prng = std.Random.Xoroshiro128.init(0x0416_fff9_140b_a135); // random but consistent seed
     const rnd = prng.random();
 
-    for (config.glb, 0..) |glb_config, glb| {
+    for (config.glb, 0..) |glb_config, glb_usize| {
+        const glb: lc4k.GLB_Index = @intCast(glb_usize);
         // Compile list of signals needed in this GLB:
         var gi_routing: [Device.num_gis_per_glb]?Device.Signal = @splat(null);
-        try routing.add_signals_from_pt(Device, &gi_routing, glb_config.shared_pt_init.pt);
-        try routing.add_signals_from_pt(Device, &gi_routing, glb_config.shared_pt_clock.pt);
-        try routing.add_signals_from_pt(Device, &gi_routing, glb_config.shared_pt_enable);
+        try routing.add_signals_from_pt(Device, glb, &gi_routing, glb_config.shared_pt_init.pt);
+        try routing.add_signals_from_pt(Device, glb, &gi_routing, glb_config.shared_pt_clock.pt);
+        try routing.add_signals_from_pt(Device, glb, &gi_routing, glb_config.shared_pt_enable);
 
         for (glb_config.mc) |mc_config| {
             switch (mc_config.logic) {
                 .sum => |sp| {
                     for (sp.sum) |pt| {
-                        try routing.add_signals_from_pt(Device, &gi_routing, pt);
+                        try routing.add_signals_from_pt(Device, glb, &gi_routing, pt);
                     }
                 },
                 .pt0 => |ptp| {
-                    try routing.add_signals_from_pt(Device, &gi_routing, ptp.pt);
+                    try routing.add_signals_from_pt(Device, glb, &gi_routing, ptp.pt);
                 },
                 .sum_xor_pt0 => |sxpt| {
-                    try routing.add_signals_from_pt(Device, &gi_routing, sxpt.pt0);
+                    try routing.add_signals_from_pt(Device, glb, &gi_routing, sxpt.pt0);
                     for (sxpt.sum) |pt| {
-                        try routing.add_signals_from_pt(Device, &gi_routing, pt);
+                        try routing.add_signals_from_pt(Device, glb, &gi_routing, pt);
                     }
                 },
                 .sum_xor_input_buffer => |sum| {
                     for (sum) |pt| {
-                        try routing.add_signals_from_pt(Device, &gi_routing, pt);
+                        try routing.add_signals_from_pt(Device, glb, &gi_routing, pt);
                     }
                 },
                 .input_buffer => {},
@@ -54,14 +55,14 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
             var special_pt: usize = 0;
             while (special_pt < 5) : (special_pt += 1) {
                 if (get_special_pt(Device, mc_config, special_pt)) |pt| {
-                    try routing.add_signals_from_pt(Device, &gi_routing, pt);
+                    try routing.add_signals_from_pt(Device, glb, &gi_routing, pt);
                 }
             }
             if (Device.family != .zero_power_enhanced) {
                 switch (mc_config.output.routing) {
                     .same_as_oe, .self => {},
                     .five_pt_fast_bypass => |sp| for (sp.sum) |pt| {
-                        try routing.add_signals_from_pt(Device, &gi_routing, pt);
+                        try routing.add_signals_from_pt(Device, glb, &gi_routing, pt);
                     },
                 }
             }

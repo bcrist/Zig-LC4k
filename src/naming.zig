@@ -84,6 +84,38 @@ pub fn Names(comptime Device: type) type {
             prefix: []const u8 = "",
             name: []const u8 = "",
             suffix: []const u8 = "",
+
+            fn to_name(self: Add_Names_Options, arena: std.mem.Allocator) ![]const u8 {
+                return std.mem.concat(arena, u8, &.{ self.prefix, self.name, self.suffix });
+            }
+
+            fn adjust_for_inner_namespace(self: Add_Names_Options, arena: std.mem.Allocator) !Add_Names_Options {
+                var prefix = self.prefix;
+                var suffix = self.suffix;
+                if (std.mem.startsWith(u8, self.name, ".")) {
+                    if (suffix.len > 0) {
+                        suffix = try std.mem.concat(arena, u8, &.{ self.name, self.suffix });
+                    } else {
+                        suffix = self.name;
+                    }
+                } else if (self.name.len > 0) {
+                    prefix = try std.mem.concat(arena, u8, &.{ self.prefix, self.name, "." });
+                }
+
+                return .{
+                    .prefix = prefix,
+                    .name = "",
+                    .suffix = suffix,
+                };
+            }
+
+            fn replace_name(self: Add_Names_Options, new_name: []const u8) Add_Names_Options {
+                return .{
+                    .prefix = self.prefix,
+                    .name = new_name,
+                    .suffix = self.suffix,
+                };
+            }
         };
 
         pub fn add_names(self: *Self, comptime what: anytype, comptime options: Add_Names_Options) !void {
@@ -166,16 +198,14 @@ pub fn Names(comptime Device: type) type {
             }
         }
 
-        pub fn add_names_alloc(self: *Self, arena: std.mem.Allocator, what: anytype, comptime options: Add_Names_Options) !void {
+        pub fn add_names_alloc(self: *Self, arena: std.mem.Allocator, what: anytype, options: Add_Names_Options) !void {
             const T = @TypeOf(what);
             switch (T) {
-                GLB_Index => try self.add_glb_name(what, options.prefix ++ options.name ++ options.suffix),
-                MC_Ref => try self.add_mc_name(what, options.prefix ++ options.name ++ options.suffix),
-                Signal => try self.add_signal_name(what, options.prefix ++ options.name ++ options.suffix),
+                GLB_Index => try self.add_glb_name(what, try options.to_name(arena)),
+                MC_Ref => try self.add_mc_name(what, try options.to_name(arena)),
+                Signal => try self.add_signal_name(what, try options.to_name(arena)),
                 type => {
-                    const name_is_suffix = comptime std.mem.startsWith(u8, options.name, ".");
-                    const prefix = options.prefix ++ if (name_is_suffix) "" else options.name ++ if (options.name.len > 0) "." else "";
-                    const suffix = if (name_is_suffix) options.name ++ options.suffix else options.suffix;
+                    const new_options = try options.adjust_for_inner_namespace(arena);
 
                     const decls = switch (@typeInfo(what)) {
                         .@"struct" => |info| info.decls,
@@ -185,38 +215,24 @@ pub fn Names(comptime Device: type) type {
 
                     inline for (decls) |decl| {
                         if (@typeInfo(@TypeOf(@field(what, decl.name))) != .@"fn") {
-                            try self.add_names(@field(what, decl.name), .{
-                                .prefix = prefix,
-                                .name = decl.name,
-                                .suffix = suffix,
-                            });
+                            try self.add_names_alloc(@field(what, decl.name), new_options.replace_name(decl.name));
                         }
                     }
                 },
                 else => switch (@typeInfo(T)) {
                     .@"struct" => |struct_info| {
-                        const name_is_suffix = comptime std.mem.startsWith(u8, options.name, ".");
-                        const prefix = options.prefix ++ if (name_is_suffix) "" else options.name ++ if (options.name.len > 0) "." else "";
-                        const suffix = if (name_is_suffix) options.name ++ options.suffix else options.suffix;
-
+                        const new_options = try options.adjust_for_inner_namespace(arena);
                         inline for (struct_info.fields) |field| {
-                            try self.add_names_alloc(arena, @field(what, field.name), .{
-                                .prefix = prefix,
-                                .name = field.name,
-                                .suffix = suffix,
-                            });
+                            try self.add_names_alloc(arena, @field(what, field.name), new_options.replace_name(field.name));
                         }
                     },
                     .array => |info| {
-                        inline for (0.., what) |i, elem| {
-                            try self.add_names_alloc(arena, elem, .{
-                                .prefix = options.prefix,
-                                .name = std.fmt.comptimePrint("{s}[{}]", .{ options.name, i }),
-                                .suffix = options.suffix,
-                            });
+                        for (0.., what) |i, elem| {
+                            const new_name = try std.fmt.allocPrint(arena, "{s}[{}]", .{ options.name, i });
+                            try self.add_names_alloc(arena, elem, options.replace_name(new_name));
                         }
                         if (info.child == Signal) {
-                            try self.add_bus_name_alloc(arena, &what, options.prefix ++ options.name ++ options.suffix);
+                            try self.add_bus_name_alloc(arena, &what, try options.to_name(arena));
                         }
                     },
                     .pointer => |info| {
@@ -224,24 +240,21 @@ pub fn Names(comptime Device: type) type {
                             if (@typeInfo(info.child) == .array) {
                                 return self.add_names_alloc(arena, what.*, options);
                             } else {
-                                @compileError("Unexpected type: " ++ @typeName(T) ++ " for " ++ options.prefix ++ options.name ++ options.suffix);
+                                std.debug.panic("Unexpected type: " ++ @typeName(T) ++ " for {s}{s}{s}", .{ options.prefix, options.name, options.suffix });
                             }
                         }
-                        inline for (0.., what) |i, elem| {
-                            try self.add_names_alloc(arena, elem, .{
-                                .prefix = options.prefix,
-                                .name = std.fmt.comptimePrint("{s}[{}]", .{ options.name, i }),
-                                .suffix = options.suffix,
-                            });
+                        for (0.., what) |i, elem| {
+                            const new_name = try std.fmt.allocPrint(arena, "{s}[{}]", .{ options.name, i });
+                            try self.add_names_alloc(arena, elem, options.replace_name(new_name));
                         }
                         if (info.child == Signal) {
-                            try self.add_bus_name_alloc(arena, &what, options.prefix ++ options.name ++ options.suffix);
+                            try self.add_bus_name_alloc(arena, what, try options.to_name(arena));
                         }
                     },
                     .int => {
-                        try self.add_constant(what, options.prefix ++ options.name ++ options.suffix);
+                        try self.add_constant(what, try options.to_name(arena));
                     },
-                    else => @compileError("Unexpected type: " ++ @typeName(T) ++ " for " ++ options.prefix ++ options.name ++ options.suffix), 
+                    else => std.debug.panic("Unexpected type: " ++ @typeName(T) ++ " for {s}{s}{s}", .{ options.prefix, options.name, options.suffix }),
                 },
             }
         }
