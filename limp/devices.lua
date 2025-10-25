@@ -77,6 +77,7 @@ device 'LC4128x_TQFP128'
 device 'LC4128V_TQFP144'
 device 'LC4128ZC_TQFP100'
 device 'LC4128ZC_csBGA132'
+device 'LC4128ZC_BMC151'
 device 'LC4128ZE_TQFP100'
 device 'LC4128ZE_TQFP144'
 device 'LC4128ZE_ucBGA132'
@@ -102,6 +103,7 @@ device_map = {
     LC4128x_TQFP128   = "LC4128V_TQFP144",
     LC4128ZC_TQFP100  = "LC4128V_TQFP144",
     LC4128ZC_csBGA132 = "LC4128V_TQFP144",
+    LC4128ZC_BMC151   = "LC4128V_TQFP144",
     LC4128ZE_TQFP100  = "LC4128V_TQFP144",
     LC4128ZE_TQFP144  = "LC4128V_TQFP144",
     LC4128ZE_ucBGA132 = "LC4128V_TQFP144",
@@ -113,15 +115,23 @@ if not which then return end
 if not devices[which] then error "unsupported device" end
 local info = devices[which]
 local base_device = device_map[which]
+local fuse_device = which
+if info.package == 'BMC151' then fuse_device = info.base .. 'ZC_csBGA132' end
+
 include 'pins'
 include 'threshold'
 include 'goes'
 include 'zerohold'
 
 info.pins, info.pins_by_type = load_pins(which)
-local pin_to_threshold_fuse = load_input_threshold_fuses(which)
-local goes = load_goe_fuses(which)
-local zerohold = load_zerohold_fuse(which)
+local pin_remap = nil
+if fuse_device ~= which then
+    fuse_device_pins = load_pins(fuse_device)
+    pin_remap = compute_pin_remap(fuse_device_pins, info.pins)
+end
+local pin_to_threshold_fuse = load_input_threshold_fuses(fuse_device, pin_remap)
+local goes = load_goe_fuses(fuse_device)
+local zerohold = load_zerohold_fuse(fuse_device)
 
 compute_signal_names(info.pins_by_type, pin_to_threshold_fuse)
 
@@ -407,7 +417,7 @@ pub const gi_options = [num_gis_per_glb][gi_mux_size]Signal {]]
 
     indent()
     include 'grp'
-    gi_to_signal = load_gi_options(base_device or which, info.base_pins)
+    gi_to_signal = load_gi_options(base_device or fuse_device, info.base_pins)
     for gi = 0,35 do
         local options = gi_to_signal[gi]
         write(nl, '.{')
@@ -528,7 +538,7 @@ pub fn get_zero_hold_time_fuse() Fuse {
 
 if info.family == 'zero_power_enhanced' then
     include 'osctimer'
-    local osctimer = load_osctimer_fuses(which)
+    local osctimer = load_osctimer_fuses(fuse_device)
 
     local min, max
     for _, f in ipairs(osctimer.enables) do
@@ -567,7 +577,7 @@ pub fn get_timer_div_range() Fuse_Range {
 pub fn get_input_power_guard_fuse(input: Signal) ?Fuse {
     return switch (input) {]])
     include 'power_guard'
-    local power_guard_fuses = load_power_guard_fuses(which)
+    local power_guard_fuses = load_power_guard_fuses(fuse_device, pin_remap)
     indent(2)
     for _, pin in spairs(dedicated_inputs, natural_cmp) do
         local fuse = power_guard_fuses[pin.id]
@@ -583,7 +593,7 @@ pub fn get_input_power_guard_fuse(input: Signal) ?Fuse {
 pub fn get_input_bus_maintenance_range(input: Signal) ?Fuse_Range {
     return switch (input) {]]
     include 'bus_maintenance'
-    local fuse1, fuse2 = load_bus_maintenance_fuses(which)
+    local fuse1, fuse2 = load_bus_maintenance_fuses(fuse_device, pin_remap)
     indent(2)
     for _, pin in spairs(dedicated_inputs, natural_cmp) do
         write(nl, '.', pin.signal_name, ' => Fuse_Range.between(Fuse.init(', fuse1[pin.id][1], ', ', fuse1[pin.id][2],
@@ -598,7 +608,7 @@ pub fn get_input_bus_maintenance_range(input: Signal) ?Fuse_Range {
 ]]
 else
     include 'global_bus_maintenance'
-    local f0, f1, extra = load_global_bus_maintenance_fuses(which)
+    local f0, f1, extra = load_global_bus_maintenance_fuses(fuse_device)
     write([[
 pub fn get_global_bus_maintenance_range() Fuse_Range {
     return Fuse.init(]], f0[1], ', ', f0[2], [[).range().expand_to_contain(Fuse.init(]], f1[1], ', ', f1[2], [[));

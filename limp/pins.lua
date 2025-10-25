@@ -141,3 +141,15 @@ function compute_signal_names (pins_by_type, pin_to_threshold_fuse)
         n = n + 1
     end
 end
+
+function compute_pin_remap (lookup_pins, result_pins)
+    local map = {}
+    for _, lp in pairs(lookup_pins) do
+        for _, rp in pairs(result_pins) do
+            if (lp.func == rp.func and lp.glb == rp.glb and lp.mc == rp.mc and lp.oe == rp.oe and lp.clk == rp.clk) then
+                map[lp.id] = rp.id
+            end
+        end
+    end
+    return map
+end

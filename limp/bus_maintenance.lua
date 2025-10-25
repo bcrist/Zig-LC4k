@@ -1,4 +1,4 @@
-function load_bus_maintenance_fuses (device_name)
+function load_bus_maintenance_fuses (device_name, pin_remap)
     local path = fs.compose_path(re4k, device_name:sub(1,6), device_name, 'bus_maintenance.sx')
     local id_to_fuse1 = {}
     local id_to_fuse2 = {}
@@ -17,18 +17,20 @@ function load_bus_maintenance_fuses (device_name)
     end
 
     function pin_visitor.fuse (_, _, pin_id)
+        local id = pin_id
+        if pin_remap then id = pin_remap[id] end
         local row = parser:require_int()
         local col = parser:require_int()
         if parser:expression('value') then
             if parser:string('2') then
-                id_to_fuse2[pin_id] = { row, col }
+                id_to_fuse2[id] = { row, col }
             else
                 parser:require_string('1')
-                id_to_fuse1[pin_id] = { row, col }
+                id_to_fuse1[id] = { row, col }
             end
             parser:require_close()
         else
-            id_to_fuse1[pin_id] = { row, col }
+            id_to_fuse1[id] = { row, col }
         end
         parser:require_close();
     end

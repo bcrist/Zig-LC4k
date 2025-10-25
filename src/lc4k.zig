@@ -41,6 +41,7 @@ pub const LC4128ZE_TQFP144 = Chip_Config(.LC4128ZE_TQFP144);
 pub const LC4128ZC_csBGA132 = Chip_Config(.LC4128ZC_csBGA132);
 pub const LC4128ZE_csBGA144 = Chip_Config(.LC4128ZE_csBGA144);
 pub const LC4128ZE_ucBGA132 = Chip_Config(.LC4128ZE_ucBGA132);
+pub const LC4128ZC_BMC151 = Chip_Config(.LC4128ZC_BMC151);
 
 pub fn Chip_Config(comptime device_type: Device_Type) type {
     const D = device_type.get();

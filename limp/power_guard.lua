@@ -1,4 +1,4 @@
-function load_power_guard_fuses (device_name)
+function load_power_guard_fuses (device_name, pin_remap)
     local path = fs.compose_path(re4k, device_name:sub(1,6), device_name, 'power_guard.sx')
     local id_to_fuse = {}
     local parser = sx.parser(get_file_contents(path))
@@ -19,7 +19,9 @@ function load_power_guard_fuses (device_name)
         local row = parser:require_int()
         local col = parser:require_int()
         parser:require_close();
-        id_to_fuse[pin_id] = { row, col }
+        local id = pin_id
+        if pin_remap then id = pin_remap[id] end
+        id_to_fuse[id] = { row, col }
     end
 
     local function ignore ()
