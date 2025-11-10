@@ -168,11 +168,11 @@ pub fn Chip_Config(comptime device_type: Device_Type) type {
 
             var buf: [4096]u8 = undefined;
             var writer = f.writer(&buf);
-            try write_report(speed_grade, file, &writer.interface, options);
+            try write_report(speed_grade, file, std.heap.smp_allocator, &writer.interface, options);
             try writer.interface.flush();
         }
-        pub fn write_report(speed_grade: comptime_int, file: JEDEC_File, writer: *std.io.Writer, options: report.Write_Options(D)) !void {
-            return report.write(D, speed_grade, file, writer, options);
+        pub fn write_report(speed_grade: comptime_int, file: JEDEC_File, temp_gpa: std.mem.Allocator, writer: *std.io.Writer, options: report.Write_Options(D)) !void {
+            return report.write(D, speed_grade, file, temp_gpa, writer, options);
         }
 
         pub fn write_diff_summary_file(temp: std.mem.Allocator, a: JEDEC_File, b: JEDEC_File, path: []const u8, options: diff.Write_Options(D)) !void {
@@ -181,7 +181,7 @@ pub fn Chip_Config(comptime device_type: Device_Type) type {
 
             var buf: [4096]u8 = undefined;
             var writer = f.writer(&buf);
-            try write_report(temp, a, b, &writer.interface, options);
+            try write_diff_summary(temp, a, b, &writer.interface, options);
             try writer.interface.flush();
         }
         pub fn write_diff_summary(temp: std.mem.Allocator, a: JEDEC_File, b: JEDEC_File, writer: *std.io.Writer, options: diff.Write_Options(D)) !void {

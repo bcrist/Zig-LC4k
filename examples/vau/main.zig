@@ -143,10 +143,14 @@ pub const g14 = Signal.mc_B12;
 pub const g16 = Signal.mc_B13;
 
 pub fn main() !void {
-    var chip = Chip {};
-    var names = Chip.Names.init(gpa.allocator());
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+
+    var names = Chip.Names.init(gpa);
     @setEvalBranchQuota(10000);
     try names.add_names(@This(), .{});
+
+    var chip = Chip {};
 
     std.debug.assert(clk == Signal.clk0);
     for (&chip.glb) |*glb| {
@@ -393,15 +397,12 @@ pub fn main() !void {
         .polarity = .positive,
     }};
 
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer arena.deinit();
-
     const results = try chip.assemble(arena.allocator(), .{});
 
     const design_name = "vau";
     try Chip.write_jed_file(results.jedec, design_name ++ ".jed", .{});
     try Chip.write_svf_file(results.jedec, design_name ++ ".svf", .{});
-    try Chip.write_report_file(5, results.jedec, design_name ++ ".html", .{
+    try Chip.write_report_file(7, results.jedec, design_name ++ ".html", .{
         .design_name = design_name,
         .notes = "Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsigned) + 16b (signed) adder, with an overflow output and some preprocessing on the 16b input to allow it to be sourced from microcode or one of 3 locations within the instruction word.",
         .errors = results.errors.items,
@@ -409,7 +410,7 @@ pub fn main() !void {
     });
 }
 
-var gpa: std.heap.GeneralPurposeAllocator(.{}) = .{};
+const gpa = std.heap.smp_allocator;
 
 const add1 = Chip_Util.add1;
 const add2 = Chip_Util.add2;

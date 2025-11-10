@@ -122,19 +122,23 @@ fn configure_chip(lp: *Chip.Logic_Parser) !Chip {
 }
 
 pub fn main() !void {
-    var names = Chip.Names.init(gpa.allocator());
+    var arena: std.heap.ArenaAllocator = .init(std.heap.page_allocator);
+    defer arena.deinit();
+
+    var names = Chip.Names.init(gpa);
     try names.add_names(in, .{});
     try names.add_names(out, .{});
     try names.add_names(buried, .{});
+
     var lp: Chip.Logic_Parser = .{
-        .gpa = std.heap.page_allocator,
-        .arena = .init(std.heap.page_allocator),
+        .gpa = gpa,
+        .arena = arena.allocator(),
         .names = &names,
     };
-    defer lp.arena.deinit();
+
     var chip = try configure_chip(&lp);
 
-    const results = try chip.assemble(lp.arena.allocator(), .{});
+    const results = try chip.assemble(arena.allocator(), .{});
 
     const design_name = "adder";
     try Chip.write_jed_file(results.jedec, design_name ++ ".jed", .{});
@@ -148,17 +152,22 @@ pub fn main() !void {
 }
 
 test configure_chip {
-    var names = Chip.Names.init(gpa.allocator());
+    var arena: std.heap.ArenaAllocator = .init(std.testing.allocator);
+    defer arena.deinit();
+
+    var names = Chip.Names.init(arena.allocator());
     try names.add_names(in, .{});
     try names.add_names(out, .{});
     try names.add_names(buried, .{});
+
     var lp: Chip.Logic_Parser = .{
-        .gpa = std.heap.page_allocator,
-        .arena = .init(std.heap.page_allocator),
+        .gpa = std.testing.allocator,
+        .arena = arena.allocator(),
         .names = &names,
     };
-    defer lp.arena.deinit();
+
     const chip = try configure_chip(&lp);
+
     var sim = chip.simulator();
 
     _ = sim.simulate(.{});
@@ -200,7 +209,7 @@ fn check_sum(sim: *lc4k.Simulator(Chip.Device), a: u16, b: u16) !void {
     try sim.expect_signal_state(&.{ out.C }, carry, null);
 }
 
-var gpa: std.heap.GeneralPurposeAllocator(.{}) = .{};
+const gpa = std.heap.smp_allocator;
 
 const add1 = Chip_Util.add1;
 const add2 = Chip_Util.add2;

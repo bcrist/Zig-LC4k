@@ -379,16 +379,13 @@ fn Report_Data(comptime Device: type) type {
     };
 }
 
-pub fn write(comptime Device: type, comptime speed_grade: comptime_int, file: JEDEC_File, writer: *std.io.Writer, options: Write_Options(Device)) !void {
+pub fn write(comptime Device: type, comptime speed_grade: comptime_int, file: JEDEC_File, temp_gpa: std.mem.Allocator, writer: *std.io.Writer, options: Write_Options(Device)) !void {
     var temp = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer temp.deinit();
     const alloc = temp.allocator();
 
-    var gpa: std.heap.GeneralPurposeAllocator(.{}) = .{};
-    defer std.debug.assert(gpa.deinit() == .ok);
-
     const data = try Report_Data(Device).init(alloc, file);
-    var timing_data = timing.Analyzer(Device, speed_grade).init(file.data, alloc, gpa.allocator());
+    var timing_data = timing.Analyzer(Device, speed_grade).init(file.data, alloc, temp_gpa);
     defer timing_data.deinit();
 
     try writer.writeAll("<html>\n");

@@ -75,9 +75,10 @@ const buried = struct {
 };
 
 pub fn main() !void {
-    var chip = Chip {};
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
 
-    var names = Chip.Names.init(gpa.allocator());
+    var names = Chip.Names.init(gpa);
     names.fallback = null;
     try names.add_glb_name(0, "X");
     try names.add_glb_name(1, "Y");
@@ -86,11 +87,12 @@ pub fn main() !void {
     try names.add_names(buried, .{});
 
     var lp: Chip.Logic_Parser = .{
-        .gpa = gpa.allocator(),
-        .arena = .init(gpa.allocator()),
+        .gpa = gpa,
+        .arena = arena.allocator(),
         .names = &names,
     };
-    defer lp.arena.deinit();
+
+    var chip = Chip {};
 
     try lp.assign_logic(&chip, &buried.TA, "~(_A & _B & S[3] | _A & ~_B & S[2])", .{ .optimize = true });
     try lp.assign_logic(&chip, &buried.TB, "~(~_B & S[1] | _B & S[0] | _A)", .{ .optimize = true });
@@ -149,9 +151,6 @@ pub fn main() !void {
         mc.logic = try lp.logic("& @fb _F", .{});
     }
 
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer arena.deinit();
-
     const results = try chip.assemble(arena.allocator(), .{});
 
     const design_name = "74x181";
@@ -165,7 +164,7 @@ pub fn main() !void {
     });
 }
 
-var gpa: std.heap.GeneralPurposeAllocator(.{}) = .{};
+const gpa = std.heap.smp_allocator;
 
 const Signal = Chip.Signal;
 

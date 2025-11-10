@@ -8,7 +8,7 @@ pub const Options = struct {
 pub fn Logic_Parser(comptime Device_Struct: type) type {
     return struct {
         gpa: std.mem.Allocator,
-        arena: std.heap.ArenaAllocator,
+        arena: std.mem.Allocator,
         names: *const Device.Names,
         optimization_signal_limit: u5 = 16,
 
@@ -50,7 +50,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                 return error.TooManyProductTerms;
             }
 
-            return try p.ir_data.get_pt(Device.Signal, self.arena.allocator(), ir_optimized, 0);
+            return try p.ir_data.get_pt(Device.Signal, self.arena, ir_optimized, 0);
         }
 
         pub fn pt_with_polarity(self: *Self, equation: []const u8, extra: anytype) !PTP {
@@ -73,7 +73,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
             const num_pts = p.ir_data.count_pts(ir_optimized);
             if (num_pts == 1) {
                 return .{
-                    .pt = try p.ir_data.get_pt(Device.Signal, self.arena.allocator(), ir_optimized, 0),
+                    .pt = try p.ir_data.get_pt(Device.Signal, self.arena, ir_optimized, 0),
                     .polarity = .positive,
                 };
             }
@@ -86,7 +86,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
             const num_pts_inverted = p.ir_data.count_pts(ir_inverted);
             if (num_pts_inverted == 1) {
                 return .{
-                    .pt = try p.ir_data.get_pt(Device.Signal, self.arena.allocator(), ir_inverted, 0),
+                    .pt = try p.ir_data.get_pt(Device.Signal, self.arena, ir_inverted, 0),
                     .polarity = .negative,
                 };
             }
@@ -116,7 +116,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                 try stderr.interface.flush();
             }
 
-            const allocator = self.arena.allocator();
+            const allocator = self.arena;
             const num_pts = p.ir_data.count_pts(ir_optimized);
             if (num_pts > p.options.max_product_terms) {
                 Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only {} are allowed.", .{
@@ -179,7 +179,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                 w.interface.flush() catch {};
                 return error.TooManyProductTerms;
             }
-            const allocator = self.arena.allocator();
+            const allocator = self.arena;
             const pts = try allocator.alloc(PT, num_pts);
             for (0.., pts) |i, *term| {
                 term.* = try p.ir_data.get_pt(Device.Signal, allocator, best_ir, i);
@@ -263,7 +263,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
         }
 
         fn find_best_logic(self: *Self, ast: *Ast(Device), maybe_dc_ast: ?*Ast(Device), ir_data: *IR_Data, bit_index: u6, options: Options) !Logic {
-            const allocator = self.arena.allocator();
+            const allocator = self.arena;
 
             const optimization_signal_limit = if (options.optimize) self.optimization_signal_limit else 0;
 

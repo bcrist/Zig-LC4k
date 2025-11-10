@@ -32,18 +32,20 @@ const signals = struct {
 };
 
 pub fn main() !void {
-    var chip = Chip {};
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
 
-    var names = Chip.Names.init(gpa.allocator());
+    var names = Chip.Names.init(gpa);
     try names.add_names(signals, .{});
     defer names.deinit();
 
     var lp: Chip.Logic_Parser = .{
-        .gpa = gpa.allocator(),
-        .arena = .init(gpa.allocator()),
+        .gpa = gpa,
+        .arena = arena.allocator(),
         .names = &names,
     };
-    defer lp.arena.deinit();
+
+    var chip = Chip {};
 
     @setEvalBranchQuota(10000);
 
@@ -97,9 +99,6 @@ pub fn main() !void {
         chip.mc(out.mc()).output.oe = .output_only;
     }
 
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer arena.deinit();
-
     const results = try chip.assemble(arena.allocator(), .{});
 
     const design_name = "priority_encoder";
@@ -112,7 +111,7 @@ pub fn main() !void {
     });
 }
 
-var gpa: std.heap.GeneralPurposeAllocator(.{}) = .{};
+const gpa = std.heap.smp_allocator;
 
 const lc4k = @import("lc4k");
 const std = @import("std");
