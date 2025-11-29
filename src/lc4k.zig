@@ -41,7 +41,7 @@ pub const LC4128ZE_TQFP144 = Chip_Config(.LC4128ZE_TQFP144);
 pub const LC4128ZC_csBGA132 = Chip_Config(.LC4128ZC_csBGA132);
 pub const LC4128ZE_csBGA144 = Chip_Config(.LC4128ZE_csBGA144);
 pub const LC4128ZE_ucBGA132 = Chip_Config(.LC4128ZE_ucBGA132);
-pub const LC4128ZC_BMC151 = Chip_Config(.LC4128ZC_BMC151);
+pub const LC4128ZC_BMC149 = Chip_Config(.LC4128ZC_BMC149);
 
 pub fn Chip_Config(comptime device_type: Device_Type) type {
     const D = device_type.get();
@@ -863,6 +863,10 @@ pub const MC_Ref = struct {
 
     pub fn fb(self: MC_Ref, comptime Signal: type) Signal {
         return Signal.mc_fb(self);
+    }
+
+    pub fn format(self: MC_Ref, w: *std.io.Writer) !void {
+        try w.print("GLB {d} MC {d}", .{ self.glb, self.mc });
     }
 };
 

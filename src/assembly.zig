@@ -2,6 +2,7 @@ pub const Assembly_Options = struct {
     // when set, only the first 4 GIs are programmed to 0's for a PT that's supposed to be always false
     use_lattice_false_pt: bool = false,
     max_gi_routing_attempts_per_signal: usize = 1000,
+    max_cluster_routing_attempts_per_glb: usize = 10_000,
 };
 
 pub const Assembly_Results = struct {
@@ -82,7 +83,7 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
         // Assign sum PTs to clusters to MCs and program routing fuses
         var router = routing.Cluster_Router.init(allocator, Device, @intCast(glb), glb_config);
         defer router.deinit();
-        var cluster_routing = try router.route(&results);
+        var cluster_routing = try router.route(&results, options.max_cluster_routing_attempts_per_glb);
 
         // Program PT fuses
         for (glb_config.mc, 0..) |mc_config, mc| {

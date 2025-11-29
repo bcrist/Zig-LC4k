@@ -549,6 +549,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
             var names: Names = .{
                 .gpa = self.gpa,
                 .fallback = self.names,
+                .allow_multiple_names = true,
             };
             errdefer names.deinit();
 

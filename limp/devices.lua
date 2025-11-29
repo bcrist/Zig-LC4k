@@ -77,7 +77,7 @@ device 'LC4128x_TQFP128'
 device 'LC4128V_TQFP144'
 device 'LC4128ZC_TQFP100'
 device 'LC4128ZC_csBGA132'
-device 'LC4128ZC_BMC151'
+device 'LC4128ZC_BMC149'
 device 'LC4128ZE_TQFP100'
 device 'LC4128ZE_TQFP144'
 device 'LC4128ZE_ucBGA132'
@@ -103,7 +103,7 @@ device_map = {
     LC4128x_TQFP128   = "LC4128V_TQFP144",
     LC4128ZC_TQFP100  = "LC4128V_TQFP144",
     LC4128ZC_csBGA132 = "LC4128V_TQFP144",
-    LC4128ZC_BMC151   = "LC4128V_TQFP144",
+    LC4128ZC_BMC149   = "LC4128V_TQFP144",
     LC4128ZE_TQFP100  = "LC4128V_TQFP144",
     LC4128ZE_TQFP144  = "LC4128V_TQFP144",
     LC4128ZE_ucBGA132 = "LC4128V_TQFP144",
@@ -116,7 +116,7 @@ if not devices[which] then error "unsupported device" end
 local info = devices[which]
 local base_device = device_map[which]
 local fuse_device = which
-if info.package == 'BMC151' then fuse_device = info.base .. 'ZC_csBGA132' end
+if info.package == 'BMC149' then fuse_device = info.base .. 'ZC_csBGA132' end
 
 include 'pins'
 include 'threshold'
@@ -234,7 +234,13 @@ do
     for signal_name, pin_or_mc in spairs(base_signal_names, natural_cmp) do
         write(nl, signal_name, ' = ', counter, ',')
         if pin_or_mc.func and pinned_signal_names[signal_name] == nil then
-            write " // Unconnected internally"
+            if info.package == 'BMC149' and signal_name == 'io_D4' then
+                write " // Externally connected to .clk1"
+            elseif info.package == 'BMC149' and signal_name == 'io_H4' then
+                write " // Externally connected to .clk3"
+            else
+                write " // Unconnected internally"
+            end
         end
         counter = counter + 1
     end
@@ -312,7 +318,7 @@ write [[
         };
     }
     pub inline fn mc(self: Signal) lc4k.MC_Ref {
-        return self.maybe_mc() orelse unreachable;
+        return self.maybe_mc() orelse std.debug.panic("Signal {t} is not associated with a macrocell", .{ self });
     }
 
     pub inline fn maybe_pin(self: Signal) ?Pin {

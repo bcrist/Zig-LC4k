@@ -156,7 +156,7 @@ pub const Cluster_Router = struct {
         return std.math.order(a_score, b_score); // min heap
     }
 
-    pub fn route(self: *Cluster_Router, results: *assembly.Assembly_Results) !Routing_Data {
+    pub fn route(self: *Cluster_Router, results: *assembly.Assembly_Results, max_attempts: usize) !Routing_Data {
         for (self.sum_size, 0..) |sum_size, mc| if (sum_size > 0) {
             try self.mark_forced_wide_routing(mc, .self);
         };
@@ -248,7 +248,10 @@ pub const Cluster_Router = struct {
         var best_routing: Compact_Routing_Data = undefined;
         var best_weighted_score: usize = std.math.maxInt(usize);
 
+        var attempt_number: usize = 0;
         while (self.open_heap.removeOrNull()) |routing| {
+            attempt_number += 1;
+
             const score = routing.compute_score(self.cluster_size, self.sum_size);
             if (score.weighted < best_weighted_score) {
                 best_routing = routing;
@@ -296,6 +299,8 @@ pub const Cluster_Router = struct {
 
             try self.closed_set.put(@bitCast(routing), {});
             _ = self.open_set.remove(@bitCast(routing));
+
+            if (attempt_number >= max_attempts) break;
         }
 
         try results.errors.append(.{

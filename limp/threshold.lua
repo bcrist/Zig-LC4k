@@ -22,8 +22,10 @@ function load_input_threshold_fuses (device_name, pin_remap)
         parser:require_close();
         local id = pin_id
         if pin_remap then id = pin_remap[id] end
-        id_to_fuse[id] = { row, col }
-        fuse_to_id[row .. '_' .. col] = id
+        if id then
+            id_to_fuse[id] = { row, col }
+            fuse_to_id[row .. '_' .. col] = id
+        end
     end
 
     local function ignore ()

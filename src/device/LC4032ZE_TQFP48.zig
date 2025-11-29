@@ -132,7 +132,7 @@ pub const Signal = enum (u16) {
         };
     }
     pub inline fn mc(self: Signal) lc4k.MC_Ref {
-        return self.maybe_mc() orelse unreachable;
+        return self.maybe_mc() orelse std.debug.panic("Signal {t} is not associated with a macrocell", .{ self });
     }
 
     pub inline fn maybe_pin(self: Signal) ?Pin {

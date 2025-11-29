@@ -263,9 +263,21 @@ pub fn Names(comptime Device: type) type {
             try self.glb_names.ensureUnusedCapacity(self.gpa, 1);
             try self.glb_lookup.ensureUnusedCapacity(self.gpa, 1);
 
-            if (self.glb_lookup.contains(name)) return error.Duplicate_Name;
-            if (self.glb_names.contains(glb)) {
-                if (!self.allow_multiple_names) return error.Already_Named;
+            if (self.glb_lookup.get(name)) |existing_glb| {
+                std.debug.panic("Can't assign the name {s} to GLB {d}; already assigned to GLB {d}", .{
+                    name,
+                    glb,
+                    existing_glb,
+                });
+            }
+            if (self.glb_names.get(glb)) |existing_name| {
+                if (!self.allow_multiple_names) {
+                    std.debug.panic("Attempted to assign multiple names to GLB {d}: {s}, {s}", .{
+                        glb,
+                        existing_name,
+                        name,
+                    });
+                }
             } else {
                 self.glb_names.putAssumeCapacityNoClobber(glb, name);
             }
@@ -277,9 +289,21 @@ pub fn Names(comptime Device: type) type {
             try self.macrocell_names.ensureUnusedCapacity(self.gpa, 1);
             try self.macrocell_lookup.ensureUnusedCapacity(self.gpa, 1);
 
-            if (self.macrocell_lookup.contains(name)) return error.Duplicate_Name;
-            if (self.macrocell_names.contains(mc)) {
-                if (!self.allow_multiple_names) return error.Already_Named;
+            if (self.macrocell_lookup.get(name)) |existing_mc| {
+                std.debug.panic("Can't assign the name {s} to {f}; already assigned to {f}", .{
+                    name,
+                    mc,
+                    existing_mc,
+                });
+            }
+            if (self.macrocell_names.get(mc)) |existing_name| {
+                if (!self.allow_multiple_names) {
+                    std.debug.panic("Attempted to assign multiple names to {f}: {s}, {s}", .{
+                        mc,
+                        existing_name,
+                        name,
+                    });
+                }
             } else {
                 self.macrocell_names.putAssumeCapacityNoClobber(mc, name);
             }
@@ -291,9 +315,21 @@ pub fn Names(comptime Device: type) type {
             try self.signal_names.ensureUnusedCapacity(self.gpa, 1);
             try self.signal_lookup.ensureUnusedCapacity(self.gpa, 1);
 
-            if (self.signal_lookup.contains(name)) return error.Duplicate_Name;
-            if (self.signal_names.contains(signal)) {
-                if (!self.allow_multiple_names) return error.Already_Named;
+            if (self.signal_lookup.get(name)) |existing_signal| {
+                std.debug.panic("Can't assign the name {s} to signal {t}; already assigned to {t}", .{
+                    name,
+                    signal,
+                    existing_signal,
+                });
+            }
+            if (self.signal_names.get(signal)) |existing_name| {
+                if (!self.allow_multiple_names) {
+                    std.debug.panic("Attempted to assign multiple names to signal {t}: {s}, {s}", .{
+                        signal,
+                        existing_name,
+                        name,
+                    });
+                }
             } else {
                 self.signal_names.putAssumeCapacity(signal, name);
             }
@@ -302,7 +338,9 @@ pub fn Names(comptime Device: type) type {
         }
 
         pub fn add_bus_name(self: *Self, signals: []const Signal, name: []const u8) !void {
-            if (self.bus_lookup.contains(name)) return error.Duplicate_Name;
+            if (self.bus_lookup.contains(name)) {
+                std.debug.panic("There is already a bus named {s}", .{ name });
+            }
             try self.bus_lookup.ensureUnusedCapacity(self.gpa, 1);
             self.bus_lookup.putAssumeCapacityNoClobber(name, signals);
         }
@@ -314,12 +352,20 @@ pub fn Names(comptime Device: type) type {
 
         pub fn add_constant(self: *Self, constant: anytype, name: []const u8) !void {
             const T = @TypeOf(constant);
-            if (self.constant_lookup.contains(name)) return error.Duplicate_Name;
-            try self.constant_lookup.ensureUnusedCapacity(self.gpa, 1);
-            self.constant_lookup.putAssumeCapacityNoClobber(name, if (T == Literal) constant else .{
+            const literal: Literal = if (T == Literal) constant else .{
                 .value = if (T == u64 or T == usize) constant else @bitCast(@as(i64, constant)),
                 .max_bit_index = @intCast(@typeInfo(T).int.bits - 1),
-            });
+            };
+
+            if (self.constant_lookup.get(name)) |existing_constant| {
+                std.debug.panic("Can't assign the name {s} to constant {f}; already assigned to {f}", .{
+                    name,
+                    literal,
+                    existing_constant,
+                });
+            }
+            try self.constant_lookup.ensureUnusedCapacity(self.gpa, 1);
+            self.constant_lookup.putAssumeCapacityNoClobber(name, literal);
         }
 
         pub fn propagate_names(self: *Self, arena: std.mem.Allocator, chip: *const lc4k.Chip_Config(Device.device_type)) !void {

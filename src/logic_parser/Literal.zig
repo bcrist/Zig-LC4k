@@ -63,5 +63,9 @@ fn parse_base(text: []const u8) struct { u8, []const u8 } {
     };
 }
 
+pub fn format(self: Literal, w: *std.io.Writer) !void {
+    w.print("{d}'0x{X:0}", .{ self.max_bit_index + 1, self.value });
+}
+
 const Literal = @This();
 const std = @import("std");

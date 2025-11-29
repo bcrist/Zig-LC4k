@@ -1,7 +1,7 @@
 .{
     .name = .lc4k,
     .fingerprint = 0x7b6fa9f9423b1ee5,
-    .version = "0.2.10",
+    .version = "0.2.11",
     .minimum_zig_version = "0.15.1",
     .paths = .{
         "src",
@@ -20,8 +20,9 @@
             .lazy = true,
         },
         .re4k = .{
-            .url = "git+https://github.com/bcrist/re4k#ea6c0ce0e24688b5956f25ea4fe04a27fb52f9cf",
-            .hash = "re4k-0.1.0-VW5jDM_rwwBplfd6yRRdH5vOr95RuzKEDonKi6dm1X1N",
+            // .url = "git+https://github.com/bcrist/re4k#ea6c0ce0e24688b5956f25ea4fe04a27fb52f9cf",
+            // .hash = "re4k-0.1.0-VW5jDM_rwwBplfd6yRRdH5vOr95RuzKEDonKi6dm1X1N",
+            .path = "../re4k/",
             .lazy = true,
         },
     },

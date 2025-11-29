@@ -16,7 +16,7 @@ pub const Package = enum {
     ucBGA132,
     TQFP144,
     csBGA144,
-    BMC151, // a custom adapter that allows use of csBGA132 devices with more affordable board types (1mm pitch sparse BGA)
+    BMC149, // a custom adapter that allows use of csBGA132 devices with more affordable board types (1mm pitch sparse BGA)
 };
 
 pub const Type = enum {
@@ -51,7 +51,7 @@ pub const Type = enum {
     LC4064x_TQFP44,
     LC4064x_TQFP48,
     LC4128V_TQFP144,
-    LC4128ZC_BMC151,
+    LC4128ZC_BMC149,
     LC4128ZC_TQFP100,
     LC4128ZC_csBGA132,
     LC4128ZE_TQFP100,
@@ -82,7 +82,7 @@ pub const Type = enum {
             .LC4064x_TQFP44 => @import("device/LC4064x_TQFP44.zig"),
             .LC4064x_TQFP48 => @import("device/LC4064x_TQFP48.zig"),
             .LC4128V_TQFP144 => @import("device/LC4128V_TQFP144.zig"),
-            .LC4128ZC_BMC151 => @import("device/LC4128ZC_BMC151.zig"),
+            .LC4128ZC_BMC149 => @import("device/LC4128ZC_BMC149.zig"),
             .LC4128ZC_TQFP100 => @import("device/LC4128ZC_TQFP100.zig"),
             .LC4128ZC_csBGA132 => @import("device/LC4128ZC_csBGA132.zig"),
             .LC4128ZE_TQFP100 => @import("device/LC4128ZE_TQFP100.zig"),
