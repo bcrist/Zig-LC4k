@@ -265,18 +265,79 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
         fn find_best_logic(self: *Self, ast: *Ast(Device), maybe_dc_ast: ?*Ast(Device), ir_data: *IR_Data, bit_index: u6, options: Options) !Logic {
             const allocator = self.arena;
 
+            var build_ir_begin: i128 = 0;
+            var prenormalize_begin: i128 = 0;
+            var normalize_begin: i128 = 0;
+            var qmc_begin: i128 = 0;
+            var qmc_end: i128 = 0;
+            var inverted_normalize_begin: i128 = 0;
+            var inverted_qmc_begin: i128 = 0;
+            var inverted_qmc_end: i128 = 0;
+            var xor_normalize_begin: i128 = 0;
+            var xor_lhs_qmc_begin: i128 = 0;
+            var xor_rhs_qmc_begin: i128 = 0;
+            var xor_lhs_inverted_normalize_begin: i128 = 0;
+            var xor_rhs_inverted_normalize_begin: i128 = 0;
+            var xor_lhs_inverted_qmc_begin: i128 = 0;
+            var xor_rhs_inverted_qmc_begin: i128 = 0;
+            var xor_count_pts_begin: i128 = 0;
+            var xor_count_pts_end: i128 = 0;
+
+            defer if (options.debug) {
+                log.info(
+                    \\find_best_logic() times:
+                    \\            Build IR: {D}
+                    \\        Prenormalize: {D}
+                    \\           Normalize: {D}
+                    \\                 QMC: {D}
+                    \\  Inverted Normalize: {D}
+                    \\        Inverted QMC: {D}
+                    \\       XOR Normalize: {D}
+                    \\         XOR LHS QMC: {D}
+                    \\         XOR RHS QMC: {D}
+                    \\    XOR LHS Inv Norm: {D}
+                    \\    XOR RHS Inv Norm: {D}
+                    \\     XOR LHS Inv QMC: {D}
+                    \\     XOR RHS Inv QMC: {D}
+                    \\       XOR Count PTs: {D}
+                    \\    
+                , .{
+                    @as(i64, @intCast(prenormalize_begin - build_ir_begin)),
+                    @as(i64, @intCast(normalize_begin - prenormalize_begin)),
+                    @as(i64, @intCast(qmc_begin - normalize_begin)),
+                    @as(i64, @intCast(qmc_end - qmc_begin)),
+                    @as(i64, @intCast(inverted_qmc_begin - inverted_normalize_begin)),
+                    @as(i64, @intCast(inverted_qmc_end - inverted_qmc_begin)),
+                    @as(i64, @intCast(xor_lhs_qmc_begin - xor_normalize_begin)),
+                    @as(i64, @intCast(xor_rhs_qmc_begin - xor_lhs_qmc_begin)),
+                    @as(i64, @intCast(xor_lhs_inverted_normalize_begin - xor_rhs_qmc_begin)),
+                    @as(i64, @intCast(xor_rhs_inverted_normalize_begin - xor_lhs_inverted_normalize_begin)),
+                    @as(i64, @intCast(xor_lhs_inverted_qmc_begin - xor_rhs_inverted_normalize_begin)),
+                    @as(i64, @intCast(xor_rhs_inverted_qmc_begin - xor_lhs_inverted_qmc_begin)),
+                    @as(i64, @intCast(xor_count_pts_begin - xor_rhs_inverted_qmc_begin)),
+                    @as(i64, @intCast(xor_count_pts_end - xor_count_pts_begin)),
+                });
+            };
+
             const optimization_signal_limit = if (options.optimize) self.optimization_signal_limit else 0;
 
-            const ir = try ir_data.normalize(try ast.build_ir(ir_data, bit_index), .{
-                .max_xor_depth = 0xFFFF,
+            build_ir_begin = std.time.nanoTimestamp();
+            const raw_ir = try ast.build_ir(ir_data, bit_index);
+
+            prenormalize_begin = std.time.nanoTimestamp();
+            const ir = try ir_data.normalize(raw_ir, .{
+                .max_xor_depth = 0xFF,
                 .demorgan = false,
                 .distribute = false,
             });
 
             const dc_ir = if (maybe_dc_ast) |dc_ast| try ir_data.normalize(try dc_ast.build_ir(ir_data, bit_index), .{ .max_xor_depth = 0 }) else null;
 
+            normalize_begin = std.time.nanoTimestamp();
             var ir_sum = try ir_data.normalize(ir, .{ .max_xor_depth = 0 });
+            qmc_begin = std.time.nanoTimestamp();
             ir_sum = try qmc.optimize(ir_data, ir_sum, dc_ir, optimization_signal_limit);
+            qmc_end = std.time.nanoTimestamp();
             const ir_sum_pts = ir_data.count_pts(ir_sum);
             if (ir_sum_pts == 1) {
                 return .{ .pt0 = .{
@@ -290,8 +351,11 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
             var best_ir_kind: std.meta.Tag(lc4k.Macrocell_Logic(Device.Signal)) = .sum;
             var best_ir_polarity: lc4k.Polarity = .positive;
 
+            inverted_normalize_begin = std.time.nanoTimestamp();
             var ir_sum_inverted = try ir_data.normalize(try ir_data.make_complement(ir), .{ .max_xor_depth = 0 });
+            inverted_qmc_begin = std.time.nanoTimestamp();
             ir_sum_inverted = try qmc.optimize(ir_data, ir_sum_inverted, dc_ir, optimization_signal_limit);
+            inverted_qmc_end = std.time.nanoTimestamp();
             const ir_sum_inverted_pts = ir_data.count_pts(ir_sum_inverted);
             if (ir_sum_inverted_pts == 1) {
                 return .{ .pt0 = .{
@@ -319,26 +383,31 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
 
             switch (ir_data.get(ir)) {
                 .xor => {
+                    xor_normalize_begin = std.time.nanoTimestamp();
                     const normalized = try ir_data.normalize(ir, .{});
                     const xor_bin = ir_data.get(normalized).xor;
 
-                    const lhs, const rhs = .{
-                        try qmc.optimize(ir_data, xor_bin.lhs, dc_ir, optimization_signal_limit),
-                        try qmc.optimize(ir_data, xor_bin.rhs, dc_ir, optimization_signal_limit),
-                    };
+                    xor_lhs_qmc_begin = std.time.nanoTimestamp();
+                    const lhs = try qmc.optimize(ir_data, xor_bin.lhs, dc_ir, optimization_signal_limit);
+                    xor_rhs_qmc_begin = std.time.nanoTimestamp();
+                    const rhs = try qmc.optimize(ir_data, xor_bin.rhs, dc_ir, optimization_signal_limit);
+
+
+                    xor_lhs_inverted_normalize_begin = std.time.nanoTimestamp();
+                    const lhs_inverted_unoptimized = try ir_data.normalize(try ir_data.make_complement(xor_bin.lhs), .{ .max_xor_depth = 0 });
+                    xor_rhs_inverted_normalize_begin = std.time.nanoTimestamp();
+                    const rhs_inverted_unoptimized = try ir_data.normalize(try ir_data.make_complement(xor_bin.rhs), .{ .max_xor_depth = 0 });
+                    xor_lhs_inverted_qmc_begin = std.time.nanoTimestamp();
+                    const lhs_inverted = try qmc.optimize(ir_data, lhs_inverted_unoptimized, dc_ir, optimization_signal_limit);
+                    xor_rhs_inverted_qmc_begin = std.time.nanoTimestamp();
+                    const rhs_inverted = try qmc.optimize(ir_data, rhs_inverted_unoptimized, dc_ir, optimization_signal_limit);
+
+                    xor_count_pts_begin = std.time.nanoTimestamp();
                     const lhs_pts = ir_data.count_pts(lhs);
                     const rhs_pts = ir_data.count_pts(rhs);
-
-                    const lhs_inverted, const rhs_inverted = bin: {
-                        const lhs_inverted = try ir_data.normalize(try ir_data.make_complement(xor_bin.lhs), .{ .max_xor_depth = 0 });
-                        const rhs_inverted = try ir_data.normalize(try ir_data.make_complement(xor_bin.rhs), .{ .max_xor_depth = 0 });
-                        break :bin .{
-                            try qmc.optimize(ir_data, lhs_inverted, dc_ir, optimization_signal_limit),
-                            try qmc.optimize(ir_data, rhs_inverted, dc_ir, optimization_signal_limit),
-                        };
-                    };
                     const lhs_inverted_pts = ir_data.count_pts(lhs_inverted);
                     const rhs_inverted_pts = ir_data.count_pts(rhs_inverted);
+                    xor_count_pts_end = std.time.nanoTimestamp();
 
                     if (options.debug) {
                         var buf: [64]u8 = undefined;
@@ -569,6 +638,8 @@ pub const lexer = @import("logic_parser/lexer.zig");
 pub const Ast = @import("logic_parser/ast.zig").Ast;
 pub const IR = IR_Data.IR;
 pub const IR_Data = @import("logic_parser/IR_Data.zig");
+
+const log = std.log.scoped(.lc4k_logic_parser);
 
 const qmc = @import("logic_parser/qmc.zig");
 const naming = @import("naming.zig");

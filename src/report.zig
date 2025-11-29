@@ -4,6 +4,10 @@ pub fn Write_Options(comptime Device: type) type {
         design_version: []const u8 = "",
         notes: []const u8 = "",
         errors: []const Config_Error = &[_]Config_Error{},
+        configuration_time_ns: ?u64 = null,
+        gi_routing_time_ns: ?u64 = null,
+        assembly_time_ns: ?u64 = null,
+        cluster_routing_time_ns: ?u64 = null,
         names: ?*const Device.Names = null,
         skip_timing: bool = false,
 
@@ -170,6 +174,7 @@ fn Report_Data(comptime Device: type) type {
                         .sum => {},
                         .input_buffer, .sum_xor_input_buffer => {
                             if (Device.Signal.maybe_mc_pad(mcref)) |signal| {
+                                ios_used.insert(signal);
                                 self.signal_usage.getPtr(signal).insert(.input_reg);
                             } else {
                                 // TODO should this be reported in disassembly errors?
@@ -391,7 +396,7 @@ pub fn write(comptime Device: type, comptime speed_grade: comptime_int, file: JE
     try writer.writeAll("<html>\n");
     try writer.writeAll("<head>\n");
     if (options.design_name.len > 0) {
-        try writer.print("<title>CPLD Design Report: {s}</title>\n", .{ options.design_name });
+        try writer.print("<title>{s} (CPLD Design Report)</title>\n", .{ options.design_name });
     } else {
         try writer.writeAll("<title>CPLD Design Report</title>\n");
     }
@@ -446,6 +451,31 @@ pub fn write(comptime Device: type, comptime speed_grade: comptime_int, file: JE
     try write_summary_line(writer, "PT Clusters Used", data.num_clusters_used, Device.num_glbs * Device.num_mcs_per_glb);
     try write_summary_line(writer, "Macrocells Used", data.num_mcs_used, Device.num_glbs * Device.num_mcs_per_glb);
     try write_summary_line(writer, "Registers Used", data.num_registers_used, Device.num_glbs * Device.num_mcs_per_glb);
+
+    if (options.configuration_time_ns) |ns| {
+        try writer.writeAll("<tr>");
+        try writer.writeAll("<th>Configuration Time</th>");
+        try writer.print("<td>{D}</td>", .{ ns });
+        try writer.writeAll("</tr>\n");
+    }
+    if (options.assembly_time_ns) |ns| {
+        try writer.writeAll("<tr>");
+        try writer.writeAll("<th>Total Assembly Time</th>");
+        try writer.print("<td>{D}</td>", .{ ns });
+        try writer.writeAll("</tr>\n");
+    }
+    if (options.gi_routing_time_ns) |ns| {
+        try writer.writeAll("<tr>");
+        try writer.writeAll("<th>GI Routing Time</th>");
+        try writer.print("<td>{D}</td>", .{ ns });
+        try writer.writeAll("</tr>\n");
+    }
+    if (options.cluster_routing_time_ns) |ns| {
+        try writer.writeAll("<tr>");
+        try writer.writeAll("<th>Cluster Routing Time</th>");
+        try writer.print("<td>{D}</td>", .{ ns });
+        try writer.writeAll("</tr>\n");
+    }
 
     try writer.writeAll("</table>\n");
 

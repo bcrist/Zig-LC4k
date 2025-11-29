@@ -84,8 +84,8 @@ fn debug_binary(self: IR_Data, kind: IR.Tag, first_index: usize, id: IR.ID, inde
 }
 
 pub const Normalize_Options = struct {
-    max_depth: u16 = 0xFFFF,
-    max_xor_depth: u16 = 1,
+    max_depth: u8 = 0xFF,
+    max_xor_depth: u8 = 1,
     demorgan: bool = true,
     distribute: bool = true,
 };
