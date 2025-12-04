@@ -28,6 +28,7 @@ pub fn intern(self: *IR_Data, ir: IR) std.mem.Allocator.Error!IR.ID {
     const id = IR.ID.init(@intCast(result.index));
     if (!result.found_existing) {
         result.key_ptr.* = ir;
+
     }
     return id;
 }
@@ -36,7 +37,55 @@ pub fn get(self: IR_Data, id: IR.ID) IR {
     return self.lookup.keys()[id.raw()];
 }
 
-pub fn debug(self: IR_Data, id: IR.ID, indent: usize, include_ids: bool, w: *std.io.Writer) anyerror!void {
+pub fn warn(self: IR_Data, id: IR.ID, comptime fmt: []const u8, arg1: anytype, arg2: anytype) void {
+    var buf: [1024]u8 = undefined;
+    var writer = std.io.Writer.fixed(&buf);
+    self.format(id, &writer) catch {};
+    const expr = writer.buffered();
+    log.warn(fmt ++ "\t{s}", .{ arg1, arg2, expr });
+}
+
+pub fn format(self: IR_Data, id: IR.ID, w: *std.io.Writer) std.io.Writer.Error!void {
+    const ir = self.get(id);
+    switch (ir) {
+        .zero => {
+            try w.writeAll("false");
+        },
+        .one => {
+            try w.writeAll("true");
+        },
+        .signal => |ordinal| {
+            try w.print("{}", .{ ordinal });
+        },
+        .complement => |inner_id| {
+            try w.writeByte('!');
+            try self.format(inner_id, w);
+        },
+        .product, .sum, .xor => {
+            try w.writeByte('(');
+
+            var iter = self.iterator(ir, id);
+            var first = true;
+            while (iter.next()) |child| {
+                if (first) {
+                    first = false;
+                } else {
+                    try w.writeAll(switch (ir) {
+                        .product => " & ",
+                        .sum => " | ",
+                        .xor => " ^ ",
+                        else => unreachable,
+                    });
+                }
+                try self.format(child, w);
+            }
+
+            try w.writeByte(')');
+        },
+    }
+}
+
+pub fn debug(self: IR_Data, id: IR.ID, indent: usize, include_ids: bool, w: *std.io.Writer) std.io.Writer.Error!void {
     const ir = self.get(id);
     if (include_ids) {
         try w.print("${} {s}", .{ @intFromEnum(id), @tagName(ir) });
@@ -64,7 +113,7 @@ pub fn debug(self: IR_Data, id: IR.ID, indent: usize, include_ids: bool, w: *std
     }
 }
 
-fn debug_binary(self: IR_Data, kind: IR.Tag, first_index: usize, id: IR.ID, indent: usize, include_ids: bool, w: *std.io.Writer) anyerror!usize {
+fn debug_binary(self: IR_Data, kind: IR.Tag, first_index: usize, id: IR.ID, indent: usize, include_ids: bool, w: *std.io.Writer) std.io.Writer.Error!usize {
     const ir = self.get(id);
     if (ir == kind) {
         const bin = switch (ir) {
@@ -83,37 +132,58 @@ fn debug_binary(self: IR_Data, kind: IR.Tag, first_index: usize, id: IR.ID, inde
     }
 }
 
+pub const Normalize_Error = error{
+    OutOfMemory,
+    ExpressionTooComplex,
+};
+
 pub const Normalize_Options = struct {
     max_depth: u8 = 0xFF,
-    max_xor_depth: u8 = 1,
+    max_xor_depth: u8 = 0,
     demorgan: bool = true,
     distribute: bool = true,
+    iteration_limit: u32 = 500,
 };
-pub fn normalize(self: *IR_Data, id: IR.ID, options: Normalize_Options) std.mem.Allocator.Error!IR.ID {
-    if (options.max_depth == 0) return id;
+pub fn normalize(self: *IR_Data, id: IR.ID, options: Normalize_Options) Normalize_Error!IR.ID {
+    var i: u32 = 0;
+    return self.normalize_inner(id, &i, options);
+}
+pub fn maybe_normalize(self: *IR_Data, id: IR.ID, options: Normalize_Options) ?IR.ID {
+    var i: u32 = 0;
+    return self.normalize_inner(id, &i, options) catch null;
+}
+
+pub fn normalize_inner(self: *IR_Data, id: IR.ID, i: *u32, options: Normalize_Options) Normalize_Error!IR.ID {
+    if (options.max_depth == 0) return error.ExpressionTooComplex;
 
     var options_less_depth = options;
     options_less_depth.max_depth -= 1;
     var options_less_xor = options_less_depth;
     options_less_xor.max_xor_depth -|= 1;
 
-    var last_result: IR.ID = .zero; // If `id` also happens to be .zero, the while loop won't run even once, but by definition .zero is already as simplified as possible
+    var last_result: IR.ID = .zero;
     var result = id;
-    while (result != last_result) {
+    
+    
+    while (i.* < options.iteration_limit) : (i.* += 1) {
         last_result = result;
-        result = switch (self.get(result)) {
+        const result_ir = self.get(result);
+        result = switch (result_ir) {
             // these are maximally simplified by definition, so we can just return if we reach one:
             .zero, .one, .signal => return result,
 
-            .complement => |inner_id| try self.normalize_complement(result, inner_id, options_less_depth),
-            .product => |bin| try self.normalize_product(result, bin, options_less_xor),
-            .sum => |bin| try self.normalize_sum(result, bin, options_less_xor),
-            .xor => |bin| try self.normalize_xor(result, bin, options_less_depth),
+            .complement => |inner_id| try self.normalize_complement(result, inner_id, i, options_less_depth),
+            .product => |bin| try self.normalize_product(result, bin, i, options_less_xor),
+            .sum => |bin| try self.normalize_sum(result, bin, i, options_less_xor),
+            .xor => |bin| try self.normalize_xor(result, bin, i, options_less_depth),
         };
+        if (result == last_result) return result;
+        // self.warn(result, "normalize {} => {} ", id.raw(), result.raw());
     }
-    return result;
+
+    return error.ExpressionTooComplex;
 }
-fn normalize_complement(self: *IR_Data, complement_id: IR.ID, inner_id: IR.ID, options: Normalize_Options) std.mem.Allocator.Error!IR.ID {
+fn normalize_complement(self: *IR_Data, complement_id: IR.ID, inner_id: IR.ID, i: *u32, options: Normalize_Options) Normalize_Error!IR.ID {
     switch (self.get(inner_id)) {
         // ~~x => x
         .complement => |double_complemented_id| return double_complemented_id,
@@ -132,29 +202,79 @@ fn normalize_complement(self: *IR_Data, complement_id: IR.ID, inner_id: IR.ID, o
 
         // ~(x|y) => ~x & ~y
         .sum => |sum_bin| if (options.demorgan) {
-            const not_lhs = try self.make_complement(sum_bin.lhs);
-            const not_rhs = try self.make_complement(sum_bin.rhs);
-            return try self.make_binary(.product, not_lhs, not_rhs);
+            if (self.get(sum_bin.lhs) == .sum or self.get(sum_bin.rhs) == .sum) {
+                std.debug.assert(self.merge_temp.items.len == 0);
+                defer self.merge_temp.clearRetainingCapacity();
+
+                var iter = self.iterator(.sum, inner_id);
+                while (iter.next()) |child| {
+                    try self.merge_temp.append(self.gpa, try self.make_complement(child));
+                }
+
+                std.sort.pdq(IR.ID, self.merge_temp.items, {}, IR.ID.less_than);
+
+                var result = self.merge_temp.items[0];
+                var last_item = result;
+                for (self.merge_temp.items[1..]) |item| {
+                    // For AND and OR, we will remove duplicate subexpressions here, according to the logical equivalences:
+                    //   x & x => x
+                    //   x | x => x
+                    if (item != last_item) {
+                        result = try self.intern(.{ .product = .{ .lhs = result, .rhs = item }});
+                        last_item = item;
+                    }
+                }
+                return result;
+            } else {
+                const not_lhs = try self.make_complement(sum_bin.lhs);
+                const not_rhs = try self.make_complement(sum_bin.rhs);
+                return try self.make_binary(.product, not_lhs, not_rhs);
+            }
         },
 
         // ~(x&y) => ~x | ~y
         .product => |product_bin| if (options.demorgan) {
-            const not_lhs = try self.make_complement(product_bin.lhs);
-            const not_rhs = try self.make_complement(product_bin.rhs);
-            return try self.make_binary(.sum, not_lhs, not_rhs);
+            if (self.get(product_bin.lhs) == .product or self.get(product_bin.rhs) == .product) {
+                std.debug.assert(self.merge_temp.items.len == 0);
+                defer self.merge_temp.clearRetainingCapacity();
+
+                var iter = self.iterator(.product, inner_id);
+                while (iter.next()) |child| {
+                    try self.merge_temp.append(self.gpa, try self.make_complement(child));
+                }
+
+                std.sort.pdq(IR.ID, self.merge_temp.items, {}, IR.ID.less_than);
+
+                var result = self.merge_temp.items[0];
+                var last_item = result;
+                for (self.merge_temp.items[1..]) |item| {
+                    // For AND and OR, we will remove duplicate subexpressions here, according to the logical equivalences:
+                    //   x & x => x
+                    //   x | x => x
+                    if (item != last_item) {
+                        result = try self.intern(.{ .sum = .{ .lhs = result, .rhs = item }});
+                        last_item = item;
+                    }
+                }
+                return result;
+            } else {
+                const not_lhs = try self.make_complement(product_bin.lhs);
+                const not_rhs = try self.make_complement(product_bin.rhs);
+                return try self.make_binary(.sum, not_lhs, not_rhs);
+            }
         },
 
         else => {},
     }
 
-    const inner_normal = try self.normalize(inner_id, options);
+    const inner_normal = try self.normalize_inner(inner_id, i, options);
     if (inner_id != inner_normal) {
         return try self.make_complement(inner_normal);
     }
 
     return complement_id;
 }
-fn normalize_product(self: *IR_Data, product_id: IR.ID, bin: IR.Binary, options: Normalize_Options) std.mem.Allocator.Error!IR.ID {
+fn normalize_product(self: *IR_Data, product_id: IR.ID, bin: IR.Binary, i: *u32, options: Normalize_Options) Normalize_Error!IR.ID {
     std.debug.assert(self.normalize_temp.count() == 0);
     defer self.normalize_temp.clearRetainingCapacity();
 
@@ -224,9 +344,9 @@ fn normalize_product(self: *IR_Data, product_id: IR.ID, bin: IR.Binary, options:
     };
 
     self.normalize_temp.clearRetainingCapacity();
-    return try self.normalize_recursive(.product, product_id, bin, options);
+    return try self.normalize_recursive(.product, product_id, bin, i, options);
 }
-fn normalize_sum(self: *IR_Data, sum_id: IR.ID, bin: IR.Binary, options: Normalize_Options) std.mem.Allocator.Error!IR.ID {
+fn normalize_sum(self: *IR_Data, sum_id: IR.ID, bin: IR.Binary, i: *u32, options: Normalize_Options) Normalize_Error!IR.ID {
     std.debug.assert(self.normalize_temp.count() == 0);
     defer self.normalize_temp.clearRetainingCapacity();
 
@@ -275,9 +395,9 @@ fn normalize_sum(self: *IR_Data, sum_id: IR.ID, bin: IR.Binary, options: Normali
     }
 
     self.normalize_temp.clearRetainingCapacity();
-    return try self.normalize_recursive(.sum, sum_id, bin, options);
+    return try self.normalize_recursive(.sum, sum_id, bin, i, options);
 }
-fn normalize_xor(self: *IR_Data, xor_id: IR.ID, bin: IR.Binary, options: Normalize_Options) std.mem.Allocator.Error!IR.ID {
+fn normalize_xor(self: *IR_Data, xor_id: IR.ID, bin: IR.Binary, i: *u32, options: Normalize_Options) Normalize_Error!IR.ID {
     std.debug.assert(self.normalize_temp.count() == 0);
     defer self.normalize_temp.clearRetainingCapacity();
 
@@ -317,12 +437,12 @@ fn normalize_xor(self: *IR_Data, xor_id: IR.ID, bin: IR.Binary, options: Normali
     options_less_xor.max_xor_depth -|= 1;
 
     self.normalize_temp.clearRetainingCapacity();
-    const xor_childnorm = try self.normalize_recursive(.xor, xor_id, bin, options_less_xor);
+    const xor_childnorm = try self.normalize_recursive(.xor, xor_id, bin, i, options_less_xor);
     if (xor_childnorm != xor_id) return xor_childnorm;
 
     return try self.normalize_xor_removal(xor_id, bin, options);
 }
-fn normalize_xor_removal(self: *IR_Data, xor_id: IR.ID, bin: IR.Binary, options: Normalize_Options) std.mem.Allocator.Error!IR.ID {
+fn normalize_xor_removal(self: *IR_Data, xor_id: IR.ID, bin: IR.Binary, options: Normalize_Options) Normalize_Error!IR.ID {
     if (options.max_xor_depth == 0) {
         const not_lhs = try self.make_complement(bin.lhs);
         const not_rhs = try self.make_complement(bin.rhs);
@@ -345,14 +465,14 @@ fn normalize_xor_removal(self: *IR_Data, xor_id: IR.ID, bin: IR.Binary, options:
 
     return xor_id;
 }
-fn normalize_recursive(self: *IR_Data, comptime kind: IR.Tag, id: IR.ID, bin: IR.Binary, options: Normalize_Options) std.mem.Allocator.Error!IR.ID {
+fn normalize_recursive(self: *IR_Data, comptime kind: IR.Tag, id: IR.ID, bin: IR.Binary, i: *u32, options: Normalize_Options) Normalize_Error!IR.ID {
     const lhs = self.get(bin.lhs);
     const lhs_normal = if (lhs == kind) try self.normalize_recursive(kind, bin.lhs, switch (lhs) {
         .xor, .sum, .product => |lhs_bin| lhs_bin,
         else => unreachable,
-    }, options) else try self.normalize(bin.lhs, options);
+    }, i, options) else try self.normalize_inner(bin.lhs, i, options);
 
-    const rhs_normal = try self.normalize(bin.rhs, options);
+    const rhs_normal = try self.normalize_inner(bin.rhs, i, options);
 
     if (bin.lhs != lhs_normal or bin.rhs != rhs_normal) {
         return try self.make_binary(kind, lhs_normal, rhs_normal);
@@ -439,6 +559,10 @@ pub fn make_signal(self: *IR_Data, ordinal: u16) !IR.ID {
 }
 
 pub fn make_complement(self: *IR_Data, inner: IR.ID) std.mem.Allocator.Error!IR.ID {
+    const inner_ir = self.get(inner);
+    if (inner_ir == .complement) {
+        return inner_ir.complement;
+    }
     return try self.intern(.{ .complement = inner });
 }
 
@@ -620,6 +744,8 @@ pub const IR = union (enum) {
 };
 
 const IR_Data = @This();
+
+const log = std.log.scoped(.irdata);
 
 const lc4k = @import("../lc4k.zig");
 const std = @import("std");

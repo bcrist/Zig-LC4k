@@ -66,6 +66,15 @@ pub const Node = union (enum) {
                 try writer.writeByte(' ');
                 try writer.writeAll(@tagName(self));
             },
+            .orm, .out, .out_oe, .out_en, .out_dis => |mcref| {
+                if (Device.Signal.maybe_mc_pad(mcref)) |pad| {
+                    try writer.writeAll(names.get_signal_name(pad));
+                    try writer.writeByte(' ');
+                    try writer.writeAll(@tagName(self));
+                } else {
+                    try writer.print("{s} {s}", .{ names.get_mc_name(mcref), @tagName(self) });
+                }
+            },
             .oe_in => |oe_index| {
                 try writer.print("OE {d}", .{ oe_index });
             },
@@ -82,7 +91,7 @@ pub const Node = union (enum) {
                 try writer.writeAll(@tagName(self));
             },
             .mc_cluster, .mc_ca, .mcd, .mc_clk, .mc_ce, .mc_init, .mc_async,
-            .mc_oe, .mcq, .orm, .fb, .out, .out_oe, .out_en, .out_dis => |mcref| {
+            .mc_oe, .mcq, .fb => |mcref| {
                 try writer.print("{s} {s}", .{ names.get_mc_name(mcref), @tagName(self) });
             },
             .mcd_setup => |mcref| {

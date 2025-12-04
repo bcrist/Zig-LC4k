@@ -3,7 +3,7 @@ pub fn Disassembly_Results(comptime Device: type) type {
         config: lc4k.Chip_Config(Device.device_type),
         gi_routing: [Device.num_glbs][Device.num_gis_per_glb]?Device.Signal,
         sum_routing: [Device.num_glbs]routing.Routing_Data,
-        errors: std.array_list.Managed(Config_Error),
+        errors: std.ArrayList(Config_Error),
     };
 }
 
@@ -12,11 +12,11 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
         .config = .{},
         .gi_routing = @splat(@splat(null)),
         .sum_routing = @splat(.{}),
-        .errors = .init(allocator),
+        .errors = .empty,
     };
 
     if (!file.data.extents.eql(Device.jedec_dimensions)) {
-        try results.errors.append(.{
+        try results.errors.append(allocator, .{
             .err = error.Malformed_JEDEC_File,
             .details = "JEDEC file fuse range does not match expected dimensions for this device!",
         });
@@ -39,25 +39,25 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
             };
         } else if (osctimer_enable == 3) {
             if (@intFromEnum(timer_div) != 3) {
-                try results.errors.append(.{
+                try results.errors.append(allocator, .{
                     .err = error.Invalid_OscTimer_Fuses,
                     .details = "OSCTIMER is disabled, but timer divisor has been set",
                 });
             }
             if (enable_osc_out_and_disable) {
-                try results.errors.append(.{
+                try results.errors.append(allocator, .{
                     .err = error.Invalid_OscTimer_Fuses,
                     .details = "OSCTIMER is disabled, but oscillator output is enabled",
                 });
             }
             if (enable_timer_out_and_reset) {
-                try results.errors.append(.{
+                try results.errors.append(allocator, .{
                     .err = error.Invalid_OscTimer_Fuses,
                     .details = "OSCTIMER is disabled, but timer output is enabled",
                 });
             }
         } else {
-            try results.errors.append(.{
+            try results.errors.append(allocator, .{
                 .err = error.Invalid_OscTimer_Fuses,
                 .details = try std.fmt.allocPrint(allocator, "Expected both OSCTIMER enable fuses to have the same value (found {})", .{ osctimer_enable }),
             });
@@ -67,7 +67,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
         if (results.config.default_bus_maintenance == .float) {
             for (Device.get_extra_float_input_fuses()) |fuse| {
                 if (file.data.is_set(fuse)) {
-                    try results.errors.append(.{
+                    try results.errors.append(allocator, .{
                         .err = error.Floating_Buried_Input,
                         .details = "When no bus maintenance is enabled, this fuse should be cleared to prevent oscillation, as this signal is not connected to any pad.",
                         .fuse = fuse,
@@ -117,7 +117,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
 
     for (&results.config.glb, 0..) |*glb_config, glb| {
         // Parse GI routing fuses
-        results.gi_routing[glb] = try read_gi_routing(Device, glb, file.data, &results);
+        results.gi_routing[glb] = try read_gi_routing(Device, glb, file.data, allocator, &results);
         const gi_routing = &results.gi_routing[glb];
 
         {
@@ -138,10 +138,10 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
 
         glb_config.shared_pt_enable = try read_pt_fuses(Device, allocator, glb, 82, gi_routing, file.data, &results);
 
-        try read_goe_config(Device, file.data, &results.config.goe0, 0, &results);
-        try read_goe_config(Device, file.data, &results.config.goe1, 1, &results);
-        try read_goe_config(Device, file.data, &results.config.goe2, 2, &results);
-        try read_goe_config(Device, file.data, &results.config.goe3, 3, &results);
+        try read_goe_config(Device, file.data, &results.config.goe0, 0, allocator, &results);
+        try read_goe_config(Device, file.data, &results.config.goe1, 1, allocator, &results);
+        try read_goe_config(Device, file.data, &results.config.goe2, 2, allocator, &results);
+        try read_goe_config(Device, file.data, &results.config.goe3, 3, allocator, &results);
 
         glb_config.bclock0 = read_bclock0(Device, file.data, glb);
         glb_config.bclock1 = read_bclock1(Device, file.data, glb);
@@ -175,7 +175,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                 if (input_bypass) {
                     mc_config.logic = .input_buffer;
                     if (mc_config.func == .combinational) {
-                        try results.errors.append(.{
+                        try results.errors.append(allocator, .{
                             .err = error.Invalid_Logic_Config,
                             .details = "Input bypass fuse should not be active when macrocell is combinational",
                             .fuse = fuses.get_input_bypass_range(Device, mcref).min,
@@ -184,7 +184,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                         });
                     }
                     if (pt0xor) {
-                        try results.errors.append(.{
+                        try results.errors.append(allocator, .{
                             .err = error.Invalid_Logic_Config,
                             .details = "PT0 should not be assigned to XOR when using fast input register",
                             .fuse = fuses.get_pt0_xor_range(Device, mcref).min,
@@ -193,7 +193,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                         });
                     }
                     if (invert) {
-                        try results.errors.append(.{
+                        try results.errors.append(allocator, .{
                             .err = error.Invalid_Logic_Config,
                             .details = "The XOR invert fuse has no effect when using fast input register",
                             .fuse = fuses.get_invert_range(Device, mcref).min,
@@ -249,7 +249,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
             switch (mc_config.func) {
                 .combinational => {
                     if (clock != .none) {
-                        try results.errors.append(.{
+                        try results.errors.append(allocator, .{
                             .err = error.Invalid_Register_Config,
                             .details = "Macrocell is combinational, but has a clock defined",
                             .glb = mcref.glb,
@@ -257,7 +257,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                         });
                     }
                     if (ce != .always_active) {
-                        try results.errors.append(.{
+                        try results.errors.append(allocator, .{
                             .err = error.Invalid_Register_Config,
                             .details = "Macrocell is combinational, but has a CE defined",
                             .glb = mcref.glb,
@@ -265,7 +265,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                         });
                     }
                     if (init_source != .shared_pt_init) {
-                        try results.errors.append(.{
+                        try results.errors.append(allocator, .{
                             .err = error.Invalid_Register_Config,
                             .details = "Macrocell is combinational, but uses shared PT init",
                             .glb = mcref.glb,
@@ -273,7 +273,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                         });
                     }
                     if (async_source != .none) {
-                        try results.errors.append(.{
+                        try results.errors.append(allocator, .{
                             .err = error.Invalid_Register_Config,
                             .details = "Macrocell is combinational, but has PT2 async source defined",
                             .glb = mcref.glb,
@@ -363,7 +363,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                         }
                         pts.len = num_pts;
                         if (num_pts > 1 and sum_is_always) {
-                            try results.errors.append(.{
+                            try results.errors.append(allocator, .{
                                 .err = error.Irrelevant_PT,
                                 .details = "5-PT fast path needlessly uses more than one PT (constant high)",
                                 .glb = mcref.glb,
@@ -409,7 +409,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                         const details = try std.fmt.allocPrint(allocator, "Logic sum needlessly uses {} PTs (constant high requires only one)", .{
                             num_pts
                         });
-                        try results.errors.append(.{
+                        try results.errors.append(allocator, .{
                             .err = error.Irrelevant_PT,
                             .details = details,
                             .glb = mcref.glb,
@@ -442,7 +442,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                     const oe_mcref = mc_config.output.output_routing().to_absolute(mcref).mc();
                     std.debug.assert(oe_mcref.glb == glb);
                     if (glb_config.mc[oe_mcref.mc].pt4_oe == null) {
-                        try results.errors.append(.{
+                        try results.errors.append(allocator, .{
                             .err = error.PT_OE_Undefined,
                             .details = "IO uses PT4 for OE, but PT4 is routed to sum",
                             .glb = @intCast(glb),
@@ -458,7 +458,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
     return results;
 }
 
-pub fn read_gi_routing(comptime Device: type, glb: usize, jed: JEDEC_Data, maybe_results: ?*Disassembly_Results(Device)) ![Device.num_gis_per_glb]?Device.Signal {
+pub fn read_gi_routing(comptime Device: type, glb: usize, jed: JEDEC_Data, allocator: std.mem.Allocator, maybe_results: ?*Disassembly_Results(Device)) ![Device.num_gis_per_glb]?Device.Signal {
     var gi_routing: [Device.num_gis_per_glb]?Device.Signal = @splat(null);
 
     for (Device.gi_options, 0..) |options, gi| {
@@ -470,7 +470,7 @@ pub fn read_gi_routing(comptime Device: type, glb: usize, jed: JEDEC_Data, maybe
             if (!jed.is_set(fuse)) {
                 if (gi_routing[gi]) |_| {
                     if (maybe_results) |results| {
-                        try results.errors.append(.{
+                        try results.errors.append(allocator, .{
                             .err = error.Too_Many_GI_Fuses,
                             .details = "Multiple fuses active for this GI",
                             .fuse = fuse,
@@ -572,7 +572,7 @@ pub fn read_pt_fuses(
                     factors[factor_index] = .{ .when_low = gi_signal };
                 }
             } else if (maybe_results) |results| {
-                try results.errors.append(.{
+                try results.errors.append(allocator, .{
                     .err = error.Unrouted_GI,
                     .details = "No signal driving GI",
                     .glb = @intCast(glb),
@@ -588,20 +588,20 @@ pub fn read_pt_fuses(
     return .{ .factors = factors };
 }
 
-pub fn read_goe_config(comptime Device: type, data: JEDEC_Data, goe_config: anytype, goe_index: usize, results: ?*Disassembly_Results(Device)) !void {
+pub fn read_goe_config(comptime Device: type, data: JEDEC_Data, goe_config: anytype, goe_index: usize, allocator: std.mem.Allocator, results: ?*Disassembly_Results(Device)) !void {
     switch (@TypeOf(goe_config.*)) {
         lc4k.GOE_Config_Bus_Or_Pin => switch (data.get(Device.get_goe_source_fuse(goe_index).?)) {
             0 => goe_config.source = .input,
-            1 => try read_goe_source_bus(Device, data, goe_config, goe_index, results),
+            1 => try read_goe_source_bus(Device, data, goe_config, goe_index, allocator, results),
         },
-        lc4k.GOE_Config_Bus => try read_goe_source_bus(Device, data, goe_config, goe_index, results),
+        lc4k.GOE_Config_Bus => try read_goe_source_bus(Device, data, goe_config, goe_index, allocator, results),
         lc4k.GOE_Config_Pin => {},
         else => unreachable,
     }
     goe_config.polarity = read_field(data, lc4k.Polarity, Device.get_goe_polarity_fuse(goe_index).range());
 }
 
-fn read_goe_source_bus(comptime Device: type, data: JEDEC_Data, goe_config: anytype, goe_index: usize, maybe_results: ?*Disassembly_Results(Device)) !void {
+fn read_goe_source_bus(comptime Device: type, data: JEDEC_Data, goe_config: anytype, goe_index: usize, allocator: std.mem.Allocator, maybe_results: ?*Disassembly_Results(Device)) !void {
     goe_config.source = .constant_high;
     var glb: lc4k.GLB_Index = 0;
     var already_reported_goe_collision = false;
@@ -613,7 +613,7 @@ fn read_goe_source_bus(comptime Device: type, data: JEDEC_Data, goe_config: anyt
                         if (!already_reported_goe_collision) {
                             already_reported_goe_collision = true;
                             if (maybe_results) |results| {
-                                try results.errors.append(.{
+                                try results.errors.append(allocator, .{
                                     .err = error.GOE_Collision,
                                     .details = "Multiple GLBs' shared enable PT are driving the same PT OE bus line",
                                     .glb = @intCast(old_glb),
@@ -621,7 +621,7 @@ fn read_goe_source_bus(comptime Device: type, data: JEDEC_Data, goe_config: anyt
                             }
                         }
                         if (maybe_results) |results| {
-                            try results.errors.append(.{
+                            try results.errors.append(allocator, .{
                                 .err = error.GOE_Collision,
                                 .details = "Multiple GLBs' shared enable PT are driving the same PT OE bus line",
                                 .glb = @intCast(glb),

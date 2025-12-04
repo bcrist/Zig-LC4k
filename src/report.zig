@@ -75,7 +75,7 @@ fn Report_Data(comptime Device: type) type {
     return struct {
         jed: JEDEC_Data,
         config: lc4k.Chip_Config(Device.device_type),
-        disassembly_errors: std.array_list.Managed(Config_Error),
+        disassembly_errors: std.ArrayList(Config_Error),
 
         glb: [Device.num_glbs]GLB_Report_Data = undefined,
 

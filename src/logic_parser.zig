@@ -3,6 +3,7 @@ pub const Options = struct {
     optimize: bool = false,
     dont_care: []const u8 = "",
     debug: bool = false,
+    polarity: ?lc4k.Polarity = null,
 };
 
 pub fn Logic_Parser(comptime Device_Struct: type) type {
@@ -27,7 +28,9 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
             var p = try self.process_single_bit(equation, extra);
             defer p.deinit();
 
-            const ir_normalized = try p.ir_data.normalize(p.ir, .{ .max_xor_depth = 0 });
+            std.debug.assert(p.options.polarity == null);
+
+            const ir_normalized = try p.ir_data.normalize(p.ir, .{ .iteration_limit = 100_000 });
             const ir_optimized = try qmc.optimize(&p.ir_data, ir_normalized, p.dc_ir, p.opt_signal_limit);
 
             if (p.options.debug) {
@@ -57,81 +60,95 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
             var p = try self.process_single_bit(equation, extra);
             defer p.deinit();
 
-            const ir_normalized = try p.ir_data.normalize(p.ir, .{ .max_xor_depth = 0 });
-            const ir_optimized = try qmc.optimize(&p.ir_data, ir_normalized, p.dc_ir, p.opt_signal_limit);
+            if (p.options.polarity) |polarity| switch (polarity) {
+                .positive => {
+                    if (p.normalize_and_optimize(p.ir, .{ .max_xor_depth = 0, .iteration_limit = 100_000 })) |result| {
+                        if (result.num_pts == 1) {
+                            return .{
+                                .pt = try p.ir_data.get_pt(Device.Signal, self.arena, result.id, 0),
+                                .polarity = .positive,
+                            };
+                        } else {
+                            Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only 1 is allowed.", .{ result.num_pts });
+                            return error.TooManyProductTerms;
+                        }
+                    } else {
+                        Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "Failed to normalize expression.", .{});
+                        return error.ExpressionTooComplex;
+                    }
+                },
+                .negative => {
+                    if (p.normalize_and_optimize(try p.ir_data.make_complement(p.ir), .{ .max_xor_depth = 0, .iteration_limit = 100_000 })) |result| {
+                        if (result.num_pts == 1) {
+                            return .{
+                                .pt = try p.ir_data.get_pt(Device.Signal, self.arena, result.id, 0),
+                                .polarity = .negative,
+                            };
+                        } else {
+                            Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only 1 is allowed.", .{ result.num_pts });
+                            return error.TooManyProductTerms;
+                        }
+                    } else {
+                        Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "Failed to normalize expression.", .{});
+                        return error.ExpressionTooComplex;
+                    }
+                },
+            } else {
+                const positive = p.normalize_and_optimize(p.ir, .{ .max_xor_depth = 0 });
+                if (positive) |result| {
+                    if (result.num_pts == 1) {
+                        return .{
+                            .pt = try p.ir_data.get_pt(Device.Signal, self.arena, result.id, 0),
+                            .polarity = .negative,
+                        };
+                    }
+                }
 
-            if (p.options.debug) {
-                var buf: [64]u8 = undefined;
-                var stderr = std.fs.File.stderr().writer(&buf);
-                try stderr.interface.writeAll("Normalized:\n");
-                try p.ir_data.debug(ir_normalized, 0, false, &stderr.interface);
-                try stderr.interface.writeAll("Optimized:\n");
-                try p.ir_data.debug(ir_optimized, 0, false, &stderr.interface);
-                try stderr.interface.flush();
+                const negative = p.normalize_and_optimize(try p.ir_data.make_complement(p.ir), .{ .max_xor_depth = 0 });
+                if (negative) |result| {
+                    if (result.num_pts == 1) {
+                        return .{
+                            .pt = try p.ir_data.get_pt(Device.Signal, self.arena, result.id, 0),
+                            .polarity = .negative,
+                        };
+                    }
+                }
+
+                if (positive == null and negative == null) {
+                    Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "Unable to guess correct polarity for expression; please specify with .{{ .polarity = .positive }} or .{{ .polarity = .negative }}", .{});
+                    return error.ExpressionTooComplex;
+                } else {
+                    var min_num_pts: u32 = std.math.maxInt(u32);
+                    if (positive) |result| min_num_pts = @min(min_num_pts, result.num_pts);
+                    if (negative) |result| min_num_pts = @min(min_num_pts, result.num_pts);
+                    Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only 1 is allowed.", .{ min_num_pts });
+                    return error.TooManyProductTerms;
+                }
             }
-
-            const num_pts = p.ir_data.count_pts(ir_optimized);
-            if (num_pts == 1) {
-                return .{
-                    .pt = try p.ir_data.get_pt(Device.Signal, self.arena, ir_optimized, 0),
-                    .polarity = .positive,
-                };
-            }
-
-            const ir_inverted = ir_inverted: {
-                const complement = try p.ir_data.make_complement(p.ir);
-                const normalized = try p.ir_data.normalize(complement, .{ .max_xor_depth = 0 });
-                break :ir_inverted try qmc.optimize(&p.ir_data, normalized, p.dc_ir, p.opt_signal_limit);
-            };
-            const num_pts_inverted = p.ir_data.count_pts(ir_inverted);
-            if (num_pts_inverted == 1) {
-                return .{
-                    .pt = try p.ir_data.get_pt(Device.Signal, self.arena, ir_inverted, 0),
-                    .polarity = .negative,
-                };
-            }
-
-            Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only 1 is allowed.", .{ @min(num_pts, num_pts_inverted) });
-            var buf: [64]u8 = undefined;
-            var w = std.fs.File.stderr().writer(&buf);
-            p.ir_data.debug(if (num_pts_inverted < num_pts) ir_inverted else ir_optimized, 0, false, &w.interface) catch {};
-            w.interface.flush() catch {};
-            return error.TooManyProductTerms;
         }
 
         pub fn sum(self: *Self, equation: []const u8, extra: anytype) ![]PT {
             var p = try self.process_single_bit(equation, extra);
             defer p.deinit();
 
-            const ir_normalized = try p.ir_data.normalize(p.ir, .{ .max_xor_depth = 0 });
-            const ir_optimized = try qmc.optimize(&p.ir_data, ir_normalized, p.dc_ir, p.opt_signal_limit);
-            
-            if (p.options.debug) {
-                var buf: [64]u8 = undefined;
-                var stderr = std.fs.File.stderr().writer(&buf);
-                try stderr.interface.writeAll("Normalized:\n");
-                try p.ir_data.debug(ir_normalized, 0, false, &stderr.interface);
-                try stderr.interface.writeAll("Optimized:\n");
-                try p.ir_data.debug(ir_optimized, 0, false, &stderr.interface);
-                try stderr.interface.flush();
-            }
+            std.debug.assert(p.options.polarity == null);
 
+            const result = p.normalize_and_optimize(p.ir, .{ .max_xor_depth = 0, .iteration_limit = 100_000 }) orelse return error.ExpressionTooComplex;
             const allocator = self.arena;
-            const num_pts = p.ir_data.count_pts(ir_optimized);
-            if (num_pts > p.options.max_product_terms) {
+            if (result.num_pts > p.options.max_product_terms) {
                 Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only {} are allowed.", .{
-                    num_pts,
+                    result.num_pts,
                     p.options.max_product_terms,
                 });
                 var buf: [64]u8 = undefined;
                 var w = std.fs.File.stderr().writer(&buf);
-                p.ir_data.debug(ir_optimized, 0, false, &w.interface) catch {};
+                p.ir_data.debug(result.id, 0, false, &w.interface) catch {};
                 w.interface.flush() catch {};
                 return error.TooManyProductTerms;
             }
-            const pts = try allocator.alloc(PT, num_pts);
+            const pts = try allocator.alloc(PT, result.num_pts);
             for (0.., pts) |i, *term| {
-                term.* = try p.ir_data.get_pt(Device.Signal, allocator, ir_optimized, i);
+                term.* = try p.ir_data.get_pt(Device.Signal, allocator, result.id, i);
             }
             return pts;
         }
@@ -140,54 +157,68 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
             var p = try self.process_single_bit(equation, extra);
             defer p.deinit();
 
-            const ir_normalized = try p.ir_data.normalize(p.ir, .{ .max_xor_depth = 0 });
-            const ir_optimized = try qmc.optimize(&p.ir_data, ir_normalized, p.dc_ir, p.opt_signal_limit);
+            var maybe_best: ?IR_Result = null;
+            var best_polarity: lc4k.Polarity = undefined;
 
-            const ir_inverted = ir_inverted: {
-                const complement = try p.ir_data.make_complement(p.ir);
-                const normalized = try p.ir_data.normalize(complement, .{ .max_xor_depth = 0 });
-                break :ir_inverted try qmc.optimize(&p.ir_data, normalized, p.dc_ir, p.opt_signal_limit);
-            };
-                
-            const num_pts_not_inverted = p.ir_data.count_pts(ir_optimized);
-            const num_pts_inverted = p.ir_data.count_pts(ir_inverted);
-            const num_pts = @min(num_pts_not_inverted, num_pts_inverted);
-            const best_ir = if (num_pts_inverted < num_pts_not_inverted) ir_inverted else ir_optimized;
+            if (p.options.polarity) |polarity| switch (polarity) {
+                .positive => {
+                    if (p.normalize_and_optimize(p.ir, .{ .max_xor_depth = 0, .iteration_limit = 100_000 })) |result| {
+                        best_polarity = .positive;
+                        maybe_best = result;
+                    }
+                },
+                .negative => {
+                    if (p.normalize_and_optimize(try p.ir_data.make_complement(p.ir), .{ .max_xor_depth = 0, .iteration_limit = 100_000 })) |result| {
+                        best_polarity = .negative;
+                        maybe_best = result;
+                    }
+                },
+            } else {
+                const maybe_positive = p.normalize_and_optimize(p.ir, .{ .max_xor_depth = 0 });
+                const maybe_negative = p.normalize_and_optimize(try p.ir_data.make_complement(p.ir), .{ .max_xor_depth = 0 });
 
-            if (p.options.debug) {
-                var buf: [64]u8 = undefined;
-                var stderr = std.fs.File.stderr().writer(&buf);
-                try stderr.interface.writeAll("Normalized:\n");
-                try p.ir_data.debug(ir_normalized, 0, false, &stderr.interface);
-                try stderr.interface.writeAll("Optimized:\n");
-                try p.ir_data.debug(ir_optimized, 0, false, &stderr.interface);
-                try stderr.interface.writeAll("Inverted:\n");
-                try p.ir_data.debug(ir_inverted, 0, false, &stderr.interface);
-                try stderr.interface.writeAll("Best:\n");
-                try p.ir_data.debug(best_ir, 0, false, &stderr.interface);
-                try stderr.interface.flush();
+                if (maybe_positive) |positive| {
+                    best_polarity = .positive;
+                    maybe_best = positive;
+                    if (maybe_negative) |negative| {
+                        if (negative.num_pts < positive.num_pts) {
+                            best_polarity = .negative;
+                            maybe_best = negative;
+                        }
+                    }
+                } else if (maybe_negative) |negative| {
+                    best_polarity = .negative;
+                    maybe_best = negative;
+                } else {
+                    Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "Unable to guess correct polarity for expression; please specify with .{{ .polarity = .positive }} or .{{ .polarity = .negative }}", .{});
+                }
             }
 
-            if (num_pts > p.options.max_product_terms) {
-                Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only {} are allowed.", .{
-                    num_pts,
-                    p.options.max_product_terms,
-                });
-                var buf: [64]u8 = undefined;
-                var w = std.fs.File.stderr().writer(&buf);
-                p.ir_data.debug(best_ir, 0, false, &w.interface) catch {};
-                w.interface.flush() catch {};
-                return error.TooManyProductTerms;
+            if (maybe_best) |best| {
+                if (best.num_pts > p.options.max_product_terms) {
+                    Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only {} are allowed.", .{
+                        best.num_pts,
+                        p.options.max_product_terms,
+                    });
+                    var buf: [64]u8 = undefined;
+                    var w = std.fs.File.stderr().writer(&buf);
+                    p.ir_data.debug(best.id, 0, false, &w.interface) catch {};
+                    w.interface.flush() catch {};
+                    return error.TooManyProductTerms;
+                }
+                const allocator = self.arena;
+                const pts = try allocator.alloc(PT, best.num_pts);
+                for (0.., pts) |i, *term| {
+                    term.* = try p.ir_data.get_pt(Device.Signal, allocator, best.id, i);
+                }
+                return .{
+                    .sum = pts,
+                    .polarity = best_polarity,
+                };
+
+            } else {
+                return error.ExpressionTooComplex;
             }
-            const allocator = self.arena;
-            const pts = try allocator.alloc(PT, num_pts);
-            for (0.., pts) |i, *term| {
-                term.* = try p.ir_data.get_pt(Device.Signal, allocator, best_ir, i);
-            }
-            return .{
-                .sum = pts,
-                .polarity = if (best_ir == ir_inverted) .negative else .positive,
-            };
         }
 
         pub fn logic(self: *Self, equation: []const u8, extra: anytype) !Logic {
@@ -265,274 +296,164 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
         fn find_best_logic(self: *Self, ast: *Ast(Device), maybe_dc_ast: ?*Ast(Device), ir_data: *IR_Data, bit_index: u6, options: Options) !Logic {
             const allocator = self.arena;
 
-            var build_ir_begin: i128 = 0;
-            var prenormalize_begin: i128 = 0;
-            var normalize_begin: i128 = 0;
-            var qmc_begin: i128 = 0;
-            var qmc_end: i128 = 0;
-            var inverted_normalize_begin: i128 = 0;
-            var inverted_qmc_begin: i128 = 0;
-            var inverted_qmc_end: i128 = 0;
-            var xor_normalize_begin: i128 = 0;
-            var xor_lhs_qmc_begin: i128 = 0;
-            var xor_rhs_qmc_begin: i128 = 0;
-            var xor_lhs_inverted_normalize_begin: i128 = 0;
-            var xor_rhs_inverted_normalize_begin: i128 = 0;
-            var xor_lhs_inverted_qmc_begin: i128 = 0;
-            var xor_rhs_inverted_qmc_begin: i128 = 0;
-            var xor_count_pts_begin: i128 = 0;
-            var xor_count_pts_end: i128 = 0;
-
-            defer if (options.debug) {
-                log.info(
-                    \\find_best_logic() times:
-                    \\            Build IR: {D}
-                    \\        Prenormalize: {D}
-                    \\           Normalize: {D}
-                    \\                 QMC: {D}
-                    \\  Inverted Normalize: {D}
-                    \\        Inverted QMC: {D}
-                    \\       XOR Normalize: {D}
-                    \\         XOR LHS QMC: {D}
-                    \\         XOR RHS QMC: {D}
-                    \\    XOR LHS Inv Norm: {D}
-                    \\    XOR RHS Inv Norm: {D}
-                    \\     XOR LHS Inv QMC: {D}
-                    \\     XOR RHS Inv QMC: {D}
-                    \\       XOR Count PTs: {D}
-                    \\    
-                , .{
-                    @as(i64, @intCast(prenormalize_begin - build_ir_begin)),
-                    @as(i64, @intCast(normalize_begin - prenormalize_begin)),
-                    @as(i64, @intCast(qmc_begin - normalize_begin)),
-                    @as(i64, @intCast(qmc_end - qmc_begin)),
-                    @as(i64, @intCast(inverted_qmc_begin - inverted_normalize_begin)),
-                    @as(i64, @intCast(inverted_qmc_end - inverted_qmc_begin)),
-                    @as(i64, @intCast(xor_lhs_qmc_begin - xor_normalize_begin)),
-                    @as(i64, @intCast(xor_rhs_qmc_begin - xor_lhs_qmc_begin)),
-                    @as(i64, @intCast(xor_lhs_inverted_normalize_begin - xor_rhs_qmc_begin)),
-                    @as(i64, @intCast(xor_rhs_inverted_normalize_begin - xor_lhs_inverted_normalize_begin)),
-                    @as(i64, @intCast(xor_lhs_inverted_qmc_begin - xor_rhs_inverted_normalize_begin)),
-                    @as(i64, @intCast(xor_rhs_inverted_qmc_begin - xor_lhs_inverted_qmc_begin)),
-                    @as(i64, @intCast(xor_count_pts_begin - xor_rhs_inverted_qmc_begin)),
-                    @as(i64, @intCast(xor_count_pts_end - xor_count_pts_begin)),
-                });
-            };
-
             const optimization_signal_limit = if (options.optimize) self.optimization_signal_limit else 0;
 
-            build_ir_begin = std.time.nanoTimestamp();
-            const raw_ir = try ast.build_ir(ir_data, bit_index);
-
-            prenormalize_begin = std.time.nanoTimestamp();
-            const ir = try ir_data.normalize(raw_ir, .{
+            const raw_ir = try ir_data.normalize(try ast.build_ir(ir_data, bit_index), .{
                 .max_xor_depth = 0xFF,
                 .demorgan = false,
                 .distribute = false,
             });
 
-            const dc_ir = if (maybe_dc_ast) |dc_ast| try ir_data.normalize(try dc_ast.build_ir(ir_data, bit_index), .{ .max_xor_depth = 0 }) else null;
+            const is_xor = ir_data.get(raw_ir) == .xor;
 
-            normalize_begin = std.time.nanoTimestamp();
-            var ir_sum = try ir_data.normalize(ir, .{ .max_xor_depth = 0 });
-            qmc_begin = std.time.nanoTimestamp();
-            ir_sum = try qmc.optimize(ir_data, ir_sum, dc_ir, optimization_signal_limit);
-            qmc_end = std.time.nanoTimestamp();
-            const ir_sum_pts = ir_data.count_pts(ir_sum);
-            if (ir_sum_pts == 1) {
-                return .{ .pt0 = .{
-                    .pt = try ir_data.get_pt(Device.Signal, allocator, ir_sum, 0),
-                    .polarity = .positive,
-                }};
+            const dc_ir = if (maybe_dc_ast) |dc_ast| try ir_data.normalize(try dc_ast.build_ir(ir_data, bit_index), .{}) else null;
+
+            var maybe_best_ir: ?IR_Result = null;
+            var best_ir_kind: std.meta.Tag(lc4k.Macrocell_Logic(Device.Signal)) = undefined;
+            var best_ir_polarity: lc4k.Polarity = undefined;
+
+            if (options.polarity != .negative) {
+                if (ir_data.maybe_normalize(raw_ir, .{ .iteration_limit = if (!is_xor and options.polarity == .positive) 100_000 else 500 })) |normalized| {
+                    const optimized = try qmc.optimize(ir_data, normalized, dc_ir, optimization_signal_limit);
+                    const num_pts = ir_data.count_pts(optimized);
+                    if (num_pts == 1) {
+                        return .{ .pt0 = .{
+                            .pt = try ir_data.get_pt(Device.Signal, allocator, optimized, 0),
+                            .polarity = .positive,
+                        }};
+                    } else {
+                        maybe_best_ir = .{
+                            .id = optimized,
+                            .num_pts = @intCast(num_pts),
+                        };
+                        best_ir_kind = .sum;
+                        best_ir_polarity = .positive;
+                    }
+                }
             }
 
-            var best_ir = ir_sum;
-            var best_ir_pts = ir_sum_pts;
-            var best_ir_kind: std.meta.Tag(lc4k.Macrocell_Logic(Device.Signal)) = .sum;
-            var best_ir_polarity: lc4k.Polarity = .positive;
-
-            inverted_normalize_begin = std.time.nanoTimestamp();
-            var ir_sum_inverted = try ir_data.normalize(try ir_data.make_complement(ir), .{ .max_xor_depth = 0 });
-            inverted_qmc_begin = std.time.nanoTimestamp();
-            ir_sum_inverted = try qmc.optimize(ir_data, ir_sum_inverted, dc_ir, optimization_signal_limit);
-            inverted_qmc_end = std.time.nanoTimestamp();
-            const ir_sum_inverted_pts = ir_data.count_pts(ir_sum_inverted);
-            if (ir_sum_inverted_pts == 1) {
-                return .{ .pt0 = .{
-                    .pt = try ir_data.get_pt(Device.Signal, allocator, ir_sum_inverted, 0),
-                    .polarity = .negative,
-                }};
-            } else if (ir_sum_inverted_pts < best_ir_pts) {
-                best_ir = ir_sum_inverted;
-                best_ir_pts = ir_sum_inverted_pts;
-                best_ir_kind = .sum;
-                best_ir_polarity = .negative;
-            }
-            
-            if (options.debug) {
-                var buf: [64]u8 = undefined;
-                var stderr = std.fs.File.stderr().writer(&buf);
-                try stderr.interface.writeAll("Normalized:\n");
-                try ir_data.debug(ir, 0, false, &stderr.interface);
-                try stderr.interface.writeAll("Sum (Optimized):\n");
-                try ir_data.debug(ir_sum, 0, false, &stderr.interface);
-                try stderr.interface.writeAll("Sum Inverted (Optimized):\n");
-                try ir_data.debug(ir_sum_inverted, 0, false, &stderr.interface);
-                try stderr.interface.flush();
+            if (options.polarity != .positive) {
+                const complement = try ir_data.make_complement(raw_ir);
+                if (ir_data.maybe_normalize(complement, .{ .iteration_limit = if (!is_xor and options.polarity == .negative) 100_000 else 500 })) |normalized| {
+                    const optimized = try qmc.optimize(ir_data, normalized, dc_ir, optimization_signal_limit);
+                    const num_pts = ir_data.count_pts(optimized);
+                    if (num_pts == 1) {
+                        return .{ .pt0 = .{
+                            .pt = try ir_data.get_pt(Device.Signal, allocator, optimized, 0),
+                            .polarity = .negative,
+                        }};
+                    } else if (maybe_best_ir == null or maybe_best_ir.?.num_pts > num_pts) {
+                        maybe_best_ir = .{
+                            .id = optimized,
+                            .num_pts = @intCast(num_pts),
+                        };
+                        best_ir_kind = .sum;
+                        best_ir_polarity = .negative;
+                    }
+                }
             }
 
-            switch (ir_data.get(ir)) {
-                .xor => {
-                    xor_normalize_begin = std.time.nanoTimestamp();
-                    const normalized = try ir_data.normalize(ir, .{});
-                    const xor_bin = ir_data.get(normalized).xor;
+            if (is_xor) {
+                const xor_bin = ir_data.get(raw_ir).xor;
 
-                    xor_lhs_qmc_begin = std.time.nanoTimestamp();
-                    const lhs = try qmc.optimize(ir_data, xor_bin.lhs, dc_ir, optimization_signal_limit);
-                    xor_rhs_qmc_begin = std.time.nanoTimestamp();
-                    const rhs = try qmc.optimize(ir_data, xor_bin.rhs, dc_ir, optimization_signal_limit);
+                const maybe_lhs: ?IR_Result = .init(ir_data, xor_bin.lhs, dc_ir, optimization_signal_limit, .{});
+                const maybe_rhs: ?IR_Result = .init(ir_data, xor_bin.rhs, dc_ir, optimization_signal_limit, .{});
 
+                const maybe_lhs_inverted: ?IR_Result = .init(ir_data, try ir_data.make_complement(xor_bin.lhs), dc_ir, optimization_signal_limit, .{});
+                const maybe_rhs_inverted: ?IR_Result = .init(ir_data, try ir_data.make_complement(xor_bin.rhs), dc_ir, optimization_signal_limit, .{});
 
-                    xor_lhs_inverted_normalize_begin = std.time.nanoTimestamp();
-                    const lhs_inverted_unoptimized = try ir_data.normalize(try ir_data.make_complement(xor_bin.lhs), .{ .max_xor_depth = 0 });
-                    xor_rhs_inverted_normalize_begin = std.time.nanoTimestamp();
-                    const rhs_inverted_unoptimized = try ir_data.normalize(try ir_data.make_complement(xor_bin.rhs), .{ .max_xor_depth = 0 });
-                    xor_lhs_inverted_qmc_begin = std.time.nanoTimestamp();
-                    const lhs_inverted = try qmc.optimize(ir_data, lhs_inverted_unoptimized, dc_ir, optimization_signal_limit);
-                    xor_rhs_inverted_qmc_begin = std.time.nanoTimestamp();
-                    const rhs_inverted = try qmc.optimize(ir_data, rhs_inverted_unoptimized, dc_ir, optimization_signal_limit);
+                var polarity: lc4k.Polarity = .positive;
 
-                    xor_count_pts_begin = std.time.nanoTimestamp();
-                    const lhs_pts = ir_data.count_pts(lhs);
-                    const rhs_pts = ir_data.count_pts(rhs);
-                    const lhs_inverted_pts = ir_data.count_pts(lhs_inverted);
-                    const rhs_inverted_pts = ir_data.count_pts(rhs_inverted);
-                    xor_count_pts_end = std.time.nanoTimestamp();
-
-                    if (options.debug) {
-                        var buf: [64]u8 = undefined;
-                        var stderr = std.fs.File.stderr().writer(&buf);
-                        try stderr.interface.writeAll("XOR LHS:\n   ");
-                        try ir_data.debug(lhs, 1, false, &stderr.interface);
-                        try stderr.interface.writeAll("XOR RHS:\n   ");
-                        try ir_data.debug(rhs, 1, false, &stderr.interface);
-                        try stderr.interface.writeAll("XOR LHS Inverted:\n   ");
-                        try ir_data.debug(lhs_inverted, 1, false, &stderr.interface);
-                        try stderr.interface.writeAll("XOR RHS Inverted:\n   ");
-                        try ir_data.debug(rhs_inverted, 1, false, &stderr.interface);
-                        try stderr.interface.flush();
-                    }
-
-                    if (lhs_pts == 1) {
-                        if (rhs_pts + 1 < best_ir_pts) {
-                            best_ir = try ir_data.make_binary(.xor, lhs, rhs);
-                            best_ir_pts = rhs_pts + 1;
-                            best_ir_kind = .sum_xor_pt0;
-                            best_ir_polarity = .positive;
-                        }
-                        if (rhs_inverted_pts + 1 < best_ir_pts) {
-                            best_ir = try ir_data.make_binary(.xor, lhs, rhs_inverted);
-                            best_ir_pts = rhs_inverted_pts + 1;
-                            best_ir_kind = .sum_xor_pt0;
-                            best_ir_polarity = .negative;
+                const best_lhs = if (maybe_lhs) |ir| result: {
+                    if (maybe_lhs_inverted) |ir_inverted| {
+                        if (ir_inverted.num_pts < ir.num_pts) {
+                            polarity = polarity.invert();
+                            break :result ir_inverted;
                         }
                     }
-                    if (rhs_pts == 1) {
-                        if (lhs_pts + 1 < best_ir_pts) {
-                            best_ir = try ir_data.make_binary(.xor, lhs, rhs);
-                            best_ir_pts = lhs_pts + 1;
-                            best_ir_kind = .sum_xor_pt0;
-                            best_ir_polarity = .positive;
-                        }
-                        if (lhs_inverted_pts + 1 < best_ir_pts) {
-                            best_ir = try ir_data.make_binary(.xor, lhs_inverted, rhs);
-                            best_ir_pts = lhs_inverted_pts + 1;
-                            best_ir_kind = .sum_xor_pt0;
-                            best_ir_polarity = .negative;
+                    break :result ir;
+                } else maybe_lhs_inverted;
+
+                const best_rhs = if (maybe_rhs) |ir| result: {
+                    if (maybe_rhs_inverted) |ir_inverted| {
+                        if (ir_inverted.num_pts < ir.num_pts) {
+                            polarity = polarity.invert();
+                            break :result ir_inverted;
                         }
                     }
-                    if (lhs_inverted_pts == 1) {
-                        if (rhs_inverted_pts + 1 < best_ir_pts) {
-                            best_ir = try ir_data.make_binary(.xor, lhs_inverted, rhs_inverted);
-                            best_ir_pts = rhs_inverted_pts + 1;
-                            best_ir_kind = .sum_xor_pt0;
-                            best_ir_polarity = .positive;
-                        }
-                        if (rhs_pts + 1 < best_ir_pts) {
-                            best_ir = try ir_data.make_binary(.xor, lhs_inverted, rhs);
-                            best_ir_pts = rhs_pts + 1;
-                            best_ir_kind = .sum_xor_pt0;
-                            best_ir_polarity = .negative;
-                        }
-                    }
-                    if (rhs_inverted_pts == 1) {
-                        if (lhs_inverted_pts + 1 < best_ir_pts) {
-                            best_ir = try ir_data.make_binary(.xor, lhs_inverted, rhs_inverted);
-                            best_ir_pts = lhs_inverted_pts + 1;
-                            best_ir_kind = .sum_xor_pt0;
-                            best_ir_polarity = .positive;
-                        }
-                        if (lhs_pts + 1 < best_ir_pts) {
-                            best_ir = try ir_data.make_binary(.xor, lhs, rhs_inverted);
-                            best_ir_pts = lhs_pts + 1;
-                            best_ir_kind = .sum_xor_pt0;
-                            best_ir_polarity = .negative;
+                    break :result ir;
+                } else maybe_rhs_inverted;
+
+                if (best_lhs) |lhs| {
+                    if (best_rhs) |rhs| {
+                        if (maybe_best_ir == null or maybe_best_ir.?.num_pts > lhs.num_pts + rhs.num_pts) {
+                            if (lhs.num_pts == 1 or rhs.num_pts == 1) {
+                                maybe_best_ir = .{
+                                    .id = try ir_data.make_binary(.xor, lhs.id, rhs.id),
+                                    .num_pts = lhs.num_pts + rhs.num_pts,
+                                };
+                                best_ir_kind = .sum_xor_pt0;
+                                best_ir_polarity = polarity;
+                            }
                         }
                     }
-                },
-                else => {}
+                }
             }
 
-            if (options.debug) {
-                var buf: [64]u8 = undefined;
-                var stderr = std.fs.File.stderr().writer(&buf);
-                try stderr.interface.print("Best ({t}):\n", .{ best_ir_kind });
-                try ir_data.debug(best_ir, 0, false, &stderr.interface);
-                try stderr.interface.flush();
-            }
+            if (maybe_best_ir) |best_ir| {
+                if (options.debug) {
+                    var buf: [64]u8 = undefined;
+                    var stderr = std.fs.File.stderr().writer(&buf);
+                    try stderr.interface.print("Best ({t}):\n", .{ best_ir_kind });
+                    try ir_data.debug(best_ir.id, 0, false, &stderr.interface);
+                    try stderr.interface.flush();
+                }
 
-            if (best_ir_pts > options.max_product_terms) {
-                Ast(Device).report_node_error_fmt(self.gpa, ast.nodes.slice(), ast.eqn, ast.root, "After normalization, expression requires {} product terms, but a maximum of only {} are allowed.", .{
-                    best_ir_pts,
-                    options.max_product_terms,
-                });
-                var buf: [64]u8 = undefined;
-                var w = std.fs.File.stderr().writer(&buf);
-                ir_data.debug(best_ir, 0, false, &w.interface) catch {};
-                w.interface.flush() catch {};
-                return error.TooManyProductTerms;
-            }
+                if (best_ir.num_pts > options.max_product_terms) {
+                    Ast(Device).report_node_error_fmt(self.gpa, ast.nodes.slice(), ast.eqn, ast.root, "After normalization, expression requires {} product terms, but a maximum of only {} are allowed.", .{
+                        best_ir.num_pts,
+                        options.max_product_terms,
+                    });
+                    var buf: [64]u8 = undefined;
+                    var w = std.fs.File.stderr().writer(&buf);
+                    ir_data.debug(best_ir.id, 0, false, &w.interface) catch {};
+                    w.interface.flush() catch {};
+                    return error.TooManyProductTerms;
+                }
 
-            switch (best_ir_kind) {
-                .sum => {
-                    const pts = try allocator.alloc(PT, best_ir_pts);
-                    for (0.., pts) |i, *term| {
-                        term.* = try ir_data.get_pt(Device.Signal, allocator, best_ir, i);
-                    }
-                    return .{ .sum = .{
-                        .sum = pts,
-                        .polarity = best_ir_polarity,
-                    }};
-                },
-                .sum_xor_pt0 => {
-                    const xor_bin = ir_data.get(best_ir).xor;
-                    var pt0_ir = xor_bin.lhs;
-                    var sum_ir = xor_bin.rhs;
-                    if (ir_data.count_pts(xor_bin.lhs) > 1) {
-                        pt0_ir = xor_bin.rhs;
-                        sum_ir = xor_bin.lhs;
-                    }
-                    const sum_pts = try allocator.alloc(PT, best_ir_pts - 1);
-                    for (0.., sum_pts) |i, *term| {
-                        term.* = try ir_data.get_pt(Device.Signal, allocator, sum_ir, i);
-                    }
-                    return .{ .sum_xor_pt0 = .{
-                        .sum = sum_pts,
-                        .pt0 = try ir_data.get_pt(Device.Signal, allocator, pt0_ir, 0),
-                        .polarity = best_ir_polarity,
-                    }};
-                },
-                else => unreachable,
+                switch (best_ir_kind) {
+                    .sum => {
+                        const pts = try allocator.alloc(PT, best_ir.num_pts);
+                        for (0.., pts) |i, *term| {
+                            term.* = try ir_data.get_pt(Device.Signal, allocator, best_ir.id, i);
+                        }
+                        return .{ .sum = .{
+                            .sum = pts,
+                            .polarity = best_ir_polarity,
+                        }};
+                    },
+                    .sum_xor_pt0 => {
+                        const xor_bin = ir_data.get(best_ir.id).xor;
+                        var pt0_ir = xor_bin.lhs;
+                        var sum_ir = xor_bin.rhs;
+                        if (ir_data.count_pts(xor_bin.lhs) > 1) {
+                            pt0_ir = xor_bin.rhs;
+                            sum_ir = xor_bin.lhs;
+                        }
+                        const sum_pts = try allocator.alloc(PT, best_ir.num_pts - 1);
+                        for (0.., sum_pts) |i, *term| {
+                            term.* = try ir_data.get_pt(Device.Signal, allocator, sum_ir, i);
+                        }
+                        return .{ .sum_xor_pt0 = .{
+                            .sum = sum_pts,
+                            .pt0 = try ir_data.get_pt(Device.Signal, allocator, pt0_ir, 0),
+                            .polarity = best_ir_polarity,
+                        }};
+                    },
+                    else => unreachable,
+                }
+            } else {
+                return error.ExpressionTooComplex;
             }
         }
 
@@ -547,6 +468,10 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
             pub fn deinit(self: *Process_Single_Bit_Results) void {
                 self.ir_data.deinit();
                 self.ast.deinit();
+            }
+
+            pub fn normalize_and_optimize(self: *Process_Single_Bit_Results, ir: IR.ID, normalize_options: IR_Data.Normalize_Options) ?IR_Result {
+                return .init(&self.ir_data, ir, self.dc_ir, self.opt_signal_limit, normalize_options);
             }
         };
 
@@ -577,7 +502,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                 _ = try dc_ast.infer_and_check_max_bit(.{ .max_result_bits = 1 });
 
                 const dc = try dc_ast.build_ir(&ir_data, 0);
-                break :dc_ir try ir_data.normalize(dc, .{ .max_xor_depth = 0 });
+                break :dc_ir try ir_data.normalize(dc, .{});
             } else null;
 
             return .{
@@ -607,6 +532,10 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                 options.dont_care = extra.dont_care;
             }
 
+            if (@hasField(T, "polarity")) {
+                options.polarity = extra.polarity;
+            }
+
             if (@hasField(T, "debug")) {
                 options.debug = true;
             }
@@ -623,7 +552,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
             errdefer names.deinit();
 
             inline for (@typeInfo(@TypeOf(extra)).@"struct".fields) |field| {
-                if (comptime !std.mem.eql(u8, field.name, "dont_care") and !std.mem.eql(u8, field.name, "max_product_terms") and !std.mem.eql(u8, field.name, "optimize") and !std.mem.eql(u8, field.name, "debug")) {
+                if (comptime !std.mem.eql(u8, field.name, "dont_care") and !std.mem.eql(u8, field.name, "max_product_terms") and !std.mem.eql(u8, field.name, "optimize") and !std.mem.eql(u8, field.name, "polarity") and !std.mem.eql(u8, field.name, "debug")) {
                     try names.add_names_alloc(temp_arena, @field(extra, field.name), .{ .name = field.name });
                 }
             }
@@ -632,6 +561,21 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
         }
     };
 }
+
+pub const IR_Result = struct {
+    id: IR.ID,
+    num_pts: u32,
+
+    pub fn init(ir_data: *IR_Data, ir: IR.ID, dc_ir: ?IR.ID, opt_signal_limit: u5, normalize_options: IR_Data.Normalize_Options) ?IR_Result {
+        var result = ir_data.normalize(ir, normalize_options) catch return null;
+        result = qmc.optimize(ir_data, result, dc_ir, opt_signal_limit) catch result;
+        const num_pts = ir_data.count_pts(result);
+        return .{
+            .id = result,
+            .num_pts = @intCast(num_pts),
+        };
+    }
+};
 
 pub const Literal = @import("logic_parser/Literal.zig");
 pub const lexer = @import("logic_parser/lexer.zig");

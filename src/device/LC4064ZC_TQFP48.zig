@@ -201,7 +201,7 @@ pub const Signal = enum (u16) {
         };
     }
     pub inline fn mc(self: Signal) lc4k.MC_Ref {
-        return self.maybe_mc() orelse std.debug.panic("Signal {t} is not associated with a macrocell", .{ self });
+        return self.maybe_mc() orelse lc4k.panic("Signal {t} is not associated with a macrocell", .{ self });
     }
 
     pub inline fn maybe_pin(self: Signal) ?Pin {
@@ -268,7 +268,7 @@ pub const Signal = enum (u16) {
 
     pub inline fn maybe_pad(self: Signal) ?Signal {
         const mcref = self.maybe_mc() orelse return null;
-        return mc_pad(mcref);
+        return maybe_mc_pad(mcref);
     }
 
     pub inline fn pad(self: Signal) Signal {

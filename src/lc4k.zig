@@ -1572,6 +1572,14 @@ pub fn is_sum_always(pts: anytype) bool {
     return false;
 }
 
+pub fn panic(comptime fmt: []const u8, args: anytype) noreturn {
+    if (@inComptime()) {
+        @compileError(std.fmt.comptimePrint(fmt, args));
+    } else {
+        std.debug.panic(fmt, args);
+    }
+}
+
 const device = @import("device.zig");
 pub const Device_Type = device.Type;
 pub const Device_Family = device.Family;
