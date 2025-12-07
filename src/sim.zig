@@ -408,7 +408,11 @@ pub fn Simulator(comptime Device: type) type {
             return true;
         }
 
-        pub fn read_signal_state(self: @This(), signals: []const Signal) usize {
+        pub fn read_signal(self: @This(), signal: Signal) bool {
+            return self.state.data.contains(signal);
+        }
+
+        pub fn read_signals(self: @This(), signals: []const Signal) usize {
             var actual_state: usize = 0;
             var bit: usize = 1;
             for (signals) |signal| {
@@ -420,12 +424,20 @@ pub fn Simulator(comptime Device: type) type {
             return actual_state;
         }
 
-        pub fn expect_signal_state(self: @This(), signals: []const Signal, expected_state: usize, names: ?*const Device.Names) !void {
-            errdefer test_print_signals("For signals:\n", signals, names);
-            try expect_equal_bin(expected_state, self.read_signal_state(signals));
+        pub fn expect_signal(self: @This(), signal: Signal, expected: bool, names: ?*const Device.Names) !void {
+            return self.expect_signals(&.{ signal }, @intFromBool(expected), names);
         }
 
-        pub fn read_oe_state(self: @This(), signals: []const Signal) usize {
+        pub fn expect_signals(self: @This(), signals: []const Signal, expected_state: usize, names: ?*const Device.Names) !void {
+            errdefer test_print_signals("For signals:\n", signals, names);
+            try expect_equal_bin(expected_state, self.read_signals(signals));
+        }
+
+        pub fn read_oe(self: @This(), signal: Signal) bool {
+            return self.state.oe.contains(signal);
+        }
+
+        pub fn read_oes(self: @This(), signals: []const Signal) usize {
             var actual_state: usize = 0;
             var bit: usize = 1;
             for (signals) |signal| {
@@ -437,10 +449,13 @@ pub fn Simulator(comptime Device: type) type {
             return actual_state;
         }
         
-        pub fn expect_oe_state(self: @This(), signals: []const Signal, expected_state: usize, names: ?*const Device.Names) !void {
+        pub fn expect_oe(self: @This(), signal: Signal, expected: bool, names: ?*const Device.Names) !void {
+            return self.expect_oes(&.{ signal }, @intFromBool(expected), names);
+        }
+
+        pub fn expect_oes(self: @This(), signals: []const Signal, expected_state: usize, names: ?*const Device.Names) !void {
             errdefer test_print_signals("For output enables:\n", signals, names);
-            
-            try expect_equal_bin(expected_state, self.read_oe_state(signals));
+            try expect_equal_bin(expected_state, self.read_oes(signals));
         }
 
         fn test_print_signals(prefix: []const u8, signals: []const Signal, maybe_names: ?*const Device.Names) void {
