@@ -62,7 +62,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
 
             if (p.options.polarity) |polarity| switch (polarity) {
                 .positive => {
-                    if (p.normalize_and_optimize(p.ir, .{ .max_xor_depth = 0, .iteration_limit = 100_000 })) |result| {
+                    if (p.normalize_and_optimize(p.ir, .{ .iteration_limit = 100_000 })) |result| {
                         if (result.num_pts == 1) {
                             return .{
                                 .pt = try p.ir_data.get_pt(Device.Signal, self.arena, result.id, 0),
@@ -78,7 +78,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                     }
                 },
                 .negative => {
-                    if (p.normalize_and_optimize(try p.ir_data.make_complement(p.ir), .{ .max_xor_depth = 0, .iteration_limit = 100_000 })) |result| {
+                    if (p.normalize_and_optimize(try p.ir_data.make_complement(p.ir), .{ .iteration_limit = 100_000 })) |result| {
                         if (result.num_pts == 1) {
                             return .{
                                 .pt = try p.ir_data.get_pt(Device.Signal, self.arena, result.id, 0),
@@ -94,17 +94,17 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                     }
                 },
             } else {
-                const positive = p.normalize_and_optimize(p.ir, .{ .max_xor_depth = 0 });
+                const positive = p.normalize_and_optimize(p.ir, .{});
                 if (positive) |result| {
                     if (result.num_pts == 1) {
                         return .{
                             .pt = try p.ir_data.get_pt(Device.Signal, self.arena, result.id, 0),
-                            .polarity = .negative,
+                            .polarity = .positive,
                         };
                     }
                 }
 
-                const negative = p.normalize_and_optimize(try p.ir_data.make_complement(p.ir), .{ .max_xor_depth = 0 });
+                const negative = p.normalize_and_optimize(try p.ir_data.make_complement(p.ir), .{});
                 if (negative) |result| {
                     if (result.num_pts == 1) {
                         return .{
@@ -133,7 +133,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
 
             std.debug.assert(p.options.polarity == null);
 
-            const result = p.normalize_and_optimize(p.ir, .{ .max_xor_depth = 0, .iteration_limit = 100_000 }) orelse return error.ExpressionTooComplex;
+            const result = p.normalize_and_optimize(p.ir, .{ .iteration_limit = 100_000 }) orelse return error.ExpressionTooComplex;
             const allocator = self.arena;
             if (result.num_pts > p.options.max_product_terms) {
                 Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only {} are allowed.", .{
@@ -162,20 +162,20 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
 
             if (p.options.polarity) |polarity| switch (polarity) {
                 .positive => {
-                    if (p.normalize_and_optimize(p.ir, .{ .max_xor_depth = 0, .iteration_limit = 100_000 })) |result| {
+                    if (p.normalize_and_optimize(p.ir, .{ .iteration_limit = 100_000 })) |result| {
                         best_polarity = .positive;
                         maybe_best = result;
                     }
                 },
                 .negative => {
-                    if (p.normalize_and_optimize(try p.ir_data.make_complement(p.ir), .{ .max_xor_depth = 0, .iteration_limit = 100_000 })) |result| {
+                    if (p.normalize_and_optimize(try p.ir_data.make_complement(p.ir), .{ .iteration_limit = 100_000 })) |result| {
                         best_polarity = .negative;
                         maybe_best = result;
                     }
                 },
             } else {
-                const maybe_positive = p.normalize_and_optimize(p.ir, .{ .max_xor_depth = 0 });
-                const maybe_negative = p.normalize_and_optimize(try p.ir_data.make_complement(p.ir), .{ .max_xor_depth = 0 });
+                const maybe_positive = p.normalize_and_optimize(p.ir, .{});
+                const maybe_negative = p.normalize_and_optimize(try p.ir_data.make_complement(p.ir), .{});
 
                 if (maybe_positive) |positive| {
                     best_polarity = .positive;
