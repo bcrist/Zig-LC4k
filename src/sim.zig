@@ -66,11 +66,12 @@ pub fn Simulator(comptime Device: type) type {
 
         // Make sure you've updated any input signals before calling simulate!
         pub fn simulate(self: *@This(), options: Simulate_Options) error{Unstable}!void {
-            for (0..options.max_iterations) |_| {
-                var new_state = self.state;
-                new_state.last_data = new_state.data;
+            const original_state = self.state;
 
-                self.update_all_macrocells(&new_state);
+            var i: usize = 0;
+            var new_state = self.state;
+            while (i < options.max_iterations) : (i += 1) {
+                self.update_all_macrocells(&new_state, false);
                 self.update_all_outputs(&new_state);
 
                 // TODO osctimer & power guard impl for ZE devices
@@ -78,51 +79,67 @@ pub fn Simulator(comptime Device: type) type {
                 // enough time has passed for the oscillator to toggle
 
                 if (new_state.data.eql(self.state.data) and new_state.oe.eql(self.state.oe)) {
-                    self.state = new_state;
-                    return;
-                }
-                if (options.names) |names| {
-                    const data_diff = new_state.data.xorWith(self.state.data);
-                    var data_iter = data_diff.iterator();
-                    while (data_iter.next()) |signal| {
-                        if (signal.kind() == .mc) {
-                            log.warn("{s} {} => {}", .{
-                                names.get_mc_name(signal.mc()),
-                                @intFromBool(self.state.data.contains(signal)),
-                                @intFromBool(new_state.data.contains(signal)),
-                            });
-                        } else {
-                            log.warn("{s} {} => {}", .{
-                                names.get_signal_name(signal),
-                                @intFromBool(self.state.data.contains(signal)),
-                                @intFromBool(new_state.data.contains(signal)),
-                            });
-                        }
-                    }
-
-                    const oe_diff = new_state.oe.xorWith(self.state.oe);
-                    var oe_iter = oe_diff.iterator();
-                    while (oe_iter.next()) |signal| {
-                        if (signal.kind() == .mc) {
-                            log.warn("{s} OE {s} => {s}", .{
-                                names.get_mc_name(signal.mc()),
-                                if (self.state.oe.contains(signal)) "enabled" else "disabled",
-                                if (new_state.oe.contains(signal)) "enabled" else "disabled",
-                            });
-                        } else {
-                            log.warn("{s} OE {s} => {s}", .{
-                                names.get_signal_name(signal),
-                                if (self.state.oe.contains(signal)) "enabled" else "disabled",
-                                if (new_state.oe.contains(signal)) "enabled" else "disabled",
-                            });
-                        }
-                    }
+                    break;
                 }
                 self.state = new_state;
             } else return error.Unstable;
+
+            self.update_all_macrocells(&new_state, true);
+
+            while (i < options.max_iterations) : (i += 1) {
+                new_state.last_data = new_state.data;
+
+                self.update_all_macrocells(&new_state, false);
+                self.update_all_outputs(&new_state);
+
+                if (new_state.data.eql(self.state.data) and new_state.oe.eql(self.state.oe)) {
+                    new_state.last_data = new_state.data;
+                    self.state = new_state;
+                    break;
+                }
+                self.state = new_state;
+            } else return error.Unstable;
+
+            if (options.names) |names| {
+                const data_diff = new_state.data.xorWith(original_state.data);
+                var data_iter = data_diff.iterator();
+                while (data_iter.next()) |signal| {
+                    if (signal.kind() == .mc) {
+                        log.warn("{s} {} => {}", .{
+                            names.get_mc_name(signal.mc()),
+                            @intFromBool(original_state.data.contains(signal)),
+                            @intFromBool(new_state.data.contains(signal)),
+                        });
+                    } else {
+                        log.warn("{s} {} => {}", .{
+                            names.get_signal_name(signal),
+                            @intFromBool(original_state.data.contains(signal)),
+                            @intFromBool(new_state.data.contains(signal)),
+                        });
+                    }
+                }
+
+                const oe_diff = new_state.oe.xorWith(original_state.oe);
+                var oe_iter = oe_diff.iterator();
+                while (oe_iter.next()) |signal| {
+                    if (signal.kind() == .mc) {
+                        log.warn("{s} OE {s} => {s}", .{
+                            names.get_mc_name(signal.mc()),
+                            if (original_state.data.contains(signal)) "enabled" else "disabled",
+                            if (new_state.oe.contains(signal)) "enabled" else "disabled",
+                        });
+                    } else {
+                        log.warn("{s} OE {s} => {s}", .{
+                            names.get_signal_name(signal),
+                            if (original_state.oe.contains(signal)) "enabled" else "disabled",
+                            if (new_state.oe.contains(signal)) "enabled" else "disabled",
+                        });
+                    }
+                }
+            }
         }
 
-        fn update_all_macrocells(self: @This(), new_state: *State) void {
+        fn update_all_macrocells(self: @This(), new_state: *State, update_ffs: bool) void {
             for (self.chip.glb, 0..) |glb_config, glb| {
                 for (glb_config.mc, 0..) |mc_config, mc| {
                     const mcref = MC_Ref.init(glb, mc);
@@ -137,7 +154,7 @@ pub fn Simulator(comptime Device: type) type {
                                 new_state.data.setPresent(fb_signal, reg_config.init_state == 1);
                             } else if (self.evaluate_async_condition(reg_config)) {
                                 new_state.data.setPresent(fb_signal, reg_config.init_state != 1);
-                            } else if (self.evaluate_clock(mc_config.func, reg_config, mcref)) {
+                            } else if (self.evaluate_clock(mc_config.func, reg_config, mcref) and (update_ffs or mc_config.func == .latch)) {
                                 const mcd = self.evaluate_mc_data(mcref);
                                 if (mc_config.func == .t_ff) {
                                     if (mcd) new_state.data.toggle(fb_signal);
