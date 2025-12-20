@@ -292,20 +292,25 @@ pub const Cluster_Router = struct {
 
         // in case we can't find a successful routing, keep track of the closest we got
         var best_routing: Compact_Routing_Data = undefined;
-        var best_weighted_score: usize = std.math.maxInt(usize);
+        var best_score: Routing_Score = .max;
 
         var attempt_number: usize = 0;
         while (self.open_heap.removeOrNull()) |routing| {
             attempt_number += 1;
 
             const score = routing.compute_score(self.cluster_size, self.sum_size);
-            if (score.weighted < best_weighted_score) {
-                best_routing = routing;
-                best_weighted_score = score.weighted;
+            if (score.early_success == 0) {
+                return Routing_Data.init(routing);
             }
 
             if (score.success == 0) {
-                return Routing_Data.init(routing);
+                if (best_score.success > 0 or score.weighted < best_score.weighted) {
+                    best_routing = routing;
+                    best_score = score;
+                }
+            } else if (best_score.success > 0 and score.weighted < best_score.weighted) {
+                best_routing = routing;
+                best_score = score;
             }
 
             for (self.forced_cluster_routing, 0..) |forced_routing, cluster| if (forced_routing == null) {
@@ -349,14 +354,16 @@ pub const Cluster_Router = struct {
             if (attempt_number >= max_attempts) break;
         }
 
-        if (self.results) |results| {
-            try results.errors.append(self.allocator, .{
-                .err = error.Cluster_Routing_Failed,
-                .details = "Failed to find a cluster routing that allocates sufficient PTs to all MCs",
-                .glb = @intCast(self.glb),
-            });
-            // We'll report info on the details of MCs that weren't completely routed later in the assembly process
-        } else return error.Cluster_Routing_Failed;
+        if (best_score.success > 0) {
+            if (self.results) |results| {
+                try results.errors.append(self.allocator, .{
+                    .err = error.Cluster_Routing_Failed,
+                    .details = "Failed to find a cluster routing that allocates sufficient PTs to all MCs",
+                    .glb = @intCast(self.glb),
+                });
+                // We'll report info on the details of MCs that weren't completely routed later in the assembly process
+            } else return error.Cluster_Routing_Failed;
+        }
         
         return Routing_Data.init(best_routing);
     }
@@ -394,8 +401,21 @@ pub const Cluster_Router = struct {
 
 
 const Routing_Score = struct {
-    success: usize,
+    success: usize, // as long as this is 0, the routing is valid, though perhaps not optimal
+    early_success: usize, // if this is 0 then we can stop searching for a better solution; we're unlikely to find one significantly better.
     weighted: usize,
+
+    pub const zero: Routing_Score = .{
+        .success = 0,
+        .early_success = 0,
+        .weighted = 0,
+    };
+
+    pub const max: Routing_Score = .{
+        .success = std.math.maxInt(usize),
+        .early_success = std.math.maxInt(usize),
+        .weighted = std.math.maxInt(usize),
+    };
 };
 
 const Compact_Routing_Data = packed struct (u48) {
@@ -537,20 +557,27 @@ const Compact_Routing_Data = packed struct (u48) {
     }
 
     pub fn compute_score(self: Compact_Routing_Data, cluster_size: [16]u8, sum_size: [16]u8) Routing_Score {
-        var score = Routing_Score { .success = 0, .weighted = 0 };
+        var score: Routing_Score = .zero;
         var available_pts: [16]u16 = @splat(0);
+        var smallest_routed_cluster: [16]u16 = @splat(5);
         for (cluster_size, 0..) |size, cluster| {
             const routing = self.get_cluster_routing(cluster);
-            available_pts[get_ca_for_cluster(cluster, routing).?] += size;
             if (routing != .self) {
                 score.weighted += 1;
+            }
+            if (size > 0) {
+                const ca = get_ca_for_cluster(cluster, routing).?;
+                available_pts[ca] += size;
+                smallest_routed_cluster[ca] = @min(smallest_routed_cluster[ca], size);
             }
         }
         for (available_pts, 0..) |available, ca| {
             const target = self.get_ca_target(ca);
             if (target != ca) {
                 available_pts[target] += available;
+                smallest_routed_cluster[target] = @min(smallest_routed_cluster[target], smallest_routed_cluster[ca]);
                 available_pts[ca] = 0;
+                smallest_routed_cluster[ca] = 5;
                 score.weighted += 800;
             }
         }
@@ -558,9 +585,13 @@ const Compact_Routing_Data = packed struct (u48) {
         for (sum_size, 0..) |required_pts, mc| {
             if (required_pts > available_pts[mc]) {
                 score.success += @as(usize, 10) + required_pts - available_pts[mc];
+            } else if (required_pts + smallest_routed_cluster[mc] <= available_pts[mc] and smallest_routed_cluster[mc] < available_pts[mc]) {
+                // we've overallocated clusters to this MC; we don't want to accept this
+                score.early_success += 1;
             }
         }
-        score.weighted += score.success;
+        score.weighted += score.success + score.early_success;
+        score.early_success += score.success;
         return score;
     }
 
