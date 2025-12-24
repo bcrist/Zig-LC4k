@@ -20,9 +20,8 @@
             .lazy = true,
         },
         .re4k = .{
-            // .url = "git+https://github.com/bcrist/re4k#ea6c0ce0e24688b5956f25ea4fe04a27fb52f9cf",
-            // .hash = "re4k-0.1.0-VW5jDM_rwwBplfd6yRRdH5vOr95RuzKEDonKi6dm1X1N",
-            .path = "../re4k/",
+            .url = "git+https://github.com/bcrist/re4k#5bf8cfd1945606247a9fed96f4b5c63410d6f0ad",
+            .hash = "re4k-0.1.0-VW5jDPPrwwBtfUBeaszs4eB_AZWZMDV3eTmRQngQfeWY",
             .lazy = true,
         },
     },
