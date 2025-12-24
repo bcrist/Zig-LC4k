@@ -270,22 +270,7 @@ pub const Cluster_Router = struct {
             break;
         }
 
-        {
-            var available_pts = initial_routing.get_available_pts(self.cluster_size);
-            // un-donate any superfluous clusters
-            for (self.forced_cluster_routing, 0..) |forced_routing, cluster| {
-                if (forced_routing == null and initial_routing.get_cluster_routing(cluster) != .self and initial_routing.get_wide_routing(cluster) == .self and self.sum_size[cluster] == 0) {
-                    const cluster_size = self.cluster_size[cluster];
-                    const target_mc = initial_routing.get_ca_target(get_ca_for_cluster(cluster, initial_routing.get_cluster_routing(cluster)).?);
-                    const sum_size = self.sum_size[target_mc];
-                    if (sum_size + cluster_size <= available_pts[target_mc]) {
-                        available_pts[target_mc] -= cluster_size;
-                        initial_routing.set_cluster_routing(cluster, .self);
-                        available_pts[cluster] += cluster_size;
-                    }
-                }
-            }
-        }
+        initial_routing = self.fix_overprovisioning(initial_routing);
 
         try self.open_set.put(self.allocator, @bitCast(initial_routing), {});
         try self.open_heap.add(initial_routing);
@@ -300,7 +285,7 @@ pub const Cluster_Router = struct {
 
             const score = routing.compute_score(self.cluster_size, self.sum_size);
             if (score.early_success == 0) {
-                return Routing_Data.init(routing);
+                return Routing_Data.init(self.fix_overprovisioning(routing));
             }
 
             if (score.success == 0) {
@@ -365,7 +350,7 @@ pub const Cluster_Router = struct {
             } else return error.Cluster_Routing_Failed;
         }
         
-        return Routing_Data.init(best_routing);
+        return Routing_Data.init(self.fix_overprovisioning(best_routing));
     }
 
     fn get_next_ca(ca: usize) usize {
@@ -395,6 +380,28 @@ pub const Cluster_Router = struct {
             }
         }
         return num_pts;
+    }
+
+    fn fix_overprovisioning(self: Cluster_Router, initial_routing: Compact_Routing_Data) Compact_Routing_Data {
+        var available_pts = initial_routing.get_available_pts(self.cluster_size);
+        var routing = initial_routing;
+        var made_changes = true;
+        while (made_changes) {
+            made_changes = false;
+            for (self.forced_cluster_routing, 0..) |forced_routing, cluster| {
+                if (forced_routing != null or routing.get_cluster_routing(cluster) == .self or routing.get_wide_routing(cluster) != .self) continue;
+                const cluster_size = self.cluster_size[cluster];
+                const target_mc = routing.get_ca_target(get_ca_for_cluster(cluster, routing.get_cluster_routing(cluster)).?);
+                const sum_size = self.sum_size[target_mc];
+                if (sum_size + cluster_size <= available_pts[target_mc]) {
+                    available_pts[target_mc] -= cluster_size;
+                    routing.set_cluster_routing(cluster, .self);
+                    available_pts[cluster] += cluster_size;
+                    made_changes = true;
+                }
+            }
+        }
+        return routing;
     }
 
 };
