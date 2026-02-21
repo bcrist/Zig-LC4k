@@ -74,11 +74,10 @@ const buried = struct {
     };
 };
 
-pub fn main() !void {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer arena.deinit();
+pub fn main(init: std.process.Init) !void {
+    var names = Chip.Names.init(init.gpa);
+    defer names.deinit();
 
-    var names = Chip.Names.init(gpa);
     names.fallback = null;
     try names.add_glb_name(0, "X");
     try names.add_glb_name(1, "Y");
@@ -87,8 +86,8 @@ pub fn main() !void {
     try names.add_names(buried, .{});
 
     var lp: Chip.Logic_Parser = .{
-        .gpa = gpa,
-        .arena = arena.allocator(),
+        .gpa = init.gpa,
+        .arena = init.arena.allocator(),
         .names = &names,
     };
 
@@ -151,20 +150,19 @@ pub fn main() !void {
         mc.logic = try lp.logic("& @fb _F", .{});
     }
 
-    const results = try chip.assemble(arena.allocator(), .{});
+    const results = try chip.assemble(init.arena.allocator(), .{});
 
     const design_name = "74x181";
-    try Chip.write_jed_file(results.jedec, design_name ++ ".jed", .{});
-    try Chip.write_svf_file(results.jedec, design_name ++ ".svf", .{});
-    try Chip.write_report_file(5, results.jedec, design_name ++ ".html", .{
+    try Chip.write_jed_file(init.io, results.jedec, design_name ++ ".jed", .{});
+    try Chip.write_svf_file(init.io, results.jedec, design_name ++ ".svf", .{});
+    try Chip.write_report_file(init.io, results.jedec, design_name ++ ".html", .{
+        .speed_grade = 5,
         .design_name = design_name,
         .notes = "An implementation of the once-venerable 74x181 4-bit ALU",
         .errors = results.errors.items,
         .names = &names,
     });
 }
-
-const gpa = std.heap.smp_allocator;
 
 const Signal = Chip.Signal;
 

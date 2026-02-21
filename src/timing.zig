@@ -58,7 +58,7 @@ pub const Node = union (enum) {
     out_en: lc4k.MC_Ref,
     out_dis: lc4k.MC_Ref,
 
-    pub fn write_name(self: Node, writer: *std.io.Writer, comptime Device: type, names: *const naming.Names(Device)) !void {
+    pub fn write_name(self: Node, writer: *std.Io.Writer, comptime Device: type, names: *const naming.Names(Device)) !void {
         switch (self) {
             .pad, .in, .grp => |signal_index| {
                 const signal: Device.Signal = @enumFromInt(signal_index);
@@ -136,39 +136,15 @@ pub const Path = struct {
     };
 };
 
-pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
+pub const VBC = struct {
+
+};
+
+pub fn Analyzer(comptime D: type) type {
     const Timing = switch (D.family) {
-        .low_power => switch (speed_grade) {
-            25 => @import("timing/VBC-25.zig"),
-            27 => @import("timing/VBC-27.zig"),
-            30 => @import("timing/VBC-3.zig"),
-            35 => @import("timing/VBC-35.zig"),
-            50, 5, 6 => @import("timing/VBC-5.zig"),
-            75, 7, 8 => @import("timing/VBC-75.zig"),
-            100, 10 => @import("timing/VBC-10.zig"),
-            else => @compileError("Invalid speed grade"),
-        },
-        .zero_power => switch (speed_grade) {
-            35 => @import("timing/ZC-35.zig"),
-            37 => @import("timing/ZC-37.zig"),
-            42 => @import("timing/ZC-42.zig"),
-            45 => @import("timing/ZC-45.zig"),
-            50, 5, 6 => @import("timing/ZC-5.zig"),
-            75, 7, 8 => @import("timing/ZC-75.zig"),
-            else => @compileError("Invalid speed grade"),
-        },
-        .zero_power_enhanced => switch (speed_grade) {
-            44 => if (D.num_glbs == 2) @import("timing/32ZE-4.zig") else @compileError("Invalid speed grade"),
-            47 => if (D.num_glbs == 4) @import("timing/64ZE-4.zig") else @compileError("Invalid speed grade"),
-            4 => switch (D.num_glbs) {
-                2 => @import("timing/32ZE-4.zig"),
-                4 => @import("timing/64ZE-4.zig"),
-                else => @compileError("Invalid speed grade"),
-            },
-            58, 5, 6 => @import("timing/ZE-5.zig"),
-            75, 7, 8 => @import("timing/ZE-75.zig"),
-            else => @compileError("Invalid speed grade"),
-        },
+        .low_power => @import("timing/VBC.zig"),
+        .zero_power => @import("timing/ZC.zig"),
+        .zero_power_enhanced => @import("timing/ZE.zig"),
     };
 
     const Node_Set = std.AutoHashMap(Node, void);
@@ -183,14 +159,16 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
         gpa: std.mem.Allocator,
         jedec: JEDEC_Data,
         cache: std.AutoHashMapUnmanaged(Segment, Path) = .{},
+        timing: Timing,
 
         const Self = @This();
 
-        pub fn init(jedec_data: JEDEC_Data, arena: std.mem.Allocator, gpa: std.mem.Allocator) Self {
+        pub fn init(jedec_data: JEDEC_Data, speed_grade: usize, arena: std.mem.Allocator, gpa: std.mem.Allocator) !Self {
             return .{
                 .arena = arena,
                 .gpa = gpa,
                 .jedec = jedec_data,
+                .timing = Timing.init(speed_grade, D.num_glbs) orelse return error.InvalidSpeedGrade,
             };
         }
 
@@ -265,14 +243,14 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                         }
                     }
                     return try self.append_to_parent(source, .{ .orm = mcref }, dest, "tBUF", visited,
-                        Timing.tBUF + self.tIOO(mcref) + self.tSLEW(mcref));
+                        self.timing.tBUF + self.tIOO(mcref) + self.tSLEW(mcref));
                 },
 
                 .out_en => |mcref| return try self.append_to_parent(source, .{ .out_oe = mcref }, dest, "tEN", visited,
-                    Timing.tEN + self.tIOO(mcref) + self.tSLEW(mcref)),
+                    self.timing.tEN + self.tIOO(mcref) + self.tSLEW(mcref)),
 
                 .out_dis => |mcref| return try self.append_to_parent(source, .{ .out_oe = mcref }, dest, "tDIS", visited,
-                    Timing.tDIS + self.tIOO(mcref)),
+                    self.timing.tDIS + self.tIOO(mcref)),
 
                 .out_oe => |mcref| {
                     if (fuses.get_output_enable_source_range(D, mcref)) |range| {
@@ -298,46 +276,46 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                                 .same_as_oe => {},
                                 .self => return try self.clone_with_new_dest(source, .{ .mcq = mcref }, dest, visited),
                                 .five_pt_fast_bypass, .five_pt_fast_bypass_inverted => {
-                                    return try self.append_to_parent(source, .{ .mc_cluster = mcref }, dest, "tPDb", visited, Timing.tPDb);
+                                    return try self.append_to_parent(source, .{ .mc_cluster = mcref }, dest, "tPDb", visited, self.timing.tPDb);
                                 },
                             }
                         }
                     }
                     const source_mcref = disassembly.unmap_orm(D, self.jedec, mcref) orelse mcref;
-                    return try self.append_to_parent(source, .{ .mcq = source_mcref }, dest, "tORP", visited, Timing.tORP);
+                    return try self.append_to_parent(source, .{ .mcq = source_mcref }, dest, "tORP", visited, self.timing.tORP);
                 },
 
                 .fb => |mcref| {
-                    return try self.append_to_parent(source, .{ .mcq = mcref }, dest, "tFBK", visited, Timing.tFBK);
+                    return try self.append_to_parent(source, .{ .mcq = mcref }, dest, "tFBK", visited, self.timing.tFBK);
                 },
 
                 .mcq => |mcref| {
                     const range = fuses.get_macrocell_function_range(D, mcref);
                     switch (disassembly.read_field(self.jedec, lc4k.Macrocell_Function, range)) {
                         .combinational => {
-                            return try self.append_to_parent(source, .{ .mcd = mcref }, dest, "tPDi", visited, Timing.tPDi);
+                            return try self.append_to_parent(source, .{ .mcd = mcref }, dest, "tPDi", visited, self.timing.tPDi);
                         },
                         .latch => {
                             var buf: [5]Path = undefined;
                             var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
 
-                            if (try self.maybe_append_to_parent(source, .{ .mcd = mcref }, dest, "tPDLi", visited, Timing.tPDLi)) |path| {
+                            if (try self.maybe_append_to_parent(source, .{ .mcd = mcref }, dest, "tPDLi", visited, self.timing.tPDLi)) |path| {
                                 options.appendAssumeCapacity(path);
                             }
 
-                            if (try self.maybe_append_to_parent(source, .{ .mc_clk = mcref }, dest, "tGOi", visited, Timing.tGOi)) |path| {
+                            if (try self.maybe_append_to_parent(source, .{ .mc_clk = mcref }, dest, "tGOi", visited, self.timing.tGOi)) |path| {
                                 options.appendAssumeCapacity(path);
                             }
 
-                            if (try self.maybe_append_to_parent(source, .{ .mc_ce = mcref }, dest, "tGOi", visited, Timing.tGOi)) |path| {
+                            if (try self.maybe_append_to_parent(source, .{ .mc_ce = mcref }, dest, "tGOi", visited, self.timing.tGOi)) |path| {
                                 options.appendAssumeCapacity(path);
                             }
 
-                            if (try self.maybe_append_to_parent(source, .{ .mc_init = mcref }, dest, "tSRi", visited, Timing.tSRi)) |path| {
+                            if (try self.maybe_append_to_parent(source, .{ .mc_init = mcref }, dest, "tSRi", visited, self.timing.tSRi)) |path| {
                                 options.appendAssumeCapacity(path);
                             }
 
-                            if (try self.maybe_append_to_parent(source, .{ .mc_async = mcref }, dest, "tSRi", visited, Timing.tSRi)) |path| {
+                            if (try self.maybe_append_to_parent(source, .{ .mc_async = mcref }, dest, "tSRi", visited, self.timing.tSRi)) |path| {
                                 options.appendAssumeCapacity(path);
                             }
                             
@@ -347,15 +325,15 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                             var buf: [3]Path = undefined;
                             var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
 
-                            if (try self.maybe_append_to_parent(source, .{ .mc_clk = mcref }, dest, "tCOi", visited, Timing.tCOi)) |path| {
+                            if (try self.maybe_append_to_parent(source, .{ .mc_clk = mcref }, dest, "tCOi", visited, self.timing.tCOi)) |path| {
                                 options.appendAssumeCapacity(path);
                             }
 
-                            if (try self.maybe_append_to_parent(source, .{ .mc_init = mcref }, dest, "tSRi", visited, Timing.tSRi)) |path| {
+                            if (try self.maybe_append_to_parent(source, .{ .mc_init = mcref }, dest, "tSRi", visited, self.timing.tSRi)) |path| {
                                 options.appendAssumeCapacity(path);
                             }
 
-                            if (try self.maybe_append_to_parent(source, .{ .mc_async = mcref }, dest, "tSRi", visited, Timing.tSRi)) |path| {
+                            if (try self.maybe_append_to_parent(source, .{ .mc_async = mcref }, dest, "tSRi", visited, self.timing.tSRi)) |path| {
                                 options.appendAssumeCapacity(path);
                             }
                             
@@ -366,7 +344,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
 
                 .mc_oe => |mcref| {
                     return switch (disassembly.read_pt4_output_enable_source(D, self.jedec, mcref)) {
-                        .pt4_active_high => try self.append_to_parent(source, .{ .pt = .{ .mcref = mcref, .pt = 4 } }, dest, "tPTOE", visited, Timing.tPTOE),
+                        .pt4_active_high => try self.append_to_parent(source, .{ .pt = .{ .mcref = mcref, .pt = 4 } }, dest, "tPTOE", visited, self.timing.tPTOE),
                         .always_low => error.Invalid_Path,
                     };
                 },
@@ -374,35 +352,35 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                 .mc_async => |mcref| {
                     return switch (disassembly.read_async_trigger_source(D, self.jedec, mcref)) {
                         .none => error.Invalid_Path,
-                        .pt2_active_high => try self.append_to_parent(source, .{ .pt = .{ .mcref = mcref, .pt = 2 } }, dest, "tPTSR", visited, Timing.tPTSR),
+                        .pt2_active_high => try self.append_to_parent(source, .{ .pt = .{ .mcref = mcref, .pt = 2 } }, dest, "tPTSR", visited, self.timing.tPTSR),
                     };
                 },
 
                 .mc_init => |mcref| {
                     return switch (disassembly.read_init_source(D, self.jedec, mcref)) {
-                        .pt3_active_high => try self.append_to_parent(source, .{ .pt = .{ .mcref = mcref, .pt = 3 } }, dest, "tPTSR", visited, Timing.tPTSR),
-                        .shared_pt_init => try self.append_to_parent(source, .{ .sptinit = mcref.glb }, dest, "tBSR", visited, Timing.tBSR),
+                        .pt3_active_high => try self.append_to_parent(source, .{ .pt = .{ .mcref = mcref, .pt = 3 } }, dest, "tPTSR", visited, self.timing.tPTSR),
+                        .shared_pt_init => try self.append_to_parent(source, .{ .sptinit = mcref.glb }, dest, "tBSR", visited, self.timing.tBSR),
                     };
                 },
 
                 .mc_ce_setup => |mcref| {
-                    return try self.append_to_parent(source, .{ .mc_ce = mcref }, dest, "tCES", visited, Timing.tCES);
+                    return try self.append_to_parent(source, .{ .mc_ce = mcref }, dest, "tCES", visited, self.timing.tCES);
                 },
 
                 .mc_ce => |mcref| {
                     switch (disassembly.read_clock_enable_source(D, self.jedec, mcref)) {
                         .always_active => return error.Invalid_Path,
                         .shared_pt_clock => {
-                            return try self.append_to_parent(source, .{ .sptclk = mcref.glb }, dest, "tBCLK", visited, Timing.tBCLK);
+                            return try self.append_to_parent(source, .{ .sptclk = mcref.glb }, dest, "tBCLK", visited, self.timing.tBCLK);
                         },
                         .pt2_active_high, .pt2_active_low => {
-                            return try self.append_to_parent(source, .{ .pt = .{ .mcref = mcref, .pt = 2 } }, dest, "tPTCLK", visited, Timing.tPTCLK);
+                            return try self.append_to_parent(source, .{ .pt = .{ .mcref = mcref, .pt = 2 } }, dest, "tPTCLK", visited, self.timing.tPTCLK);
                         },
                     }
                 },
 
                 .mc_clk_ce_hold => |mcref| {
-                    return try self.append_to_parent(source, .{ .mc_clk = mcref }, dest, "tCEH", visited, Timing.tCEH);
+                    return try self.append_to_parent(source, .{ .mc_clk = mcref }, dest, "tCEH", visited, self.timing.tCEH);
                 },
 
                 .mc_clk_d_hold => |mcref| {
@@ -410,10 +388,10 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                     switch (disassembly.read_field(self.jedec, lc4k.Macrocell_Function, range)) {
                         .combinational => return error.Invalid_Path,
                         .latch => {
-                            return try self.append_to_parent(source, .{ .mc_clk = mcref }, dest, "tHL", visited, Timing.tHL);
+                            return try self.append_to_parent(source, .{ .mc_clk = mcref }, dest, "tHL", visited, self.timing.tHL);
                         },
                         .t_ff => {
-                            return try self.append_to_parent(source, .{ .mc_clk = mcref }, dest, "tHT", visited, Timing.tHT);
+                            return try self.append_to_parent(source, .{ .mc_clk = mcref }, dest, "tHT", visited, self.timing.tHT);
                         },
                         .d_ff => {
                             if (disassembly.read_input_bypass(D, self.jedec, mcref)) {
@@ -422,12 +400,12 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                                     .none, .bclock0, .bclock1, .bclock2, .bclock3 => false,
                                 };
                                 if (is_ptclk) {
-                                    return try self.append_to_parent(source, .{ .mc_clk = mcref }, dest, "tHIR_PT", visited, Timing.tHIR_PT);
+                                    return try self.append_to_parent(source, .{ .mc_clk = mcref }, dest, "tHIR_PT", visited, self.timing.tHIR_PT);
                                 } else {
-                                    return try self.append_to_parent(source, .{ .mc_clk = mcref }, dest, "tHIR", visited, Timing.tHIR);
+                                    return try self.append_to_parent(source, .{ .mc_clk = mcref }, dest, "tHIR", visited, self.timing.tHIR);
                                 }
                             } else {
-                                return try self.append_to_parent(source, .{ .mc_clk = mcref }, dest, "tH", visited, Timing.tH);
+                                return try self.append_to_parent(source, .{ .mc_clk = mcref }, dest, "tH", visited, self.timing.tH);
                             }
                         },
                     }
@@ -437,10 +415,10 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                     switch (disassembly.read_clock_source(D, self.jedec, mcref)) {
                         .none => return error.Invalid_Path,
                         .shared_pt_clock => {
-                            return try self.append_to_parent(source, .{ .sptclk = mcref.glb }, dest, "tBCLK", visited, Timing.tBCLK);
+                            return try self.append_to_parent(source, .{ .sptclk = mcref.glb }, dest, "tBCLK", visited, self.timing.tBCLK);
                         },
                         .pt1_positive, .pt1_negative => {
-                            return try self.append_to_parent(source, .{ .pt = .{ .mcref = mcref, .pt = 1 } }, dest, "tPTCLK", visited, Timing.tPTCLK);
+                            return try self.append_to_parent(source, .{ .pt = .{ .mcref = mcref, .pt = 1 } }, dest, "tPTCLK", visited, self.timing.tPTCLK);
                         },
                         .bclock0 => return try self.clone_with_new_dest(source, .{ .bclock0 = mcref.glb }, dest, visited),
                         .bclock1 => return try self.clone_with_new_dest(source, .{ .bclock1 = mcref.glb }, dest, visited),
@@ -459,30 +437,30 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                         .combinational => return error.Invalid_Path,
                         .latch => {
                             if (is_ptclk) {
-                                return try self.append_to_parent(source, .{ .mcd = mcref }, dest, "tSL_PT", visited, Timing.tSL_PT);
+                                return try self.append_to_parent(source, .{ .mcd = mcref }, dest, "tSL_PT", visited, self.timing.tSL_PT);
                             } else {
-                                return try self.append_to_parent(source, .{ .mcd = mcref }, dest, "tSL", visited, Timing.tSL);
+                                return try self.append_to_parent(source, .{ .mcd = mcref }, dest, "tSL", visited, self.timing.tSL);
                             }
                         },
                         .t_ff => {
                             if (is_ptclk) {
-                                return try self.append_to_parent(source, .{ .mcd = mcref }, dest, "tST_PT", visited, Timing.tST_PT);
+                                return try self.append_to_parent(source, .{ .mcd = mcref }, dest, "tST_PT", visited, self.timing.tST_PT);
                             } else {
-                                return try self.append_to_parent(source, .{ .mcd = mcref }, dest, "tST", visited, Timing.tST);
+                                return try self.append_to_parent(source, .{ .mcd = mcref }, dest, "tST", visited, self.timing.tST);
                             }
                         },
                         .d_ff => {
                             if (disassembly.read_input_bypass(D, self.jedec, mcref)) {
                                 if (is_ptclk) {
-                                    return try self.append_to_parent(source, .{ .mcd = mcref }, dest, "tSIR_PT", visited, Timing.tSIR_PT);
+                                    return try self.append_to_parent(source, .{ .mcd = mcref }, dest, "tSIR_PT", visited, self.timing.tSIR_PT);
                                 } else {
-                                    return try self.append_to_parent(source, .{ .mcd = mcref }, dest, "tSIR", visited, Timing.tSIR);
+                                    return try self.append_to_parent(source, .{ .mcd = mcref }, dest, "tSIR", visited, self.timing.tSIR);
                                 }
                             } else {
                                 if (is_ptclk) {
-                                    return try self.append_to_parent(source, .{ .mcd = mcref }, dest, "tS_PT", visited, Timing.tS_PT);
+                                    return try self.append_to_parent(source, .{ .mcd = mcref }, dest, "tS_PT", visited, self.timing.tS_PT);
                                 } else {
-                                    return try self.append_to_parent(source, .{ .mcd = mcref }, dest, "tS", visited, Timing.tS);
+                                    return try self.append_to_parent(source, .{ .mcd = mcref }, dest, "tS", visited, self.timing.tS);
                                 }
                             }
                         },
@@ -494,18 +472,18 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                     var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
 
                     if (disassembly.read_input_bypass(D, self.jedec, mcref)) {
-                        const delay = Timing.tINREG + self.tINDIO();
+                        const delay = self.timing.tINREG + self.tINDIO();
                         if (try self.maybe_append_to_parent(source, .{ .in = @intFromEnum(D.Signal.mc_pad(mcref)) }, dest, "tINREG", visited, delay)) |path| {
                             options.appendAssumeCapacity(path);
                         }
                     } else if (disassembly.read_pt0_xor(D, self.jedec, mcref)) {
-                        if (try self.maybe_append_to_parent(source, .{ .pt = .{ .mcref = mcref, .pt = 0 }}, dest, "tMCELL", visited, Timing.tMCELL)) |path| {
+                        if (try self.maybe_append_to_parent(source, .{ .pt = .{ .mcref = mcref, .pt = 0 }}, dest, "tMCELL", visited, self.timing.tMCELL)) |path| {
                             options.appendAssumeCapacity(path);
                         }
                     }
 
                     if (disassembly.read_field(self.jedec, lc4k.Wide_Routing, fuses.get_wide_routing_range(D, mcref)) == .self) {
-                        if (try self.maybe_append_to_parent(source, .{ .mc_ca = mcref }, dest, "tMCELL", visited, Timing.tMCELL)) |path| {
+                        if (try self.maybe_append_to_parent(source, .{ .mc_ca = mcref }, dest, "tMCELL", visited, self.timing.tMCELL)) |path| {
                             options.appendAssumeCapacity(path);
                         }
                     }
@@ -552,7 +530,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
 
                     const prev_wide_cluster = lc4k.MC_Ref.init(mcref.glb, (mcref.mc + D.num_mcs_per_glb - 4) % D.num_mcs_per_glb);
                     if (disassembly.read_field(self.jedec, lc4k.Wide_Routing, fuses.get_wide_routing_range(D, prev_wide_cluster)) == .self_plus_four) {
-                        if (try self.maybe_append_to_parent(source, .{ .mc_ca = prev_wide_cluster }, dest, "tEXP", visited, Timing.tEXP)) |path| {
+                        if (try self.maybe_append_to_parent(source, .{ .mc_ca = prev_wide_cluster }, dest, "tEXP", visited, self.timing.tEXP)) |path| {
                             options.appendAssumeCapacity(path);
                         }
                     }
@@ -640,7 +618,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                     }
                     if (total_gis == 0) return error.Invalid_Path;
 
-                    const delay: i32 = @intCast(Timing.tROUTE + Timing.tBLA * (total_gis - 1));
+                    const delay: i32 = @intCast(self.timing.tROUTE + self.timing.tBLA * (total_gis - 1));
                     if (signal.kind() == .mc) {
                         return try self.append_to_parent(source, .{ .fb = signal.mc() }, dest, "tROUTE", visited, delay);
                     } else {
@@ -658,7 +636,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                     const pin = D.clock_pins[index];
                     const signal_index = pin.info.signal_index.?;
                     const signal: D.Signal = @enumFromInt(signal_index);
-                    const delay = Timing.tGCLK_IN + self.tIOI(signal);
+                    const delay = self.timing.tGCLK_IN + self.tIOI(signal);
                     return try self.append_to_parent(source, .{ .pad = signal_index }, dest, "tGCLK_IN", visited, delay);
                 },
 
@@ -667,7 +645,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                     const pin = D.oe_pins[index];
                     const signal_index = pin.info.signal_index.?;
                     const signal: D.Signal = @enumFromInt(signal_index);
-                    const delay = Timing.tGOE + self.tIOI(signal);
+                    const delay = self.timing.tGOE + self.tIOI(signal);
                     return try self.append_to_parent(source, .{ .pad = signal_index }, dest, "tGOE", visited, delay);
                 },
 
@@ -684,7 +662,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                         }
                     }
 
-                    const delay = Timing.tIN + self.tIOI(signal);
+                    const delay = self.timing.tIN + self.tIOI(signal);
                     return try self.append_to_parent(source, .{ .pad = signal_index }, dest, "tIN", visited, delay);
                 },
 
@@ -697,8 +675,8 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
         fn compute_goe_critical_path(self: *Self, source: Node, dest: Node, goe: lc4k.GOE_Index, visited: *Node_Set) Error!Path {
             if (D.num_glbs == 2) {
                 return switch (goe) {
-                    0 => self.append_to_parent(source, .igoe0, dest, "tGPTOE", visited, Timing.tGPTOE),
-                    1 => self.append_to_parent(source, .igoe1, dest, "tGPTOE", visited, Timing.tGPTOE),
+                    0 => self.append_to_parent(source, .igoe0, dest, "tGPTOE", visited, self.timing.tGPTOE),
+                    1 => self.append_to_parent(source, .igoe1, dest, "tGPTOE", visited, self.timing.tGPTOE),
                     2 => self.clone_with_new_dest(source, .{ .oe_in = 0 }, dest, visited),
                     3 => self.clone_with_new_dest(source, .{ .oe_in = 1 }, dest, visited),
                     else => unreachable,
@@ -708,16 +686,16 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
                     0, 1 => {
                         if (self.jedec.is_set(D.get_goe_source_fuse(goe).?)) {
                             return switch (goe) {
-                                0 => self.append_to_parent(source, .igoe0, dest, "tGPTOE", visited, Timing.tGPTOE),
-                                1 => self.append_to_parent(source, .igoe1, dest, "tGPTOE", visited, Timing.tGPTOE),
+                                0 => self.append_to_parent(source, .igoe0, dest, "tGPTOE", visited, self.timing.tGPTOE),
+                                1 => self.append_to_parent(source, .igoe1, dest, "tGPTOE", visited, self.timing.tGPTOE),
                                 else => unreachable,
                             };
                         } else {
                             return self.clone_with_new_dest(source, .{ .oe_in = goe }, dest, visited);
                         }
                     },
-                    2 => return self.append_to_parent(source, .igoe2, dest, "tGPTOE", visited, Timing.tGPTOE),
-                    3 => return self.append_to_parent(source, .igoe3, dest, "tGPTOE", visited, Timing.tGPTOE),
+                    2 => return self.append_to_parent(source, .igoe2, dest, "tGPTOE", visited, self.timing.tGPTOE),
+                    3 => return self.append_to_parent(source, .igoe3, dest, "tGPTOE", visited, self.timing.tGPTOE),
                     else => unreachable,
                 }
             }
@@ -872,7 +850,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
             _ = self;
             _ = signal;
             // We're not including tIOO because input/output buffer delays are heavily dependent on trace length, capacitance, etc. anyway.
-            //return Timing.tIOI_low;
+            //return self.timing.tIOI_low;
             return 0;
         }
 
@@ -880,14 +858,14 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
             _ = self;
             _ = mcref;
             // We're not including tIOO because input/output buffer delays are heavily dependent on trace length, capacitance, etc. anyway.
-            //return Timing.tIOO;
+            //return self.timing.tIOO;
             return 0;
         }
 
         fn tSLEW(self: *Self, mcref: lc4k.MC_Ref) Picoseconds {
             if (fuses.get_slew_rate_range(D, mcref)) |range| {
                 if (disassembly.read_field(self.jedec, lc4k.Slew_Rate, range) == .slow) {
-                    return Timing.tSLEW;
+                    return self.timing.tSLEW;
                 }
             }
             return 0;
@@ -895,7 +873,7 @@ pub fn Analyzer(comptime D: type, comptime speed_grade: comptime_int) type {
 
         fn tINDIO(self: *Self) Picoseconds {
             const zero_hold_time = !self.jedec.is_set(D.get_zero_hold_time_fuse());
-            return if (zero_hold_time) Timing.tINDIO else 0;
+            return if (zero_hold_time) self.timing.tINDIO else 0;
         }
 
     };

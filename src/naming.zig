@@ -456,7 +456,7 @@ pub fn Names(comptime Device: type) type {
             }
         }
 
-        pub fn debug(self: Self, w: *std.io.Writer) !void {
+        pub fn debug(self: Self, w: *std.Io.Writer) !void {
             if (self.constant_lookup.count() > 0) {
                 try w.writeAll("\nConstants:\n");
                 var constant_iter = self.constant_lookup.iterator();

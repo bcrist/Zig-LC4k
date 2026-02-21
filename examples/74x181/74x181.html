@@ -1,6 +1,6 @@
 <html>
 <head>
-<title>CPLD Design Report: 74x181</title>
+<title>74x181 (CPLD Design Report)</title>
 <style>
 body {
     background: #111;
@@ -179,8 +179,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div>
 <pre><span class="comment">// Macrocell 3</span>
 <abbr>_G</abbr> = <abbr>unused</abbr> = !<abbr>TA[3]</abbr> &amp; !<abbr>TB[3]</abbr>
-        | !<abbr>TA[2]</abbr> &amp; !<abbr>TB[2]</abbr> &amp; !<abbr>TB[3]</abbr>
         | !<abbr>TB[0]</abbr> &amp; !<abbr>TB[1]</abbr> &amp; !<abbr>TB[2]</abbr> &amp; !<abbr>TB[3]</abbr>
+        | !<abbr>TA[2]</abbr> &amp; !<abbr>TB[2]</abbr> &amp; !<abbr>TB[3]</abbr>
         | !<abbr>TA[1]</abbr> &amp; !<abbr>TB[1]</abbr> &amp; !<abbr>TB[2]</abbr> &amp; !<abbr>TB[3]</abbr>
 </pre>
 <pre><span class="comment">// Macrocell 4</span>
@@ -255,20 +255,20 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <abbr>A_eq_B</abbr> = <abbr>unused</abbr> = <abbr>_F[0].fb</abbr> &amp; <abbr>_F[1].fb</abbr> &amp; <abbr>_F[2].fb</abbr> &amp; <abbr>_F[3].fb</abbr>
 </pre>
 <pre><span class="comment">// Macrocell 12</span>
-<abbr>TB[0]</abbr> = !<abbr>_A[0]</abbr> &amp; !<abbr>S[1]</abbr> &amp; !<abbr>_B[0]</abbr>
-        | !<abbr>_A[0]</abbr> &amp; !<abbr>S[0]</abbr> &amp; <abbr>_B[0]</abbr>
+<abbr>TB[0]</abbr> = !<abbr>_A[0]</abbr> &amp; !<abbr>S[0]</abbr> &amp; <abbr>_B[0]</abbr>
+        | !<abbr>_A[0]</abbr> &amp; !<abbr>S[1]</abbr> &amp; !<abbr>_B[0]</abbr>
 </pre>
 <pre><span class="comment">// Macrocell 13</span>
-<abbr>TB[1]</abbr> = !<abbr>_A[1]</abbr> &amp; !<abbr>S[0]</abbr> &amp; <abbr>_B[1]</abbr>
-        | !<abbr>_A[1]</abbr> &amp; !<abbr>S[1]</abbr> &amp; !<abbr>_B[1]</abbr>
+<abbr>TB[1]</abbr> = !<abbr>_A[1]</abbr> &amp; !<abbr>S[1]</abbr> &amp; !<abbr>_B[1]</abbr>
+        | !<abbr>_A[1]</abbr> &amp; !<abbr>S[0]</abbr> &amp; <abbr>_B[1]</abbr>
 </pre>
 <pre><span class="comment">// Macrocell 14</span>
-<abbr>TB[2]</abbr> = !<abbr>_A[2]</abbr> &amp; !<abbr>S[0]</abbr> &amp; <abbr>_B[2]</abbr>
-        | !<abbr>_A[2]</abbr> &amp; !<abbr>S[1]</abbr> &amp; !<abbr>_B[2]</abbr>
+<abbr>TB[2]</abbr> = !<abbr>_A[2]</abbr> &amp; !<abbr>S[1]</abbr> &amp; !<abbr>_B[2]</abbr>
+        | !<abbr>_A[2]</abbr> &amp; !<abbr>S[0]</abbr> &amp; <abbr>_B[2]</abbr>
 </pre>
 <pre><span class="comment">// Macrocell 15</span>
-<abbr>TB[3]</abbr> = !<abbr>_A[3]</abbr> &amp; !<abbr>S[0]</abbr> &amp; <abbr>_B[3]</abbr>
-        | !<abbr>_A[3]</abbr> &amp; !<abbr>S[1]</abbr> &amp; !<abbr>_B[3]</abbr>
+<abbr>TB[3]</abbr> = !<abbr>_A[3]</abbr> &amp; !<abbr>S[1]</abbr> &amp; !<abbr>_B[3]</abbr>
+        | !<abbr>_A[3]</abbr> &amp; !<abbr>S[0]</abbr> &amp; <abbr>_B[3]</abbr>
 </pre>
 </div>
 </section>
@@ -475,9 +475,9 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <tr class="highlight">
 <td rowspan="5">unused</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>TA[3]</u></abbr> &middot; <abbr><u>TB[3]</u></abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>TA[2]</u></abbr> &middot; <abbr><u>TB[2]</u></abbr> &middot; <abbr><u>TB[3]</u></abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>TB[0]</u></abbr> &middot; <abbr><u>TB[1]</u></abbr> &middot; <abbr><u>TB[2]</u></abbr> &middot; <abbr><u>TB[3]</u></abbr></td></tr>
 <tr class="highlight">
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>TB[0]</u></abbr> &middot; <abbr><u>TB[1]</u></abbr> &middot; <abbr><u>TB[2]</u></abbr> &middot; <abbr><u>TB[3]</u></abbr></td></tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>TA[2]</u></abbr> &middot; <abbr><u>TB[2]</u></abbr> &middot; <abbr><u>TB[3]</u></abbr></td></tr>
 <tr class="highlight">
 <td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>TA[1]</u></abbr> &middot; <abbr><u>TB[1]</u></abbr> &middot; <abbr><u>TB[2]</u></abbr> &middot; <abbr><u>TB[3]</u></abbr></td></tr>
 <tr class="highlight">
@@ -737,29 +737,9 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <tr class="highlight">
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>true</abbr></td></tr>
 <tr>
-<td rowspan="5">TB[0]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>_A[0]</u></abbr> &middot; <abbr><u>S[1]</u></abbr> &middot; <abbr><u>_B[0]</u></abbr></td></tr>
+<td rowspan="5">TB[0]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>_A[0]</u></abbr> &middot; <abbr><u>S[0]</u></abbr> &middot; <abbr>_B[0]</abbr></td></tr>
 <tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>_A[0]</u></abbr> &middot; <abbr><u>S[0]</u></abbr> &middot; <abbr>_B[0]</abbr></td></tr>
-<tr>
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
-<tr>
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
-<tr>
-<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
-<tr class="highlight">
-<td rowspan="5">TB[1]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>_A[1]</u></abbr> &middot; <abbr><u>S[0]</u></abbr> &middot; <abbr>_B[1]</abbr></td></tr>
-<tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>_A[1]</u></abbr> &middot; <abbr><u>S[1]</u></abbr> &middot; <abbr><u>_B[1]</u></abbr></td></tr>
-<tr class="highlight">
-<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
-<tr class="highlight">
-<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
-<tr class="highlight">
-<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
-<tr>
-<td rowspan="5">TB[2]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>_A[2]</u></abbr> &middot; <abbr><u>S[0]</u></abbr> &middot; <abbr>_B[2]</abbr></td></tr>
-<tr>
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>_A[2]</u></abbr> &middot; <abbr><u>S[1]</u></abbr> &middot; <abbr><u>_B[2]</u></abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>_A[0]</u></abbr> &middot; <abbr><u>S[1]</u></abbr> &middot; <abbr><u>_B[0]</u></abbr></td></tr>
 <tr>
 <td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr>
@@ -767,9 +747,29 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <tr>
 <td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
-<td rowspan="5">TB[3]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>_A[3]</u></abbr> &middot; <abbr><u>S[0]</u></abbr> &middot; <abbr>_B[3]</abbr></td></tr>
+<td rowspan="5">TB[1]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>_A[1]</u></abbr> &middot; <abbr><u>S[1]</u></abbr> &middot; <abbr><u>_B[1]</u></abbr></td></tr>
 <tr class="highlight">
-<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>_A[3]</u></abbr> &middot; <abbr><u>S[1]</u></abbr> &middot; <abbr><u>_B[3]</u></abbr></td></tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>_A[1]</u></abbr> &middot; <abbr><u>S[0]</u></abbr> &middot; <abbr>_B[1]</abbr></td></tr>
+<tr class="highlight">
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
+<tr class="highlight">
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
+<tr class="highlight">
+<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
+<tr>
+<td rowspan="5">TB[2]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>_A[2]</u></abbr> &middot; <abbr><u>S[1]</u></abbr> &middot; <abbr><u>_B[2]</u></abbr></td></tr>
+<tr>
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>_A[2]</u></abbr> &middot; <abbr><u>S[0]</u></abbr> &middot; <abbr>_B[2]</abbr></td></tr>
+<tr>
+<td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
+<tr>
+<td>3</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
+<tr>
+<td>4</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
+<tr class="highlight">
+<td rowspan="5">TB[3]</td><td>0</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>_A[3]</u></abbr> &middot; <abbr><u>S[1]</u></abbr> &middot; <abbr><u>_B[3]</u></abbr></td></tr>
+<tr class="highlight">
+<td>1</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr><u>_A[3]</u></abbr> &middot; <abbr><u>S[0]</u></abbr> &middot; <abbr>_B[3]</abbr></td></tr>
 <tr class="highlight">
 <td>2</td><td><kbd class="pt-usage sum">Sum</kbd></td><td class="left"><abbr>false</abbr></td></tr>
 <tr class="highlight">
@@ -876,7 +876,7 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <table>
 <tr class="header"><th>GI</th><th colspan="6">Fuses</th><th>Signal</th><th>Fanout</th></tr>
 <tr>
-<td>0</td><td class="fuse" title="S[0]">&#9679;</td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td class="fuse" title="TB[3]"></td><td class="fuse" title="unused"></td><td>S[0]</td><td>4</td></tr>
+<td>0</td><td class="fuse" title="S[0]"></td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td class="fuse" title="TB[3]">&#9679;</td><td class="fuse" title="unused"></td><td>TB[3]</td><td>2</td></tr>
 <tr class="highlight">
 <td>1</td><td class="fuse" title="_A[0]"></td><td class="fuse" title="TA[3]">&#9679;</td><td class="fuse" title="_F[3].fb"></td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td>TA[3]</td><td>2</td></tr>
 <tr>
@@ -886,7 +886,7 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <tr>
 <td>4</td><td class="fuse" title="M"></td><td class="fuse" title="TA[3]"></td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td></td><td></td></tr>
 <tr class="highlight">
-<td>5</td><td class="fuse" title="unused"></td><td class="fuse" title="TA[2]">&#9679;</td><td class="fuse" title="TX[3]"></td><td class="fuse" title="_B[0]"></td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td>TA[2]</td><td>2</td></tr>
+<td>5</td><td class="fuse" title="unused"></td><td class="fuse" title="TA[2]"></td><td class="fuse" title="TX[3]"></td><td class="fuse" title="_B[0]">&#9679;</td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td>_B[0]</td><td>2</td></tr>
 <tr>
 <td>6</td><td class="fuse" title="S[2]"></td><td class="fuse" title="_F[1]"></td><td class="fuse" title="unused"></td><td class="fuse" title="_B[2]">&#9679;</td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td>_B[2]</td><td>2</td></tr>
 <tr class="highlight">
@@ -894,7 +894,7 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <tr>
 <td>8</td><td class="fuse" title="S[0]"></td><td class="fuse" title="TX[0]"></td><td class="fuse" title="_F[0].fb">&#9679;</td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td>_F[0].fb</td><td>1</td></tr>
 <tr class="highlight">
-<td>9</td><td class="fuse" title="_A[3]"></td><td class="fuse" title="_F[2]"></td><td class="fuse" title="_F[1].fb"></td><td class="fuse" title="_G"></td><td class="fuse" title="TB[3]">&#9679;</td><td class="fuse" title="unused"></td><td>TB[3]</td><td>2</td></tr>
+<td>9</td><td class="fuse" title="_A[3]"></td><td class="fuse" title="_F[2]"></td><td class="fuse" title="_F[1].fb">&#9679;</td><td class="fuse" title="_G"></td><td class="fuse" title="TB[3]"></td><td class="fuse" title="unused"></td><td>_F[1].fb</td><td>1</td></tr>
 <tr>
 <td>10</td><td class="fuse" title="S[3]"></td><td class="fuse" title="unused"></td><td class="fuse" title="TX[3]"></td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td></td><td></td></tr>
 <tr class="highlight">
@@ -930,9 +930,9 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <tr>
 <td>26</td><td class="fuse" title="_A[3]">&#9679;</td><td class="fuse" title="unused"></td><td class="fuse" title="TA[0]"></td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td>_A[3]</td><td>2</td></tr>
 <tr class="highlight">
-<td>27</td><td class="fuse" title="S[0]"></td><td class="fuse" title="TX[1]"></td><td class="fuse" title="_F[2].fb"></td><td class="fuse" title="_B[0]">&#9679;</td><td class="fuse" title="A_eq_B"></td><td class="fuse" title="unused"></td><td>_B[0]</td><td>2</td></tr>
+<td>27</td><td class="fuse" title="S[0]">&#9679;</td><td class="fuse" title="TX[1]"></td><td class="fuse" title="_F[2].fb"></td><td class="fuse" title="_B[0]"></td><td class="fuse" title="A_eq_B"></td><td class="fuse" title="unused"></td><td>S[0]</td><td>4</td></tr>
 <tr>
-<td>28</td><td class="fuse" title="S[3]"></td><td class="fuse" title="TA[2]"></td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td class="fuse" title="TB[0]"></td><td></td><td></td></tr>
+<td>28</td><td class="fuse" title="S[3]"></td><td class="fuse" title="TA[2]">&#9679;</td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td class="fuse" title="TB[0]"></td><td>TA[2]</td><td>2</td></tr>
 <tr class="highlight">
 <td>29</td><td class="fuse" title="S[3]"></td><td class="fuse" title="_F[0]"></td><td class="fuse" title="unused"></td><td class="fuse" title="_P"></td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td></td><td></td></tr>
 <tr>
@@ -944,7 +944,7 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <tr class="highlight">
 <td>33</td><td class="fuse" title="S[1]"></td><td class="fuse" title="TA[2]"></td><td class="fuse" title="_F[2].fb"></td><td class="fuse" title="_B[3]"></td><td class="fuse" title="TB[1]"></td><td class="fuse" title="unused"></td><td></td><td></td></tr>
 <tr>
-<td>34</td><td class="fuse" title="_A[1]"></td><td class="fuse" title="_F[1]"></td><td class="fuse" title="_F[1].fb">&#9679;</td><td class="fuse" title="unused"></td><td class="fuse" title="TB[1]"></td><td class="fuse" title="unused"></td><td>_F[1].fb</td><td>1</td></tr>
+<td>34</td><td class="fuse" title="_A[1]"></td><td class="fuse" title="_F[1]"></td><td class="fuse" title="_F[1].fb"></td><td class="fuse" title="unused"></td><td class="fuse" title="TB[1]"></td><td class="fuse" title="unused"></td><td></td><td></td></tr>
 <tr class="highlight">
 <td>35</td><td class="fuse" title="_A[2]"></td><td class="fuse" title="TA[3]"></td><td class="fuse" title="_F[1].fb"></td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td class="fuse" title="unused"></td><td></td><td></td></tr>
 </table>
@@ -970,8 +970,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_A[0] in</div>
+<div class="details">_G orm</div>
+</td><td>_G out<div class="details">_A[0] in</div>
 <div class="details">TB[0] mc_ca</div>
 <div class="details">TB[0] mcd</div>
 <div class="details">TB[0] mcq</div>
@@ -979,8 +979,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">_G orm</div>
+<div class="details">_G out</div>
 </td><td>10 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1002,8 +1002,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_A[1] in</div>
+<div class="details">_G orm</div>
+</td><td>_G out<div class="details">_A[1] in</div>
 <div class="details">TB[1] mc_ca</div>
 <div class="details">TB[1] mcd</div>
 <div class="details">TB[1] mcq</div>
@@ -1011,8 +1011,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">_G orm</div>
+<div class="details">_G out</div>
 </td><td>10 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1027,24 +1027,24 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <tr class="details-root">
 <td>_A[2] pad<div class="details">_A[2] pad</div>
 <div class="details">_A[2] in</div>
-<div class="details">TA[2] mc_ca</div>
-<div class="details">TA[2] mcd</div>
-<div class="details">TA[2] mcq</div>
-<div class="details">TA[2] fb</div>
+<div class="details">TB[2] mc_ca</div>
+<div class="details">TB[2] mcd</div>
+<div class="details">TB[2] mcq</div>
+<div class="details">TB[2] fb</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_A[2] in</div>
-<div class="details">TA[2] mc_ca</div>
-<div class="details">TA[2] mcd</div>
-<div class="details">TA[2] mcq</div>
-<div class="details">TA[2] fb</div>
+<div class="details">_G orm</div>
+</td><td>_G out<div class="details">_A[2] in</div>
+<div class="details">TB[2] mc_ca</div>
+<div class="details">TB[2] mcd</div>
+<div class="details">TB[2] mcq</div>
+<div class="details">TB[2] fb</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">_G orm</div>
+<div class="details">_G out</div>
 </td><td>10 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1066,8 +1066,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_A[3] in</div>
+<div class="details">_G orm</div>
+</td><td>_G out<div class="details">_A[3] in</div>
 <div class="details">TB[3] mc_ca</div>
 <div class="details">TB[3] mcd</div>
 <div class="details">TB[3] mcq</div>
@@ -1075,8 +1075,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">_G orm</div>
+<div class="details">_G out</div>
 </td><td>10 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1098,8 +1098,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">S[0] in</div>
+<div class="details">_G orm</div>
+</td><td>_G out<div class="details">S[0] in</div>
 <div class="details">TB[3] mc_ca</div>
 <div class="details">TB[3] mcd</div>
 <div class="details">TB[3] mcq</div>
@@ -1107,8 +1107,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">_G orm</div>
+<div class="details">_G out</div>
 </td><td>9.95 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.25 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1130,8 +1130,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">S[1] in</div>
+<div class="details">_G orm</div>
+</td><td>_G out<div class="details">S[1] in</div>
 <div class="details">TB[3] mc_ca</div>
 <div class="details">TB[3] mcd</div>
 <div class="details">TB[3] mcq</div>
@@ -1139,8 +1139,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">_G orm</div>
+<div class="details">_G out</div>
 </td><td>9.95 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.25 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1162,8 +1162,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">S[2] in</div>
+<div class="details">_G orm</div>
+</td><td>_G out<div class="details">S[2] in</div>
 <div class="details">TA[3] mc_ca</div>
 <div class="details">TA[3] mcd</div>
 <div class="details">TA[3] mcq</div>
@@ -1171,8 +1171,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">_G orm</div>
+<div class="details">_G out</div>
 </td><td>9.95 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.25 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1194,8 +1194,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">S[3] in</div>
+<div class="details">_G orm</div>
+</td><td>_G out<div class="details">S[3] in</div>
 <div class="details">TA[3] mc_ca</div>
 <div class="details">TA[3] mcd</div>
 <div class="details">TA[3] mcq</div>
@@ -1203,8 +1203,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">_G orm</div>
+<div class="details">_G out</div>
 </td><td>9.95 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.25 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1226,8 +1226,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_B[0] in</div>
+<div class="details">_G orm</div>
+</td><td>_G out<div class="details">_B[0] in</div>
 <div class="details">TB[0] mc_ca</div>
 <div class="details">TB[0] mcd</div>
 <div class="details">TB[0] mcq</div>
@@ -1235,8 +1235,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">_G orm</div>
+<div class="details">_G out</div>
 </td><td>10 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1258,8 +1258,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_B[1] in</div>
+<div class="details">_G orm</div>
+</td><td>_G out<div class="details">_B[1] in</div>
 <div class="details">TB[1] mc_ca</div>
 <div class="details">TB[1] mcd</div>
 <div class="details">TB[1] mcq</div>
@@ -1267,8 +1267,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">_G orm</div>
+<div class="details">_G out</div>
 </td><td>10 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1283,24 +1283,24 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <tr class="details-root">
 <td>_B[2] pad<div class="details">_B[2] pad</div>
 <div class="details">_B[2] in</div>
-<div class="details">TA[2] mc_ca</div>
-<div class="details">TA[2] mcd</div>
-<div class="details">TA[2] mcq</div>
-<div class="details">TA[2] fb</div>
+<div class="details">TB[2] mc_ca</div>
+<div class="details">TB[2] mcd</div>
+<div class="details">TB[2] mcq</div>
+<div class="details">TB[2] fb</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_B[2] in</div>
-<div class="details">TA[2] mc_ca</div>
-<div class="details">TA[2] mcd</div>
-<div class="details">TA[2] mcq</div>
-<div class="details">TA[2] fb</div>
+<div class="details">_G orm</div>
+</td><td>_G out<div class="details">_B[2] in</div>
+<div class="details">TB[2] mc_ca</div>
+<div class="details">TB[2] mcd</div>
+<div class="details">TB[2] mcq</div>
+<div class="details">TB[2] fb</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">_G orm</div>
+<div class="details">_G out</div>
 </td><td>10 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1322,8 +1322,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_B[3] in</div>
+<div class="details">_G orm</div>
+</td><td>_G out<div class="details">_B[3] in</div>
 <div class="details">TB[3] mc_ca</div>
 <div class="details">TB[3] mcd</div>
 <div class="details">TB[3] mcq</div>
@@ -1331,8 +1331,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">_G orm</div>
+<div class="details">_G out</div>
 </td><td>10 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1354,8 +1354,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_A[0] in</div>
+<div class="details">_P orm</div>
+</td><td>_P out<div class="details">_A[0] in</div>
 <div class="details">TA[0] mc_ca</div>
 <div class="details">TA[0] mcd</div>
 <div class="details">TA[0] mcq</div>
@@ -1363,8 +1363,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">_P orm</div>
+<div class="details">_P out</div>
 </td><td>10 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1386,8 +1386,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_A[1] in</div>
+<div class="details">_P orm</div>
+</td><td>_P out<div class="details">_A[1] in</div>
 <div class="details">TA[1] mc_ca</div>
 <div class="details">TA[1] mcd</div>
 <div class="details">TA[1] mcq</div>
@@ -1395,8 +1395,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">_P orm</div>
+<div class="details">_P out</div>
 </td><td>10 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1418,8 +1418,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_A[2] in</div>
+<div class="details">_P orm</div>
+</td><td>_P out<div class="details">_A[2] in</div>
 <div class="details">TA[2] mc_ca</div>
 <div class="details">TA[2] mcd</div>
 <div class="details">TA[2] mcq</div>
@@ -1427,8 +1427,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">_P orm</div>
+<div class="details">_P out</div>
 </td><td>10 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1450,8 +1450,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_A[3] in</div>
+<div class="details">_P orm</div>
+</td><td>_P out<div class="details">_A[3] in</div>
 <div class="details">TA[3] mc_ca</div>
 <div class="details">TA[3] mcd</div>
 <div class="details">TA[3] mcq</div>
@@ -1459,8 +1459,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">_P orm</div>
+<div class="details">_P out</div>
 </td><td>10 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1482,8 +1482,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">S[2] in</div>
+<div class="details">_P orm</div>
+</td><td>_P out<div class="details">S[2] in</div>
 <div class="details">TA[0] mc_ca</div>
 <div class="details">TA[0] mcd</div>
 <div class="details">TA[0] mcq</div>
@@ -1491,8 +1491,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">_P orm</div>
+<div class="details">_P out</div>
 </td><td>9.95 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.25 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1514,8 +1514,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">S[3] in</div>
+<div class="details">_P orm</div>
+</td><td>_P out<div class="details">S[3] in</div>
 <div class="details">TA[0] mc_ca</div>
 <div class="details">TA[0] mcd</div>
 <div class="details">TA[0] mcq</div>
@@ -1523,8 +1523,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">_P orm</div>
+<div class="details">_P out</div>
 </td><td>9.95 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.25 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1546,8 +1546,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_B[0] in</div>
+<div class="details">_P orm</div>
+</td><td>_P out<div class="details">_B[0] in</div>
 <div class="details">TA[0] mc_ca</div>
 <div class="details">TA[0] mcd</div>
 <div class="details">TA[0] mcq</div>
@@ -1555,8 +1555,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">_P orm</div>
+<div class="details">_P out</div>
 </td><td>10 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1578,8 +1578,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_B[1] in</div>
+<div class="details">_P orm</div>
+</td><td>_P out<div class="details">_B[1] in</div>
 <div class="details">TA[1] mc_ca</div>
 <div class="details">TA[1] mcd</div>
 <div class="details">TA[1] mcq</div>
@@ -1587,8 +1587,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">_P orm</div>
+<div class="details">_P out</div>
 </td><td>10 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1610,8 +1610,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_B[2] in</div>
+<div class="details">_P orm</div>
+</td><td>_P out<div class="details">_B[2] in</div>
 <div class="details">TA[2] mc_ca</div>
 <div class="details">TA[2] mcd</div>
 <div class="details">TA[2] mcq</div>
@@ -1619,8 +1619,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">_P orm</div>
+<div class="details">_P out</div>
 </td><td>10 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1642,8 +1642,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_B[3] in</div>
+<div class="details">_P orm</div>
+</td><td>_P out<div class="details">_B[3] in</div>
 <div class="details">TA[3] mc_ca</div>
 <div class="details">TA[3] mcd</div>
 <div class="details">TA[3] mcq</div>
@@ -1651,8 +1651,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">_P orm</div>
+<div class="details">_P out</div>
 </td><td>10 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1670,13 +1670,13 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">Cin in</div>
+<div class="details">Cout orm</div>
+</td><td>Cout out<div class="details">Cin in</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">Cout orm</div>
+<div class="details">Cout out</div>
 </td><td>5.8 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.25 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1694,8 +1694,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_A[0] in</div>
+<div class="details">Cout orm</div>
+</td><td>Cout out<div class="details">_A[0] in</div>
 <div class="details">TB[0] mc_ca</div>
 <div class="details">TB[0] mcd</div>
 <div class="details">TB[0] mcq</div>
@@ -1703,8 +1703,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">Cout orm</div>
+<div class="details">Cout out</div>
 </td><td>10 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1726,8 +1726,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_A[1] in</div>
+<div class="details">Cout orm</div>
+</td><td>Cout out<div class="details">_A[1] in</div>
 <div class="details">TB[1] mc_ca</div>
 <div class="details">TB[1] mcd</div>
 <div class="details">TB[1] mcq</div>
@@ -1735,8 +1735,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">Cout orm</div>
+<div class="details">Cout out</div>
 </td><td>10 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1758,8 +1758,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_A[2] in</div>
+<div class="details">Cout orm</div>
+</td><td>Cout out<div class="details">_A[2] in</div>
 <div class="details">TB[2] mc_ca</div>
 <div class="details">TB[2] mcd</div>
 <div class="details">TB[2] mcq</div>
@@ -1767,8 +1767,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">Cout orm</div>
+<div class="details">Cout out</div>
 </td><td>10 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1790,8 +1790,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_A[3] in</div>
+<div class="details">Cout orm</div>
+</td><td>Cout out<div class="details">_A[3] in</div>
 <div class="details">TB[3] mc_ca</div>
 <div class="details">TB[3] mcd</div>
 <div class="details">TB[3] mcq</div>
@@ -1799,8 +1799,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">Cout orm</div>
+<div class="details">Cout out</div>
 </td><td>10 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1822,8 +1822,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">S[0] in</div>
+<div class="details">Cout orm</div>
+</td><td>Cout out<div class="details">S[0] in</div>
 <div class="details">TB[3] mc_ca</div>
 <div class="details">TB[3] mcd</div>
 <div class="details">TB[3] mcq</div>
@@ -1831,8 +1831,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">Cout orm</div>
+<div class="details">Cout out</div>
 </td><td>9.95 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.25 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1854,8 +1854,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">S[1] in</div>
+<div class="details">Cout orm</div>
+</td><td>Cout out<div class="details">S[1] in</div>
 <div class="details">TB[3] mc_ca</div>
 <div class="details">TB[3] mcd</div>
 <div class="details">TB[3] mcq</div>
@@ -1863,8 +1863,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">Cout orm</div>
+<div class="details">Cout out</div>
 </td><td>9.95 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.25 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1886,8 +1886,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">S[2] in</div>
+<div class="details">Cout orm</div>
+</td><td>Cout out<div class="details">S[2] in</div>
 <div class="details">TA[3] mc_ca</div>
 <div class="details">TA[3] mcd</div>
 <div class="details">TA[3] mcq</div>
@@ -1895,8 +1895,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">Cout orm</div>
+<div class="details">Cout out</div>
 </td><td>9.95 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.25 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1918,8 +1918,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">S[3] in</div>
+<div class="details">Cout orm</div>
+</td><td>Cout out<div class="details">S[3] in</div>
 <div class="details">TA[3] mc_ca</div>
 <div class="details">TA[3] mcd</div>
 <div class="details">TA[3] mcq</div>
@@ -1927,8 +1927,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">Cout orm</div>
+<div class="details">Cout out</div>
 </td><td>9.95 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.25 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1950,8 +1950,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_B[0] in</div>
+<div class="details">Cout orm</div>
+</td><td>Cout out<div class="details">_B[0] in</div>
 <div class="details">TB[0] mc_ca</div>
 <div class="details">TB[0] mcd</div>
 <div class="details">TB[0] mcq</div>
@@ -1959,8 +1959,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">Cout orm</div>
+<div class="details">Cout out</div>
 </td><td>10 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -1982,8 +1982,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_B[1] in</div>
+<div class="details">Cout orm</div>
+</td><td>Cout out<div class="details">_B[1] in</div>
 <div class="details">TB[1] mc_ca</div>
 <div class="details">TB[1] mcd</div>
 <div class="details">TB[1] mcq</div>
@@ -1991,8 +1991,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">Cout orm</div>
+<div class="details">Cout out</div>
 </td><td>10 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -2014,8 +2014,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_B[2] in</div>
+<div class="details">Cout orm</div>
+</td><td>Cout out<div class="details">_B[2] in</div>
 <div class="details">TB[2] mc_ca</div>
 <div class="details">TB[2] mcd</div>
 <div class="details">TB[2] mcq</div>
@@ -2023,8 +2023,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">Cout orm</div>
+<div class="details">Cout out</div>
 </td><td>10 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -2046,8 +2046,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_B[3] in</div>
+<div class="details">Cout orm</div>
+</td><td>Cout out<div class="details">_B[3] in</div>
 <div class="details">TB[3] mc_ca</div>
 <div class="details">TB[3] mcd</div>
 <div class="details">TB[3] mcq</div>
@@ -2055,8 +2055,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused mc_ca</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">Cout orm</div>
+<div class="details">Cout out</div>
 </td><td>10 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -2827,10 +2827,10 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <tr class="highlight details-root">
 <td>_A[2] pad<div class="details">_A[2] pad</div>
 <div class="details">_A[2] in</div>
-<div class="details">TA[2] mc_ca</div>
-<div class="details">TA[2] mcd</div>
-<div class="details">TA[2] mcq</div>
-<div class="details">TA[2] fb</div>
+<div class="details">TB[2] mc_ca</div>
+<div class="details">TB[2] mcd</div>
+<div class="details">TB[2] mcq</div>
+<div class="details">TB[2] fb</div>
 <div class="details">TX[2] mc_ca</div>
 <div class="details">TX[2] mcd</div>
 <div class="details">TX[2] mcq</div>
@@ -2840,10 +2840,10 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">_F[2] mcq</div>
 <div class="details">_F[2] orm</div>
 </td><td>_F[2] out<div class="details">_A[2] in</div>
-<div class="details">TA[2] mc_ca</div>
-<div class="details">TA[2] mcd</div>
-<div class="details">TA[2] mcq</div>
-<div class="details">TA[2] fb</div>
+<div class="details">TB[2] mc_ca</div>
+<div class="details">TB[2] mcd</div>
+<div class="details">TB[2] mcq</div>
+<div class="details">TB[2] fb</div>
 <div class="details">TX[2] mc_ca</div>
 <div class="details">TX[2] mcd</div>
 <div class="details">TX[2] mcq</div>
@@ -3131,10 +3131,10 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <tr class="highlight details-root">
 <td>_B[2] pad<div class="details">_B[2] pad</div>
 <div class="details">_B[2] in</div>
-<div class="details">TA[2] mc_ca</div>
-<div class="details">TA[2] mcd</div>
-<div class="details">TA[2] mcq</div>
-<div class="details">TA[2] fb</div>
+<div class="details">TB[2] mc_ca</div>
+<div class="details">TB[2] mcd</div>
+<div class="details">TB[2] mcq</div>
+<div class="details">TB[2] fb</div>
 <div class="details">TX[2] mc_ca</div>
 <div class="details">TX[2] mcd</div>
 <div class="details">TX[2] mcq</div>
@@ -3144,10 +3144,10 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">_F[2] mcq</div>
 <div class="details">_F[2] orm</div>
 </td><td>_F[2] out<div class="details">_B[2] in</div>
-<div class="details">TA[2] mc_ca</div>
-<div class="details">TA[2] mcd</div>
-<div class="details">TA[2] mcq</div>
-<div class="details">TA[2] fb</div>
+<div class="details">TB[2] mc_ca</div>
+<div class="details">TB[2] mcd</div>
+<div class="details">TB[2] mcq</div>
+<div class="details">TB[2] fb</div>
 <div class="details">TX[2] mc_ca</div>
 <div class="details">TX[2] mcd</div>
 <div class="details">TX[2] mcq</div>
@@ -3291,10 +3291,10 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <tr class="details-root">
 <td>_A[3] pad<div class="details">_A[3] pad</div>
 <div class="details">_A[3] in</div>
-<div class="details">TA[3] mc_ca</div>
-<div class="details">TA[3] mcd</div>
-<div class="details">TA[3] mcq</div>
-<div class="details">TA[3] fb</div>
+<div class="details">TB[3] mc_ca</div>
+<div class="details">TB[3] mcd</div>
+<div class="details">TB[3] mcq</div>
+<div class="details">TB[3] fb</div>
 <div class="details">TX[3] mc_ca</div>
 <div class="details">TX[3] mcd</div>
 <div class="details">TX[3] mcq</div>
@@ -3304,10 +3304,10 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">_F[3] mcq</div>
 <div class="details">_F[3] orm</div>
 </td><td>_F[3] out<div class="details">_A[3] in</div>
-<div class="details">TA[3] mc_ca</div>
-<div class="details">TA[3] mcd</div>
-<div class="details">TA[3] mcq</div>
-<div class="details">TA[3] fb</div>
+<div class="details">TB[3] mc_ca</div>
+<div class="details">TB[3] mcd</div>
+<div class="details">TB[3] mcq</div>
+<div class="details">TB[3] fb</div>
 <div class="details">TX[3] mc_ca</div>
 <div class="details">TX[3] mcd</div>
 <div class="details">TX[3] mcq</div>
@@ -3627,10 +3627,10 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <tr class="details-root">
 <td>_B[3] pad<div class="details">_B[3] pad</div>
 <div class="details">_B[3] in</div>
-<div class="details">TA[3] mc_ca</div>
-<div class="details">TA[3] mcd</div>
-<div class="details">TA[3] mcq</div>
-<div class="details">TA[3] fb</div>
+<div class="details">TB[3] mc_ca</div>
+<div class="details">TB[3] mcd</div>
+<div class="details">TB[3] mcq</div>
+<div class="details">TB[3] fb</div>
 <div class="details">TX[3] mc_ca</div>
 <div class="details">TX[3] mcd</div>
 <div class="details">TX[3] mcq</div>
@@ -3640,10 +3640,10 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">_F[3] mcq</div>
 <div class="details">_F[3] orm</div>
 </td><td>_F[3] out<div class="details">_B[3] in</div>
-<div class="details">TA[3] mc_ca</div>
-<div class="details">TA[3] mcd</div>
-<div class="details">TA[3] mcq</div>
-<div class="details">TA[3] fb</div>
+<div class="details">TB[3] mc_ca</div>
+<div class="details">TB[3] mcd</div>
+<div class="details">TB[3] mcq</div>
+<div class="details">TB[3] fb</div>
 <div class="details">TX[3] mc_ca</div>
 <div class="details">TX[3] mcd</div>
 <div class="details">TX[3] mcq</div>
@@ -3686,8 +3686,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">Cin in</div>
+<div class="details">A_eq_B orm</div>
+</td><td>A_eq_B out<div class="details">Cin in</div>
 <div class="details">_F[0] mc_ca</div>
 <div class="details">_F[0] mcd</div>
 <div class="details">_F[0] mcq</div>
@@ -3695,8 +3695,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">A_eq_B orm</div>
+<div class="details">A_eq_B out</div>
 </td><td>10.9 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.25 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -3726,8 +3726,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_A[0] in</div>
+<div class="details">A_eq_B orm</div>
+</td><td>A_eq_B out<div class="details">_A[0] in</div>
 <div class="details">TB[0] mc_ca</div>
 <div class="details">TB[0] mcd</div>
 <div class="details">TB[0] mcq</div>
@@ -3743,8 +3743,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">A_eq_B orm</div>
+<div class="details">A_eq_B out</div>
 </td><td>19.2 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -3782,8 +3782,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_A[1] in</div>
+<div class="details">A_eq_B orm</div>
+</td><td>A_eq_B out<div class="details">_A[1] in</div>
 <div class="details">TB[1] mc_ca</div>
 <div class="details">TB[1] mcd</div>
 <div class="details">TB[1] mcq</div>
@@ -3799,8 +3799,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">A_eq_B orm</div>
+<div class="details">A_eq_B out</div>
 </td><td>19.2 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -3823,10 +3823,10 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <tr class="details-root">
 <td>_A[2] pad<div class="details">_A[2] pad</div>
 <div class="details">_A[2] in</div>
-<div class="details">TA[2] mc_ca</div>
-<div class="details">TA[2] mcd</div>
-<div class="details">TA[2] mcq</div>
-<div class="details">TA[2] fb</div>
+<div class="details">TB[2] mc_ca</div>
+<div class="details">TB[2] mcd</div>
+<div class="details">TB[2] mcq</div>
+<div class="details">TB[2] fb</div>
 <div class="details">TX[2] mc_ca</div>
 <div class="details">TX[2] mcd</div>
 <div class="details">TX[2] mcq</div>
@@ -3838,12 +3838,12 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_A[2] in</div>
-<div class="details">TA[2] mc_ca</div>
-<div class="details">TA[2] mcd</div>
-<div class="details">TA[2] mcq</div>
-<div class="details">TA[2] fb</div>
+<div class="details">A_eq_B orm</div>
+</td><td>A_eq_B out<div class="details">_A[2] in</div>
+<div class="details">TB[2] mc_ca</div>
+<div class="details">TB[2] mcd</div>
+<div class="details">TB[2] mcq</div>
+<div class="details">TB[2] fb</div>
 <div class="details">TX[2] mc_ca</div>
 <div class="details">TX[2] mcd</div>
 <div class="details">TX[2] mcq</div>
@@ -3855,8 +3855,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">A_eq_B orm</div>
+<div class="details">A_eq_B out</div>
 </td><td>19.2 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -3879,10 +3879,10 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <tr class="details-root">
 <td>_A[3] pad<div class="details">_A[3] pad</div>
 <div class="details">_A[3] in</div>
-<div class="details">TA[3] mc_ca</div>
-<div class="details">TA[3] mcd</div>
-<div class="details">TA[3] mcq</div>
-<div class="details">TA[3] fb</div>
+<div class="details">TB[3] mc_ca</div>
+<div class="details">TB[3] mcd</div>
+<div class="details">TB[3] mcq</div>
+<div class="details">TB[3] fb</div>
 <div class="details">TX[3] mc_ca</div>
 <div class="details">TX[3] mcd</div>
 <div class="details">TX[3] mcq</div>
@@ -3894,12 +3894,12 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_A[3] in</div>
-<div class="details">TA[3] mc_ca</div>
-<div class="details">TA[3] mcd</div>
-<div class="details">TA[3] mcq</div>
-<div class="details">TA[3] fb</div>
+<div class="details">A_eq_B orm</div>
+</td><td>A_eq_B out<div class="details">_A[3] in</div>
+<div class="details">TB[3] mc_ca</div>
+<div class="details">TB[3] mcd</div>
+<div class="details">TB[3] mcq</div>
+<div class="details">TB[3] fb</div>
 <div class="details">TX[3] mc_ca</div>
 <div class="details">TX[3] mcd</div>
 <div class="details">TX[3] mcq</div>
@@ -3911,8 +3911,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">A_eq_B orm</div>
+<div class="details">A_eq_B out</div>
 </td><td>19.2 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -3950,8 +3950,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">S[0] in</div>
+<div class="details">A_eq_B orm</div>
+</td><td>A_eq_B out<div class="details">S[0] in</div>
 <div class="details">TB[0] mc_ca</div>
 <div class="details">TB[0] mcd</div>
 <div class="details">TB[0] mcq</div>
@@ -3967,8 +3967,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">A_eq_B orm</div>
+<div class="details">A_eq_B out</div>
 </td><td>19.15 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.25 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -4006,8 +4006,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">S[1] in</div>
+<div class="details">A_eq_B orm</div>
+</td><td>A_eq_B out<div class="details">S[1] in</div>
 <div class="details">TB[0] mc_ca</div>
 <div class="details">TB[0] mcd</div>
 <div class="details">TB[0] mcq</div>
@@ -4023,8 +4023,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">A_eq_B orm</div>
+<div class="details">A_eq_B out</div>
 </td><td>19.15 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.25 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -4062,8 +4062,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">S[2] in</div>
+<div class="details">A_eq_B orm</div>
+</td><td>A_eq_B out<div class="details">S[2] in</div>
 <div class="details">TA[0] mc_ca</div>
 <div class="details">TA[0] mcd</div>
 <div class="details">TA[0] mcq</div>
@@ -4079,8 +4079,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">A_eq_B orm</div>
+<div class="details">A_eq_B out</div>
 </td><td>19.15 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.25 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -4118,8 +4118,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">S[3] in</div>
+<div class="details">A_eq_B orm</div>
+</td><td>A_eq_B out<div class="details">S[3] in</div>
 <div class="details">TA[0] mc_ca</div>
 <div class="details">TA[0] mcd</div>
 <div class="details">TA[0] mcq</div>
@@ -4135,8 +4135,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">A_eq_B orm</div>
+<div class="details">A_eq_B out</div>
 </td><td>19.15 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.25 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -4166,8 +4166,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">M in</div>
+<div class="details">A_eq_B orm</div>
+</td><td>A_eq_B out<div class="details">M in</div>
 <div class="details">_F[0] mc_ca</div>
 <div class="details">_F[0] mcd</div>
 <div class="details">_F[0] mcq</div>
@@ -4175,8 +4175,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">A_eq_B orm</div>
+<div class="details">A_eq_B out</div>
 </td><td>10.9 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.25 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -4206,8 +4206,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_B[0] in</div>
+<div class="details">A_eq_B orm</div>
+</td><td>A_eq_B out<div class="details">_B[0] in</div>
 <div class="details">TB[0] mc_ca</div>
 <div class="details">TB[0] mcd</div>
 <div class="details">TB[0] mcq</div>
@@ -4223,8 +4223,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">A_eq_B orm</div>
+<div class="details">A_eq_B out</div>
 </td><td>19.2 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -4262,8 +4262,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_B[1] in</div>
+<div class="details">A_eq_B orm</div>
+</td><td>A_eq_B out<div class="details">_B[1] in</div>
 <div class="details">TB[1] mc_ca</div>
 <div class="details">TB[1] mcd</div>
 <div class="details">TB[1] mcq</div>
@@ -4279,8 +4279,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">A_eq_B orm</div>
+<div class="details">A_eq_B out</div>
 </td><td>19.2 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -4303,10 +4303,10 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <tr class="details-root">
 <td>_B[2] pad<div class="details">_B[2] pad</div>
 <div class="details">_B[2] in</div>
-<div class="details">TA[2] mc_ca</div>
-<div class="details">TA[2] mcd</div>
-<div class="details">TA[2] mcq</div>
-<div class="details">TA[2] fb</div>
+<div class="details">TB[2] mc_ca</div>
+<div class="details">TB[2] mcd</div>
+<div class="details">TB[2] mcq</div>
+<div class="details">TB[2] fb</div>
 <div class="details">TX[2] mc_ca</div>
 <div class="details">TX[2] mcd</div>
 <div class="details">TX[2] mcq</div>
@@ -4318,12 +4318,12 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_B[2] in</div>
-<div class="details">TA[2] mc_ca</div>
-<div class="details">TA[2] mcd</div>
-<div class="details">TA[2] mcq</div>
-<div class="details">TA[2] fb</div>
+<div class="details">A_eq_B orm</div>
+</td><td>A_eq_B out<div class="details">_B[2] in</div>
+<div class="details">TB[2] mc_ca</div>
+<div class="details">TB[2] mcd</div>
+<div class="details">TB[2] mcq</div>
+<div class="details">TB[2] fb</div>
 <div class="details">TX[2] mc_ca</div>
 <div class="details">TX[2] mcd</div>
 <div class="details">TX[2] mcq</div>
@@ -4335,8 +4335,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">A_eq_B orm</div>
+<div class="details">A_eq_B out</div>
 </td><td>19.2 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>
@@ -4359,10 +4359,10 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <tr class="details-root">
 <td>_B[3] pad<div class="details">_B[3] pad</div>
 <div class="details">_B[3] in</div>
-<div class="details">TA[3] mc_ca</div>
-<div class="details">TA[3] mcd</div>
-<div class="details">TA[3] mcq</div>
-<div class="details">TA[3] fb</div>
+<div class="details">TB[3] mc_ca</div>
+<div class="details">TB[3] mcd</div>
+<div class="details">TB[3] mcq</div>
+<div class="details">TB[3] fb</div>
 <div class="details">TX[3] mc_ca</div>
 <div class="details">TX[3] mcd</div>
 <div class="details">TX[3] mcq</div>
@@ -4374,12 +4374,12 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-</td><td>unused out<div class="details">_B[3] in</div>
-<div class="details">TA[3] mc_ca</div>
-<div class="details">TA[3] mcd</div>
-<div class="details">TA[3] mcq</div>
-<div class="details">TA[3] fb</div>
+<div class="details">A_eq_B orm</div>
+</td><td>A_eq_B out<div class="details">_B[3] in</div>
+<div class="details">TB[3] mc_ca</div>
+<div class="details">TB[3] mcd</div>
+<div class="details">TB[3] mcq</div>
+<div class="details">TB[3] fb</div>
 <div class="details">TX[3] mc_ca</div>
 <div class="details">TX[3] mcd</div>
 <div class="details">TX[3] mcq</div>
@@ -4391,8 +4391,8 @@ An implementation of the once-venerable 74x181 4-bit ALU</div>
 <div class="details">unused PT0</div>
 <div class="details">unused mcd</div>
 <div class="details">unused mcq</div>
-<div class="details">unused orm</div>
-<div class="details">unused out</div>
+<div class="details">A_eq_B orm</div>
+<div class="details">A_eq_B out</div>
 </td><td>19.2 ns<div class="details">1.05 ns (tIN)</div>
 <div class="details">2.3 ns (tROUTE)</div>
 <div class="details">0.65 ns (tMCELL)</div>

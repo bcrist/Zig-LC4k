@@ -39,13 +39,13 @@ pub fn get(self: IR_Data, id: IR.ID) IR {
 
 pub fn warn(self: IR_Data, id: IR.ID, comptime fmt: []const u8, arg1: anytype, arg2: anytype) void {
     var buf: [1024]u8 = undefined;
-    var writer = std.io.Writer.fixed(&buf);
+    var writer = std.Io.Writer.fixed(&buf);
     self.format(id, &writer) catch {};
     const expr = writer.buffered();
     log.warn(fmt ++ "\t{s}", .{ arg1, arg2, expr });
 }
 
-pub fn format(self: IR_Data, id: IR.ID, w: *std.io.Writer) std.io.Writer.Error!void {
+pub fn format(self: IR_Data, id: IR.ID, w: *std.Io.Writer) std.Io.Writer.Error!void {
     const ir = self.get(id);
     switch (ir) {
         .zero => {
@@ -85,7 +85,7 @@ pub fn format(self: IR_Data, id: IR.ID, w: *std.io.Writer) std.io.Writer.Error!v
     }
 }
 
-pub fn debug(self: IR_Data, id: IR.ID, indent: usize, include_ids: bool, w: *std.io.Writer) std.io.Writer.Error!void {
+pub fn debug(self: IR_Data, id: IR.ID, indent: usize, include_ids: bool, w: *std.Io.Writer) std.Io.Writer.Error!void {
     const ir = self.get(id);
     if (include_ids) {
         try w.print("${} {s}", .{ @intFromEnum(id), @tagName(ir) });
@@ -113,7 +113,7 @@ pub fn debug(self: IR_Data, id: IR.ID, indent: usize, include_ids: bool, w: *std
     }
 }
 
-fn debug_binary(self: IR_Data, kind: IR.Tag, first_index: usize, id: IR.ID, indent: usize, include_ids: bool, w: *std.io.Writer) std.io.Writer.Error!usize {
+fn debug_binary(self: IR_Data, kind: IR.Tag, first_index: usize, id: IR.ID, indent: usize, include_ids: bool, w: *std.Io.Writer) std.Io.Writer.Error!usize {
     const ir = self.get(id);
     if (ir == kind) {
         const bin = switch (ir) {

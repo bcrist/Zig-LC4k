@@ -11,7 +11,7 @@ pub fn Write_Options(comptime Device: type) type {
     };
 }
 
-pub fn write(temp: std.mem.Allocator, comptime Device: type, a: JEDEC_File, b: JEDEC_File, writer: *std.io.Writer, raw_options: Write_Options(Device)) !void {
+pub fn write(temp: std.mem.Allocator, comptime Device: type, a: JEDEC_File, b: JEDEC_File, writer: *std.Io.Writer, raw_options: Write_Options(Device)) !void {
     var diff: JEDEC_Data = try .init_diff(temp, a.data, b.data);
     defer diff.deinit(temp);
 
@@ -166,10 +166,10 @@ pub fn write(temp: std.mem.Allocator, comptime Device: type, a: JEDEC_File, b: J
     try writer.print("{} total bit differences found in JEDEC fuse data!\n", .{ flipped_bits });
 }
 
-fn write_glb(temp: std.mem.Allocator, comptime Device: type, a: JEDEC_Data, b: JEDEC_Data, diff: JEDEC_Data, glb: GLB_Index, writer: *std.io.Writer, options: Write_Options(Device)) !void {
+fn write_glb(temp: std.mem.Allocator, comptime Device: type, a: JEDEC_Data, b: JEDEC_Data, diff: JEDEC_Data, glb: GLB_Index, writer: *std.Io.Writer, options: Write_Options(Device)) !void {
     var context: struct {
         glb: GLB_Index,
-        writer: *std.io.Writer,
+        writer: *std.Io.Writer,
         options: Write_Options(Device),
         should_write_heading: bool = true,
 
@@ -626,7 +626,7 @@ fn write_glb(temp: std.mem.Allocator, comptime Device: type, a: JEDEC_Data, b: J
     try context.end();
 }
 
-fn write_pt_diff(temp: std.mem.Allocator, comptime Device: type, a: JEDEC_Data, b: JEDEC_Data, diff: JEDEC_Data, glb: usize, glb_pt_offset: usize, writer: *std.io.Writer, options: Write_Options(Device)) !void {
+fn write_pt_diff(temp: std.mem.Allocator, comptime Device: type, a: JEDEC_Data, b: JEDEC_Data, diff: JEDEC_Data, glb: usize, glb_pt_offset: usize, writer: *std.Io.Writer, options: Write_Options(Device)) !void {
     const range = fuses.get_pt_range(Device, glb, glb_pt_offset);
     try write_fuse_diff(b, diff, range, writer);
 
@@ -650,7 +650,7 @@ fn write_pt_diff(temp: std.mem.Allocator, comptime Device: type, a: JEDEC_Data, 
     try writer.writeAll("\n");
 }
 
-fn write_fuse_diff(data: JEDEC_Data, diff: JEDEC_Data, range: Fuse_Range, writer: *std.io.Writer) !void {
+fn write_fuse_diff(data: JEDEC_Data, diff: JEDEC_Data, range: Fuse_Range, writer: *std.Io.Writer) !void {
     const width = range.width();
     const height = range.height();
     std.debug.assert(width > 0);
@@ -710,7 +710,7 @@ fn write_fuse_diff(data: JEDEC_Data, diff: JEDEC_Data, range: Fuse_Range, writer
     try default_color.apply(writer);
 }
 
-fn write_table_column_header(prefix: u8, first: usize, last: usize, writer: *std.io.Writer) !void {
+fn write_table_column_header(prefix: u8, first: usize, last: usize, writer: *std.Io.Writer) !void {
     std.debug.assert(last >= first);
 
     var first_buf: [32]u8 = undefined;
@@ -748,7 +748,7 @@ fn write_table_column_header(prefix: u8, first: usize, last: usize, writer: *std
     try writer.writeByte('\n');
 }
 
-fn write_table_row_header(prefix: u8, label: usize, writer: *std.io.Writer) !void {
+fn write_table_row_header(prefix: u8, label: usize, writer: *std.Io.Writer) !void {
     var buf: [32]u8 = undefined;
     const str = std.fmt.bufPrint(&buf, "{c}{}", .{ prefix, label }) catch unreachable;
 

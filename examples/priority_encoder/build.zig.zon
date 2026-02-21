@@ -2,7 +2,7 @@
     .name = .priority_encoder,
     .fingerprint = 0xe5bbe10de649df8c,
     .version = "0.0.1",
-    .minimum_zig_version = "0.15.1",
+    .minimum_zig_version = "0.16.0-dev.2626+0e3c6514a",
     .paths = .{""},
     .dependencies = .{
         .lc4k = .{ .path = "../.." },

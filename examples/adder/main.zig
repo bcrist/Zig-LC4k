@@ -121,29 +121,29 @@ fn configure_chip(lp: *Chip.Logic_Parser) !Chip {
     return chip;
 }
 
-pub fn main() !void {
-    var arena: std.heap.ArenaAllocator = .init(std.heap.page_allocator);
-    defer arena.deinit();
+pub fn main(init: std.process.Init) !void {
+    var names = Chip.Names.init(init.gpa);
+    defer names.deinit();
 
-    var names = Chip.Names.init(gpa);
     try names.add_names(in, .{});
     try names.add_names(out, .{});
     try names.add_names(buried, .{});
 
     var lp: Chip.Logic_Parser = .{
-        .gpa = gpa,
-        .arena = arena.allocator(),
+        .gpa = init.gpa,
+        .arena = init.arena.allocator(),
         .names = &names,
     };
 
     var chip = try configure_chip(&lp);
 
-    const results = try chip.assemble(arena.allocator(), .{});
+    const results = try chip.assemble(init.arena.allocator(), .{});
 
     const design_name = "adder";
-    try Chip.write_jed_file(results.jedec, design_name ++ ".jed", .{});
-    try Chip.write_svf_file(results.jedec, design_name ++ ".svf", .{});
-    try Chip.write_report_file(5, results.jedec, design_name ++ ".html", .{
+    try Chip.write_jed_file(init.io, results.jedec, design_name ++ ".jed", .{});
+    try Chip.write_svf_file(init.io, results.jedec, design_name ++ ".svf", .{});
+    try Chip.write_report_file(init.io, results.jedec, design_name ++ ".html", .{
+        .speed_grade = 5,
         .design_name = design_name,
         .notes = "A 16-bit carry lookahead adder",
         .errors = results.errors.items,
@@ -208,8 +208,6 @@ fn check_sum(sim: *lc4k.Simulator(Chip.Device), a: u16, b: u16) !void {
     try sim.expect_signals(&out.S, truncated_sum, null);
     try sim.expect_signal(out.C, carry != 0, null);
 }
-
-const gpa = std.heap.smp_allocator;
 
 const add1 = Chip_Util.add1;
 const add2 = Chip_Util.add2;

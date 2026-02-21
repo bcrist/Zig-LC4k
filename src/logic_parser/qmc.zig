@@ -2,10 +2,10 @@ pub const Minterm = struct {
     v: u32,
     dc: u32 = 0,
 
-    pub fn format(self: Minterm, writer: *std.io.Writer) !void {
+    pub fn format(self: Minterm, writer: *std.Io.Writer) !void {
         self.formatNumber(writer, .{});
     }
-    pub fn formatNumber(self: Minterm, writer: std.io.Writer, options: std.fmt.Number) !void {
+    pub fn formatNumber(self: Minterm, writer: std.Io.Writer, options: std.fmt.Number) !void {
         const v: std.StaticBitSet(32) = .{ .mask = self.v };
         const dc: std.StaticBitSet(32) = .{ .mask = self.dc };
 

@@ -10,7 +10,7 @@
 const std = @import("std");
 const lc4k = @import("lc4k");
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     @setEvalBranchQuota(5000);
 
     const Chip = lc4k.LC4032ZE_TQFP48;
@@ -62,15 +62,13 @@ pub fn main() !void {
         }};
     }
 
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer arena.deinit();
-
-    const results = try chip.assemble(arena.allocator(), .{});
+    const results = try chip.assemble(init.arena.allocator(), .{});
 
     const design_name = "counter2";
-    try Chip.write_jed_file(results.jedec, design_name ++ ".jed", .{});
-    try Chip.write_svf_file(results.jedec, design_name ++ ".svf", .{});
-    try Chip.write_report_file(5, results.jedec, design_name ++ ".html", .{
+    try Chip.write_jed_file(init.io, results.jedec, design_name ++ ".jed", .{});
+    try Chip.write_svf_file(init.io, results.jedec, design_name ++ ".svf", .{});
+    try Chip.write_report_file(init.io, results.jedec, design_name ++ ".html", .{
+        .speed_grade = 5,
         .design_name = design_name,
         .errors = results.errors.items,
     });

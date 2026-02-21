@@ -99,7 +99,7 @@ pub const Write_Options = struct {
     notes: []const u8 = "",
 };
 
-pub fn write(comptime Device: type, file: JEDEC_File, writer: *std.io.Writer, options: Write_Options) !void {
+pub fn write(comptime Device: type, file: JEDEC_File, writer: *std.Io.Writer, options: Write_Options) !void {
     const nl = options.line_ending;
 
     std.debug.assert(file.data.extents.eql(Device.jedec_dimensions));
@@ -207,7 +207,7 @@ pub fn write(comptime Device: type, file: JEDEC_File, writer: *std.io.Writer, op
     try write_state("RESET", writer, nl);
 }
 
-fn write_row_hex(data: JEDEC_Data, row: u16, writer: *std.io.Writer) !void {
+fn write_row_hex(data: JEDEC_Data, row: u16, writer: *std.Io.Writer) !void {
     const chars: u16 = @intCast((data.extents.width() + 3) / 4);
     var col: i32 = chars * 4;
     while (col >= 4) : (col -= 4) {
@@ -224,7 +224,7 @@ fn write_row_hex(data: JEDEC_Data, row: u16, writer: *std.io.Writer) !void {
     }
 }
 
-fn write_hex(comptime T: type, data: T, writer: *std.io.Writer) !void {
+fn write_hex(comptime T: type, data: T, writer: *std.Io.Writer) !void {
     if (T != NoData) {
         // Ideally we could use std.fmt to print this all at once,
         // but it currently fails when trying to print large numbers:
@@ -241,7 +241,7 @@ fn write_hex(comptime T: type, data: T, writer: *std.io.Writer) !void {
     }
 }
 
-fn write_command(command: JTAG_Command, comptime T: type, tdi_data: ?T, tdo_data: ?T, writer: *std.io.Writer, nl: []const u8) !void {
+fn write_command(command: JTAG_Command, comptime T: type, tdi_data: ?T, tdo_data: ?T, writer: *std.Io.Writer, nl: []const u8) !void {
     try writer.print("! {s}{s}", .{ @tagName(command), nl });
     try writer.print("SIR\t8\tTDI  ({X:0>2});{s}", .{ @intFromEnum(command), nl });
 
@@ -263,11 +263,11 @@ fn write_command(command: JTAG_Command, comptime T: type, tdi_data: ?T, tdo_data
     }
 }
 
-fn write_state(state: []const u8, writer: *std.io.Writer, nl: []const u8) !void {
+fn write_state(state: []const u8, writer: *std.Io.Writer, nl: []const u8) !void {
     try writer.print("STATE\t{s};{s}", .{ state, nl });
 }
 
-fn write_idle(command: JTAG_Command, writer: *std.io.Writer, nl: []const u8) !void {
+fn write_idle(command: JTAG_Command, writer: *std.Io.Writer, nl: []const u8) !void {
     const delay = command.getDelay();
     if (delay.min_ms > 0 and delay.min_clocks > 0) {
         try writer.print("RUNTEST\tIDLE\t{} TCK\t{}.E-3 SEC;{s}", .{ delay.min_clocks, delay.min_ms, nl });

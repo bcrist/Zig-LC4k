@@ -1,6 +1,6 @@
 <html>
 <head>
-<title>CPLD Design Report: vau</title>
+<title>vau (CPLD Design Report)</title>
 <style>
 body {
     background: #111;
@@ -3332,11 +3332,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">F0 mc_clk</div>
 <div class="details">F0 mcq</div>
-<div class="details">F0 orm</div>
-</td><td>F0 out<div class="details">F0 mc_clk</div>
+<div class="details">page_offset[0] orm</div>
+</td><td>page_offset[0] out<div class="details">F0 mc_clk</div>
 <div class="details">F0 mcq</div>
-<div class="details">F0 orm</div>
-<div class="details">F0 out</div>
+<div class="details">page_offset[0] orm</div>
+<div class="details">page_offset[0] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -3344,9 +3344,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="details-root">
 <td>F0 mcq<div class="details">F0 mcq</div>
-<div class="details">F0 orm</div>
-</td><td>F0 out<div class="details">F0 orm</div>
-<div class="details">F0 out</div>
+<div class="details">page_offset[0] orm</div>
+</td><td>page_offset[0] out<div class="details">page_offset[0] orm</div>
+<div class="details">page_offset[0] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -3680,11 +3680,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">F1 mc_clk</div>
 <div class="details">F1 mcq</div>
-<div class="details">F1 orm</div>
-</td><td>F1 out<div class="details">F1 mc_clk</div>
+<div class="details">page_offset[1] orm</div>
+</td><td>page_offset[1] out<div class="details">F1 mc_clk</div>
 <div class="details">F1 mcq</div>
-<div class="details">F1 orm</div>
-<div class="details">F1 out</div>
+<div class="details">page_offset[1] orm</div>
+<div class="details">page_offset[1] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -3692,9 +3692,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="highlight details-root">
 <td>F1 mcq<div class="details">F1 mcq</div>
-<div class="details">F1 orm</div>
-</td><td>F1 out<div class="details">F1 orm</div>
-<div class="details">F1 out</div>
+<div class="details">page_offset[1] orm</div>
+</td><td>page_offset[1] out<div class="details">page_offset[1] orm</div>
+<div class="details">page_offset[1] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -4103,11 +4103,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">F2 mc_clk</div>
 <div class="details">F2 mcq</div>
-<div class="details">F2 orm</div>
-</td><td>F2 out<div class="details">F2 mc_clk</div>
+<div class="details">page_offset[2] orm</div>
+</td><td>page_offset[2] out<div class="details">F2 mc_clk</div>
 <div class="details">F2 mcq</div>
-<div class="details">F2 orm</div>
-<div class="details">F2 out</div>
+<div class="details">page_offset[2] orm</div>
+<div class="details">page_offset[2] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -4115,9 +4115,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="details-root">
 <td>F2 mcq<div class="details">F2 mcq</div>
-<div class="details">F2 orm</div>
-</td><td>F2 out<div class="details">F2 orm</div>
-<div class="details">F2 out</div>
+<div class="details">page_offset[2] orm</div>
+</td><td>page_offset[2] out<div class="details">page_offset[2] orm</div>
+<div class="details">page_offset[2] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -4601,11 +4601,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">F4 mc_clk</div>
 <div class="details">F4 mcq</div>
-<div class="details">F4 orm</div>
-</td><td>F4 out<div class="details">F4 mc_clk</div>
+<div class="details">page_offset[3] orm</div>
+</td><td>page_offset[3] out<div class="details">F4 mc_clk</div>
 <div class="details">F4 mcq</div>
-<div class="details">F4 orm</div>
-<div class="details">F4 out</div>
+<div class="details">page_offset[3] orm</div>
+<div class="details">page_offset[3] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -4613,9 +4613,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="highlight details-root">
 <td>F4 mcq<div class="details">F4 mcq</div>
-<div class="details">F4 orm</div>
-</td><td>F4 out<div class="details">F4 orm</div>
-<div class="details">F4 out</div>
+<div class="details">page_offset[3] orm</div>
+</td><td>page_offset[3] out<div class="details">page_offset[3] orm</div>
+<div class="details">page_offset[3] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -5354,11 +5354,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">F5 mc_clk</div>
 <div class="details">F5 mcq</div>
-<div class="details">F5 orm</div>
-</td><td>F5 out<div class="details">F5 mc_clk</div>
+<div class="details">page_offset[4] orm</div>
+</td><td>page_offset[4] out<div class="details">F5 mc_clk</div>
 <div class="details">F5 mcq</div>
-<div class="details">F5 orm</div>
-<div class="details">F5 out</div>
+<div class="details">page_offset[4] orm</div>
+<div class="details">page_offset[4] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -5366,9 +5366,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="details-root">
 <td>F5 mcq<div class="details">F5 mcq</div>
-<div class="details">F5 orm</div>
-</td><td>F5 out<div class="details">F5 orm</div>
-<div class="details">F5 out</div>
+<div class="details">page_offset[4] orm</div>
+</td><td>page_offset[4] out<div class="details">page_offset[4] orm</div>
+<div class="details">page_offset[4] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -6182,11 +6182,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">F6 mc_clk</div>
 <div class="details">F6 mcq</div>
-<div class="details">F6 orm</div>
-</td><td>F6 out<div class="details">F6 mc_clk</div>
+<div class="details">page_offset[5] orm</div>
+</td><td>page_offset[5] out<div class="details">F6 mc_clk</div>
 <div class="details">F6 mcq</div>
-<div class="details">F6 orm</div>
-<div class="details">F6 out</div>
+<div class="details">page_offset[5] orm</div>
+<div class="details">page_offset[5] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -6194,9 +6194,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="highlight details-root">
 <td>F6 mcq<div class="details">F6 mcq</div>
-<div class="details">F6 orm</div>
-</td><td>F6 out<div class="details">F6 orm</div>
-<div class="details">F6 out</div>
+<div class="details">page_offset[5] orm</div>
+</td><td>page_offset[5] out<div class="details">page_offset[5] orm</div>
+<div class="details">page_offset[5] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -7409,11 +7409,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">F8 mc_clk</div>
 <div class="details">F8 mcq</div>
-<div class="details">F8 orm</div>
-</td><td>F8 out<div class="details">F8 mc_clk</div>
+<div class="details">page_offset[6] orm</div>
+</td><td>page_offset[6] out<div class="details">F8 mc_clk</div>
 <div class="details">F8 mcq</div>
-<div class="details">F8 orm</div>
-<div class="details">F8 out</div>
+<div class="details">page_offset[6] orm</div>
+<div class="details">page_offset[6] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -7421,9 +7421,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="details-root">
 <td>F8 mcq<div class="details">F8 mcq</div>
-<div class="details">F8 orm</div>
-</td><td>F8 out<div class="details">F8 orm</div>
-<div class="details">F8 out</div>
+<div class="details">page_offset[6] orm</div>
+</td><td>page_offset[6] out<div class="details">page_offset[6] orm</div>
+<div class="details">page_offset[6] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -8682,11 +8682,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">F10 mc_clk</div>
 <div class="details">F10 mcq</div>
-<div class="details">F10 orm</div>
-</td><td>F10 out<div class="details">F10 mc_clk</div>
+<div class="details">page_offset[7] orm</div>
+</td><td>page_offset[7] out<div class="details">F10 mc_clk</div>
 <div class="details">F10 mcq</div>
-<div class="details">F10 orm</div>
-<div class="details">F10 out</div>
+<div class="details">page_offset[7] orm</div>
+<div class="details">page_offset[7] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -8694,9 +8694,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="highlight details-root">
 <td>F10 mcq<div class="details">F10 mcq</div>
-<div class="details">F10 orm</div>
-</td><td>F10 out<div class="details">F10 orm</div>
-<div class="details">F10 out</div>
+<div class="details">page_offset[7] orm</div>
+</td><td>page_offset[7] out<div class="details">page_offset[7] orm</div>
+<div class="details">page_offset[7] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -10150,11 +10150,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">F12 mc_clk</div>
 <div class="details">F12 mcq</div>
-<div class="details">F12 orm</div>
-</td><td>F12 out<div class="details">F12 mc_clk</div>
+<div class="details">page_offset[8] orm</div>
+</td><td>page_offset[8] out<div class="details">F12 mc_clk</div>
 <div class="details">F12 mcq</div>
-<div class="details">F12 orm</div>
-<div class="details">F12 out</div>
+<div class="details">page_offset[8] orm</div>
+<div class="details">page_offset[8] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -10162,9 +10162,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="details-root">
 <td>F12 mcq<div class="details">F12 mcq</div>
-<div class="details">F12 orm</div>
-</td><td>F12 out<div class="details">F12 orm</div>
-<div class="details">F12 out</div>
+<div class="details">page_offset[8] orm</div>
+</td><td>page_offset[8] out<div class="details">page_offset[8] orm</div>
+<div class="details">page_offset[8] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -11664,11 +11664,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">F13 mc_clk</div>
 <div class="details">F13 mcq</div>
-<div class="details">F13 orm</div>
-</td><td>F13 out<div class="details">F13 mc_clk</div>
+<div class="details">page_offset[9] orm</div>
+</td><td>page_offset[9] out<div class="details">F13 mc_clk</div>
 <div class="details">F13 mcq</div>
-<div class="details">F13 orm</div>
-<div class="details">F13 out</div>
+<div class="details">page_offset[9] orm</div>
+<div class="details">page_offset[9] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -11676,9 +11676,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="highlight details-root">
 <td>F13 mcq<div class="details">F13 mcq</div>
-<div class="details">F13 orm</div>
-</td><td>F13 out<div class="details">F13 orm</div>
-<div class="details">F13 out</div>
+<div class="details">page_offset[9] orm</div>
+</td><td>page_offset[9] out<div class="details">page_offset[9] orm</div>
+<div class="details">page_offset[9] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -13315,11 +13315,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">F14 mc_clk</div>
 <div class="details">F14 mcq</div>
-<div class="details">F14 orm</div>
-</td><td>F14 out<div class="details">F14 mc_clk</div>
+<div class="details">page_offset[10] orm</div>
+</td><td>page_offset[10] out<div class="details">F14 mc_clk</div>
 <div class="details">F14 mcq</div>
-<div class="details">F14 orm</div>
-<div class="details">F14 out</div>
+<div class="details">page_offset[10] orm</div>
+<div class="details">page_offset[10] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -13327,9 +13327,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="details-root">
 <td>F14 mcq<div class="details">F14 mcq</div>
-<div class="details">F14 orm</div>
-</td><td>F14 out<div class="details">F14 orm</div>
-<div class="details">F14 out</div>
+<div class="details">page_offset[10] orm</div>
+</td><td>page_offset[10] out<div class="details">page_offset[10] orm</div>
+<div class="details">page_offset[10] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -14991,11 +14991,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">G0 mc_clk</div>
 <div class="details">G0 mcq</div>
-<div class="details">G0 orm</div>
-</td><td>G0 out<div class="details">G0 mc_clk</div>
+<div class="details">page_offset[11] orm</div>
+</td><td>page_offset[11] out<div class="details">G0 mc_clk</div>
 <div class="details">G0 mcq</div>
-<div class="details">G0 orm</div>
-<div class="details">G0 out</div>
+<div class="details">page_offset[11] orm</div>
+<div class="details">page_offset[11] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -15003,9 +15003,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="details-root">
 <td>G0 mcq<div class="details">G0 mcq</div>
-<div class="details">G0 orm</div>
-</td><td>G0 out<div class="details">G0 orm</div>
-<div class="details">G0 out</div>
+<div class="details">page_offset[11] orm</div>
+</td><td>page_offset[11] out<div class="details">page_offset[11] orm</div>
+<div class="details">page_offset[11] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -16724,11 +16724,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">G2 mc_clk</div>
 <div class="details">G2 mcq</div>
-<div class="details">G2 orm</div>
-</td><td>G2 out<div class="details">G2 mc_clk</div>
+<div class="details">page[0] orm</div>
+</td><td>page[0] out<div class="details">G2 mc_clk</div>
 <div class="details">G2 mcq</div>
-<div class="details">G2 orm</div>
-<div class="details">G2 out</div>
+<div class="details">page[0] orm</div>
+<div class="details">page[0] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -16736,9 +16736,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="highlight details-root">
 <td>G2 mcq<div class="details">G2 mcq</div>
-<div class="details">G2 orm</div>
-</td><td>G2 out<div class="details">G2 orm</div>
-<div class="details">G2 out</div>
+<div class="details">page[0] orm</div>
+</td><td>page[0] out<div class="details">page[0] orm</div>
+<div class="details">page[0] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -18474,11 +18474,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">G4 mc_clk</div>
 <div class="details">G4 mcq</div>
-<div class="details">G4 orm</div>
-</td><td>G4 out<div class="details">G4 mc_clk</div>
+<div class="details">page[1] orm</div>
+</td><td>page[1] out<div class="details">G4 mc_clk</div>
 <div class="details">G4 mcq</div>
-<div class="details">G4 orm</div>
-<div class="details">G4 out</div>
+<div class="details">page[1] orm</div>
+<div class="details">page[1] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -18486,9 +18486,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="details-root">
 <td>G4 mcq<div class="details">G4 mcq</div>
-<div class="details">G4 orm</div>
-</td><td>G4 out<div class="details">G4 orm</div>
-<div class="details">G4 out</div>
+<div class="details">page[1] orm</div>
+</td><td>page[1] out<div class="details">page[1] orm</div>
+<div class="details">page[1] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -20289,11 +20289,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">G5 mc_clk</div>
 <div class="details">G5 mcq</div>
-<div class="details">G5 orm</div>
-</td><td>G5 out<div class="details">G5 mc_clk</div>
+<div class="details">page[2] orm</div>
+</td><td>page[2] out<div class="details">G5 mc_clk</div>
 <div class="details">G5 mcq</div>
-<div class="details">G5 orm</div>
-<div class="details">G5 out</div>
+<div class="details">page[2] orm</div>
+<div class="details">page[2] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -20301,9 +20301,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="highlight details-root">
 <td>G5 mcq<div class="details">G5 mcq</div>
-<div class="details">G5 orm</div>
-</td><td>G5 out<div class="details">G5 orm</div>
-<div class="details">G5 out</div>
+<div class="details">page[2] orm</div>
+</td><td>page[2] out<div class="details">page[2] orm</div>
+<div class="details">page[2] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -22121,11 +22121,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">G6 mc_clk</div>
 <div class="details">G6 mcq</div>
-<div class="details">G6 orm</div>
-</td><td>G6 out<div class="details">G6 mc_clk</div>
+<div class="details">page[3] orm</div>
+</td><td>page[3] out<div class="details">G6 mc_clk</div>
 <div class="details">G6 mcq</div>
-<div class="details">G6 orm</div>
-<div class="details">G6 out</div>
+<div class="details">page[3] orm</div>
+<div class="details">page[3] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -22133,9 +22133,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="details-root">
 <td>G6 mcq<div class="details">G6 mcq</div>
-<div class="details">G6 orm</div>
-</td><td>G6 out<div class="details">G6 orm</div>
-<div class="details">G6 out</div>
+<div class="details">page[3] orm</div>
+</td><td>page[3] out<div class="details">page[3] orm</div>
+<div class="details">page[3] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -24018,11 +24018,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">G8 mc_clk</div>
 <div class="details">G8 mcq</div>
-<div class="details">G8 orm</div>
-</td><td>G8 out<div class="details">G8 mc_clk</div>
+<div class="details">page[4] orm</div>
+</td><td>page[4] out<div class="details">G8 mc_clk</div>
 <div class="details">G8 mcq</div>
-<div class="details">G8 orm</div>
-<div class="details">G8 out</div>
+<div class="details">page[4] orm</div>
+<div class="details">page[4] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -24030,9 +24030,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="highlight details-root">
 <td>G8 mcq<div class="details">G8 mcq</div>
-<div class="details">G8 orm</div>
-</td><td>G8 out<div class="details">G8 orm</div>
-<div class="details">G8 out</div>
+<div class="details">page[4] orm</div>
+</td><td>page[4] out<div class="details">page[4] orm</div>
+<div class="details">page[4] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -25932,11 +25932,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">G9 mc_clk</div>
 <div class="details">G9 mcq</div>
-<div class="details">G9 orm</div>
-</td><td>G9 out<div class="details">G9 mc_clk</div>
+<div class="details">page[5] orm</div>
+</td><td>page[5] out<div class="details">G9 mc_clk</div>
 <div class="details">G9 mcq</div>
-<div class="details">G9 orm</div>
-<div class="details">G9 out</div>
+<div class="details">page[5] orm</div>
+<div class="details">page[5] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -25944,9 +25944,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="details-root">
 <td>G9 mcq<div class="details">G9 mcq</div>
-<div class="details">G9 orm</div>
-</td><td>G9 out<div class="details">G9 orm</div>
-<div class="details">G9 out</div>
+<div class="details">page[5] orm</div>
+</td><td>page[5] out<div class="details">page[5] orm</div>
+<div class="details">page[5] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -27911,11 +27911,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">G10 mc_clk</div>
 <div class="details">G10 mcq</div>
-<div class="details">G10 orm</div>
-</td><td>G10 out<div class="details">G10 mc_clk</div>
+<div class="details">page[6] orm</div>
+</td><td>page[6] out<div class="details">G10 mc_clk</div>
 <div class="details">G10 mcq</div>
-<div class="details">G10 orm</div>
-<div class="details">G10 out</div>
+<div class="details">page[6] orm</div>
+<div class="details">page[6] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -27923,9 +27923,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="highlight details-root">
 <td>G10 mcq<div class="details">G10 mcq</div>
-<div class="details">G10 orm</div>
-</td><td>G10 out<div class="details">G10 orm</div>
-<div class="details">G10 out</div>
+<div class="details">page[6] orm</div>
+</td><td>page[6] out<div class="details">page[6] orm</div>
+<div class="details">page[6] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -29907,11 +29907,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">G12 mc_clk</div>
 <div class="details">G12 mcq</div>
-<div class="details">G12 orm</div>
-</td><td>G12 out<div class="details">G12 mc_clk</div>
+<div class="details">page[7] orm</div>
+</td><td>page[7] out<div class="details">G12 mc_clk</div>
 <div class="details">G12 mcq</div>
-<div class="details">G12 orm</div>
-<div class="details">G12 out</div>
+<div class="details">page[7] orm</div>
+<div class="details">page[7] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -29919,9 +29919,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="details-root">
 <td>G12 mcq<div class="details">G12 mcq</div>
-<div class="details">G12 orm</div>
-</td><td>G12 out<div class="details">G12 orm</div>
-<div class="details">G12 out</div>
+<div class="details">page[7] orm</div>
+</td><td>page[7] out<div class="details">page[7] orm</div>
+<div class="details">page[7] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -31920,11 +31920,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">G13 mc_clk</div>
 <div class="details">G13 mcq</div>
-<div class="details">G13 orm</div>
-</td><td>G13 out<div class="details">G13 mc_clk</div>
+<div class="details">page[8] orm</div>
+</td><td>page[8] out<div class="details">G13 mc_clk</div>
 <div class="details">G13 mcq</div>
-<div class="details">G13 orm</div>
-<div class="details">G13 out</div>
+<div class="details">page[8] orm</div>
+<div class="details">page[8] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -31932,9 +31932,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="highlight details-root">
 <td>G13 mcq<div class="details">G13 mcq</div>
-<div class="details">G13 orm</div>
-</td><td>G13 out<div class="details">G13 orm</div>
-<div class="details">G13 out</div>
+<div class="details">page[8] orm</div>
+</td><td>page[8] out<div class="details">page[8] orm</div>
+<div class="details">page[8] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -33950,11 +33950,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">G14 mc_clk</div>
 <div class="details">G14 mcq</div>
-<div class="details">G14 orm</div>
-</td><td>G14 out<div class="details">G14 mc_clk</div>
+<div class="details">page[9] orm</div>
+</td><td>page[9] out<div class="details">G14 mc_clk</div>
 <div class="details">G14 mcq</div>
-<div class="details">G14 orm</div>
-<div class="details">G14 out</div>
+<div class="details">page[9] orm</div>
+<div class="details">page[9] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -33962,9 +33962,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="details-root">
 <td>G14 mcq<div class="details">G14 mcq</div>
-<div class="details">G14 orm</div>
-</td><td>G14 out<div class="details">G14 orm</div>
-<div class="details">G14 out</div>
+<div class="details">page[9] orm</div>
+</td><td>page[9] out<div class="details">page[9] orm</div>
+<div class="details">page[9] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -36005,11 +36005,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">H0 mc_clk</div>
 <div class="details">H0 mcq</div>
-<div class="details">H0 orm</div>
-</td><td>H0 out<div class="details">H0 mc_clk</div>
+<div class="details">page[10] orm</div>
+</td><td>page[10] out<div class="details">H0 mc_clk</div>
 <div class="details">H0 mcq</div>
-<div class="details">H0 orm</div>
-<div class="details">H0 out</div>
+<div class="details">page[10] orm</div>
+<div class="details">page[10] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -36017,9 +36017,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="details-root">
 <td>H0 mcq<div class="details">H0 mcq</div>
-<div class="details">H0 orm</div>
-</td><td>H0 out<div class="details">H0 orm</div>
-<div class="details">H0 out</div>
+<div class="details">page[10] orm</div>
+</td><td>page[10] out<div class="details">page[10] orm</div>
+<div class="details">page[10] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -38069,11 +38069,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">H1 mc_clk</div>
 <div class="details">H1 mcq</div>
-<div class="details">H1 orm</div>
-</td><td>H1 out<div class="details">H1 mc_clk</div>
+<div class="details">page[11] orm</div>
+</td><td>page[11] out<div class="details">H1 mc_clk</div>
 <div class="details">H1 mcq</div>
-<div class="details">H1 orm</div>
-<div class="details">H1 out</div>
+<div class="details">page[11] orm</div>
+<div class="details">page[11] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -38081,9 +38081,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="highlight details-root">
 <td>H1 mcq<div class="details">H1 mcq</div>
-<div class="details">H1 orm</div>
-</td><td>H1 out<div class="details">H1 orm</div>
-<div class="details">H1 out</div>
+<div class="details">page[11] orm</div>
+</td><td>page[11] out<div class="details">page[11] orm</div>
+<div class="details">page[11] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -40150,11 +40150,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">H2 mc_clk</div>
 <div class="details">H2 mcq</div>
-<div class="details">H2 orm</div>
-</td><td>H2 out<div class="details">H2 mc_clk</div>
+<div class="details">page[12] orm</div>
+</td><td>page[12] out<div class="details">H2 mc_clk</div>
 <div class="details">H2 mcq</div>
-<div class="details">H2 orm</div>
-<div class="details">H2 out</div>
+<div class="details">page[12] orm</div>
+<div class="details">page[12] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -40162,9 +40162,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="details-root">
 <td>H2 mcq<div class="details">H2 mcq</div>
-<div class="details">H2 orm</div>
-</td><td>H2 out<div class="details">H2 orm</div>
-<div class="details">H2 out</div>
+<div class="details">page[12] orm</div>
+</td><td>page[12] out<div class="details">page[12] orm</div>
+<div class="details">page[12] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -42248,11 +42248,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">H4 mc_clk</div>
 <div class="details">H4 mcq</div>
-<div class="details">H4 orm</div>
-</td><td>H4 out<div class="details">H4 mc_clk</div>
+<div class="details">page[13] orm</div>
+</td><td>page[13] out<div class="details">H4 mc_clk</div>
 <div class="details">H4 mcq</div>
-<div class="details">H4 orm</div>
-<div class="details">H4 out</div>
+<div class="details">page[13] orm</div>
+<div class="details">page[13] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -42260,9 +42260,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="highlight details-root">
 <td>H4 mcq<div class="details">H4 mcq</div>
-<div class="details">H4 orm</div>
-</td><td>H4 out<div class="details">H4 orm</div>
-<div class="details">H4 out</div>
+<div class="details">page[13] orm</div>
+</td><td>page[13] out<div class="details">page[13] orm</div>
+<div class="details">page[13] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -44363,11 +44363,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">H5 mc_clk</div>
 <div class="details">H5 mcq</div>
-<div class="details">H5 orm</div>
-</td><td>H5 out<div class="details">H5 mc_clk</div>
+<div class="details">page[14] orm</div>
+</td><td>page[14] out<div class="details">H5 mc_clk</div>
 <div class="details">H5 mcq</div>
-<div class="details">H5 orm</div>
-<div class="details">H5 out</div>
+<div class="details">page[14] orm</div>
+<div class="details">page[14] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -44375,9 +44375,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="details-root">
 <td>H5 mcq<div class="details">H5 mcq</div>
-<div class="details">H5 orm</div>
-</td><td>H5 out<div class="details">H5 orm</div>
-<div class="details">H5 out</div>
+<div class="details">page[14] orm</div>
+</td><td>page[14] out<div class="details">page[14] orm</div>
+<div class="details">page[14] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -46495,11 +46495,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">H6 mc_clk</div>
 <div class="details">H6 mcq</div>
-<div class="details">H6 orm</div>
-</td><td>H6 out<div class="details">H6 mc_clk</div>
+<div class="details">page[15] orm</div>
+</td><td>page[15] out<div class="details">H6 mc_clk</div>
 <div class="details">H6 mcq</div>
-<div class="details">H6 orm</div>
-<div class="details">H6 out</div>
+<div class="details">page[15] orm</div>
+<div class="details">page[15] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -46507,9 +46507,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="highlight details-root">
 <td>H6 mcq<div class="details">H6 mcq</div>
-<div class="details">H6 orm</div>
-</td><td>H6 out<div class="details">H6 orm</div>
-<div class="details">H6 out</div>
+<div class="details">page[15] orm</div>
+</td><td>page[15] out<div class="details">page[15] orm</div>
+<div class="details">page[15] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -48644,11 +48644,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">H8 mc_clk</div>
 <div class="details">H8 mcq</div>
-<div class="details">H8 orm</div>
-</td><td>H8 out<div class="details">H8 mc_clk</div>
+<div class="details">page[16] orm</div>
+</td><td>page[16] out<div class="details">H8 mc_clk</div>
 <div class="details">H8 mcq</div>
-<div class="details">H8 orm</div>
-<div class="details">H8 out</div>
+<div class="details">page[16] orm</div>
+<div class="details">page[16] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -48656,9 +48656,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="details-root">
 <td>H8 mcq<div class="details">H8 mcq</div>
-<div class="details">H8 orm</div>
-</td><td>H8 out<div class="details">H8 orm</div>
-<div class="details">H8 out</div>
+<div class="details">page[16] orm</div>
+</td><td>page[16] out<div class="details">page[16] orm</div>
+<div class="details">page[16] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -50810,11 +50810,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">H9 mc_clk</div>
 <div class="details">H9 mcq</div>
-<div class="details">H9 orm</div>
-</td><td>H9 out<div class="details">H9 mc_clk</div>
+<div class="details">page[17] orm</div>
+</td><td>page[17] out<div class="details">H9 mc_clk</div>
 <div class="details">H9 mcq</div>
-<div class="details">H9 orm</div>
-<div class="details">H9 out</div>
+<div class="details">page[17] orm</div>
+<div class="details">page[17] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -50822,9 +50822,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="highlight details-root">
 <td>H9 mcq<div class="details">H9 mcq</div>
-<div class="details">H9 orm</div>
-</td><td>H9 out<div class="details">H9 orm</div>
-<div class="details">H9 out</div>
+<div class="details">page[17] orm</div>
+</td><td>page[17] out<div class="details">page[17] orm</div>
+<div class="details">page[17] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -52993,11 +52993,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">H10 mc_clk</div>
 <div class="details">H10 mcq</div>
-<div class="details">H10 orm</div>
-</td><td>H10 out<div class="details">H10 mc_clk</div>
+<div class="details">page[18] orm</div>
+</td><td>page[18] out<div class="details">H10 mc_clk</div>
 <div class="details">H10 mcq</div>
-<div class="details">H10 orm</div>
-<div class="details">H10 out</div>
+<div class="details">page[18] orm</div>
+<div class="details">page[18] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -53005,9 +53005,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="details-root">
 <td>H10 mcq<div class="details">H10 mcq</div>
-<div class="details">H10 orm</div>
-</td><td>H10 out<div class="details">H10 orm</div>
-<div class="details">H10 out</div>
+<div class="details">page[18] orm</div>
+</td><td>page[18] out<div class="details">page[18] orm</div>
+<div class="details">page[18] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -55193,11 +55193,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">H12 mc_clk</div>
 <div class="details">H12 mcq</div>
-<div class="details">H12 orm</div>
-</td><td>H12 out<div class="details">H12 mc_clk</div>
+<div class="details">page[19] orm</div>
+</td><td>page[19] out<div class="details">H12 mc_clk</div>
 <div class="details">H12 mcq</div>
-<div class="details">H12 orm</div>
-<div class="details">H12 out</div>
+<div class="details">page[19] orm</div>
+<div class="details">page[19] out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -55205,9 +55205,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="highlight details-root">
 <td>H12 mcq<div class="details">H12 mcq</div>
-<div class="details">H12 orm</div>
-</td><td>H12 out<div class="details">H12 orm</div>
-<div class="details">H12 out</div>
+<div class="details">page[19] orm</div>
+</td><td>page[19] out<div class="details">page[19] orm</div>
+<div class="details">page[19] out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>
@@ -57410,11 +57410,11 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 <td>clk pad<div class="details">clk pad</div>
 <div class="details">H14 mc_clk</div>
 <div class="details">H14 mcq</div>
-<div class="details">H14 orm</div>
-</td><td>H14 out<div class="details">H14 mc_clk</div>
+<div class="details">addr_overflow_fault orm</div>
+</td><td>addr_overflow_fault out<div class="details">H14 mc_clk</div>
 <div class="details">H14 mcq</div>
-<div class="details">H14 orm</div>
-<div class="details">H14 out</div>
+<div class="details">addr_overflow_fault orm</div>
+<div class="details">addr_overflow_fault out</div>
 </td><td>5.9 ns<div class="details">2.15 ns (tGCLK_IN)</div>
 <div class="details">1.05 ns (tCOi)</div>
 <div class="details">0.4 ns (tORP)</div>
@@ -57422,9 +57422,9 @@ Virtual Address Unit for the Vera homebrew CPU.  Mainly consists of a 32b (unsig
 </td></tr>
 <tr class="details-root">
 <td>H14 mcq<div class="details">H14 mcq</div>
-<div class="details">H14 orm</div>
-</td><td>H14 out<div class="details">H14 orm</div>
-<div class="details">H14 out</div>
+<div class="details">addr_overflow_fault orm</div>
+</td><td>addr_overflow_fault out<div class="details">addr_overflow_fault orm</div>
+<div class="details">addr_overflow_fault out</div>
 </td><td>2.7 ns<div class="details">0.4 ns (tORP)</div>
 <div class="details">2.3 ns (tBUF)</div>
 </td></tr>

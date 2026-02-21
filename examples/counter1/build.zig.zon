@@ -2,7 +2,7 @@
     .name = .counter1,
     .fingerprint = 0xddc3342d2bd5e363,
     .version = "0.0.1",
-    .minimum_zig_version = "0.15.1",
+    .minimum_zig_version = "0.16.0-dev.2626+0e3c6514a",
     .paths = .{""},
     .dependencies = .{
         .lc4k = .{ .path = "../.." },

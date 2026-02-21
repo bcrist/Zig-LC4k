@@ -14,8 +14,8 @@ pub const Assembly_Results = struct {
     total_time_ns: u64,
 };
 
-pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), allocator: std.mem.Allocator, options: Assembly_Options) !Assembly_Results {
-    const assembly_start_time = std.time.nanoTimestamp();
+pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.device_type), allocator: std.mem.Allocator, options: Assembly_Options) !Assembly_Results {
+    const assembly_start_time = std.Io.Clock.awake.now(io);
 
     var results = Assembly_Results {
         .jedec = JEDEC_File {
@@ -79,7 +79,7 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
         }
 
         // Route signals to specific GI fuses:
-        const gi_routing_begin = std.time.nanoTimestamp();
+        const gi_routing_begin = std.Io.Clock.awake.now(io);
         gi_routing = try routing.route_generic_inputs(Device, &gi_routing, glb_config.forced_gi_routing, rnd, @intCast(glb), allocator, &results, options.max_gi_routing_attempts_per_signal);
         for (gi_routing, 0..) |maybe_signal, gi| if (maybe_signal) |signal| {
             const option_index = std.mem.indexOfScalar(Device.Signal, &Device.gi_options[gi], signal).?;
@@ -88,16 +88,16 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
             iter.skip(option_index);
             results.jedec.data.put(iter.next().?, 0);
         };
-        const gi_routing_end = std.time.nanoTimestamp();
-        results.gi_routing_time_ns += @intCast(gi_routing_end - gi_routing_begin);
+        const gi_routing_end = std.Io.Clock.awake.now(io);
+        results.gi_routing_time_ns += @intCast(gi_routing_begin.durationTo(gi_routing_end).toNanoseconds());
 
         // Assign sum PTs to clusters to MCs and program routing fuses
-        const cluster_routing_begin = std.time.nanoTimestamp();
+        const cluster_routing_begin = std.Io.Clock.awake.now(io);
         var router = routing.Cluster_Router.init(allocator, Device, @intCast(glb), glb_config, &results);
         defer router.deinit();
         var cluster_routing = try router.route(options.max_cluster_routing_attempts_per_glb);
-        const cluster_routing_end = std.time.nanoTimestamp();
-        results.cluster_routing_time_ns += @intCast(cluster_routing_end - cluster_routing_begin);
+        const cluster_routing_end = std.Io.Clock.awake.now(io);
+        results.cluster_routing_time_ns += @intCast(cluster_routing_begin.durationTo(cluster_routing_end).toNanoseconds());
 
         // Program PT fuses
         for (glb_config.mc, 0..) |mc_config, mc| {
@@ -385,9 +385,9 @@ pub fn assemble(comptime Device: type, config: Chip_Config(Device.device_type), 
     results.jedec.usercode = config.usercode;
     results.jedec.security = @intFromBool(config.security);
 
-    const assembly_end_time = std.time.nanoTimestamp();
+    const assembly_end_time = std.Io.Clock.awake.now(io);
 
-    results.total_time_ns = @intCast(assembly_end_time - assembly_start_time);
+    results.total_time_ns = @intCast(assembly_start_time.durationTo(assembly_end_time).toNanoseconds());
 
     return results;
 }

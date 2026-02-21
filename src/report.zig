@@ -2,6 +2,7 @@ pub fn Write_Options(comptime Device: type) type {
     return struct {
         design_name: []const u8 = "",
         design_version: []const u8 = "",
+        speed_grade: usize = 0,
         notes: []const u8 = "",
         errors: []const Config_Error = &[_]Config_Error{},
         configuration_time_ns: ?u64 = null,
@@ -384,14 +385,12 @@ fn Report_Data(comptime Device: type) type {
     };
 }
 
-pub fn write(comptime Device: type, comptime speed_grade: comptime_int, file: JEDEC_File, temp_gpa: std.mem.Allocator, writer: *std.io.Writer, options: Write_Options(Device)) !void {
+pub fn write(comptime Device: type, file: JEDEC_File, temp_gpa: std.mem.Allocator, writer: *std.Io.Writer, options: Write_Options(Device)) !void {
     var temp = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer temp.deinit();
     const alloc = temp.allocator();
 
     const data = try Report_Data(Device).init(alloc, file);
-    var timing_data = timing.Analyzer(Device, speed_grade).init(file.data, alloc, temp_gpa);
-    defer timing_data.deinit();
 
     try writer.writeAll("<html>\n");
     try writer.writeAll("<head>\n");
@@ -427,10 +426,10 @@ pub fn write(comptime Device: type, comptime speed_grade: comptime_int, file: JE
     try writer.print("<td>{s}</td>", .{ @tagName(Device.device_type) });
     try writer.writeAll("</tr>\n");
 
-    if (speed_grade != 0) {
+    if (options.speed_grade != 0) {
         try writer.writeAll("<tr>");
         try writer.writeAll("<th>Speed Grade</th>");
-        try writer.print("<td>{d}</td>", .{ speed_grade });
+        try writer.print("<td>{d}</td>", .{ options.speed_grade });
         try writer.writeAll("</tr>\n");
     }
 
@@ -514,8 +513,10 @@ pub fn write(comptime Device: type, comptime speed_grade: comptime_int, file: JE
     try write_product_terms(writer, Device, data, options);
     try write_glb_routing(writer, Device, data, options);
 
-    if (!options.skip_timing) {
-        try write_timing(writer, Device, speed_grade, data, &timing_data, options);
+    if (options.speed_grade > 0 and !options.skip_timing) {
+        var timing_data = try timing.Analyzer(Device).init(file.data, options.speed_grade, alloc, temp_gpa);
+        defer timing_data.deinit();
+        try write_timing(writer, Device, data, &timing_data, options);
     }
 
     try writer.writeAll("<footer>\n");
@@ -528,7 +529,7 @@ pub fn write(comptime Device: type, comptime speed_grade: comptime_int, file: JE
     try writer.writeAll("</html>\n");
 }
 
-fn write_equations(writer: *std.io.Writer, comptime Device: type, data: Report_Data(Device), options: Write_Options(Device)) !void {
+fn write_equations(writer: *std.Io.Writer, comptime Device: type, data: Report_Data(Device), options: Write_Options(Device)) !void {
     try begin_section(writer, "Equations", .{}, .{});
 
     const eqn_options: Equation_Options = .{ .style = .ascii };
@@ -640,7 +641,7 @@ fn write_equations(writer: *std.io.Writer, comptime Device: type, data: Report_D
     try end_section(writer);
 }
 
-fn write_reg_ctrl_equations(writer: *std.io.Writer, comptime Device: type, data: Report_Data(Device), mcref: lc4k.MC_Ref, options: Write_Options(Device)) !void {
+fn write_reg_ctrl_equations(writer: *std.Io.Writer, comptime Device: type, data: Report_Data(Device), mcref: lc4k.MC_Ref, options: Write_Options(Device)) !void {
     const mc_func = data.config.glb[mcref.glb].mc[mcref.mc].func;
     const reg_config: lc4k.Register_Config(Device.Signal) = switch (mc_func) {
         .combinational => return,
@@ -740,7 +741,7 @@ fn write_reg_ctrl_equations(writer: *std.io.Writer, comptime Device: type, data:
     }
 }
 
-fn write_globals_and_inputs(writer: *std.io.Writer, comptime Device: type, data: Report_Data(Device), options: Write_Options(Device)) !void {
+fn write_globals_and_inputs(writer: *std.Io.Writer, comptime Device: type, data: Report_Data(Device), options: Write_Options(Device)) !void {
     try begin_section(writer, "Global Resources", .{}, .{});
 
     try begin_section(writer, "Global Output Enables", .{}, .{ .tier = 3, .class = "inline" });
@@ -854,7 +855,7 @@ fn write_globals_and_inputs(writer: *std.io.Writer, comptime Device: type, data:
     try end_section(writer);
 }
 
-fn write_goe(writer: *std.io.Writer, comptime Device: type, data: Report_Data(Device), goe_index: usize, options: Write_Options(Device), highlight: bool) !void {
+fn write_goe(writer: *std.Io.Writer, comptime Device: type, data: Report_Data(Device), goe_index: usize, options: Write_Options(Device), highlight: bool) !void {
     try begin_row(writer, .{ .highlight = highlight });
 
     try begin_cell(writer, .{});
@@ -874,7 +875,7 @@ fn write_goe(writer: *std.io.Writer, comptime Device: type, data: Report_Data(De
     try end_row(writer);
 }
 
-fn write_block_clock(writer: *std.io.Writer, comptime Device: type, highlight: bool, bclk_index: usize, value: anytype, used: bool, options: Write_Options(Device)) !void {
+fn write_block_clock(writer: *std.Io.Writer, comptime Device: type, highlight: bool, bclk_index: usize, value: anytype, used: bool, options: Write_Options(Device)) !void {
     try begin_row(writer, .{
         .class = if (used) "" else "unused",
         .highlight = highlight,
@@ -892,7 +893,7 @@ fn write_block_clock(writer: *std.io.Writer, comptime Device: type, highlight: b
 }
 
 fn write_input_pin(
-    writer: *std.io.Writer,
+    writer: *std.Io.Writer,
     highlight: bool,
     comptime Device: type,
     data: Report_Data(Device),
@@ -935,7 +936,7 @@ fn write_input_pin(
     try end_row(writer);
 }
 
-fn write_input_threshold(writer: *std.io.Writer, comptime Device: type, threshold: lc4k.Input_Threshold) !void {
+fn write_input_threshold(writer: *std.Io.Writer, comptime Device: type, threshold: lc4k.Input_Threshold) !void {
     switch (Device.family) {
         .zero_power_enhanced => {
             try writer.writeAll(switch (threshold) {
@@ -958,7 +959,7 @@ fn write_input_threshold(writer: *std.io.Writer, comptime Device: type, threshol
     }
 }
 
-fn write_bus_maintenance(writer: *std.io.Writer, maint: lc4k.Bus_Maintenance) !void {
+fn write_bus_maintenance(writer: *std.Io.Writer, maint: lc4k.Bus_Maintenance) !void {
     try writer.writeAll(switch (maint) {
         .pulldown => "<kbd class=\"maintenance pulldown\">Pulldown</kbd>",
         .float => "<kbd class=\"maintenance float\">Float</kbd>",
@@ -967,14 +968,14 @@ fn write_bus_maintenance(writer: *std.io.Writer, maint: lc4k.Bus_Maintenance) !v
     });
 }
 
-fn write_power_guard(writer: *std.io.Writer, pg: lc4k.Power_Guard) !void {
+fn write_power_guard(writer: *std.Io.Writer, pg: lc4k.Power_Guard) !void {
     try writer.writeAll(switch (pg) {
         .from_bie => "<kbd class=\"power-guard enabled\">Enabled</kbd>",
         .disabled => "<kbd class=\"power-guard disabled\">Disabled</kbd>",
     });
 }
 
-fn write_product_terms(writer: *std.io.Writer, comptime Device: type, data: Report_Data(Device), options: Write_Options(Device)) !void {
+fn write_product_terms(writer: *std.Io.Writer, comptime Device: type, data: Report_Data(Device), options: Write_Options(Device)) !void {
     try begin_section(writer, "Product Terms", .{}, .{});
     for (data.glb, 0..) |glb_data, glb| {
         try begin_glb_section(writer, glb, options.get_names().get_glb_name(@intCast(glb)));
@@ -1035,7 +1036,7 @@ fn write_product_terms(writer: *std.io.Writer, comptime Device: type, data: Repo
     try end_section(writer);
 }
 
-fn write_pt_usage(writer: *std.io.Writer, usage: PT_Usage) !void {
+fn write_pt_usage(writer: *std.Io.Writer, usage: PT_Usage) !void {
     try writer.writeAll(switch (usage) {
         .none     => return,
         .sum      => "<kbd class=\"pt-usage sum\">Sum</kbd>",
@@ -1050,13 +1051,13 @@ fn write_pt_usage(writer: *std.io.Writer, usage: PT_Usage) !void {
     });
 }
 
-fn write_pt_equation_wrapped(writer: *std.io.Writer, comptime Device: type, pt: lc4k.Product_Term(Device.Signal), options: Write_Options(Device)) !void {
+fn write_pt_equation_wrapped(writer: *std.Io.Writer, comptime Device: type, pt: lc4k.Product_Term(Device.Signal), options: Write_Options(Device)) !void {
     try writer.writeAll("<td class=\"left\">");
     try write_pt_equation(writer, Device, pt, .{}, options);
     try writer.writeAll("</td>");
 }
 
-fn write_glb_routing(writer: *std.io.Writer, comptime Device: type, data: Report_Data(Device), options: Write_Options(Device)) !void {
+fn write_glb_routing(writer: *std.Io.Writer, comptime Device: type, data: Report_Data(Device), options: Write_Options(Device)) !void {
     try begin_section(writer, "GI Routing", .{}, .{});
     for (data.config.glb, 0..) |_, glb| {
         try begin_glb_section(writer, glb, options.get_names().get_glb_name(@intCast(glb)));
@@ -1108,7 +1109,7 @@ fn write_glb_routing(writer: *std.io.Writer, comptime Device: type, data: Report
     try end_section(writer);
 }
 
-fn write_macrocells(writer: *std.io.Writer, comptime Device: type, data: Report_Data(Device), options: Write_Options(Device)) !void {
+fn write_macrocells(writer: *std.Io.Writer, comptime Device: type, data: Report_Data(Device), options: Write_Options(Device)) !void {
     try begin_section(writer, "Macrocells", .{}, .{});
 
     for (data.config.glb, 0..) |glb_config, glb| {
@@ -1568,7 +1569,7 @@ fn write_macrocells(writer: *std.io.Writer, comptime Device: type, data: Report_
     try end_section(writer);
 }
 
-fn write_timing(writer: *std.io.Writer, comptime Device: type, comptime speed: comptime_int, data: Report_Data(Device), timing_data: *timing.Analyzer(Device, speed), options: Write_Options(Device)) !void {
+fn write_timing(writer: *std.Io.Writer, comptime Device: type, data: Report_Data(Device), timing_data: *timing.Analyzer(Device), options: Write_Options(Device)) !void {
     try begin_section(writer, "Critical Path Timing", .{}, .{});
     for (data.config.glb, 0..) |glb_config, glb| {
         try begin_glb_section(writer, glb, options.get_names().get_glb_name(@intCast(glb)));
@@ -1583,17 +1584,17 @@ fn write_timing(writer: *std.io.Writer, comptime Device: type, comptime speed: c
         for (glb_config.mc, 0..) |_, mc| {
             const mcref = lc4k.MC_Ref.init(glb, mc);
 
-            var found_path = try write_timing_for_target(writer, Device, speed, .{ .out = mcref }, data, timing_data, options, highlight) != null;
-            found_path = try write_timing_for_target(writer, Device, speed, .{ .out_en = mcref }, data, timing_data, options, highlight) != null or found_path;
-            found_path = try write_timing_for_target(writer, Device, speed, .{ .out_dis = mcref }, data, timing_data, options, highlight) != null or found_path;
+            var found_path = try write_timing_for_target(writer, Device, .{ .out = mcref }, data, timing_data, options, highlight) != null;
+            found_path = try write_timing_for_target(writer, Device, .{ .out_en = mcref }, data, timing_data, options, highlight) != null or found_path;
+            found_path = try write_timing_for_target(writer, Device, .{ .out_dis = mcref }, data, timing_data, options, highlight) != null or found_path;
 
             if (data.config.glb[mcref.glb].mc[mcref.mc].func != .combinational) {
-                const clk_path = try write_timing_for_target(writer, Device, speed, .{ .mc_clk = mcref }, data, timing_data, options, highlight);
+                const clk_path = try write_timing_for_target(writer, Device, .{ .mc_clk = mcref }, data, timing_data, options, highlight);
                 if (clk_path) |path| {
                     const clk_source = path.critical_path[0].segment.source;
 
-                    try write_setup_hold_timing(writer, Device, speed, .{ .mcd_setup = mcref }, .{ .mc_clk_d_hold = mcref }, clk_source, data, timing_data, options, highlight);
-                    try write_setup_hold_timing(writer, Device, speed, .{ .mc_ce_setup = mcref }, .{ .mc_clk_ce_hold = mcref }, clk_source, data, timing_data, options, highlight);
+                    try write_setup_hold_timing(writer, Device, .{ .mcd_setup = mcref }, .{ .mc_clk_d_hold = mcref }, clk_source, data, timing_data, options, highlight);
+                    try write_setup_hold_timing(writer, Device, .{ .mc_ce_setup = mcref }, .{ .mc_clk_ce_hold = mcref }, clk_source, data, timing_data, options, highlight);
                 }
             }
 
@@ -1607,7 +1608,7 @@ fn write_timing(writer: *std.io.Writer, comptime Device: type, comptime speed: c
 
 }
 
-fn write_timing_for_target(writer: *std.io.Writer, comptime Device: type, comptime speed: comptime_int, target: timing.Node, data: Report_Data(Device), timing_data: *timing.Analyzer(Device, speed), options: Write_Options(Device), highlight: bool) !?timing.Path {
+fn write_timing_for_target(writer: *std.Io.Writer, comptime Device: type, target: timing.Node, data: Report_Data(Device), timing_data: *timing.Analyzer(Device), options: Write_Options(Device), highlight: bool) !?timing.Path {
     var shortest_path: ?timing.Path = null;
 
     for (std.enums.values(Device.Signal)) |signal| {
@@ -1669,7 +1670,7 @@ fn write_timing_for_target(writer: *std.io.Writer, comptime Device: type, compti
     return shortest_path;
 }
 
-fn write_setup_hold_timing(writer: *std.io.Writer, comptime Device: type, comptime speed: comptime_int, setup: timing.Node, hold: timing.Node, clk_source: timing.Node, data: Report_Data(Device), timing_data: *timing.Analyzer(Device, speed), options: Write_Options(Device), highlight: bool) !void {
+fn write_setup_hold_timing(writer: *std.Io.Writer, comptime Device: type, setup: timing.Node, hold: timing.Node, clk_source: timing.Node, data: Report_Data(Device), timing_data: *timing.Analyzer(Device), options: Write_Options(Device), highlight: bool) !void {
     const clk_mcref = switch (hold) {
         .mc_clk_d_hold, .mc_clk_ce_hold => |mcref| mcref,
         else => unreachable,
@@ -1803,7 +1804,7 @@ fn write_setup_hold_timing(writer: *std.io.Writer, comptime Device: type, compti
     }
 }
 
-fn write_error(writer: *std.io.Writer, comptime Device: type, err: Config_Error, options: Write_Options(Device)) !void {
+fn write_error(writer: *std.Io.Writer, comptime Device: type, err: Config_Error, options: Write_Options(Device)) !void {
     try writer.print("<tr><td>{s}</td><td>{s}</td><td>", .{ @errorName(err.err), err.details });
     if (err.glb) |glb| {
         if (err.mc) |mc| {
@@ -1868,11 +1869,11 @@ pub const Equation_Options = struct {
     }
 };
 
-fn write_equation_comment(writer: *std.io.Writer, comptime fmt: []const u8, args: anytype) !void {
+fn write_equation_comment(writer: *std.Io.Writer, comptime fmt: []const u8, args: anytype) !void {
     try writer.print("<span class=\"comment\">// " ++ fmt ++ "</span>", args);
 }
 
-fn write_xor_equation(writer: *std.io.Writer, comptime Device: type, maybe_xor_pt: ?lc4k.Product_Term(Device.Signal), sum: []const lc4k.Product_Term(Device.Signal), eqn_options: Equation_Options, options: Write_Options(Device)) !void {
+fn write_xor_equation(writer: *std.Io.Writer, comptime Device: type, maybe_xor_pt: ?lc4k.Product_Term(Device.Signal), sum: []const lc4k.Product_Term(Device.Signal), eqn_options: Equation_Options, options: Write_Options(Device)) !void {
     const sum_eqn_options = switch (eqn_options.polarity) {
         .negative => eqn_options.invert(),
         .positive => eqn_options,
@@ -1902,11 +1903,11 @@ fn write_xor_equation(writer: *std.io.Writer, comptime Device: type, maybe_xor_p
     }
 }
 
-fn write_sum_with_polarity_equation(writer: *std.io.Writer, comptime Device: type, sp: lc4k.Sum_With_Polarity(Device.Signal), eqn_options: Equation_Options, options: Write_Options(Device)) !void {
+fn write_sum_with_polarity_equation(writer: *std.Io.Writer, comptime Device: type, sp: lc4k.Sum_With_Polarity(Device.Signal), eqn_options: Equation_Options, options: Write_Options(Device)) !void {
     try write_sum_equation(writer, Device, sp.sum, eqn_options.apply_polarity(sp.polarity), options);
 }
 
-fn write_sum_equation(writer: *std.io.Writer, comptime Device: type, sum: []const lc4k.Product_Term(Device.Signal), eqn_options: Equation_Options, options: Write_Options(Device)) !void {
+fn write_sum_equation(writer: *std.Io.Writer, comptime Device: type, sum: []const lc4k.Product_Term(Device.Signal), eqn_options: Equation_Options, options: Write_Options(Device)) !void {
     for (0.., sum) |i, pt| {
         if (i > 0) {
             try writer.writeAll(switch (eqn_options.polarity) {
@@ -1936,11 +1937,11 @@ fn write_sum_equation(writer: *std.io.Writer, comptime Device: type, sum: []cons
     }
 }
 
-fn write_pt_with_polarity_equation(writer: *std.io.Writer, comptime Device: type, ptp: lc4k.Product_Term_With_Polarity(Device.Signal), eqn_options: Equation_Options, options: Write_Options(Device)) !void {
+fn write_pt_with_polarity_equation(writer: *std.Io.Writer, comptime Device: type, ptp: lc4k.Product_Term_With_Polarity(Device.Signal), eqn_options: Equation_Options, options: Write_Options(Device)) !void {
     try write_pt_equation(writer, Device, ptp.pt, eqn_options.apply_polarity(ptp.polarity), options);
 }
 
-pub fn write_pt_equation(writer: *std.io.Writer, comptime Device: type, pt: lc4k.Product_Term(Device.Signal), eqn_options: Equation_Options, options: Write_Options(Device)) !void {
+pub fn write_pt_equation(writer: *std.Io.Writer, comptime Device: type, pt: lc4k.Product_Term(Device.Signal), eqn_options: Equation_Options, options: Write_Options(Device)) !void {
     for (0.., pt.factors) |i, factor| {
         if (i > 0) switch (eqn_options.polarity) {
             .positive => switch (eqn_options.style) {
@@ -1967,7 +1968,7 @@ pub fn write_pt_equation(writer: *std.io.Writer, comptime Device: type, pt: lc4k
     }
 }
 
-fn write_goe_equation(writer: *std.io.Writer, comptime Device: type, data: Report_Data(Device), goe_index: usize, goe_config: anytype, eqn_options: Equation_Options, options: Write_Options(Device)) !void {
+fn write_goe_equation(writer: *std.Io.Writer, comptime Device: type, data: Report_Data(Device), goe_index: usize, goe_config: anytype, eqn_options: Equation_Options, options: Write_Options(Device)) !void {
     switch (@TypeOf(goe_config)) {
         lc4k.GOE_Config_Bus_Or_Pin => switch (goe_config.source) {
             .constant_high => try write_constant_equation(writer, true, goe_config.polarity.xor(eqn_options.polarity), eqn_options.style, true),
@@ -1989,16 +1990,16 @@ fn write_goe_equation(writer: *std.io.Writer, comptime Device: type, data: Repor
     }
 }
 
-fn write_bus_goe_equation(writer: *std.io.Writer, comptime Device: type, data: Report_Data(Device), glb: usize, eqn_options: Equation_Options, options: Write_Options(Device)) !void {
+fn write_bus_goe_equation(writer: *std.Io.Writer, comptime Device: type, data: Report_Data(Device), glb: usize, eqn_options: Equation_Options, options: Write_Options(Device)) !void {
     try write_pt_equation(writer, Device, data.config.glb[glb].shared_pt_enable, eqn_options, options);
     try writer.print(" <span class=\"comment\">// GLB {} Shared OE PT</span>", .{ glb });
 }
 
-fn write_pin_goe_equation(writer: *std.io.Writer, comptime Device: type, pin: Device.Pin, eqn_options: Equation_Options, options: Write_Options(Device)) !void {
+fn write_pin_goe_equation(writer: *std.Io.Writer, comptime Device: type, pin: Device.Pin, eqn_options: Equation_Options, options: Write_Options(Device)) !void {
     try write_signal_equation(writer, Device, pin.pad(), eqn_options, options);
 }
 
-fn write_block_clock_equation(writer: *std.io.Writer, comptime Device: type, value: anytype, eqn_options: Equation_Options, options: Write_Options(Device)) !void {
+fn write_block_clock_equation(writer: *std.Io.Writer, comptime Device: type, value: anytype, eqn_options: Equation_Options, options: Write_Options(Device)) !void {
     const signal, const polarity = res: {
         const BClock = @TypeOf(value);
         inline for (@typeInfo(BClock).@"enum".fields) |field| {
@@ -2020,7 +2021,7 @@ fn write_block_clock_equation(writer: *std.io.Writer, comptime Device: type, val
     try write_signal_equation(writer, Device, signal, eqn_options.apply_polarity(polarity), options);
 }
 
-fn write_signal_equation(writer: *std.io.Writer, comptime Device: type, maybe_signal: ?Device.Signal, eqn_options: Equation_Options, options: Write_Options(Device)) !void {
+fn write_signal_equation(writer: *std.Io.Writer, comptime Device: type, maybe_signal: ?Device.Signal, eqn_options: Equation_Options, options: Write_Options(Device)) !void {
     const attribs = if (maybe_signal == null) " class=\"error\"" else "";
     switch (eqn_options.polarity) {
         .positive => switch (eqn_options.style) {
@@ -2065,7 +2066,7 @@ fn write_signal_equation(writer: *std.io.Writer, comptime Device: type, maybe_si
     }
 }
 
-fn write_constant_equation(writer: *std.io.Writer, value: bool, polarity: lc4k.Polarity, style: Equation_Style, unused: bool) !void {
+fn write_constant_equation(writer: *std.Io.Writer, value: bool, polarity: lc4k.Polarity, style: Equation_Style, unused: bool) !void {
     switch (style) {
         .console => {
             if (unused) try console.Style.apply(.{ .fg = .bright_black }, writer);
@@ -2094,7 +2095,7 @@ const Section_Options = struct {
     class: []const u8 = "",
 };
 
-fn begin_section(writer: *std.io.Writer, comptime fmt: []const u8, args: anytype, options: Section_Options) !void {
+fn begin_section(writer: *std.Io.Writer, comptime fmt: []const u8, args: anytype, options: Section_Options) !void {
     if (options.class.len > 0) {
         try writer.print("<section class=\"{s}\">\n", .{ options.class });
     } else {
@@ -2105,15 +2106,15 @@ fn begin_section(writer: *std.io.Writer, comptime fmt: []const u8, args: anytype
     try writer.print("</h{}>\n<div>\n", .{ options.tier });
 }
 
-fn begin_glb_section(writer: *std.io.Writer, glb: usize, name: []const u8) !void {
+fn begin_glb_section(writer: *std.Io.Writer, glb: usize, name: []const u8) !void {
     try begin_section(writer, "GLB {} ({s})", .{ glb, name }, .{ .tier = 3, .class = "inline" });
 }
 
-fn end_section(writer: *std.io.Writer) !void {
+fn end_section(writer: *std.Io.Writer) !void {
     try writer.writeAll("</div>\n</section>\n");
 }
 
-fn write_summary_line(writer: *std.io.Writer, label: []const u8, numerator: usize, denominator: usize) !void {
+fn write_summary_line(writer: *std.Io.Writer, label: []const u8, numerator: usize, denominator: usize) !void {
     try writer.writeAll("<tr>");
     try writer.print("<th>{s}</th>", .{ label });
     try writer.print("<td>{} / {}</td>", .{ numerator, denominator });
@@ -2121,11 +2122,11 @@ fn write_summary_line(writer: *std.io.Writer, label: []const u8, numerator: usiz
 }
 
 
-fn begin_table(writer: *std.io.Writer) !void {
+fn begin_table(writer: *std.Io.Writer) !void {
     try writer.writeAll("<table>\n");
 }
 
-fn table_header(writer: *std.io.Writer, columns: anytype) !void {
+fn table_header(writer: *std.Io.Writer, columns: anytype) !void {
     const ColumnsType = @TypeOf(columns);
     const columns_info = @typeInfo(ColumnsType).@"struct";
 
@@ -2155,7 +2156,7 @@ const Row_Options = struct {
     hover_selector: []const u8 = "",
 };
 
-fn begin_row(writer: *std.io.Writer, options: Row_Options) !void {
+fn begin_row(writer: *std.Io.Writer, options: Row_Options) !void {
     try writer.writeAll("<tr");
     if (options.highlight or options.class.len > 0) {
         try writer.writeAll(" class=\"");
@@ -2175,7 +2176,7 @@ fn begin_row(writer: *std.io.Writer, options: Row_Options) !void {
     try writer.writeAll(">\n");
 }
 
-fn end_row(writer: *std.io.Writer) !void {
+fn end_row(writer: *std.Io.Writer) !void {
     try writer.writeAll("</tr>\n");
 }
 
@@ -2185,7 +2186,7 @@ const Cell_Options = struct {
     hover_selector: []const u8 = "",
 };
 
-fn begin_cell(writer: *std.io.Writer, options: Cell_Options) !void {
+fn begin_cell(writer: *std.Io.Writer, options: Cell_Options) !void {
     try writer.writeAll("<td");
     if (options.class.len > 0 or options.additional_classes.len > 0) {
         try writer.print(" class=\"{s}", .{ options.class });
@@ -2201,11 +2202,11 @@ fn begin_cell(writer: *std.io.Writer, options: Cell_Options) !void {
     try writer.writeAll(">");
 }
 
-fn end_cell(writer: *std.io.Writer) !void {
+fn end_cell(writer: *std.Io.Writer) !void {
     try writer.writeAll("</td>");
 }
 
-fn end_table(writer: *std.io.Writer) !void {
+fn end_table(writer: *std.Io.Writer) !void {
     try writer.writeAll("</table>\n");
 }
 
@@ -2213,7 +2214,7 @@ const Details_Options = struct {
     class: []const u8 = "",
     hover_selector: []const u8 = "",
 };
-fn begin_details(writer: *std.io.Writer, options: Details_Options) !void {
+fn begin_details(writer: *std.Io.Writer, options: Details_Options) !void {
     try writer.writeAll("<div class=\"details");
     if (options.class.len > 0) {
         try writer.print(" {s}", .{ options.class });
@@ -2225,7 +2226,7 @@ fn begin_details(writer: *std.io.Writer, options: Details_Options) !void {
     try writer.writeAll(">");
 }
 
-fn end_details(writer: *std.io.Writer) !void {
+fn end_details(writer: *std.Io.Writer) !void {
     try writer.writeAll("</div>\n");
 }
 

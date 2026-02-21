@@ -59,11 +59,21 @@ pub fn Ast(comptime Device: type) type {
             defer parser.deinit();
 
             const root = (try parser.try_sum()) orelse {
-                report_token_error(equation, token_offsets[parser.next_token], "Expected expression");
+                const d: Diag = .{
+                    .eqn = equation,
+                    .scratch = gpa,
+                    .slice = parser.nodes.slice(),
+                };
+                d.report_token_error(token_offsets[parser.next_token], "Expected expression");
                 return error.InvalidEquation;
             };
             if (!parser.try_token(.eof)) {
-                report_token_error(equation, token_offsets[parser.next_token], "Expected end of equation");
+                const d: Diag = .{
+                    .eqn = equation,
+                    .scratch = gpa,
+                    .slice = parser.nodes.slice(),
+                };
+                d.report_token_error(token_offsets[parser.next_token], "Expected end of equation");
                 return error.InvalidEquation;
             }
 
@@ -87,6 +97,14 @@ pub fn Ast(comptime Device: type) type {
             self.extra_children.deinit(self.gpa);
         }
 
+        fn diag(self: *Self) Diag {
+            return .{
+                .eqn = self.eqn,
+                .scratch = self.gpa,
+                .slice = self.nodes.slice(),
+            };
+        }
+
         pub const Check_Bit_Widths_Options = struct {
             min_result_bits: u6 = 1,
             max_result_bits: u6 = std.math.maxInt(u6),
@@ -97,24 +115,16 @@ pub fn Ast(comptime Device: type) type {
             const width: usize = @as(usize, max_bit) + 1;
             if (width > options.max_result_bits) {
                 if (options.max_result_bits == 1) {
-                    report_node_error_fmt(self.gpa, self.nodes.slice(), self.eqn,
-                        self.root, "Result has width of {} bits, but expected width of 1 bit", .{ width }
-                    );
+                    self.diag().report_node_error_fmt(self.root, "Result has width of {} bits, but expected width of 1 bit", .{ width });
                 } else {
-                    report_node_error_fmt(self.gpa, self.nodes.slice(), self.eqn, 
-                        self.root, "Result has width of {} bits, but expected width of {} bits or less", .{ width, options.max_result_bits }
-                    );
+                    self.diag().report_node_error_fmt(self.root, "Result has width of {} bits, but expected width of {} bits or less", .{ width, options.max_result_bits });
                 }
                 return error.InvalidEquation;
             } else if (max_bit < options.min_result_bits - 1) {
                 if (options.min_result_bits == 1) {
-                    report_node_error_fmt(self.gpa, self.nodes.slice(), self.eqn,
-                        self.root, "Result has width of {} bits, but expected width of at least 1 bit", .{ width }
-                    );
+                    self.diag().report_node_error_fmt(self.root, "Result has width of {} bits, but expected width of at least 1 bit", .{ width });
                 } else {
-                    report_node_error_fmt(self.gpa, self.nodes.slice(), self.eqn, 
-                        self.root, "Result has width of {} bits, but expected width of at least {} bits", .{ width, options.min_result_bits }
-                    );
+                    self.diag().report_node_error_fmt(self.root, "Result has width of {} bits, but expected width of at least {} bits", .{ width, options.min_result_bits });
                 }
                 return error.InvalidEquation;
             }
@@ -147,7 +157,7 @@ pub fn Ast(comptime Device: type) type {
                     const lhs_max_bit = try self.infer_and_check_node_max_bit(slice, data.lhs);
                     const rhs_max_bit = try self.infer_and_check_node_max_bit(slice, data.rhs);
                     if (lhs_max_bit != rhs_max_bit) {
-                        report_node_error_fmt_3(self.gpa, self.nodes.slice(), self.eqn, 
+                        self.diag().report_node_error_fmt_3(
                             node, "Both sides of a comparison operator must have the same bit width", .{},
                             data.lhs, "Left side has width of {} bits", .{ @as(usize, lhs_max_bit) + 1 },
                             data.rhs, "Right side has width of {} bits", .{ @as(usize, rhs_max_bit) + 1 }
@@ -164,7 +174,7 @@ pub fn Ast(comptime Device: type) type {
                     const lhs_max_bit = try self.infer_and_check_node_max_bit(slice, data.lhs);
                     const rhs_max_bit = try self.infer_and_check_node_max_bit(slice, data.rhs);
                     if (lhs_max_bit != rhs_max_bit and lhs_max_bit != 0 and rhs_max_bit != 0) {
-                        report_node_error_fmt_3(self.gpa, self.nodes.slice(), self.eqn, 
+                        self.diag().report_node_error_fmt_3(
                             node, "Both sides of binary operator must have the same bit width, or one side must have a width of 1 bit", .{},
                             data.lhs, "Left side has width of {} bits", .{ @as(usize, lhs_max_bit) + 1 },
                             data.rhs, "Right side has width of {} bits", .{ @as(usize, rhs_max_bit) + 1 }
@@ -206,7 +216,7 @@ pub fn Ast(comptime Device: type) type {
                     const bus_max_bit = try self.infer_and_check_node_max_bit(slice, data.lhs);
                     const selector_max_bit = try self.infer_and_check_node_max_bit(slice, data.rhs);
                     if (selector_max_bit > 5) {
-                        report_node_error_fmt_3(self.gpa, self.nodes.slice(), self.eqn, 
+                        self.diag().report_node_error_fmt_3(
                             node, "Multiplexer selector width cannot be greater than 6 bits", .{},
                             data.lhs, "Bus has width of {} bits", .{ @as(usize, bus_max_bit) + 1 },
                             data.rhs, "Selector has width of {} bits", .{ @as(usize, selector_max_bit) + 1 }
@@ -215,7 +225,7 @@ pub fn Ast(comptime Device: type) type {
                     }
                     const expected_bus_max_bit = (@as(u7, 1) << @intCast(selector_max_bit + 1)) - 1;
                     if (expected_bus_max_bit != bus_max_bit) {
-                        report_node_error_fmt_3(self.gpa, self.nodes.slice(), self.eqn, 
+                        self.diag().report_node_error_fmt_3(
                             node, "Multiplexer width mismatch", .{},
                             data.lhs, "Bus has width of {} bits (expected {} bits)", .{ @as(usize, bus_max_bit) + 1, @as(usize, expected_bus_max_bit) + 1 },
                             data.rhs, "Selector has width of {} bits", .{ @as(usize, selector_max_bit) + 1 }
@@ -239,7 +249,7 @@ pub fn Ast(comptime Device: type) type {
                         if (child_max_bit != 0) {
                             if (bus_max_bit) |max_bit| {
                                 if (max_bit != child_max_bit) {
-                                    report_node_error_fmt_3(self.gpa, self.nodes.slice(), self.eqn, 
+                                    self.diag().report_node_error_fmt_3(
                                         node, "All items in compound operator must have the same bit width, or a width of 1 bit", .{},
                                         bus_child, "Expected width is {} bits", .{ @as(usize, max_bit) + 1 },
                                         child, "Item {} has width of {} bits", .{ n, @as(usize, child_max_bit) + 1 }
@@ -302,7 +312,7 @@ pub fn Ast(comptime Device: type) type {
                 .literal => {
                     const value: u6 = @intCast(slice.items(.data)[node_index].literal); // range has already been checked at parse time
                     if (value > bus_max_bit) {
-                        report_node_error_fmt_2(self.gpa, self.nodes.slice(), self.eqn, 
+                        self.diag().report_node_error_fmt_2(
                             node, "Bit index out of range", .{},
                             bus_node, "Bus has width of {} bits", .{ bus_width }
                         );
@@ -310,7 +320,7 @@ pub fn Ast(comptime Device: type) type {
                     }
                     if (prev_index) |prev| {
                         if (endianness == null and value > prev) {
-                            report_node_error_fmt(self.gpa, self.nodes.slice(), self.eqn, 
+                            self.diag().report_node_error_fmt(
                                 node, "Ambiguous extraction; big-endian interpretation would result in extracting bits out of order.  Use '>' or '<' to request big or little endian mode explicitly.", .{}
                             );
                             return error.InvalidEquation;
@@ -326,7 +336,7 @@ pub fn Ast(comptime Device: type) type {
                         .big => bus_max_bit,
                     } else bus_max_bit;
                     if (first > bus_max_bit) {
-                        report_node_error_fmt_2(self.gpa, self.nodes.slice(), self.eqn, 
+                        self.diag().report_node_error_fmt_2(
                             node, "First bit index out of range", .{},
                             bus_node, "Bus has width of {} bits", .{ bus_width }
                         );
@@ -338,7 +348,7 @@ pub fn Ast(comptime Device: type) type {
                         .big => 0,
                     } else 0;
                     if (last > bus_max_bit) {
-                        report_node_error_fmt_2(self.gpa, self.nodes.slice(), self.eqn, 
+                        self.diag().report_node_error_fmt_2(
                             node, "Last bit index out of range", .{},
                             bus_node, "Bus has width of {} bits", .{ bus_width }
                         );
@@ -347,7 +357,7 @@ pub fn Ast(comptime Device: type) type {
 
                     if (prev_index) |prev| {
                         if (endianness == null and first > prev) {
-                            report_node_error_fmt(self.gpa, self.nodes.slice(), self.eqn, 
+                            self.diag().report_node_error_fmt(
                                 node, "Ambiguous extraction; big-endian interpretation would result in extracting bits out of order.  Use '>' or '<' to request big or little endian mode explicitly.", .{}
                             );
                             return error.InvalidEquation;
@@ -355,7 +365,7 @@ pub fn Ast(comptime Device: type) type {
                     }
 
                     if (endianness == null and last > first) {
-                        report_node_error_fmt(self.gpa, self.nodes.slice(), self.eqn, 
+                        self.diag().report_node_error_fmt(
                             node, "Ambiguous extraction; big-endian interpretation would result in extracting bits out of order.  Use '>' or '<' to request big or little endian mode explicitly.", .{}
                         );
                         return error.InvalidEquation;
@@ -752,11 +762,11 @@ pub fn Ast(comptime Device: type) type {
             }
         }
 
-        pub fn debug(self: *Self, w: *std.io.Writer) !void {
+        pub fn debug(self: *Self, w: *std.Io.Writer) !void {
             const slice = self.nodes.slice();
             try self.debug_node(slice, self.root, 0, w);
         }
-        fn debug_node(self: *Self, slice: std.MultiArrayList(Node).Slice, maybe_node: ?Node.ID, indent: usize, w: *std.io.Writer) !void {
+        fn debug_node(self: *Self, slice: std.MultiArrayList(Node).Slice, maybe_node: ?Node.ID, indent: usize, w: *std.Io.Writer) !void {
             if (maybe_node) |node| {
                 const node_index = @intFromEnum(node);
                 const kind = slice.items(.kind)[node_index];
@@ -876,6 +886,14 @@ pub fn Ast(comptime Device: type) type {
                 self.temp_nodes.deinit(self.gpa);
             }
 
+            fn diag(self: *Parser) Diag {
+                return .{
+                    .eqn = self.eqn,
+                    .scratch = self.gpa,
+                    .slice = self.nodes.slice(),
+                };
+            }
+
             // product
             // product | product ...
             // product + product ...
@@ -899,7 +917,7 @@ pub fn Ast(comptime Device: type) type {
                                 operator_token = self.next_token;
                                 if (!self.try_token(.sum)) break;
                             } else {
-                                report_token_error_2(self.eqn,
+                                self.diag().report_token_error_2(
                                     self.token_offsets[self.next_token], "Expected product expression",
                                     self.token_offsets[operator_token], "for OR operator here"
                                 );
@@ -919,7 +937,7 @@ pub fn Ast(comptime Device: type) type {
                                 operator_token = self.next_token;
                                 if (!self.try_token(.xor)) break;
                             } else {
-                                report_token_error_2(self.eqn,
+                                self.diag().report_token_error_2(
                                     self.token_offsets[self.next_token], "Expected product expression",
                                     self.token_offsets[operator_token], "for XOR operator here"
                                 );
@@ -959,7 +977,7 @@ pub fn Ast(comptime Device: type) type {
                         if (try self.try_equality()) |rhs| {
                             try self.temp_nodes.append(self.gpa, rhs);
                         } else {
-                            report_token_error_2(self.eqn,
+                            self.diag().report_token_error_2(
                                 self.token_offsets[self.next_token], "Expected comparison expression",
                                 self.token_offsets[operator_token], "for AND operator here"
                             );
@@ -989,7 +1007,7 @@ pub fn Ast(comptime Device: type) type {
                             if (try self.try_unary()) |rhs| {
                                 result = try self.create_binary_node(result.?, rhs, .equals, .{});
                             } else {
-                                report_token_error_2(self.eqn,
+                                self.diag().report_token_error_2(
                                     self.token_offsets[self.next_token], "Expected unary expression",
                                     self.token_offsets[operator_token], "for equality operator here"
                                 );
@@ -1000,7 +1018,7 @@ pub fn Ast(comptime Device: type) type {
                             if (try self.try_unary()) |rhs| {
                                 result = try self.create_binary_node(result.?, rhs, .not_equals, .{});
                             } else {
-                                report_token_error_2(self.eqn,
+                                self.diag().report_token_error_2(
                                     self.token_offsets[self.next_token], "Expected unary expression",
                                     self.token_offsets[operator_token], "for inequality operator here"
                                 );
@@ -1032,7 +1050,7 @@ pub fn Ast(comptime Device: type) type {
                         const offset = self.token_offsets[operator_token];
                         self.consume_token();
                         const inner = (try self.try_unary()) orelse {
-                            report_token_error_2(self.eqn,
+                            self.diag().report_token_error_2(
                                 self.token_offsets[self.next_token], "Expected unary expression",
                                 offset, "for reduction OR here"
                             );
@@ -1044,7 +1062,7 @@ pub fn Ast(comptime Device: type) type {
                         const offset = self.token_offsets[operator_token];
                         self.consume_token();
                         const inner = (try self.try_unary()) orelse {
-                            report_token_error_2(self.eqn,
+                            self.diag().report_token_error_2(
                                 self.token_offsets[self.next_token], "Expected unary expression",
                                 offset, "for reduction XOR here"
                             );
@@ -1056,7 +1074,7 @@ pub fn Ast(comptime Device: type) type {
                         const offset = self.token_offsets[operator_token];
                         self.consume_token();
                         const inner = (try self.try_unary()) orelse {
-                            report_token_error_2(self.eqn,
+                            self.diag().report_token_error_2(
                                 self.token_offsets[self.next_token], "Expected unary expression",
                                 offset, "for reduction AND here"
                             );
@@ -1068,7 +1086,7 @@ pub fn Ast(comptime Device: type) type {
                         const offset = self.token_offsets[operator_token];
                         self.consume_token();
                         const inner = (try self.try_unary()) orelse {
-                            report_token_error_2(self.eqn,
+                            self.diag().report_token_error_2(
                                 self.token_offsets[self.next_token], "Expected unary expression",
                                 offset, "for complement here"
                             );
@@ -1082,7 +1100,7 @@ pub fn Ast(comptime Device: type) type {
                         self.consume_token();
                         if (std.mem.eql(u8, builtin, "@pad")) {
                             const inner = (try self.try_unary()) orelse {
-                                report_token_error_2(self.eqn,
+                                self.diag().report_token_error_2(
                                     self.token_offsets[self.next_token], "Expected unary expression",
                                     token_offset, "for builtin here"
                                 );
@@ -1091,7 +1109,7 @@ pub fn Ast(comptime Device: type) type {
                             return try self.create_unary_node(inner, .pad_signal, .{ .token_offset = token_offset });
                         } else if (std.mem.eql(u8, builtin, "@fb")) {
                             const inner = (try self.try_unary()) orelse {
-                                report_token_error_2(self.eqn,
+                                self.diag().report_token_error_2(
                                     self.token_offsets[self.next_token], "Expected unary expression",
                                     token_offset, "for builtin here"
                                 );
@@ -1099,7 +1117,7 @@ pub fn Ast(comptime Device: type) type {
                             };
                             return try self.create_unary_node(inner, .fb_signal, .{ .token_offset = token_offset });
                         } else {
-                            report_token_error(self.eqn, token_offset, "Unrecognized builtin; did you mean @pad or @fb?");
+                            self.diag().report_token_error(token_offset, "Unrecognized builtin; did you mean @pad or @fb?");
                             return error.InvalidEquation;
                         }
                     },
@@ -1150,7 +1168,7 @@ pub fn Ast(comptime Device: type) type {
 
                 while (!self.try_token(.end_extract)) {
                     if (is_mux_definition) {
-                        report_token_error_2(self.eqn,
+                        self.diag().report_token_error_2(
                             self.token_offsets[self.next_token], "Expected closing ']'",
                             self.token_offsets[begin_token], "for mux definition beginning here"
                         );
@@ -1161,7 +1179,7 @@ pub fn Ast(comptime Device: type) type {
                     } else if (self.try_token(.little_endian)) {
                         if (maybe_endianness) |endianness| {
                             if (endianness == .big) {
-                                report_token_error_2(self.eqn,
+                                self.diag().report_token_error_2(
                                     self.token_offsets[self.next_token - 1], "Can't select little-endian mode here",
                                     self.token_offsets[first_endianness_token], "big-endian was previously requested here"
                                 );
@@ -1174,7 +1192,7 @@ pub fn Ast(comptime Device: type) type {
                     } else if (self.try_token(.big_endian)) {
                         if (maybe_endianness) |endianness| {
                             if (endianness == .little) {
-                                report_token_error_2(self.eqn,
+                                self.diag().report_token_error_2(
                                     self.token_offsets[self.next_token - 1], "Can't select big-endian mode here",
                                     self.token_offsets[first_endianness_token], "little-endian was previously requested here"
                                 );
@@ -1185,7 +1203,7 @@ pub fn Ast(comptime Device: type) type {
                             first_endianness_token = self.next_token - 1;
                         }
                     } else if (self.temp_nodes.items.len > initial_temp_nodes_len + 1) {
-                        report_token_error_2(self.eqn,
+                        self.diag().report_token_error_2(
                             self.token_offsets[self.next_token], "Expected bit literal or range, or closing ']'",
                             self.token_offsets[begin_token], "for extraction beginning here"
                         );
@@ -1194,7 +1212,7 @@ pub fn Ast(comptime Device: type) type {
                         try self.temp_nodes.append(self.gpa, selector);
                         is_mux_definition = true;
                     } else {
-                        report_token_error_2(self.eqn,
+                        self.diag().report_token_error_2(
                             self.token_offsets[self.next_token], "Expected bit literal, range, or expression",
                             self.token_offsets[begin_token], "for extraction/mux beginning here"
                         );
@@ -1208,7 +1226,7 @@ pub fn Ast(comptime Device: type) type {
 
                 const children = self.temp_nodes.items[initial_temp_nodes_len..];
                 if (children.len < 2) {
-                    report_token_error_2(self.eqn,
+                    self.diag().report_token_error_2(
                         self.token_offsets[self.next_token - 1], "Expected at least one bit literal, range, or expression",
                         self.token_offsets[begin_token], "for extraction/mux beginning here"
                     );
@@ -1262,7 +1280,7 @@ pub fn Ast(comptime Device: type) type {
 
                 if (maybe_literal) |literal| {
                     return std.math.cast(u6, literal.value) orelse {
-                        report_token_error(self.eqn, token_offset, "Bit index is too large");
+                        self.diag().report_token_error(token_offset, "Bit index is too large");
                         return error.InvalidEquation;
                     };
                 }
@@ -1295,7 +1313,7 @@ pub fn Ast(comptime Device: type) type {
                     } else if (self.names.lookup_signal(text)) |signal| {
                         return try self.create_signal_node(signal, token_offset);
                     } else {
-                        report_token_error(self.eqn, token_offset, "Undefined signal/bus/constant");
+                        self.diag().report_token_error(token_offset, "Undefined signal/bus/constant");
                         return error.InvalidEquation;
                     }
                 }
@@ -1312,8 +1330,8 @@ pub fn Ast(comptime Device: type) type {
                     const text = token_span(self.eqn, token_offset);
                     const lit = Literal.parse(text) catch |err| {
                         switch (err) {
-                            error.Overflow => report_token_error(self.eqn, token_offset, "Literal value overflows bit width"),
-                            error.InvalidCharacter => report_token_error(self.eqn, token_offset, "Invalid literal"),
+                            error.Overflow => self.diag().report_token_error(token_offset, "Literal value overflows bit width"),
+                            error.InvalidCharacter => self.diag().report_token_error(token_offset, "Invalid literal"),
                         }
                         return error.InvalidEquation;
                     };
@@ -1327,7 +1345,7 @@ pub fn Ast(comptime Device: type) type {
                 const begin_token_offset = self.token_offsets[self.next_token];
                 if (self.try_token(.begin_subexpr)) {
                     const inner = (try self.try_sum()) orelse {
-                        report_token_error_2(self.eqn,
+                        self.diag().report_token_error_2(
                             self.token_offsets[self.next_token], "Expected sum expression",
                             begin_token_offset, "for parenthesis here"
                         );
@@ -1335,7 +1353,7 @@ pub fn Ast(comptime Device: type) type {
                     };
                     const end_token_offset = self.token_offsets[self.next_token];
                     if (!self.try_token(.end_subexpr)) {
-                        report_token_error_2(self.eqn,
+                        self.diag().report_token_error_2(
                             self.token_offsets[self.next_token], "Expected ')'",
                             begin_token_offset, "for parenthesized subexpression starting here"
                         );
@@ -1372,7 +1390,7 @@ pub fn Ast(comptime Device: type) type {
                         } else if (self.try_token(.little_endian)) {
                             if (maybe_endianness) |endianness| {
                                 if (endianness == .big) {
-                                    report_token_error_2(self.eqn,
+                                    self.diag().report_token_error_2(
                                         self.token_offsets[self.next_token - 1], "Can't select little-endian mode here",
                                         self.token_offsets[first_endianness_token], "big-endian was previously requested here"
                                     );
@@ -1385,7 +1403,7 @@ pub fn Ast(comptime Device: type) type {
                         } else if (self.try_token(.big_endian)) {
                             if (maybe_endianness) |endianness| {
                                 if (endianness == .little) {
-                                    report_token_error_2(self.eqn,
+                                    self.diag().report_token_error_2(
                                         self.token_offsets[self.next_token - 1], "Can't select big-endian mode here",
                                         self.token_offsets[first_endianness_token], "little-endian was previously requested here"
                                     );
@@ -1397,12 +1415,12 @@ pub fn Ast(comptime Device: type) type {
                             }
                         } else {
                             if (self.temp_nodes.items.len > initial_temp_nodes_len + 1) {
-                                report_token_error_2(self.eqn,
+                                self.diag().report_token_error_2(
                                     self.token_offsets[self.next_token], "Expected sum expression or closing '}'",
                                     begin_token_offset, "for concatenation beginning here"
                                 );
                             } else {
-                                report_token_error_2(self.eqn,
+                                self.diag().report_token_error_2(
                                     self.token_offsets[self.next_token], "Expected sum expression",
                                     begin_token_offset, "for concatenation beginning here"
                                 );
@@ -1418,7 +1436,7 @@ pub fn Ast(comptime Device: type) type {
 
                     const children = self.temp_nodes.items[initial_temp_nodes_len..];
                     if (children.len < 2) {
-                        report_token_error_2(self.eqn,
+                        self.diag().report_token_error_2(
                             self.token_offsets[self.next_token - 1], "Expected at least two items to concatenate",
                             begin_token_offset, "for concatenation beginning here"
                         );
@@ -1581,125 +1599,145 @@ pub fn Ast(comptime Device: type) type {
             }
         };
 
+        pub const Diag = struct {
+            eqn: []const u8,
+            scratch: std.mem.Allocator,
+            slice: std.MultiArrayList(Node).Slice,
 
-        pub fn report_node_error_fmt(gpa: std.mem.Allocator, slice: std.MultiArrayList(Node).Slice, eqn: []const u8, node: Node.ID, comptime format: []const u8, args: anytype) void {
-            var buf: [64]u8 = undefined;
-            var w = std.fs.File.stderr().writer(&buf);
-            w.interface.writeAll(" \n") catch {};
+            pub fn report_node_error_fmt(self: @This(), node: Node.ID, comptime format: []const u8, args: anytype) void {
+                var buffer: [64]u8 = undefined;
+                const stderr = std.debug.lockStderr(&buffer);
+                defer std.debug.unlockStderr();
 
-            const node_index = @intFromEnum(node);
-            const offset = slice.items(.begin_token_offset)[node_index];
-            const end_token_offset = slice.items(.end_token_offset)[node_index];
-            const len = end_token_offset - offset + token_span(eqn, end_token_offset).len;
-            const msg = std.fmt.allocPrint(gpa, format, args) catch return;
-            defer gpa.free(msg);
-            console.print_context(eqn, &.{
-                .{ .offset = offset, .len = len, .note = msg },
-            }, &w.interface, 160, .{}) catch {};
-            w.interface.flush() catch {};
-        }
+                const w = &stderr.file_writer.interface;
+                w.writeAll(" \n") catch {};
 
-        pub fn report_node_error_fmt_2(gpa: std.mem.Allocator, slice: std.MultiArrayList(Node).Slice, eqn: []const u8,
-            node: Node.ID, comptime format: []const u8, args: anytype,
-            node2: Node.ID, comptime format2: []const u8, args2: anytype,
-        ) void {
-            var buf: [64]u8 = undefined;
-            var w = std.fs.File.stderr().writer(&buf);
-            w.interface.writeAll(" \n") catch {};
+                const node_index = @intFromEnum(node);
+                const offset = self.slice.items(.begin_token_offset)[node_index];
+                const end_token_offset = self.slice.items(.end_token_offset)[node_index];
+                const len = end_token_offset - offset + token_span(self.eqn, end_token_offset).len;
+                const msg = std.fmt.allocPrint(self.scratch, format, args) catch return;
+                defer self.scratch.free(msg);
+                console.print_context(self.eqn, &.{
+                    .{ .offset = offset, .len = len, .note = msg },
+                }, w, 160, .{}) catch {};
+                w.flush() catch {};
+            }
 
-            const node_index = @intFromEnum(node);
-            const offset = slice.items(.begin_token_offset)[node_index];
-            const end_token_offset = slice.items(.end_token_offset)[node_index];
-            const len = end_token_offset - offset + token_span(eqn, end_token_offset).len;
-            const msg = std.fmt.allocPrint(gpa, format, args) catch return;
-            defer gpa.free(msg);
+            pub fn report_node_error_fmt_2(self: @This(),
+                node: Node.ID, comptime format: []const u8, args: anytype,
+                node2: Node.ID, comptime format2: []const u8, args2: anytype,
+            ) void {
+                var buffer: [64]u8 = undefined;
+                const stderr = std.debug.lockStderr(&buffer);
+                defer std.debug.unlockStderr();
 
-            const node_index2 = @intFromEnum(node2);
-            const offset2 = slice.items(.begin_token_offset)[node_index2];
-            const end_token_offset2 = slice.items(.end_token_offset)[node_index2];
-            const len2 = end_token_offset2 - offset2 + token_span(eqn, end_token_offset2).len;
-            const msg2 = std.fmt.allocPrint(gpa, format2, args2) catch return;
-            defer gpa.free(msg2);
+                const w = &stderr.file_writer.interface;
+                w.writeAll(" \n") catch {};
 
-            console.print_context(eqn, &.{
-                .{ .offset = offset, .len = len, .note = msg },
-                .{ .offset = offset2, .len = len2, .note = msg2, .style = .{ .fg = .yellow }, .note_style = .{ .fg = .yellow } },
-            }, &w.interface, 160, .{}) catch {};
-            w.interface.flush() catch {};
-        }
+                const node_index = @intFromEnum(node);
+                const offset = self.slice.items(.begin_token_offset)[node_index];
+                const end_token_offset = self.slice.items(.end_token_offset)[node_index];
+                const len = end_token_offset - offset + token_span(self.eqn, end_token_offset).len;
+                const msg = std.fmt.allocPrint(self.scratch, format, args) catch return;
+                defer self.scratch.free(msg);
 
-        pub fn report_node_error_fmt_3(gpa: std.mem.Allocator, slice: std.MultiArrayList(Node).Slice, eqn: []const u8,
-            node: Node.ID, comptime format: []const u8, args: anytype,
-            node2: Node.ID, comptime format2: []const u8, args2: anytype,
-            node3: Node.ID, comptime format3: []const u8, args3: anytype,
-        ) void {
-            var buf: [64]u8 = undefined;
-            var w = std.fs.File.stderr().writer(&buf);
-            w.interface.writeAll(" \n") catch {};
+                const node_index2 = @intFromEnum(node2);
+                const offset2 = self.slice.items(.begin_token_offset)[node_index2];
+                const end_token_offset2 = self.slice.items(.end_token_offset)[node_index2];
+                const len2 = end_token_offset2 - offset2 + token_span(self.eqn, end_token_offset2).len;
+                const msg2 = std.fmt.allocPrint(self.scratch, format2, args2) catch return;
+                defer self.scratch.free(msg2);
 
-            const node_index = @intFromEnum(node);
-            const offset = slice.items(.begin_token_offset)[node_index];
-            const end_token_offset = slice.items(.end_token_offset)[node_index];
-            const len = end_token_offset - offset + token_span(eqn, end_token_offset).len;
-            const msg = std.fmt.allocPrint(gpa, format, args) catch return;
-            defer gpa.free(msg);
+                console.print_context(self.eqn, &.{
+                    .{ .offset = offset, .len = len, .note = msg },
+                    .{ .offset = offset2, .len = len2, .note = msg2, .style = .{ .fg = .yellow }, .note_style = .{ .fg = .yellow } },
+                }, w, 160, .{}) catch {};
+                w.flush() catch {};
+            }
 
-            const node_index2 = @intFromEnum(node2);
-            const offset2 = slice.items(.begin_token_offset)[node_index2];
-            const end_token_offset2 = slice.items(.end_token_offset)[node_index2];
-            const len2 = end_token_offset2 - offset2 + token_span(eqn, end_token_offset2).len;
-            const msg2 = std.fmt.allocPrint(gpa, format2, args2) catch return;
-            defer gpa.free(msg2);
+            pub fn report_node_error_fmt_3(self: @This(),
+                node: Node.ID, comptime format: []const u8, args: anytype,
+                node2: Node.ID, comptime format2: []const u8, args2: anytype,
+                node3: Node.ID, comptime format3: []const u8, args3: anytype,
+            ) void {
+                var buffer: [64]u8 = undefined;
+                const stderr = std.debug.lockStderr(&buffer);
+                defer std.debug.unlockStderr();
 
-            const node_index3 = @intFromEnum(node3);
-            const offset3 = slice.items(.begin_token_offset)[node_index3];
-            const end_token_offset3 = slice.items(.end_token_offset)[node_index3];
-            const len3 = end_token_offset3 - offset3 + token_span(eqn, end_token_offset3).len;
-            const msg3 = std.fmt.allocPrint(gpa, format3, args3) catch return;
-            defer gpa.free(msg3);
+                const w = &stderr.file_writer.interface;
+                w.writeAll(" \n") catch {};
 
-            console.print_context(eqn, &.{
-                .{ .offset = offset, .len = len, .note = msg, .style = .{ .fg = .yellow }, .note_style = .{ .fg = .yellow } },
-                .{ .offset = offset2, .len = len2, .note = msg2 },
-                .{ .offset = offset3, .len = len3, .note = msg3 },
-            }, &w.interface, 160, .{}) catch {};
-            w.interface.flush() catch {};
-        }
+                const node_index = @intFromEnum(node);
+                const offset = self.slice.items(.begin_token_offset)[node_index];
+                const end_token_offset = self.slice.items(.end_token_offset)[node_index];
+                const len = end_token_offset - offset + token_span(self.eqn, end_token_offset).len;
+                const msg = std.fmt.allocPrint(self.scratch, format, args) catch return;
+                defer self.scratch.free(msg);
 
-        pub fn report_token_error(eqn: []const u8, token_offset: u32, msg: []const u8) void {
-            var buf: [64]u8 = undefined;
-            var w = std.fs.File.stderr().writer(&buf);
-            w.interface.writeAll(" \n") catch {};
-            console.print_context(eqn, &.{
-                .{
-                    .offset = token_offset,
-                    .len = token_span(eqn, token_offset).len,
-                    .note = msg,
-                },
-            }, &w.interface, 160, .{}) catch {};
-            w.interface.flush() catch {};
-        }
+                const node_index2 = @intFromEnum(node2);
+                const offset2 = self.slice.items(.begin_token_offset)[node_index2];
+                const end_token_offset2 = self.slice.items(.end_token_offset)[node_index2];
+                const len2 = end_token_offset2 - offset2 + token_span(self.eqn, end_token_offset2).len;
+                const msg2 = std.fmt.allocPrint(self.scratch, format2, args2) catch return;
+                defer self.scratch.free(msg2);
 
-        pub fn report_token_error_2(eqn: []const u8, token_offset: u32, msg: []const u8, note_token_offset: u32, note: []const u8) void {
-            var buf: [64]u8 = undefined;
-            var w = std.fs.File.stderr().writer(&buf);
-            w.interface.writeAll(" \n") catch {};
-            console.print_context(eqn, &.{
-                .{
-                    .offset = token_offset,
-                    .len = token_span(eqn, token_offset).len,
-                    .note = msg,
-                },
-                .{
-                    .offset = note_token_offset,
-                    .len = token_span(eqn, note_token_offset).len,
-                    .note = note,
-                    .style = .{ .fg = .yellow },
-                    .note_style = .{ .fg = .yellow },
-                },
-            }, &w.interface, 160, .{}) catch {};
-            w.interface.flush() catch {};
-        }
+                const node_index3 = @intFromEnum(node3);
+                const offset3 = self.slice.items(.begin_token_offset)[node_index3];
+                const end_token_offset3 = self.slice.items(.end_token_offset)[node_index3];
+                const len3 = end_token_offset3 - offset3 + token_span(self.eqn, end_token_offset3).len;
+                const msg3 = std.fmt.allocPrint(self.scratch, format3, args3) catch return;
+                defer self.scratch.free(msg3);
+
+                console.print_context(self.eqn, &.{
+                    .{ .offset = offset, .len = len, .note = msg, .style = .{ .fg = .yellow }, .note_style = .{ .fg = .yellow } },
+                    .{ .offset = offset2, .len = len2, .note = msg2 },
+                    .{ .offset = offset3, .len = len3, .note = msg3 },
+                }, w, 160, .{}) catch {};
+                w.flush() catch {};
+            }
+
+            pub fn report_token_error(self: @This(), token_offset: u32, msg: []const u8) void {
+                var buffer: [64]u8 = undefined;
+                const stderr = std.debug.lockStderr(&buffer);
+                defer std.debug.unlockStderr();
+
+                const w = &stderr.file_writer.interface;
+                w.writeAll(" \n") catch {};
+                console.print_context(self.eqn, &.{
+                    .{
+                        .offset = token_offset,
+                        .len = token_span(self.eqn, token_offset).len,
+                        .note = msg,
+                    },
+                }, w, 160, .{}) catch {};
+                w.flush() catch {};
+            }
+
+            pub fn report_token_error_2(self: @This(), token_offset: u32, msg: []const u8, note_token_offset: u32, note: []const u8) void {
+                var buffer: [64]u8 = undefined;
+                const stderr = std.debug.lockStderr(&buffer);
+                defer std.debug.unlockStderr();
+
+                const w = &stderr.file_writer.interface;
+                w.writeAll(" \n") catch {};
+                console.print_context(self.eqn, &.{
+                    .{
+                        .offset = token_offset,
+                        .len = token_span(self.eqn, token_offset).len,
+                        .note = msg,
+                    },
+                    .{
+                        .offset = note_token_offset,
+                        .len = token_span(self.eqn, note_token_offset).len,
+                        .note = note,
+                        .style = .{ .fg = .yellow },
+                        .note_style = .{ .fg = .yellow },
+                    },
+                }, w, 160, .{}) catch {};
+                w.flush() catch {};
+            }
+        };
     };
 }
 

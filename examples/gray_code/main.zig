@@ -19,19 +19,17 @@ const signals = struct {
     };
 };
 
-pub fn main() !void {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer arena.deinit();
-
+pub fn main(init: std.process.Init) !void {
     @setEvalBranchQuota(5000);
 
-    var names: Chip.Names = .init(gpa);
-    try names.add_names(signals, .{});
+    var names: Chip.Names = .init(init.gpa);
     defer names.deinit();
 
+    try names.add_names(signals, .{});
+
     var lp: Chip.Logic_Parser = .{
-        .gpa = gpa,
-        .arena = arena.allocator(),
+        .gpa = init.gpa,
+        .arena = init.arena.allocator(),
         .names = &names,
     };
 
@@ -75,19 +73,18 @@ pub fn main() !void {
         }
     }
 
-    const results = try chip.assemble(arena.allocator(), .{});
+    const results = try chip.assemble(init.arena.allocator(), .{});
 
     const design_name = "gray_code";
-    try Chip.write_jed_file(results.jedec, design_name ++ ".jed", .{});
-    try Chip.write_svf_file(results.jedec, design_name ++ ".svf", .{});
-    try Chip.write_report_file(5, results.jedec, design_name ++ ".html", .{
+    try Chip.write_jed_file(init.io, results.jedec, design_name ++ ".jed", .{});
+    try Chip.write_svf_file(init.io, results.jedec, design_name ++ ".svf", .{});
+    try Chip.write_report_file(init.io, results.jedec, design_name ++ ".html", .{
+        .speed_grade = 5,
         .design_name = design_name,
         .errors = results.errors.items,
         .names = &names,
     });
 }
-
-const gpa = std.heap.smp_allocator;
 
 const lc4k = @import("lc4k");
 const std = @import("std");

@@ -460,7 +460,7 @@ pub fn Simulator(comptime Device: type) type {
 
         fn test_print_signals(prefix: []const u8, signals: []const Signal, maybe_names: ?*const Device.Names) void {
             var buf: [2048]u8 = undefined;
-            var w = std.io.Writer.fixed(&buf);
+            var w = std.Io.Writer.fixed(&buf);
 
             w.writeAll(prefix) catch {};
 

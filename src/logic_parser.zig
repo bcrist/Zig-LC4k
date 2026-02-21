@@ -35,21 +35,33 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
 
             if (p.options.debug) {
                 var buf: [64]u8 = undefined;
-                var stderr = std.fs.File.stderr().writer(&buf);
-                try stderr.interface.writeAll("Normalized:\n");
-                try p.ir_data.debug(ir_normalized, 0, false, &stderr.interface);
-                try stderr.interface.writeAll("Optimized:\n");
-                try p.ir_data.debug(ir_optimized, 0, false, &stderr.interface);
-                try stderr.interface.flush();
+                var stderr = std.debug.lockStderr(&buf);
+                defer std.debug.unlockStderr();
+                const w = &stderr.file_writer.interface;
+
+                try w.writeAll("Normalized:\n");
+                try p.ir_data.debug(ir_normalized, 0, false, w);
+                try w.writeAll("Optimized:\n");
+                try p.ir_data.debug(ir_optimized, 0, false, w);
+                try w.flush();
             }
 
             const num_pts = p.ir_data.count_pts(ir_optimized);
             if (num_pts > 1) {
-                Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only 1 is allowed.", .{ num_pts });
+                const diag: Ast(Device).Diag = .{
+                    .eqn = equation,
+                    .scratch = self.gpa,
+                    .slice = p.ast.nodes.slice(),
+                };
+                diag.report_node_error_fmt(p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only 1 is allowed.", .{ num_pts });
+
                 var buf: [64]u8 = undefined;
-                var w = std.fs.File.stderr().writer(&buf);
-                p.ir_data.debug(ir_optimized, 0, false, &w.interface) catch {};
-                w.interface.flush() catch {};
+                var stderr = std.debug.lockStderr(&buf);
+                defer std.debug.unlockStderr();
+                const w = &stderr.file_writer.interface;
+
+                p.ir_data.debug(ir_optimized, 0, false, w) catch {};
+                w.flush() catch {};
                 return error.TooManyProductTerms;
             }
 
@@ -60,6 +72,12 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
             var p = try self.process_single_bit(equation, extra);
             defer p.deinit();
 
+            const diag: Ast(Device).Diag = .{
+                .eqn = equation,
+                .scratch = self.gpa,
+                .slice = p.ast.nodes.slice(),
+            };
+
             if (p.options.polarity) |polarity| switch (polarity) {
                 .positive => {
                     if (p.normalize_and_optimize(p.ir, .{ .iteration_limit = 100_000 })) |result| {
@@ -69,11 +87,11 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                                 .polarity = .positive,
                             };
                         } else {
-                            Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only 1 is allowed.", .{ result.num_pts });
+                            diag.report_node_error_fmt(p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only 1 is allowed.", .{ result.num_pts });
                             return error.TooManyProductTerms;
                         }
                     } else {
-                        Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "Failed to normalize expression.", .{});
+                        diag.report_node_error_fmt(p.ast.root, "Failed to normalize expression.", .{});
                         return error.ExpressionTooComplex;
                     }
                 },
@@ -85,11 +103,11 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                                 .polarity = .negative,
                             };
                         } else {
-                            Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only 1 is allowed.", .{ result.num_pts });
+                            diag.report_node_error_fmt(p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only 1 is allowed.", .{ result.num_pts });
                             return error.TooManyProductTerms;
                         }
                     } else {
-                        Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "Failed to normalize expression.", .{});
+                        diag.report_node_error_fmt(p.ast.root, "Failed to normalize expression.", .{});
                         return error.ExpressionTooComplex;
                     }
                 },
@@ -115,13 +133,13 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                 }
 
                 if (positive == null and negative == null) {
-                    Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "Unable to guess correct polarity for expression; please specify with .{{ .polarity = .positive }} or .{{ .polarity = .negative }}", .{});
+                    diag.report_node_error_fmt(p.ast.root, "Unable to guess correct polarity for expression; please specify with .{{ .polarity = .positive }} or .{{ .polarity = .negative }}", .{});
                     return error.ExpressionTooComplex;
                 } else {
                     var min_num_pts: u32 = std.math.maxInt(u32);
                     if (positive) |result| min_num_pts = @min(min_num_pts, result.num_pts);
                     if (negative) |result| min_num_pts = @min(min_num_pts, result.num_pts);
-                    Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only 1 is allowed.", .{ min_num_pts });
+                    diag.report_node_error_fmt(p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only 1 is allowed.", .{ min_num_pts });
                     return error.TooManyProductTerms;
                 }
             }
@@ -136,14 +154,21 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
             const result = p.normalize_and_optimize(p.ir, .{ .iteration_limit = 100_000 }) orelse return error.ExpressionTooComplex;
             const allocator = self.arena;
             if (result.num_pts > p.options.max_product_terms) {
-                Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only {} are allowed.", .{
+                const diag: Ast(Device).Diag = .{
+                    .eqn = equation,
+                    .scratch = self.gpa,
+                    .slice = p.ast.nodes.slice(),
+                };
+                diag.report_node_error_fmt(p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only {} are allowed.", .{
                     result.num_pts,
                     p.options.max_product_terms,
                 });
                 var buf: [64]u8 = undefined;
-                var w = std.fs.File.stderr().writer(&buf);
-                p.ir_data.debug(result.id, 0, false, &w.interface) catch {};
-                w.interface.flush() catch {};
+                var stderr = std.debug.lockStderr(&buf);
+                defer std.debug.unlockStderr();
+                const w = &stderr.file_writer.interface;
+                p.ir_data.debug(result.id, 0, false, w) catch {};
+                w.flush() catch {};
                 return error.TooManyProductTerms;
             }
             const pts = try allocator.alloc(PT, result.num_pts);
@@ -190,20 +215,32 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                     best_polarity = .negative;
                     maybe_best = negative;
                 } else {
-                    Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "Unable to guess correct polarity for expression; please specify with .{{ .polarity = .positive }} or .{{ .polarity = .negative }}", .{});
+                    const diag: Ast(Device).Diag = .{
+                        .eqn = equation,
+                        .scratch = self.gpa,
+                        .slice = p.ast.nodes.slice(),
+                    };
+                    diag.report_node_error_fmt(p.ast.root, "Unable to guess correct polarity for expression; please specify with .{{ .polarity = .positive }} or .{{ .polarity = .negative }}", .{});
                 }
             }
 
             if (maybe_best) |best| {
                 if (best.num_pts > p.options.max_product_terms) {
-                    Ast(Device).report_node_error_fmt(self.gpa, p.ast.nodes.slice(), equation, p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only {} are allowed.", .{
+                    const diag: Ast(Device).Diag = .{
+                        .eqn = equation,
+                        .scratch = self.gpa,
+                        .slice = p.ast.nodes.slice(),
+                    };
+                    diag.report_node_error_fmt(p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only {} are allowed.", .{
                         best.num_pts,
                         p.options.max_product_terms,
                     });
                     var buf: [64]u8 = undefined;
-                    var w = std.fs.File.stderr().writer(&buf);
-                    p.ir_data.debug(best.id, 0, false, &w.interface) catch {};
-                    w.interface.flush() catch {};
+                    var stderr = std.debug.lockStderr(&buf);
+                    defer std.debug.unlockStderr();
+                    const w = &stderr.file_writer.interface;
+                    p.ir_data.debug(best.id, 0, false, w) catch {};
+                    w.flush() catch {};
                     return error.TooManyProductTerms;
                 }
                 const allocator = self.arena;
@@ -403,21 +440,30 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
             if (maybe_best_ir) |best_ir| {
                 if (options.debug) {
                     var buf: [64]u8 = undefined;
-                    var stderr = std.fs.File.stderr().writer(&buf);
-                    try stderr.interface.print("Best ({t}):\n", .{ best_ir_kind });
-                    try ir_data.debug(best_ir.id, 0, false, &stderr.interface);
-                    try stderr.interface.flush();
+                    var stderr = std.debug.lockStderr(&buf);
+                    defer std.debug.unlockStderr();
+                    const w = &stderr.file_writer.interface;
+                    try w.print("Best ({t}):\n", .{ best_ir_kind });
+                    try ir_data.debug(best_ir.id, 0, false, w);
+                    try w.flush();
                 }
 
                 if (best_ir.num_pts > options.max_product_terms) {
-                    Ast(Device).report_node_error_fmt(self.gpa, ast.nodes.slice(), ast.eqn, ast.root, "After normalization, expression requires {} product terms, but a maximum of only {} are allowed.", .{
+                    const diag: Ast(Device).Diag = .{
+                        .eqn = ast.eqn,
+                        .scratch = self.gpa,
+                        .slice = ast.nodes.slice(),
+                    };
+                    diag.report_node_error_fmt(ast.root, "After normalization, expression requires {} product terms, but a maximum of only {} are allowed.", .{
                         best_ir.num_pts,
                         options.max_product_terms,
                     });
                     var buf: [64]u8 = undefined;
-                    var w = std.fs.File.stderr().writer(&buf);
-                    ir_data.debug(best_ir.id, 0, false, &w.interface) catch {};
-                    w.interface.flush() catch {};
+                    var stderr = std.debug.lockStderr(&buf);
+                    defer std.debug.unlockStderr();
+                    const w = &stderr.file_writer.interface;
+                    ir_data.debug(best_ir.id, 0, false, w) catch {};
+                    w.flush() catch {};
                     return error.TooManyProductTerms;
                 }
 

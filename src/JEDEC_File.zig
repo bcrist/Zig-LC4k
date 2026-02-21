@@ -234,7 +234,7 @@ pub const Write_Options = struct {
     notes: []const u8 = "",
 };
 
-pub fn write(self: JEDEC_File, device_type: device.Type, writer: *std.io.Writer, options: Write_Options) !void {
+pub fn write(self: JEDEC_File, device_type: device.Type, writer: *std.Io.Writer, options: Write_Options) !void {
     var buf: [64]u8 = undefined;
     var checksum_writer = @import("writer.zig").checksummed(writer, @as(u16, 0), &buf);
     const w = &checksum_writer.writer;

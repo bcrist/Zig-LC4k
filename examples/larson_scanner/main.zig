@@ -31,18 +31,15 @@ const signals = struct {
     pub const none = Chip.Signal.mc_C15;
 };
 
-pub fn main() !void {
-    var arena: std.heap.ArenaAllocator = .init(std.heap.page_allocator);
-    defer arena.deinit();
-
-    var names = Chip.Names.init(gpa);
+pub fn main(init: std.process.Init) !void {
+    var names = Chip.Names.init(init.gpa);
+    defer names.deinit();
     @setEvalBranchQuota(10000);
     try names.add_names(signals, .{});
-    defer names.deinit();
 
     var lp: Chip.Logic_Parser = .{
-        .gpa = gpa,
-        .arena = arena.allocator(),
+        .gpa = init.gpa,
+        .arena = init.arena.allocator(),
         .names = &names,
     };
 
@@ -66,8 +63,6 @@ pub fn main() !void {
     none_mc.output.oe = .output_only;
     none_mc.logic = try lp.logic("@fb &~out[31 28 25 22 19 16 15 12 9 6 3 0]", .{});
 
-    @setEvalBranchQuota(10000);
-
     inline for (signals.out, 0..) |out, bit| {
         var mc = chip.mc(out.mc());
         mc.func = .{ .d_ff = .{ .clock = .shared_pt_clock }};
@@ -85,19 +80,18 @@ pub fn main() !void {
         }, extra);
     }
 
-    const results = try chip.assemble(arena.allocator(), .{});
+    const results = try chip.assemble(init.arena.allocator(), .{});
 
     const design_name = "larson_scanner";
-    try Chip.write_jed_file(results.jedec, design_name ++ ".jed", .{});
-    try Chip.write_svf_file(results.jedec, design_name ++ ".svf", .{});
-    try Chip.write_report_file(5, results.jedec, design_name ++ ".html", .{
+    try Chip.write_jed_file(init.io, results.jedec, design_name ++ ".jed", .{});
+    try Chip.write_svf_file(init.io, results.jedec, design_name ++ ".svf", .{});
+    try Chip.write_report_file(init.io, results.jedec, design_name ++ ".html", .{
+        .speed_grade = 5,
         .design_name = design_name,
         .errors = results.errors.items,
         .names = &names,
     });
 }
-
-const gpa = std.heap.smp_allocator;
 
 const lc4k = @import("lc4k");
 const std = @import("std");
