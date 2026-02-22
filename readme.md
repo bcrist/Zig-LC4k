@@ -28,8 +28,9 @@ my_exe.root_module.addImport("lc4k", b.dependency("LC4k", .{}).module("lc4k"));
 To use the library, you first need to construct one of the device configuration structs defined in the `lc4k` module (e.g. `lc4k.LC4032ZE_TQFP48`).  Usually this is done manually, initializing the macrocells and other configuration necessary to define your design, using Zig code as a low-level pseudo-HDL.  Check the examples directory for more details.  You can also load an existing bitstream/JEDEC file, e.g. for reverse engineering:
 
 ```zig
-const bitstream = try lc4k.LC4032ZE_TQFP48.parse_jed_file(io, "path/to/bitstream_file.jed", allocator);
-const results = try lc4k.LC4032ZE_TQFP48.disassemble(allocator, bitstream);
+const Device = lc4k.LC4032ZE_TQFP48);
+const bitstream = try Device.parse_jed_file(io, "path/to/bitstream_file.jed", allocator);
+const results = try Device.disassemble(allocator, bitstream);
 const chip = results.config;
 ```
 
