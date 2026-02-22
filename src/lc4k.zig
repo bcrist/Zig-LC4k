@@ -133,6 +133,11 @@ pub fn Chip_Config(comptime device_type: Device_Type) type {
             return disassembly.disassemble(D, allocator, file);
         }
 
+        pub fn parse_jed_file(io: std.Io, path: []const u8, allocator: std.mem.Allocator) !JEDEC_File {
+            const contents = try std.Io.Dir.cwd().readFileAlloc(io, path, allocator, .limited(1_000_000));
+            defer allocator.free(contents);
+            return try parse_jed(allocator, contents);
+        }
         pub fn parse_jed(allocator: std.mem.Allocator, text: []const u8) !JEDEC_File {
             return JEDEC_File.parse(allocator, D.jedec_dimensions.width(), D.jedec_dimensions.height(), text);
         }
