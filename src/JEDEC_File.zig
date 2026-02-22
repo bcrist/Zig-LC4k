@@ -25,7 +25,7 @@ const JEDEC_Field_Iterator = struct {
 
     fn next(self: *JEDEC_Field_Iterator) !?JEDEC_Field {
         while (std.mem.indexOf(u8, self.remaining, "*")) |end| {
-            const cmd = std.mem.trimLeft(u8, self.remaining[0..end], " \t\r\n");
+            const cmd = std.mem.trimStart(u8, self.remaining[0..end], " \t\r\n");
             self.remaining = self.remaining[end + 1 ..];
             if (cmd.len == 0) {
                 log.warn("Ignoring empty field", .{});
