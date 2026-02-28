@@ -19,31 +19,31 @@ jobs:
       - run: zig build test
       - name: 'Example: 74x181'
         run: zig build
-        working_directory: ./examples/74x181/
+        working-directory: ./examples/74x181/
       - name: 'Example: adder'
         run: zig build
-        working_directory: ./examples/adder/
+        working-directory: ./examples/adder/
       - name: 'Example: compress_18_5'
         run: zig build
-        working_directory: ./examples/compress_18_5/
+        working-directory: ./examples/compress_18_5/
       - name: 'Example: counter1'
         run: zig build
-        working_directory: ./examples/counter1/
+        working-directory: ./examples/counter1/
       - name: 'Example: counter2'
         run: zig build
-        working_directory: ./examples/counter2/
+        working-directory: ./examples/counter2/
       - name: 'Example: demux'
         run: zig build
-        working_directory: ./examples/demux/
+        working-directory: ./examples/demux/
       - name: 'Example: gray_code'
         run: zig build
-        working_directory: ./examples/gray_code/
+        working-directory: ./examples/gray_code/
       - name: 'Example: larson_scanner'
         run: zig build
-        working_directory: ./examples/larson_scanner/
+        working-directory: ./examples/larson_scanner/
       - name: 'Example: priority_encoder'
         run: zig build
-        working_directory: ./examples/priority_encoder/
+        working-directory: ./examples/priority_encoder/
       - name: 'Example: vau'
         run: zig build
-        working_directory: ./examples/vau/
+        working-directory: ./examples/vau/
