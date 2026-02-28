@@ -814,12 +814,14 @@ test "Logic_Parser" {
     };
     try names.add_names(buses, .{});
 
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
     var parser: Device.Logic_Parser = .{
         .gpa = std.testing.allocator,
-        .arena = .init(std.testing.allocator),
+        .arena = arena.allocator(),
         .names = &names,
     };
-    defer parser.arena.deinit();
 
     const pt = try parser.pt("clk0 & clk1 & &~A", .{});
     try std.testing.expectEqualDeep(comptime buses.A[3].when_low().pt()
