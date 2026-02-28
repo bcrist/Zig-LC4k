@@ -138,10 +138,10 @@ pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.de
                             const glb_pt_offset = mc * 5 + pt_index;
                             if (next_sum_pt < sp.sum.len) {
                                 const pt = sp.sum[next_sum_pt];
-                                try write_pt_fuses(Device, allocator, &results, glb, glb_pt_offset, &gi_routing, pt, options);
+                                try write_pt_fuses(Device, &results, glb, glb_pt_offset, &gi_routing, pt, options);
                                 next_sum_pt += 1;
                             } else if (!lc4k.is_sum_always(sp.sum)) {
-                                try write_pt_fuses(Device, allocator, &results, glb, glb_pt_offset, &gi_routing, Product_Term(Device.Signal).never(), options);
+                                try write_pt_fuses(Device, &results, glb, glb_pt_offset, &gi_routing, Product_Term(Device.Signal).never(), options);
                             }
                         }
                         if (next_sum_pt < sp.sum.len and !lc4k.is_sum_always(sp.sum)) {
