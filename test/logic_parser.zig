@@ -233,7 +233,7 @@ fn test_parse(comptime Device: type, names: *const Device.Names, eqn: []const u8
     var ast = try lp.Ast(Device).parse(std.testing.allocator, names, eqn);
     defer ast.deinit();
 
-    var temp = std.io.Writer.Allocating.init(std.testing.allocator);
+    var temp = std.Io.Writer.Allocating.init(std.testing.allocator);
     defer temp.deinit();
 
     try ast.debug(&temp.writer);
@@ -434,7 +434,7 @@ fn test_bit_widths(comptime Device: type, names: *const Device.Names, eqn: []con
 
     _ = try ast.infer_and_check_max_bit(.{});
 
-    var temp = std.io.Writer.Allocating.init(std.testing.allocator);
+    var temp = std.Io.Writer.Allocating.init(std.testing.allocator);
     defer temp.deinit();
 
     try ast.debug(&temp.writer);
@@ -653,7 +653,7 @@ test "build IR" {
         \\
     );
 
-    try test_build_ir(Device, &names, "io_A0 + io_A1 | io_A2 ^ io_A3 ^ io_A4 | io_A5 + io_A6 ^ io_A7", 0, .{},
+    try test_build_ir(Device, &names, "io_A0 + io_A1 | io_A2 ^ io_A3 ^ io_A4 | io_A5 + io_A6 ^ io_A7", 0, .{ .max_xor_depth = 1 },
         \\xor:
         \\   [0] signal 17
         \\   [1] sum:
@@ -735,8 +735,8 @@ test "build IR" {
         \\   [1] product:
         \\      [0] complement: signal 3
         \\      [1] complement: signal 2
-        \\      [2] complement: signal 0
-        \\      [3] complement: signal 1
+        \\      [2] complement: signal 1
+        \\      [3] complement: signal 0
         \\
     );
 
@@ -786,7 +786,7 @@ fn test_build_ir(comptime Device: type, names: *const Device.Names, eqn: []const
         ir_id = try ir_data.normalize(ir_id, options);
     }
 
-    var temp = std.io.Writer.Allocating.init(std.testing.allocator);
+    var temp = std.Io.Writer.Allocating.init(std.testing.allocator);
     defer temp.deinit();
 
     try ir_data.debug(ir_id, 0, false, &temp.writer);
@@ -814,7 +814,7 @@ test "Logic_Parser" {
     };
     try names.add_names(buses, .{});
 
-    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    var arena: std.heap.ArenaAllocator = .init(std.testing.allocator);
     defer arena.deinit();
 
     var parser: Device.Logic_Parser = .{
@@ -904,8 +904,8 @@ test "Logic_Parser" {
     try std.testing.expectEqualDeep(comptime lc4k.Sum_With_Polarity(Signal) {
         .sum = &.{
             Signal.clk1.when_low().pt().and_factor(Signal.clk0.when_low()),
-            Signal.clk2.when_high().pt().and_factor(Signal.clk0.when_low()),
             Signal.clk3.when_high().pt().and_factor(Signal.clk0.when_low()),
+            Signal.clk2.when_high().pt().and_factor(Signal.clk0.when_low()),
             Signal.clk3.when_high().pt().and_factor(Signal.clk2.when_low()),
             Signal.clk3.when_low().pt().and_factor(Signal.clk2.when_high()).and_factor(Signal.clk1.when_high()),
         },
@@ -926,8 +926,8 @@ test "Logic_Parser" {
     try std.testing.expectEqualDeep(comptime lc4k.Macrocell_Logic(Signal) { .sum = .{
         .sum = &.{
             Signal.clk1.when_low().pt().and_factor(Signal.clk0.when_low()),
-            Signal.clk2.when_high().pt().and_factor(Signal.clk0.when_low()),
             Signal.clk3.when_high().pt().and_factor(Signal.clk0.when_low()),
+            Signal.clk2.when_high().pt().and_factor(Signal.clk0.when_low()),
             Signal.clk3.when_high().pt().and_factor(Signal.clk2.when_low()),
             Signal.clk3.when_low().pt().and_factor(Signal.clk2.when_high()).and_factor(Signal.clk1.when_high()),
         },
