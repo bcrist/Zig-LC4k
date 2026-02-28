@@ -8,10 +8,36 @@ pub const Assembly_Options = struct {
 pub const Assembly_Results = struct {
     jedec: JEDEC_File,
     errors: std.ArrayList(Config_Error),
+    errors_alloc: std.mem.Allocator, // use when appending to errors
     error_arena: std.heap.ArenaAllocator, // used to store dynamically allocated error messages
     gi_routing_time_ns: u64,
     cluster_routing_time_ns: u64,
     total_time_ns: u64,
+
+    pub fn add_error(self: *Assembly_Results, err: Config_Error) !void {
+        try self.errors.append(self.errors_alloc, err);
+    }
+
+    pub const Fmt_Error_Context = struct {
+        fuse: ?lc4k.Fuse = null,
+        gi: ?lc4k.GI_Index = null,
+        glb: ?lc4k.GLB_Index = null,
+        mc: ?lc4k.MC_Index = null,
+        signal_ordinal: ?u16 = null,
+    };
+
+    pub fn fmt_error(self: *Assembly_Results, comptime format: []const u8, args: anytype, err: anyerror, context: Fmt_Error_Context) !void {
+        const msg = try std.fmt.allocPrint(self.error_arena.allocator(), format, args);
+        try self.add_error(.{
+            .err = err,
+            .details = msg,
+            .fuse = context.fuse,
+            .gi = context.gi,
+            .glb = context.glb,
+            .mc = context.mc,
+            .signal_ordinal = context.signal_ordinal,
+        });
+    }
 };
 
 pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.device_type), allocator: std.mem.Allocator, options: Assembly_Options) !Assembly_Results {
@@ -22,6 +48,7 @@ pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.de
             .data = try JEDEC_Data.init_full(allocator, Device.jedec_dimensions),
         },
         .errors = .empty,
+        .errors_alloc = allocator,
         .error_arena = .init(allocator),
         .gi_routing_time_ns = 0,
         .cluster_routing_time_ns = 0,
@@ -35,29 +62,29 @@ pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.de
         const glb: lc4k.GLB_Index = @intCast(glb_usize);
         // Compile list of signals needed in this GLB:
         var gi_routing: [Device.num_gis_per_glb]?Device.Signal = @splat(null);
-        try add_signals_from_pt(Device, allocator, &results, glb, &gi_routing, glb_config.shared_pt_init.pt);
-        try add_signals_from_pt(Device, allocator, &results, glb, &gi_routing, glb_config.shared_pt_clock.pt);
-        try add_signals_from_pt(Device, allocator, &results, glb, &gi_routing, glb_config.shared_pt_enable);
+        try add_signals_from_pt(Device, &results, glb, &gi_routing, glb_config.shared_pt_init.pt);
+        try add_signals_from_pt(Device, &results, glb, &gi_routing, glb_config.shared_pt_clock.pt);
+        try add_signals_from_pt(Device, &results, glb, &gi_routing, glb_config.shared_pt_enable);
 
         for (glb_config.mc) |mc_config| {
             switch (mc_config.logic) {
                 .sum => |sp| {
                     for (sp.sum) |pt| {
-                        try add_signals_from_pt(Device, allocator, &results, glb, &gi_routing, pt);
+                        try add_signals_from_pt(Device, &results, glb, &gi_routing, pt);
                     }
                 },
                 .pt0 => |ptp| {
-                    try add_signals_from_pt(Device, allocator, &results, glb, &gi_routing, ptp.pt);
+                    try add_signals_from_pt(Device, &results, glb, &gi_routing, ptp.pt);
                 },
                 .sum_xor_pt0 => |sxpt| {
-                    try add_signals_from_pt(Device, allocator, &results, glb, &gi_routing, sxpt.pt0);
+                    try add_signals_from_pt(Device, &results, glb, &gi_routing, sxpt.pt0);
                     for (sxpt.sum) |pt| {
-                        try add_signals_from_pt(Device, allocator, &results, glb, &gi_routing, pt);
+                        try add_signals_from_pt(Device, &results, glb, &gi_routing, pt);
                     }
                 },
                 .sum_xor_input_buffer => |sum| {
                     for (sum) |pt| {
-                        try add_signals_from_pt(Device, allocator, &results, glb, &gi_routing, pt);
+                        try add_signals_from_pt(Device, &results, glb, &gi_routing, pt);
                     }
                 },
                 .input_buffer => {},
@@ -65,14 +92,14 @@ pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.de
             var special_pt: usize = 0;
             while (special_pt < 5) : (special_pt += 1) {
                 if (get_special_pt(Device, mc_config, special_pt)) |pt| {
-                    try add_signals_from_pt(Device, allocator, &results, glb, &gi_routing, pt);
+                    try add_signals_from_pt(Device, &results, glb, &gi_routing, pt);
                 }
             }
             if (Device.family != .zero_power_enhanced) {
                 switch (mc_config.output.routing) {
                     .same_as_oe, .self => {},
                     .five_pt_fast_bypass => |sp| for (sp.sum) |pt| {
-                        try add_signals_from_pt(Device, allocator, &results, glb, &gi_routing, pt);
+                        try add_signals_from_pt(Device, &results, glb, &gi_routing, pt);
                     },
                 }
             }
@@ -80,7 +107,7 @@ pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.de
 
         // Route signals to specific GI fuses:
         const gi_routing_begin = std.Io.Clock.awake.now(io);
-        gi_routing = try routing.route_generic_inputs(Device, &gi_routing, glb_config.forced_gi_routing, rnd, @intCast(glb), allocator, &results, options.max_gi_routing_attempts_per_signal);
+        gi_routing = try routing.route_generic_inputs(Device, &gi_routing, glb_config.forced_gi_routing, rnd, @intCast(glb), &results, options.max_gi_routing_attempts_per_signal);
         for (gi_routing, 0..) |maybe_signal, gi| if (maybe_signal) |signal| {
             const option_index = std.mem.indexOfScalar(Device.Signal, &Device.gi_options[gi], signal).?;
             const range = Device.get_gi_range(glb, gi);
@@ -93,9 +120,8 @@ pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.de
 
         // Assign sum PTs to clusters to MCs and program routing fuses
         const cluster_routing_begin = std.Io.Clock.awake.now(io);
-        var router = routing.Cluster_Router.init(allocator, Device, @intCast(glb), glb_config, &results);
-        defer router.deinit();
-        var cluster_routing = try router.route(options.max_cluster_routing_attempts_per_glb);
+        var router = routing.Cluster_Router.init(Device, @intCast(glb), glb_config, &results);
+        var cluster_routing = try router.route(allocator, options.max_cluster_routing_attempts_per_glb);
         const cluster_routing_end = std.Io.Clock.awake.now(io);
         results.cluster_routing_time_ns += @intCast(cluster_routing_begin.durationTo(cluster_routing_end).toNanoseconds());
 
@@ -119,13 +145,11 @@ pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.de
                             }
                         }
                         if (next_sum_pt < sp.sum.len and !lc4k.is_sum_always(sp.sum)) {
-                            const msg = try std.fmt.allocPrint(results.error_arena.allocator(), "{} sum PTs were configured, but only {} PTs are available for fast bypass mode", .{ sp.sum.len, next_sum_pt });
-                            try results.errors.append(allocator, .{
-                                .err = error.Too_Many_Sum_PTs,
-                                .details = msg,
-                                .glb = @intCast(glb),
-                                .mc = @intCast(mc),
-                            });
+                            try results.fmt_error("{} sum PTs were configured, but only {} PTs are available for fast bypass mode",
+                                .{ sp.sum.len, next_sum_pt }, error.Too_Many_Sum_PTs, .{
+                                    .glb = @intCast(glb),
+                                    .mc = @intCast(mc),
+                                });
                         }
                     },
                 }
@@ -142,17 +166,14 @@ pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.de
                 while (pt_iter.next()) |glb_pt_offset| {
                     if (next_sum_pt < sum_pts.len) {
                         const pt = sum_pts[next_sum_pt];
-                        try write_pt_fuses(Device, allocator, &results, glb, glb_pt_offset, &gi_routing, pt, options);
+                        try write_pt_fuses(Device, &results, glb, glb_pt_offset, &gi_routing, pt, options);
                         next_sum_pt += 1;
                     } else if (!lc4k.is_sum_always(sum_pts)) {
-                        try write_pt_fuses(Device, allocator, &results, glb, glb_pt_offset, &gi_routing, Product_Term(Device.Signal).never(), options);
+                        try write_pt_fuses(Device, &results, glb, glb_pt_offset, &gi_routing, Product_Term(Device.Signal).never(), options);
                     }
                 }
                 if (next_sum_pt < sum_pts.len and !lc4k.is_sum_always(sum_pts)) {
-                    const msg = try std.fmt.allocPrint(results.error_arena.allocator(), "{} sum PTs were configured, but only {} PTs were routed to this macrocell", .{ sum_pts.len, next_sum_pt });
-                    try results.errors.append(allocator, .{
-                        .err = error.Too_Many_Sum_PTs,
-                        .details = msg,
+                    try results.fmt_error("{} sum PTs were configured, but only {} PTs were routed to this macrocell", .{ sum_pts.len, next_sum_pt }, error.Too_Many_Sum_PTs, .{
                         .glb = @intCast(glb),
                         .mc = @intCast(mc),
                     });
@@ -162,14 +183,14 @@ pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.de
             var special_pt: usize = 0;
             while (special_pt < 5) : (special_pt += 1) {
                 if (get_special_pt(Device, mc_config, special_pt)) |pt| {
-                    try write_pt_fuses(Device, allocator, &results, glb, mc * 5 + special_pt, &gi_routing, pt, options);
+                    try write_pt_fuses(Device, &results, glb, mc * 5 + special_pt, &gi_routing, pt, options);
                 }
             }
         }
 
-        try write_pt_fuses(Device, allocator, &results, glb, 80, &gi_routing, glb_config.shared_pt_init.pt, options);
-        try write_pt_fuses(Device, allocator, &results, glb, 81, &gi_routing, glb_config.shared_pt_clock.pt, options);
-        try write_pt_fuses(Device, allocator, &results, glb, 82, &gi_routing, glb_config.shared_pt_enable, options);
+        try write_pt_fuses(Device, &results, glb, 80, &gi_routing, glb_config.shared_pt_init.pt, options);
+        try write_pt_fuses(Device, &results, glb, 81, &gi_routing, glb_config.shared_pt_clock.pt, options);
+        try write_pt_fuses(Device, &results, glb, 82, &gi_routing, glb_config.shared_pt_enable, options);
 
         // Program MC-slice configuration fuses (Replace default/unset parameters with the defaults)
         for (glb_config.mc, 0..) |mc_config, mc| {
@@ -267,7 +288,7 @@ pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.de
             if (fuses.get_output_routing_range(Device, mcref)) |range| {
                 const oe_routing = mc_config.output.output_routing();
                 const relative = oe_routing.to_relative(mcref) orelse rel: {
-                    try results.errors.append(allocator, .{
+                    try results.add_error(.{
                         .err = error.Invalid_Output_Routing,
                         .details = "Invalid target for ORM routing; target signal should be a macrocell feedback signal in the same GLB with a relative offset of +0 to +7",
                         .glb = mcref.glb,
@@ -282,7 +303,7 @@ pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.de
                     .from_orm_active_high, .from_orm_active_low => {
                         const absolute: u4 = @truncate(mcref.mc + relative);
                         if (glb_config.mc[absolute].pt4_oe == null) {
-                            try results.errors.append(allocator, .{
+                            try results.add_error(.{
                                 .err = error.PT_OE_Not_Configured,
                                 .details = "IO uses PT4 for OE, but it has not been configured",
                                 .glb = @intCast(glb),
@@ -392,7 +413,7 @@ pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.de
     return results;
 }
 
-fn add_signals_from_pt(comptime Device: type, allocator: std.mem.Allocator, results: *Assembly_Results, glb: lc4k.GLB_Index, gi_signals: *[Device.num_gis_per_glb]?Device.Signal, pt: lc4k.Product_Term(Device.Signal)) !void {
+fn add_signals_from_pt(comptime Device: type, results: *Assembly_Results, glb: lc4k.GLB_Index, gi_signals: *[Device.num_gis_per_glb]?Device.Signal, pt: lc4k.Product_Term(Device.Signal)) !void {
     for (pt.factors) |factor| switch (factor) {
         .always, .never => {},
         .when_high, .when_low => |signal| {
@@ -408,7 +429,7 @@ fn add_signals_from_pt(comptime Device: type, allocator: std.mem.Allocator, resu
                 for (results.errors.items) |err| {
                     if (err.err == error.TooManySignalsInGLB and err.glb.? == glb and err.signal_ordinal.? == signal_ordinal) return;
                 }
-                try results.errors.append(allocator, .{
+                try results.add_error(.{
                     .details = "Signal could not be routed to this GLB because every GI has been used already",
                     .err = error.TooManySignalsInGLB,
                     .glb = glb,
@@ -499,7 +520,7 @@ fn write_dedicated_input_fuses(comptime Device: type, data: *JEDEC_Data, pin_inf
     }
 }
 
-fn write_pt_fuses(comptime Device: type, allocator: std.mem.Allocator, results: *Assembly_Results, glb: usize, glb_pt_offset: usize, gi_signals: *[Device.num_gis_per_glb]?Device.Signal, pt: Product_Term(Device.Signal), options: Assembly_Options) !void {
+fn write_pt_fuses(comptime Device: type, results: *Assembly_Results, glb: usize, glb_pt_offset: usize, gi_signals: *[Device.num_gis_per_glb]?Device.Signal, pt: Product_Term(Device.Signal), options: Assembly_Options) !void {
     if (pt.is_always()) return;
 
     const range = fuses.get_pt_range(Device, glb, glb_pt_offset);
@@ -516,7 +537,7 @@ fn write_pt_fuses(comptime Device: type, allocator: std.mem.Allocator, results: 
                     }
                 }
             } else {
-                try results.errors.append(allocator, .{
+                try results.add_error(.{
                     .err = error.Signal_Not_Routed,
                     .details = "PT uses signal that isn't assigned to a GI in this GLB",
                     .glb = @intCast(glb),

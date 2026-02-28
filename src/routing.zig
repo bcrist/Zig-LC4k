@@ -1,11 +1,11 @@
-pub fn route_generic_inputs(comptime Device: type, signals_to_route: []?Device.Signal, forced_gi_routing: [Device.num_gis_per_glb]?Device.Signal, rnd: std.Random, glb: lc4k.GLB_Index, allocator: std.mem.Allocator, results: *assembly.Assembly_Results, max_attempts: usize) ![Device.num_gis_per_glb]?Device.Signal {
+pub fn route_generic_inputs(comptime Device: type, signals_to_route: []?Device.Signal, forced_gi_routing: [Device.num_gis_per_glb]?Device.Signal, rnd: std.Random, glb: lc4k.GLB_Index, results: *assembly.Assembly_Results, max_attempts: usize) ![Device.num_gis_per_glb]?Device.Signal {
     var routed_signals: std.EnumSet(Device.Signal) = .initEmpty();
 
     var forced = forced_gi_routing;
     
     for (0.., forced_gi_routing) |gi, maybe_signal| if (maybe_signal) |signal| {
         if (routed_signals.contains(signal)) {
-            try results.errors.append(allocator, .{
+            try results.add_error(.{
                 .err = error.Invalid_GI_Routing,
                 .details = "Signal appears in multiple forced GI slots",
                 .glb = glb,
@@ -17,7 +17,7 @@ pub fn route_generic_inputs(comptime Device: type, signals_to_route: []?Device.S
         }
 
         if (std.mem.indexOfScalar(Device.Signal, &Device.gi_options[gi], signal) == null) {
-            try results.errors.append(allocator, .{
+            try results.add_error(.{
                 .err = error.Invalid_GI_Routing,
                 .details = "Attempted to force signal into a GI slot that it is not allowed in",
                 .glb = glb,
@@ -64,7 +64,7 @@ pub fn route_generic_inputs(comptime Device: type, signals_to_route: []?Device.S
             }
             break;
         } else {
-            try results.errors.append(allocator, .{
+            try results.add_error(.{
                 .err = error.GI_Routing_Failed,
                 .details = "Could not find available GI for signal",
                 .glb = glb,
@@ -82,14 +82,9 @@ pub const Cluster_Router = struct {
     sum_size: [16]u8,
     forced_cluster_routing: [16]?Cluster_Routing,
     forced_wide_routing: [16]?Wide_Routing,
-
-    allocator: std.mem.Allocator,
-    open_heap: std.PriorityQueue(Compact_Routing_Data, *Cluster_Router, compare_priority),
-    open_set: std.AutoHashMapUnmanaged(u48, void),
-    closed_set: std.AutoHashMapUnmanaged(u48, void),
     results: ?*assembly.Assembly_Results,
 
-    pub fn init(allocator: std.mem.Allocator, comptime Device: type, glb: lc4k.GLB_Index, glb_config: lc4k.GLB_Config(Device), results: ?*assembly.Assembly_Results) Cluster_Router {
+    pub fn init(comptime Device: type, glb: lc4k.GLB_Index, glb_config: lc4k.GLB_Config(Device), results: ?*assembly.Assembly_Results) Cluster_Router {
         std.debug.assert(Device.num_mcs_per_glb == 16);
 
         var self = Cluster_Router {
@@ -98,13 +93,8 @@ pub const Cluster_Router = struct {
             .sum_size = @splat(0),
             .forced_cluster_routing = @splat(null),
             .forced_wide_routing = @splat(null),
-            .allocator = allocator,
-            .open_heap = undefined,
-            .open_set = .empty,
-            .closed_set = .empty,
             .results = results,
         };
-        self.open_heap = std.PriorityQueue(Compact_Routing_Data, *Cluster_Router, compare_priority).init(allocator, &self);
 
         for (glb_config.mc, 0..) |mc_config, mc| {
             var available: u8 = 0;
@@ -148,23 +138,26 @@ pub const Cluster_Router = struct {
         return self;
     }
 
-    pub fn deinit(self: *Cluster_Router) void {
-        self.open_heap.deinit();
-        self.open_set.deinit(self.allocator);
-        self.closed_set.deinit(self.allocator);
-    }
-
     fn compare_priority(self: *Cluster_Router, a: Compact_Routing_Data, b: Compact_Routing_Data) std.math.Order {
         const a_score = a.compute_score(self.cluster_size, self.sum_size).weighted;
         const b_score = b.compute_score(self.cluster_size, self.sum_size).weighted;
         return std.math.order(a_score, b_score); // min heap
     }
 
-    pub fn route(self: *Cluster_Router, max_attempts: usize) !Routing_Data {
+    pub fn route(self: *Cluster_Router, scratch: std.mem.Allocator, max_attempts: usize) !Routing_Data {
+        var open_heap: std.PriorityQueue(Compact_Routing_Data, *Cluster_Router, compare_priority) = .initContext(self);
+        defer open_heap.deinit(scratch);
+
+        var open_set: std.AutoHashMapUnmanaged(u48, void) = .empty;
+        defer open_set.deinit(scratch);
+
+        var closed_set: std.AutoHashMapUnmanaged(u48, void) = .empty;
+        defer closed_set.deinit(scratch);
+
         for (self.sum_size, 0..) |sum_size, mc| if (sum_size > 0) {
             self.mark_forced_wide_routing(mc, .self) catch |err| {
                 if (self.results) |results| {
-                    try results.errors.append(self.allocator, .{
+                    try results.add_error(.{
                         .err = err,
                         .details = "Cluster must be routed to its own MC since it uses sum PTs",
                         .glb = self.glb,
@@ -175,9 +168,7 @@ pub const Cluster_Router = struct {
 
             if (sum_size > 16 * 5) {
                 if (self.results) |results| {
-                    try results.errors.append(self.allocator, .{
-                        .err = error.Too_Many_PTs,
-                        .details = try std.fmt.allocPrint(results.error_arena.allocator(), "Sum wants {} PTs, but each GLB contains only {}", .{ sum_size, 16 * 5 }),
+                    try results.fmt_error("Sum wants {} PTs, but each GLB contains only {}", .{ sum_size, 16 * 5 }, error.Too_Many_PTs, .{
                         .glb = self.glb,
                         .mc = @intCast(mc),
                     });
@@ -190,9 +181,7 @@ pub const Cluster_Router = struct {
             while (max_pts < sum_size) : (next_ca = get_next_ca(next_ca)) {
                 if (next_ca == mc) {
                     if (self.results) |results| {
-                        try results.errors.append(self.allocator, .{
-                            .err = error.Too_Many_PTs,
-                            .details = try std.fmt.allocPrint(results.error_arena.allocator(), "Sum wants {} PTs, but cluster routing can only provide up to {}", .{ sum_size, max_pts }),
+                        try results.fmt_error("Sum wants {} PTs, but cluster routing can only provide up to {}", .{ sum_size, max_pts }, error.Too_Many_PTs, .{
                             .glb = self.glb,
                             .mc = @intCast(mc),
                         });
@@ -201,9 +190,7 @@ pub const Cluster_Router = struct {
                 } else {
                     self.mark_forced_wide_routing(next_ca, .self_plus_four) catch {
                         if (self.results) |results| {
-                            try results.errors.append(self.allocator, .{
-                                .err = error.Too_Many_PTs,
-                                .details = try std.fmt.allocPrint(results.error_arena.allocator(), "Sum wants {} PTs, but cluster routing can only provide up to {}", .{ sum_size, max_pts }),
+                            try results.fmt_error("Sum wants {} PTs, but cluster routing can only provide up to {}", .{ sum_size, max_pts }, error.Too_Many_PTs, .{
                                 .glb = self.glb,
                                 .mc = @intCast(mc),
                             });
@@ -272,15 +259,15 @@ pub const Cluster_Router = struct {
 
         initial_routing = self.fix_overprovisioning(initial_routing);
 
-        try self.open_set.put(self.allocator, @bitCast(initial_routing), {});
-        try self.open_heap.add(initial_routing);
+        try open_set.put(scratch, @bitCast(initial_routing), {});
+        try open_heap.push(scratch, initial_routing);
 
         // in case we can't find a successful routing, keep track of the closest we got
         var best_routing: Compact_Routing_Data = undefined;
         var best_score: Routing_Score = .max;
 
         var attempt_number: usize = 0;
-        while (self.open_heap.removeOrNull()) |routing| {
+        while (open_heap.pop()) |routing| {
             attempt_number += 1;
 
             const score = routing.compute_score(self.cluster_size, self.sum_size);
@@ -307,9 +294,9 @@ pub const Cluster_Router = struct {
                                 var new_routing = routing;
                                 new_routing.set_cluster_routing(cluster, cluster_routing);
                                 const new_score = new_routing.compute_score(self.cluster_size, self.sum_size);
-                                if (new_score.success <= score.success and !self.closed_set.contains(@bitCast(new_routing))) {
-                                    try self.open_set.put(self.allocator, @bitCast(new_routing), {});
-                                    try self.open_heap.add(new_routing);
+                                if (new_score.success <= score.success and !closed_set.contains(@bitCast(new_routing))) {
+                                    try open_set.put(scratch, @bitCast(new_routing), {});
+                                    try open_heap.push(scratch, new_routing);
                                 }
                             }
                         }
@@ -324,24 +311,24 @@ pub const Cluster_Router = struct {
                             var new_routing = routing;
                             new_routing.set_wide_routing(ca, wide_routing);
                             const new_score = new_routing.compute_score(self.cluster_size, self.sum_size);
-                            if (new_score.success <= score.success and !self.closed_set.contains(@bitCast(new_routing))) {
-                                try self.open_set.put(self.allocator, @bitCast(new_routing), {});
-                                try self.open_heap.add(new_routing);
+                            if (new_score.success <= score.success and !closed_set.contains(@bitCast(new_routing))) {
+                                try open_set.put(scratch, @bitCast(new_routing), {});
+                                try open_heap.push(scratch, new_routing);
                             }
                         }
                     }
                 }
             };
 
-            try self.closed_set.put(self.allocator, @bitCast(routing), {});
-            _ = self.open_set.remove(@bitCast(routing));
+            try closed_set.put(scratch, @bitCast(routing), {});
+            _ = open_set.remove(@bitCast(routing));
 
             if (attempt_number >= max_attempts) break;
         }
 
         if (best_score.success > 0) {
             if (self.results) |results| {
-                try results.errors.append(self.allocator, .{
+                try results.add_error(.{
                     .err = error.Cluster_Routing_Failed,
                     .details = "Failed to find a cluster routing that allocates sufficient PTs to all MCs",
                     .glb = @intCast(self.glb),
