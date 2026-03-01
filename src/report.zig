@@ -5,10 +5,10 @@ pub fn Write_Options(comptime Device: type) type {
         speed_grade: usize = 0,
         notes: []const u8 = "",
         errors: []const Config_Error = &[_]Config_Error{},
-        configuration_time_ns: ?u64 = null,
-        gi_routing_time_ns: ?u64 = null,
-        assembly_time_ns: ?u64 = null,
-        cluster_routing_time_ns: ?u64 = null,
+        configuration_time: ?std.Io.Duration = null,
+        gi_routing_time: ?std.Io.Duration = null,
+        assembly_time: ?std.Io.Duration = null,
+        cluster_routing_time: ?std.Io.Duration = null,
         names: ?*const Device.Names = null,
         skip_timing: bool = false,
 
@@ -451,28 +451,28 @@ pub fn write(comptime Device: type, file: JEDEC_File, temp_gpa: std.mem.Allocato
     try write_summary_line(writer, "Macrocells Used", data.num_mcs_used, Device.num_glbs * Device.num_mcs_per_glb);
     try write_summary_line(writer, "Registers Used", data.num_registers_used, Device.num_glbs * Device.num_mcs_per_glb);
 
-    if (options.configuration_time_ns) |ns| {
+    if (options.configuration_time) |duration| {
         try writer.writeAll("<tr>");
         try writer.writeAll("<th>Configuration Time</th>");
-        try writer.print("<td>{D}</td>", .{ ns });
+        try writer.print("<td>{f}</td>", .{ duration });
         try writer.writeAll("</tr>\n");
     }
-    if (options.assembly_time_ns) |ns| {
+    if (options.assembly_time) |duration| {
         try writer.writeAll("<tr>");
         try writer.writeAll("<th>Total Assembly Time</th>");
-        try writer.print("<td>{D}</td>", .{ ns });
+        try writer.print("<td>{f}</td>", .{ duration });
         try writer.writeAll("</tr>\n");
     }
-    if (options.gi_routing_time_ns) |ns| {
+    if (options.gi_routing_time) |duration| {
         try writer.writeAll("<tr>");
         try writer.writeAll("<th>GI Routing Time</th>");
-        try writer.print("<td>{D}</td>", .{ ns });
+        try writer.print("<td>{f}</td>", .{ duration });
         try writer.writeAll("</tr>\n");
     }
-    if (options.cluster_routing_time_ns) |ns| {
+    if (options.cluster_routing_time) |duration| {
         try writer.writeAll("<tr>");
         try writer.writeAll("<th>Cluster Routing Time</th>");
-        try writer.print("<td>{D}</td>", .{ ns });
+        try writer.print("<td>{f}</td>", .{ duration });
         try writer.writeAll("</tr>\n");
     }
 

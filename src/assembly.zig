@@ -10,9 +10,9 @@ pub const Assembly_Results = struct {
     errors: std.ArrayList(Config_Error),
     errors_alloc: std.mem.Allocator, // use when appending to errors
     error_arena: std.heap.ArenaAllocator, // used to store dynamically allocated error messages
-    gi_routing_time_ns: u64,
-    cluster_routing_time_ns: u64,
-    total_time_ns: u64,
+    gi_routing_time: std.Io.Duration,
+    cluster_routing_time: std.Io.Duration,
+    total_time: std.Io.Duration,
 
     pub fn add_error(self: *Assembly_Results, err: Config_Error) !void {
         try self.errors.append(self.errors_alloc, err);
@@ -50,9 +50,9 @@ pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.de
         .errors = .empty,
         .errors_alloc = allocator,
         .error_arena = .init(allocator),
-        .gi_routing_time_ns = 0,
-        .cluster_routing_time_ns = 0,
-        .total_time_ns = 0,
+        .gi_routing_time = .zero,
+        .cluster_routing_time = .zero,
+        .total_time = .zero,
     };
 
     var prng = std.Random.Xoroshiro128.init(0x0416_fff9_140b_a135); // random but consistent seed
@@ -116,14 +116,14 @@ pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.de
             results.jedec.data.put(iter.next().?, 0);
         };
         const gi_routing_end = std.Io.Clock.awake.now(io);
-        results.gi_routing_time_ns += @intCast(gi_routing_begin.durationTo(gi_routing_end).toNanoseconds());
+        results.gi_routing_time = gi_routing_begin.durationTo(gi_routing_end);
 
         // Assign sum PTs to clusters to MCs and program routing fuses
         const cluster_routing_begin = std.Io.Clock.awake.now(io);
         var router = routing.Cluster_Router.init(Device, @intCast(glb), glb_config, &results);
         var cluster_routing = try router.route(allocator, options.max_cluster_routing_attempts_per_glb);
         const cluster_routing_end = std.Io.Clock.awake.now(io);
-        results.cluster_routing_time_ns += @intCast(cluster_routing_begin.durationTo(cluster_routing_end).toNanoseconds());
+        results.cluster_routing_time = cluster_routing_begin.durationTo(cluster_routing_end);
 
         // Program PT fuses
         for (glb_config.mc, 0..) |mc_config, mc| {
@@ -408,7 +408,7 @@ pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.de
 
     const assembly_end_time = std.Io.Clock.awake.now(io);
 
-    results.total_time_ns = @intCast(assembly_start_time.durationTo(assembly_end_time).toNanoseconds());
+    results.total_time = assembly_start_time.durationTo(assembly_end_time);
 
     return results;
 }
