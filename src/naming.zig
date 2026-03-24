@@ -61,12 +61,23 @@ pub fn Names(comptime Device: type) type {
 
             inline for (@typeInfo(Pins).@"struct".decls) |decl| {
                 if (@field(Pins, decl.name).info.signal_index) |signal_index| {
-                    const name = if (comptime std.mem.startsWith(u8, decl.name, "_")) "pin" ++ decl.name else "pin_" ++ decl.name;
+                    const name = comptime name_with_prefix("pin", decl.name);
                     self.add_bus_name(&.{ @enumFromInt(signal_index) }, name) catch unreachable;
                 }
             }
 
             return self;
+        }
+
+        fn name_with_prefix(comptime prefix: []const u8, comptime name: []const u8) []const u8 {
+            comptime {
+                @setEvalBranchQuota(10_000);
+                if (std.mem.startsWith(u8, name, "_")) {
+                    return prefix ++ name;
+                } else {
+                    return prefix ++ "_" ++ name;
+                }
+            }
         }
 
         pub fn deinit(self: *Self) void {
