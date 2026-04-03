@@ -376,8 +376,8 @@ pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.de
 
     if (Device.family == .zero_power_enhanced) {
         if (config.ext.osctimer) |osctimer| {
-            const osc_mc = config.mc(Device.osctimer.osc_out.mc());
-            const timer_mc = config.mc(Device.osctimer.timer_out.mc());
+            const osc_mc = config.mc_const(Device.osctimer.osc_out.mc());
+            const timer_mc = config.mc_const(Device.osctimer.timer_out.mc());
 
             if (osctimer.enable_osc_dynamic_disable and osc_mc.logic == .sum and osc_mc.logic.sum.is_constant()) {
                 try results.add_error(.{
