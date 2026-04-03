@@ -1,4 +1,4 @@
-//[[!! include('devices', 'LC4128ZE_TQFP144') !! 1043 ]]
+//[[!! include('devices', 'LC4128ZE_TQFP144') !! 1044 ]]
 //[[ ################# !! GENERATED CODE -- DO NOT MODIFY !! ################# ]]
 const std = @import("std");
 const lc4k = @import("../lc4k.zig");
@@ -633,15 +633,16 @@ pub fn get_zero_hold_time_fuse() Fuse {
     return Fuse.init(87, 101);
 }
 
-pub fn get_osctimer_enable_range() Fuse_Range {
-    return Fuse_Range.between(
-        Fuse.init(91, 98),
-        Fuse.init(92, 98),
-    );
+pub fn get_osc_dynamic_disable_fuse() Fuse {
+    return Fuse.init(91, 98);
 }
 
 pub fn get_osc_out_fuse() Fuse {
     return Fuse.init(93, 100);
+}
+
+pub fn get_timer_dynamic_reset_fuse() Fuse {
+    return Fuse.init(92, 98);
 }
 
 pub fn get_timer_out_fuse() Fuse {

@@ -375,12 +375,33 @@ pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.de
     results.jedec.data.put(Device.get_zero_hold_time_fuse(), @intFromBool(!config.zero_hold_time));
 
     if (Device.family == .zero_power_enhanced) {
-
         if (config.ext.osctimer) |osctimer| {
-            results.jedec.data.put_range(Device.get_osctimer_enable_range(), 0);
+            const osc_mc = config.mc(Device.osctimer.osc_out.mc());
+            const timer_mc = config.mc(Device.osctimer.timer_out.mc());
+
+            if (osctimer.enable_osc_dynamic_disable and osc_mc.logic == .sum and osc_mc.logic.sum.is_constant()) {
+                try results.add_error(.{
+                    .details = "OSCTIMER dynamic disable is being used but uses a constant signal",
+                    .err = error.InvalidOscDynamicDisableSignal,
+                    .glb = Device.osctimer.osc_out.mc().glb,
+                    .mc = Device.osctimer.osc_out.mc().mc,
+                });
+            }
+
+            if (osctimer.enable_timer_reset and timer_mc.logic == .sum and timer_mc.logic.sum.is_constant()) {
+                try results.add_error(.{
+                    .details = "OSCTIMER timer reset is enabled but uses a constant signal",
+                    .err = error.InvalidTimerResetSignal,
+                    .glb = Device.osctimer.timer_out.mc().glb,
+                    .mc = Device.osctimer.timer_out.mc().mc,
+                });
+            }
+
+            results.jedec.data.put(Device.get_osc_dynamic_disable_fuse(), @intFromBool(!osctimer.enable_osc_dynamic_disable));
+            results.jedec.data.put(Device.get_osc_out_fuse(), @intFromBool(!osctimer.enable_osc_out));
+            results.jedec.data.put(Device.get_timer_dynamic_reset_fuse(), @intFromBool(!osctimer.enable_timer_reset));
+            results.jedec.data.put(Device.get_timer_out_fuse(), @intFromBool(!osctimer.enable_timer_out));
             write_field(&results.jedec.data, lc4k.Timer_Divisor, osctimer.timer_divisor, Device.get_timer_div_range());
-            results.jedec.data.put(Device.get_osc_out_fuse(), @intFromBool(!osctimer.enable_osc_out_and_disable));
-            results.jedec.data.put(Device.get_timer_out_fuse(), @intFromBool(!osctimer.enable_timer_out_and_reset));
         }
     } else {
         write_field(&results.jedec.data, lc4k.Bus_Maintenance, config.default_bus_maintenance, Device.get_global_bus_maintenance_range());

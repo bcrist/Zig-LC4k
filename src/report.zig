@@ -769,15 +769,27 @@ fn write_globals_and_inputs(writer: *std.Io.Writer, comptime Device: type, data:
             try writer.print("<td>{} Hz</td>", .{ osc_frequency });
             try writer.writeAll("</tr>\n");
 
-            if (config.enable_osc_out_and_disable) {
+            if (config.enable_osc_out or config.enable_osc_dynamic_disable) {
                 try writer.writeAll("<tr>");
-                try writer.writeAll("<th>Oscillator disable/output signal</th>");
+                if (config.enable_osc_out and config.enable_osc_dynamic_disable) {
+                    try writer.writeAll("<th>Oscillator disable/output signal</th>");
+                } else if (config.enable_osc_out) {
+                    try writer.writeAll("<th>Oscillator output signal</th>");
+                } else {
+                    try writer.writeAll("<th>Oscillator dynamic disable signal</th>");
+                }
                 try writer.print("<td>{s}</td>", .{ options.get_names().get_signal_name(lc4k.Oscillator_Timer_Config(Device).signals.osc_out) });
                 try writer.writeAll("</tr>\n");
             }
-            if (config.enable_timer_out_and_reset) {
+            if (config.enable_timer_out or config.enable_timer_reset) {
                 try writer.writeAll("<tr>");
-                try writer.writeAll("<th>Timer reset/output signal</th>");
+                if (config.enable_timer_out and config.enable_timer_reset) {
+                    try writer.writeAll("<th>Timer reset/output signal</th>");
+                } else if (config.enable_timer_out) {
+                    try writer.writeAll("<th>Timer output signal</th>");
+                } else {
+                    try writer.writeAll("<th>Timer reset signal</th>");
+                }
                 try writer.print("<td>{s}</td>", .{ options.get_names().get_signal_name(lc4k.Oscillator_Timer_Config(Device).signals.timer_out) });
                 try writer.writeAll("</tr>\n");
 

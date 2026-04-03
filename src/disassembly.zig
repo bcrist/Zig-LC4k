@@ -32,41 +32,39 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
     results.config.zero_hold_time = !file.data.is_set(Device.get_zero_hold_time_fuse());
 
     if (Device.family == .zero_power_enhanced) {
-        const osctimer_enable = read_field(file.data, u2, Device.get_osctimer_enable_range());
+        const enable_osc_dynamic_disable = !file.data.is_set(Device.get_osc_dynamic_disable_fuse());
+        const enable_osc_out = !file.data.is_set(Device.get_osc_out_fuse());
+        const enable_timer_reset = !file.data.is_set(Device.get_timer_dynamic_reset_fuse());
+        const enable_timer_out = !file.data.is_set(Device.get_timer_out_fuse());
         const timer_div = read_field(file.data, lc4k.Timer_Divisor, Device.get_timer_div_range());
-        const enable_osc_out_and_disable = !file.data.is_set(Device.get_osc_out_fuse());
-        const enable_timer_out_and_reset = !file.data.is_set(Device.get_timer_out_fuse());
 
-        if (osctimer_enable == 0) {
+        if (enable_osc_out or enable_timer_out) {
             results.config.ext.osctimer = lc4k.Oscillator_Timer_Config(Device) {
-                .enable_osc_out_and_disable = enable_osc_out_and_disable,
-                .enable_timer_out_and_reset = enable_timer_out_and_reset,
+                .enable_osc_dynamic_disable = enable_osc_dynamic_disable,
+                .enable_osc_out = enable_osc_out,
+                .enable_timer_reset = enable_timer_reset,
+                .enable_timer_out = enable_timer_out,
                 .timer_divisor = timer_div,
             };
-        } else if (osctimer_enable == 3) {
+        } else {
             if (@intFromEnum(timer_div) != 3) {
                 try results.add_error(.{
                     .err = error.Invalid_OscTimer_Fuses,
                     .details = "OSCTIMER is disabled, but timer divisor has been set",
                 });
             }
-            if (enable_osc_out_and_disable) {
+            if (enable_osc_dynamic_disable) {
                 try results.add_error(.{
                     .err = error.Invalid_OscTimer_Fuses,
-                    .details = "OSCTIMER is disabled, but oscillator output is enabled",
+                    .details = "OSCTIMER is disabled, but dynamic oscillator disable is enabled",
                 });
             }
-            if (enable_timer_out_and_reset) {
+            if (enable_timer_reset) {
                 try results.add_error(.{
                     .err = error.Invalid_OscTimer_Fuses,
-                    .details = "OSCTIMER is disabled, but timer output is enabled",
+                    .details = "OSCTIMER is disabled, but timer reset is enabled",
                 });
             }
-        } else {
-            try results.add_error(.{
-                .err = error.Invalid_OscTimer_Fuses,
-                .details = try std.fmt.allocPrint(allocator, "Expected both OSCTIMER enable fuses to have the same value (found {})", .{ osctimer_enable }),
-            });
         }
     } else {
         results.config.default_bus_maintenance = read_field(file.data, lc4k.Bus_Maintenance, Device.get_global_bus_maintenance_range());

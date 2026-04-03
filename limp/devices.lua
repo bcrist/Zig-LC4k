@@ -545,30 +545,17 @@ pub fn get_zero_hold_time_fuse() Fuse {
 if info.family == 'zero_power_enhanced' then
     include 'osctimer'
     local osctimer = load_osctimer_fuses(fuse_device)
-
-    local min, max
-    for _, f in ipairs(osctimer.enables) do
-        if min == nil then
-            min = { f[1], f[2] }
-            max = { f[1], f[2] }
-        else
-            min[1] = math.min(min[1], f[1])
-            min[2] = math.min(min[2], f[2])
-            max[1] = math.max(max[1], f[1])
-            max[2] = math.max(max[2], f[2])
-        end
-    end
-
     write([[
-pub fn get_osctimer_enable_range() Fuse_Range {
-    return Fuse_Range.between(
-        Fuse.init(]],min[1],', ',min[2],[[),
-        Fuse.init(]],max[1],', ',max[2],[[),
-    );
+pub fn get_osc_dynamic_disable_fuse() Fuse {
+    return Fuse.init(]],osctimer.osc_disable[1],', ',osctimer.osc_disable[2],[[);
 }
 
 pub fn get_osc_out_fuse() Fuse {
     return Fuse.init(]],osctimer.osc_out[1],', ',osctimer.osc_out[2],[[);
+}
+
+pub fn get_timer_dynamic_reset_fuse() Fuse {
+    return Fuse.init(]],osctimer.timer_reset[1],', ',osctimer.timer_reset[2],[[);
 }
 
 pub fn get_timer_out_fuse() Fuse {

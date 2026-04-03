@@ -517,8 +517,10 @@ pub const GOE_Config_Bus_Or_Pin = struct {
 pub fn Oscillator_Timer_Config(comptime Device: type) type {
     return struct {
         pub const signals = Device.osctimer;
-        enable_osc_out_and_disable: bool = false,
-        enable_timer_out_and_reset: bool = false,
+        enable_osc_out: bool = false,
+        enable_osc_dynamic_disable: bool = false,
+        enable_timer_out: bool = false,
+        enable_timer_reset: bool = false,
         timer_divisor: Timer_Divisor = .div_1048576,
     };
 }
@@ -609,6 +611,14 @@ pub fn Sum_With_Polarity(comptime Device_Signal: type) type {
     return struct {
         sum: []const Product_Term(Device_Signal),
         polarity: Polarity,
+
+        pub fn is_constant(self: @This()) bool {
+            if (self.sum.len == 0) return true;
+            for (self.sum) |pt| {
+                if (!pt.is_always() and !pt.is_never()) return false;
+            }
+            return true;
+        }
 
         pub fn debug(self: @This(), w: *std.Io.Writer) !void {
             if (self.polarity == .negative) {
@@ -1192,6 +1202,7 @@ pub const JEDEC_File = @import("JEDEC_File.zig");
 pub const Fuse = @import("Fuse.zig");
 pub const Fuse_Range = @import("Fuse_Range.zig");
 pub const svf = @import("svf.zig");
+pub const fuses = @import("fuses.zig");
 const sim = @import("sim.zig");
 const assembly = @import("assembly.zig");
 const disassembly = @import("disassembly.zig");

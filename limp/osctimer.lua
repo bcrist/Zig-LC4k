@@ -1,10 +1,7 @@
 function load_osctimer_fuses (device_name)
     local path = fs.compose_path(re4k, device_name:sub(1,6), device_name, 'osctimer.sx')
     local parser = sx.parser(get_file_contents(path))
-
-    local results = {
-        enables = {}
-    }
+    local results = { }
 
     parser:require_expression(device_name)
     parser:require_expression('osctimer')
@@ -16,7 +13,15 @@ function load_osctimer_fuses (device_name)
         local col = parser:require_int()
         parser:require_close()
         parser:ignore_remaining_expression()
-        results.enables[#results.enables + 1] = { row, col }
+        results.osc_disable = { row, col }
+    end
+    function root_visitor.reset ()
+        parser:require_expression('fuse')
+        local row = parser:require_int()
+        local col = parser:require_int()
+        parser:require_close()
+        parser:ignore_remaining_expression()
+        results.timer_reset = { row, col }
     end
     function root_visitor.timer_out ()
         parser:require_expression('fuse')
