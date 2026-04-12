@@ -80,7 +80,7 @@ fn Report_Data(comptime Device: type) type {
 
         glb: [Device.num_glbs]GLB_Report_Data = undefined,
 
-        signal_usage: std.EnumArray(Device.Signal, std.EnumSet(Signal_Usage)) = .initFill(.initEmpty()),
+        signal_usage: std.EnumArray(Device.Signal, std.EnumSet(Signal_Usage)) = .initFill(.empty),
 
         num_gis_used: u16 = 0,
         num_pts_used: u16 = 0,
@@ -114,7 +114,7 @@ fn Report_Data(comptime Device: type) type {
                     .sum_routing = dis.sum_routing[glb],
                     .pts = undefined,
                     .pt_usage = undefined,
-                    .mc_usage = .initEmpty(),
+                    .mc_usage = .empty,
                     .uses_bie = false,
                     .uses_bclk = .{ false, false, false, false },
                 };

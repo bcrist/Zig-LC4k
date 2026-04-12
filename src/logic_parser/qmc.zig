@@ -30,8 +30,8 @@ pub fn optimize(data: *IR_Data, sum: IR.ID, dc_sum: ?IR.ID, max_signals: u5) !IR
 
     if (max_signals < 2) return sum;
 
-    var signals: std.AutoArrayHashMap(u16, void) = .init(data.gpa);
-    defer signals.deinit();
+    var signals: std.array_hash_map.Auto(u16, void) = .empty;
+    defer signals.deinit(data.gpa);
 
     // determine how many and which signals are used in the sum:
     var max_signal_ordinal: u16 = 0;
@@ -41,14 +41,14 @@ pub fn optimize(data: *IR_Data, sum: IR.ID, dc_sum: ?IR.ID, max_signals: u5) !IR
         while (factor_iter.next()) |factor| {
             switch (data.get(factor)) {
                 .signal => |ordinal| {
-                    try signals.put(ordinal, {});
+                    try signals.put(data.gpa, ordinal, {});
                     if (ordinal > max_signal_ordinal) {
                         max_signal_ordinal = ordinal;
                     }
                 },
                 .complement => |signal| {
                     const ordinal = data.get(signal).signal;
-                    try signals.put(ordinal, {});
+                    try signals.put(data.gpa, ordinal, {});
                     if (ordinal > max_signal_ordinal) {
                         max_signal_ordinal = ordinal;
                     }
@@ -132,11 +132,11 @@ pub fn optimize(data: *IR_Data, sum: IR.ID, dc_sum: ?IR.ID, max_signals: u5) !IR
 // iterating all permutations of the don't care bits and providing them as separate minterms.
 // Failure to do this may result in incorrect results.
 pub fn compute_prime_implicants(gpa: std.mem.Allocator, minterms: []const Minterm) ![]Minterm {
-    var prime_implicants: std.AutoArrayHashMap(Minterm, void) = .init(gpa);
-    defer prime_implicants.deinit();
+    var prime_implicants: std.array_hash_map.Auto(Minterm, void) = .empty;
+    defer prime_implicants.deinit(gpa);
 
-    var possible_prime_implicants: std.AutoArrayHashMap(Minterm, void) = .init(gpa);
-    defer possible_prime_implicants.deinit();
+    var possible_prime_implicants: std.array_hash_map.Auto(Minterm, void) = .empty;
+    defer possible_prime_implicants.deinit(gpa);
 
     var remaining_minterms: std.ArrayList(Minterm) = try .initCapacity(gpa, minterms.len);
     remaining_minterms.appendSliceAssumeCapacity(minterms);
@@ -149,7 +149,7 @@ pub fn compute_prime_implicants(gpa: std.mem.Allocator, minterms: []const Minter
         for (0.., remaining_minterms.items) |ai, a| {
             for (ai + 1.., remaining_minterms.items[ai + 1..]) |bi, b| {
                 if (a.dc == b.dc and @popCount(a.v ^ b.v) == 1) {
-                    try possible_prime_implicants.put(.{
+                    try possible_prime_implicants.put(gpa, .{
                         .dc = a.dc | (a.v ^ b.v),
                         .v = a.v & b.v,
                     }, {});
@@ -161,7 +161,7 @@ pub fn compute_prime_implicants(gpa: std.mem.Allocator, minterms: []const Minter
 
         for (0..remaining_minterms.items.len) |i| {
             if (!merged_minterms.isSet(i)) {
-                try prime_implicants.put(remaining_minterms.items[i], {});
+                try prime_implicants.put(gpa, remaining_minterms.items[i], {});
             }
         }
 
@@ -180,11 +180,11 @@ pub fn compute_prime_implicants(gpa: std.mem.Allocator, minterms: []const Minter
 
 // N.B. any don't care minterms should not be provided.
 pub fn compute_covering_implicants(gpa: std.mem.Allocator, minterms: []const Minterm, prime_implicants: []const Minterm) ![]Minterm {
-    var covering_implicants: std.AutoArrayHashMap(Minterm, void) = .init(gpa);
-    defer covering_implicants.deinit();
+    var covering_implicants: std.array_hash_map.Auto(Minterm, void) = .empty;
+    defer covering_implicants.deinit(gpa);
 
-    var uncovered_minterms: std.AutoArrayHashMap(Minterm, std.DynamicBitSetUnmanaged) = .init(gpa);
-    defer uncovered_minterms.deinit();
+    var uncovered_minterms: std.array_hash_map.Auto(Minterm, std.DynamicBitSetUnmanaged) = .empty;
+    defer uncovered_minterms.deinit(gpa);
     defer for (uncovered_minterms.values()) |*coverage| {
         coverage.deinit(gpa);
     };
@@ -208,9 +208,9 @@ pub fn compute_covering_implicants(gpa: std.mem.Allocator, minterms: []const Min
             @panic("No prime implicant covers minterm");
         } else if (temp_coverage.count() == 1) {
             const prime_implicant = prime_implicants[temp_coverage.findFirstSet().?];
-            try covering_implicants.put(prime_implicant, {});
+            try covering_implicants.put(gpa, prime_implicant, {});
         } else {
-            try uncovered_minterms.put(minterm, (try temp_coverage.clone(gpa)).unmanaged);
+            try uncovered_minterms.put(gpa, minterm, (try temp_coverage.clone(gpa)).unmanaged);
         }
     }
 
@@ -285,7 +285,7 @@ pub fn compute_covering_implicants(gpa: std.mem.Allocator, minterms: []const Min
         var factor_iter = ird.iterator(.product, best_term.?);
         while (factor_iter.next()) |factor| {
             const prime_implicant = prime_implicants[ird.get(factor).signal];
-            try covering_implicants.put(prime_implicant, {});
+            try covering_implicants.put(gpa, prime_implicant, {});
         }
     }
 

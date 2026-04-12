@@ -3,9 +3,9 @@ pub fn Simulator(comptime Device: type) type {
         pub const Signal = Device.Signal;
 
         pub const State = struct {
-            last_data: std.EnumSet(Signal) = .initEmpty(), // used to detect rising/falling clock edges; do not modify this manually!
-            data: std.EnumSet(Signal) = .initEmpty(),
-            oe: std.EnumSet(Signal) = .initEmpty(),
+            last_data: std.EnumSet(Signal) = .empty, // used to detect rising/falling clock edges; do not modify this manually!
+            data: std.EnumSet(Signal) = .empty,
+            oe: std.EnumSet(Signal) = .empty,
         };
 
         chip: *const Chip_Config(Device.device_type),
@@ -40,7 +40,7 @@ pub fn Simulator(comptime Device: type) type {
             if (maybe_rng) |rng| {
                 rng.bytes(std.mem.asBytes(&self.state.data.bits.masks));
             } else {
-                self.state.data.bits = .initEmpty();
+                self.state.data.bits = .empty;
             }
 
             for (self.chip.glb, 0..) |glb_config, glb| {

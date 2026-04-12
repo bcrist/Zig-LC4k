@@ -15,8 +15,8 @@
             .hash = "console_helper-0.4.0-19g4E2FKAADz-6lhZD5Y9Pb_o-dg5QUv05_mtXP-r9if",
         },
         .limp = .{
-            .url = "git+https://github.com/bcrist/limp?ref=zig-0.16#4539788b01c9e54a1564082b578d8722f66fd4ae",
-            .hash = "limp-0.2.16-RgAsz00jDwDiHtoYw-NuRwyxZ6cjzwWK_uCjd48_9_4R",
+            .url = "git+https://github.com/bcrist/limp?ref=zig-0.16#618f00d51cc20e152062753adb6f3764fd53d04b",
+            .hash = "limp-0.2.16-RgAszzIjDwDxxNYO_jUXVnIV3MxFL9iCFxDgqAkVDGvY",
             .lazy = true,
         },
         .re4k = .{

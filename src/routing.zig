@@ -1,5 +1,5 @@
 pub fn route_generic_inputs(comptime Device: type, signals_to_route: []?Device.Signal, forced_gi_routing: [Device.num_gis_per_glb]?Device.Signal, rnd: std.Random, glb: lc4k.GLB_Index, results: *assembly.Assembly_Results, max_attempts: usize) ![Device.num_gis_per_glb]?Device.Signal {
-    var routed_signals: std.EnumSet(Device.Signal) = .initEmpty();
+    var routed_signals: std.EnumSet(Device.Signal) = .empty;
 
     var forced = forced_gi_routing;
     
