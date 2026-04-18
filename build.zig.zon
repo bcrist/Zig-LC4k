@@ -2,7 +2,7 @@
     .name = .lc4k,
     .fingerprint = 0x7b6fa9f9423b1ee5,
     .version = "0.3.2",
-    .minimum_zig_version = "0.16.0-dev.2626+0e3c6514a",
+    .minimum_zig_version = "0.16.0",
     .paths = .{
         "src",
         "build.zig",
@@ -11,17 +11,17 @@
     },
     .dependencies = .{
         .console_helper = .{
-            .url = "git+https://github.com/bcrist/zig-consolehelper?ref=zig-0.16#2dd909a4f774c9b95a893f80bb00c47c09560fed",
-            .hash = "console_helper-0.4.0-19g4E2FKAADz-6lhZD5Y9Pb_o-dg5QUv05_mtXP-r9if",
+            .url = "git+https://codeberg.org/bcrist/zig-consolehelper#0b5a528d1b17ad945ffc1b9b2d04000af676e06e",
+            .hash = "console_helper-0.4.0-19g4E05KAAAMg44f5EGJcxoINllXTnbU6bBS1kVaSK-r",
         },
         .limp = .{
-            .url = "git+https://github.com/bcrist/limp?ref=zig-0.16#618f00d51cc20e152062753adb6f3764fd53d04b",
-            .hash = "limp-0.2.16-RgAszzIjDwDxxNYO_jUXVnIV3MxFL9iCFxDgqAkVDGvY",
+            .url = "git+https://codeberg.org/bcrist/limp#52f2ad7c46135b80deeed9dfb6dc209bdd9df018",
+            .hash = "limp-0.2.17-RgAsz7sjDwCsl9yLTHN1aP8xOsJU9zVb_hVkrWbiYB2U",
             .lazy = true,
         },
         .re4k = .{
-            .url = "git+https://github.com/bcrist/re4k#9dcd6a8db2776903f115e395b6fed3bd127e9099",
-            .hash = "re4k-0.1.0-VW5jDOXswwAZB9Zo0ghIQb3ji7D4suUBFttn8fgzDaEy",
+            .url = "git+https://codeberg.org/bcrist/re4k#3afc8f9cc3d7a2f7e0fd77c65498ae822041100f",
+            .hash = "re4k-0.1.1-VW5jDN7swwD5e23xhkrh9hVA-SPp3vFoZ5qOx4IZ2Pxx",
             .lazy = true,
         },
     },
