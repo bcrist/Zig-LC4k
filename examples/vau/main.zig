@@ -287,7 +287,7 @@ pub fn main(init: std.process.Init) !void {
     add2(&chip, .{ .a = vab[9..11], .b = offset[9..11], .sum = page_offset[9..11], .ci = carry8, .p = p10, .g = g10 });
     add2(&chip, .{ .a = vab[11..13], .b = offset[11..13], .sum = &.{ page_offset[11], page[0] }, .ci = carry10, .p = p12, .g = g12 });
     add2(&chip, .{ .a = vab[13..15], .b = offset[13..15], .sum = page[1..3], .ci = carry12, .p = p14, .g = g14 });
-    add2(&chip, .{ .a = vab[15..17], .b = &(.{ offset[15] } ** 2), .sum = page[3..5], .ci = carry14, .p = p16, .g = g16 });
+    add2(&chip, .{ .a = vab[15..17], .b = &(.{ offset[15], offset[15] }), .sum = page[3..5], .ci = carry14, .p = p16, .g = g16 });
 
     const sign = offset[15];
     inline for (17..32, vab[17..], page[5..]) |bit, base, result| {
