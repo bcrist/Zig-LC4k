@@ -134,7 +134,7 @@ pub fn write(comptime Device: type, file: JEDEC_File, writer: *std.Io.Writer, op
     try write_command(.IDCODE, u32, 0xFFFFFFFF, get_id_code(Device), writer, nl);
     try writer.writeAll(nl);
 
-    try write_command(.SAMPLE_PRELOAD, std.meta.Int(.unsigned, get_boundary_scan_length(Device)), 0, null, writer, nl);
+    try write_command(.SAMPLE_PRELOAD, @Int(.unsigned, get_boundary_scan_length(Device)), 0, null, writer, nl);
     try writer.writeAll(nl);
 
     try write_command(.ISC_ENABLE, NoData, null, null, writer, nl);
@@ -162,7 +162,7 @@ pub fn write(comptime Device: type, file: JEDEC_File, writer: *std.Io.Writer, op
 
     if (options.verify) {
         const rows = comptime Device.jedec_dimensions.height();
-        const AddressShiftType = std.meta.Int(.unsigned, @intCast(rows));
+        const AddressShiftType = @Int(.unsigned, @intCast(rows));
         const address_shift = @as(AddressShiftType, 1) << (rows - 1);
         try write_command(.ISC_ADDRESS_SHIFT, AddressShiftType, address_shift, null, writer, nl);
         try write_command(.ISC_READ, NoData, null, null, writer, nl);

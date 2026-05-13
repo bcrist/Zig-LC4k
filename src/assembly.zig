@@ -590,7 +590,7 @@ fn write_pt_fuses(comptime Device: type, results: *Assembly_Results, glb: usize,
 fn write_field(data: *JEDEC_Data, comptime T: type, value: T, range: Fuse_Range) void {
     std.debug.assert(@bitSizeOf(T) == range.count());
     const v = if (@typeInfo(T) == .@"enum") @intFromEnum(value) else value;
-    const IntT = std.meta.Int(.unsigned, @bitSizeOf(T));
+    const IntT = @Int(.unsigned, @bitSizeOf(T));
     var int_value = @as(u64, @as(IntT, @bitCast(v)));
     var iter = range.iterator();
     while (iter.next()) |fuse| {
