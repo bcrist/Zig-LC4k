@@ -11,12 +11,12 @@
     },
     .dependencies = .{
         .console_helper = .{
-            .url = "git+https://codeberg.org/bcrist/zig-consolehelper?ref=zig-master#279360c9993a00db64ecb75d42c235592fd25832",
-            .hash = "console_helper-0.5.0-19g4E1lKAADC6IFLYagX0wm6wxM3kJKhEsidkh89fTad",
+            .url = "git+https://codeberg.org/bcrist/zig-consolehelper#446cf88cc8b3551a56643954bf120c6701b48554",
+            .hash = "console_helper-0.4.2-19g4E2VKAAADECN2nMmLE7dQUWXXVMq38EZeVAWxeoWL",
         },
         .limp = .{
-            .url = "git+https://codeberg.org/bcrist/limp#52f2ad7c46135b80deeed9dfb6dc209bdd9df018",
-            .hash = "limp-0.2.17-RgAsz7sjDwCsl9yLTHN1aP8xOsJU9zVb_hVkrWbiYB2U",
+            .url = "git+https://codeberg.org/bcrist/limp?ref=zig-master#b374e4370d5ab4acfe56ee012d6033f895f0794a",
+            .hash = "limp-0.2.18-RgAsz7gjDwDfngJwe_4eEsZMQZIYWD0Fji6wKx7YBBws",
             .lazy = true,
         },
         .re4k = .{
