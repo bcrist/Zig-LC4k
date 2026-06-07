@@ -162,10 +162,10 @@ pub fn Names(comptime Device: type) type {
                         const prefix = options.prefix ++ if (name_is_suffix) "" else options.name ++ if (options.name.len > 0) "." else "";
                         const suffix = if (name_is_suffix) options.name ++ options.suffix else options.suffix;
 
-                        inline for (struct_info.fields) |field| {
-                            try self.add_names(@field(what, field.name), .{
+                        inline for (struct_info.field_names) |field_name| {
+                            try self.add_names(@field(what, field_name), .{
                                 .prefix = prefix,
-                                .name = field.name,
+                                .name = field_name,
                                 .suffix = suffix,
                             });
                         }
@@ -219,22 +219,22 @@ pub fn Names(comptime Device: type) type {
                     const new_options = try options.adjust_for_inner_namespace(arena);
 
                     const decls = switch (@typeInfo(what)) {
-                        .@"struct" => |info| info.decls,
-                        .@"union" => |info| info.decls,
+                        .@"struct" => |info| info.decl_names,
+                        .@"union" => |info| info.decl_names,
                         else => @compileError("Expected struct or union type; found " ++ @typeName(what)),
                     };
 
                     inline for (decls) |decl| {
-                        if (@typeInfo(@TypeOf(@field(what, decl.name))) != .@"fn") {
-                            try self.add_names_alloc(@field(what, decl.name), new_options.replace_name(decl.name));
+                        if (@typeInfo(@TypeOf(@field(what, decl))) != .@"fn") {
+                            try self.add_names_alloc(@field(what, decl), new_options.replace_name(decl));
                         }
                     }
                 },
                 else => switch (@typeInfo(T)) {
                     .@"struct" => |struct_info| {
                         const new_options = try options.adjust_for_inner_namespace(arena);
-                        inline for (struct_info.fields) |field| {
-                            try self.add_names_alloc(arena, @field(what, field.name), new_options.replace_name(field.name));
+                        inline for (struct_info.field_names) |field_name| {
+                            try self.add_names_alloc(arena, @field(what, field_name), new_options.replace_name(field_name));
                         }
                     },
                     .array => |info| {

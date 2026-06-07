@@ -2014,16 +2014,16 @@ fn write_pin_goe_equation(writer: *std.Io.Writer, comptime Device: type, pin: De
 fn write_block_clock_equation(writer: *std.Io.Writer, comptime Device: type, value: anytype, eqn_options: Equation_Options, options: Write_Options(Device)) !void {
     const signal, const polarity = res: {
         const BClock = @TypeOf(value);
-        inline for (@typeInfo(BClock).@"enum".fields) |field| {
-            if (value == @field(BClock, field.name)) {
-                const signal: Device.Signal = comptime switch (field.name[3]) {
+        inline for (@typeInfo(BClock).@"enum".field_names) |field_name| {
+            if (value == @field(BClock, field_name)) {
+                const signal: Device.Signal = comptime switch (field_name[3]) {
                     '0' => .clk0,
                     '1' => .clk1,
                     '2' => .clk2,
                     '3' => .clk3,
                     else => unreachable,
                 };
-                const polarity: lc4k.Polarity = comptime if (std.mem.endsWith(u8, field.name, "_neg")) .negative else .positive;
+                const polarity: lc4k.Polarity = comptime if (std.mem.endsWith(u8, field_name, "_neg")) .negative else .positive;
                 break :res .{ signal, polarity };
             }
         }
@@ -2149,12 +2149,12 @@ fn table_header(writer: *std.Io.Writer, columns: anytype) !void {
             try writer.print("<th>{s}</th>", .{ col });
         }
     } else {
-        inline for (columns_info.fields) |field| {
-            const colspan: usize = @field(columns, field.name);
+        inline for (columns_info.field_names) |field_name| {
+            const colspan: usize = @field(columns, field_name);
             if (colspan > 1) {
-                try writer.print("<th colspan=\"{}\">{s}</th>", .{ colspan, field.name });
+                try writer.print("<th colspan=\"{}\">{s}</th>", .{ colspan, field_name });
             } else {
-                try writer.print("<th>{s}</th>", .{ field.name });
+                try writer.print("<th>{s}</th>", .{ field_name });
             }
         }
     }
