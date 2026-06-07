@@ -59,9 +59,9 @@ pub fn Names(comptime Device: type) type {
                 self.add_signal_name(signal, @tagName(signal)) catch unreachable;
             }
 
-            inline for (@typeInfo(Pins).@"struct".decls) |decl| {
-                if (@field(Pins, decl.name).info.signal_index) |signal_index| {
-                    const name = comptime name_with_prefix("pin", decl.name);
+            inline for (@typeInfo(Pins).@"struct".decl_names) |decl| {
+                if (@field(Pins, decl).info.signal_index) |signal_index| {
+                    const name = comptime name_with_prefix("pin", decl);
                     self.add_bus_name(&.{ @enumFromInt(signal_index) }, name) catch unreachable;
                 }
             }
@@ -141,16 +141,16 @@ pub fn Names(comptime Device: type) type {
                     const suffix = if (name_is_suffix) options.name ++ options.suffix else options.suffix;
 
                     const decls = switch (@typeInfo(what)) {
-                        .@"struct" => |info| info.decls,
-                        .@"union" => |info| info.decls,
+                        .@"struct" => |info| info.decl_names,
+                        .@"union" => |info| info.decl_names,
                         else => @compileError("Expected struct or union type; found " ++ @typeName(what)),
                     };
 
                     inline for (decls) |decl| {
-                        if (@typeInfo(@TypeOf(@field(what, decl.name))) != .@"fn") {
-                            try self.add_names(@field(what, decl.name), .{
+                        if (@typeInfo(@TypeOf(@field(what, decl))) != .@"fn") {
+                            try self.add_names(@field(what, decl), .{
                                 .prefix = prefix,
-                                .name = decl.name,
+                                .name = decl,
                                 .suffix = suffix,
                             });
                         }

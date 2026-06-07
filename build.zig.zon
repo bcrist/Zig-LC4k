@@ -1,8 +1,8 @@
 .{
     .name = .lc4k,
     .fingerprint = 0x7b6fa9f9423b1ee5,
-    .version = "0.4.0",
-    .minimum_zig_version = "0.17.0-dev.260+a79428757",
+    .version = "0.4.1",
+    .minimum_zig_version = "0.17.0-dev.812+5434f85c4",
     .paths = .{
         "src",
         "build.zig",

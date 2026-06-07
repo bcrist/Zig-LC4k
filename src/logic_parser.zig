@@ -597,9 +597,9 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
             };
             errdefer names.deinit();
 
-            inline for (@typeInfo(@TypeOf(extra)).@"struct".fields) |field| {
-                if (comptime !std.mem.eql(u8, field.name, "dont_care") and !std.mem.eql(u8, field.name, "max_product_terms") and !std.mem.eql(u8, field.name, "optimize") and !std.mem.eql(u8, field.name, "polarity") and !std.mem.eql(u8, field.name, "debug")) {
-                    try names.add_names_alloc(temp_arena, @field(extra, field.name), .{ .name = field.name });
+            inline for (@typeInfo(@TypeOf(extra)).@"struct".field_names) |field_name| {
+                if (comptime !std.mem.eql(u8, field_name, "dont_care") and !std.mem.eql(u8, field_name, "max_product_terms") and !std.mem.eql(u8, field_name, "optimize") and !std.mem.eql(u8, field_name, "polarity") and !std.mem.eql(u8, field_name, "debug")) {
+                    try names.add_names_alloc(temp_arena, @field(extra, field_name), .{ .name = field_name });
                 }
             }
 
