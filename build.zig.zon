@@ -15,8 +15,8 @@
             .hash = "console_helper-0.4.2-19g4E2VKAAADECN2nMmLE7dQUWXXVMq38EZeVAWxeoWL",
         },
         .limp = .{
-            .url = "git+https://codeberg.org/bcrist/limp?ref=zig-master#b374e4370d5ab4acfe56ee012d6033f895f0794a",
-            .hash = "limp-0.2.18-RgAsz7gjDwDfngJwe_4eEsZMQZIYWD0Fji6wKx7YBBws",
+            .url = "git+https://codeberg.org/bcrist/limp?ref=zig-master#d88c5420ffde141f1726bf703d698333214302ce",
+            .hash = "limp-0.2.19-RgAsz7kjDwC38i_PkhQpn-tEd2-FzkcP2bapLnbskX1T",
             .lazy = true,
         },
         .re4k = .{
