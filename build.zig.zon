@@ -2,7 +2,7 @@
     .name = .lc4k,
     .fingerprint = 0x7b6fa9f9423b1ee5,
     .version = "0.4.2",
-    .minimum_zig_version = "0.17.0-dev.812+5434f85c4",
+    .minimum_zig_version = "0.17.0",
     .paths = .{
         "src",
         "build.zig",
@@ -11,12 +11,12 @@
     },
     .dependencies = .{
         .console_helper = .{
-            .url = "git+https://codeberg.org/bcrist/zig-consolehelper#446cf88cc8b3551a56643954bf120c6701b48554",
+            .url = "git+https://codeberg.org/bcrist/zig-consolehelper#5e62f78e284b6c37e0a6e8e6d3526e2da6312b0d",
             .hash = "console_helper-0.4.2-19g4E2VKAAADECN2nMmLE7dQUWXXVMq38EZeVAWxeoWL",
         },
         .limp = .{
-            .url = "git+https://codeberg.org/bcrist/limp?ref=zig-master#d88c5420ffde141f1726bf703d698333214302ce",
-            .hash = "limp-0.2.19-RgAsz7kjDwC38i_PkhQpn-tEd2-FzkcP2bapLnbskX1T",
+            .url = "git+https://codeberg.org/bcrist/limp#0a4ce9cca37795b56859c31a48ebed5b39a18fdd",
+            .hash = "limp-0.2.19-RgAsz6YjDwA-e32gTSFZ-BPoGBccUGEE-neiW3jceFY-",
             .lazy = true,
         },
         .re4k = .{

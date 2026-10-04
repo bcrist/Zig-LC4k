@@ -28,7 +28,9 @@ pub fn build(b: *std.Build) void {
         if (b.lazyDependency("limp", .{ .target = b.graph.host, .optimize = .ReleaseSafe, .artifact_name = "limp" })) |dep| {
             const run_limp = b.addRunArtifact(dep.artifact("limp"));
             run_limp.addArgs(&.{ "-R", "--set", "re4k" });
-            run_limp.addDirectoryArg(re4k_path);
+            run_limp.addDirectoryArg2(re4k_path, .{
+                .make_absolute = true,
+            });
             run_limp.addDirectoryArg(b.path("src"));
             b.getInstallStep().dependOn(&run_limp.step);
         }

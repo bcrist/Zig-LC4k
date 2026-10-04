@@ -24,6 +24,14 @@ In your `build.zig`, you can then add an import for the `lc4k` module:
 my_exe.root_module.addImport("lc4k", b.dependency("LC4k", .{}).module("lc4k"));
 ```
 
+## Branches
+| Zig Version  | Recommended Branch |
+|--------------|--------------------|
+| 0.18.0-dev.* | zig-master         |
+| 0.17.0       | main               |
+| 0.16.0       | zig-0.16           |
+| 0.15.2       | zig-0.15           |
+
 ## Workflow
 To use the library, you first need to construct one of the device configuration structs defined in the `lc4k` module (e.g. `lc4k.LC4032ZE_TQFP48`).  Usually this is done manually, initializing the macrocells and other configuration necessary to define your design, using Zig code as a low-level pseudo-HDL.  Check the examples directory for more details.  You can also load an existing bitstream/JEDEC file, e.g. for reverse engineering:
 
