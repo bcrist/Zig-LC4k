@@ -24,14 +24,14 @@ const PT_Usage = enum {
     xor,
     fast,
     init,
-    @"async",
+    async,
     clock,
     ce,
     clock_and_ce,
     oe,
 };
 
-const Signal_Usage = enum (u8) {
+const Signal_Usage = enum(u8) {
     input_reg = std.math.maxInt(u8) - 3,
     bclk = std.math.maxInt(u8) - 2,
     orm = std.math.maxInt(u8) - 1,
@@ -39,17 +39,17 @@ const Signal_Usage = enum (u8) {
     _, // 0..n correspond to usage as a GI in GLB 0..n
 
     pub fn init_glb(index: lc4k.GLB_Index) Signal_Usage {
-        std.debug.assert(index != @intFromEnum(Signal_Usage.input_reg));
-        std.debug.assert(index != @intFromEnum(Signal_Usage.bclk));
-        std.debug.assert(index != @intFromEnum(Signal_Usage.orm));
-        std.debug.assert(index != @intFromEnum(Signal_Usage.output));
-        return @enumFromInt(index);
+        std.debug.assert(index != @backingInt(Signal_Usage.input_reg));
+        std.debug.assert(index != @backingInt(Signal_Usage.bclk));
+        std.debug.assert(index != @backingInt(Signal_Usage.orm));
+        std.debug.assert(index != @backingInt(Signal_Usage.output));
+        return @fromBackingInt(@intCast(index));
     }
 
     pub fn glb_index(self: Signal_Usage) ?lc4k.GLB_Index {
         return switch (self) {
             .input_reg, .bclk, .orm, .output => null,
-            else => @intFromEnum(self),
+            else => @backingInt(self),
         };
     }
 };
@@ -100,16 +100,16 @@ fn Report_Data(comptime Device: type) type {
 
             const dis = try disassembly.disassemble(Device, alloc, file);
 
-            var self = Self {
+            var self = Self{
                 .jed = file.data,
                 .config = dis.config,
                 .disassembly_errors = dis.errors,
             };
 
-            var mcs_used = std.EnumSet(Signal) {};
-            var ios_used = std.EnumSet(Signal) {};
+            var mcs_used = std.EnumSet(Signal){};
+            var ios_used = std.EnumSet(Signal){};
             inline for (dis.config.glb, 0..) |glb_config, glb| {
-                var glb_data = GLB_Report_Data {
+                var glb_data = GLB_Report_Data{
                     .gi_routing = dis.gi_routing[glb],
                     .sum_routing = dis.sum_routing[glb],
                     .pts = undefined,
@@ -234,7 +234,7 @@ fn Report_Data(comptime Device: type) type {
                                     switch (reg_config.async_source) {
                                         .none => {},
                                         .pt2_active_high => {
-                                            glb_data.pt_usage[mc * 5 + 2] = .@"async";
+                                            glb_data.pt_usage[mc * 5 + 2] = .async;
                                         },
                                     }
                                 },
@@ -246,7 +246,7 @@ fn Report_Data(comptime Device: type) type {
                                     switch (reg_config.async_source) {
                                         .none => {},
                                         .pt2_active_high => {
-                                            glb_data.pt_usage[mc * 5 + 2] = .@"async";
+                                            glb_data.pt_usage[mc * 5 + 2] = .async;
                                         },
                                     }
                                 },
@@ -293,8 +293,8 @@ fn Report_Data(comptime Device: type) type {
                             .none => {},
                             .sum => {
                                 if (!glb_data.pts[glb_pt_offset].is_always() and
-                                    !glb_data.pts[glb_pt_offset].is_never()
-                                ) {
+                                    !glb_data.pts[glb_pt_offset].is_never())
+                                {
                                     self.num_pts_used += 1;
                                     cluster_used = true;
                                 }
@@ -325,11 +325,11 @@ fn Report_Data(comptime Device: type) type {
 
             for (Device.all_pins) |pin| {
                 switch (pin.info.func) {
-                    .io, .io_oe0, .io_oe1,
-                        => self.num_ios += 1,
-                    .input, .clock,
-                    .no_connect, .gnd, .gndo, .vcc_core, .vcco, .tck, .tms, .tdi, .tdo
-                        => continue,
+                    .io,
+                    .io_oe0,
+                    .io_oe1,
+                    => self.num_ios += 1,
+                    .input, .clock, .no_connect, .gnd, .gndo, .vcc_core, .vcco, .tck, .tms, .tdi, .tdo => continue,
                 }
             }
 
@@ -395,7 +395,7 @@ pub fn write(comptime Device: type, file: JEDEC_File, temp_gpa: std.mem.Allocato
     try writer.writeAll("<html>\n");
     try writer.writeAll("<head>\n");
     if (options.design_name.len > 0) {
-        try writer.print("<title>{s} (CPLD Design Report)</title>\n", .{ options.design_name });
+        try writer.print("<title>{s} (CPLD Design Report)</title>\n", .{options.design_name});
     } else {
         try writer.writeAll("<title>CPLD Design Report</title>\n");
     }
@@ -411,32 +411,32 @@ pub fn write(comptime Device: type, file: JEDEC_File, temp_gpa: std.mem.Allocato
     if (options.design_name.len > 0) {
         try writer.writeAll("<tr>");
         try writer.writeAll("<th>Design Name</th>");
-        try writer.print("<td>{s}</td>", .{ options.design_name });
+        try writer.print("<td>{s}</td>", .{options.design_name});
         try writer.writeAll("</tr>\n");
     }
     if (options.design_version.len > 0) {
         try writer.writeAll("<tr>");
         try writer.writeAll("<th>Design Version</th>");
-        try writer.print("<td>{s}</td>", .{ options.design_version });
+        try writer.print("<td>{s}</td>", .{options.design_version});
         try writer.writeAll("</tr>\n");
     }
 
     try writer.writeAll("<tr>");
     try writer.writeAll("<th>Device</th>");
-    try writer.print("<td>{s}</td>", .{ @tagName(Device.device_type) });
+    try writer.print("<td>{s}</td>", .{@tagName(Device.device_type)});
     try writer.writeAll("</tr>\n");
 
     if (options.speed_grade != 0) {
         try writer.writeAll("<tr>");
         try writer.writeAll("<th>Speed Grade</th>");
-        try writer.print("<td>{d}</td>", .{ options.speed_grade });
+        try writer.print("<td>{d}</td>", .{options.speed_grade});
         try writer.writeAll("</tr>\n");
     }
 
     if (file.usercode) |usercode| {
         try writer.writeAll("<tr>");
         try writer.writeAll("<th>Usercode</th>");
-        try writer.print("<td>0x{X:0>8}</td>", .{ usercode });
+        try writer.print("<td>0x{X:0>8}</td>", .{usercode});
         try writer.writeAll("</tr>\n");
     }
 
@@ -454,25 +454,25 @@ pub fn write(comptime Device: type, file: JEDEC_File, temp_gpa: std.mem.Allocato
     if (options.configuration_time) |duration| {
         try writer.writeAll("<tr>");
         try writer.writeAll("<th>Configuration Time</th>");
-        try writer.print("<td>{f}</td>", .{ duration });
+        try writer.print("<td>{f}</td>", .{duration});
         try writer.writeAll("</tr>\n");
     }
     if (options.assembly_time) |duration| {
         try writer.writeAll("<tr>");
         try writer.writeAll("<th>Total Assembly Time</th>");
-        try writer.print("<td>{f}</td>", .{ duration });
+        try writer.print("<td>{f}</td>", .{duration});
         try writer.writeAll("</tr>\n");
     }
     if (options.gi_routing_time) |duration| {
         try writer.writeAll("<tr>");
         try writer.writeAll("<th>GI Routing Time</th>");
-        try writer.print("<td>{f}</td>", .{ duration });
+        try writer.print("<td>{f}</td>", .{duration});
         try writer.writeAll("</tr>\n");
     }
     if (options.cluster_routing_time) |duration| {
         try writer.writeAll("<tr>");
         try writer.writeAll("<th>Cluster Routing Time</th>");
-        try writer.print("<td>{f}</td>", .{ duration });
+        try writer.print("<td>{f}</td>", .{duration});
         try writer.writeAll("</tr>\n");
     }
 
@@ -548,7 +548,7 @@ fn write_equations(writer: *std.Io.Writer, comptime Device: type, data: Report_D
             }
 
             try writer.writeAll("<pre>");
-            try write_equation_comment(writer, "Macrocell {}", .{ mcref.mc });
+            try write_equation_comment(writer, "Macrocell {}", .{mcref.mc});
             try writer.writeByte('\n');
 
             if (Device.Signal.maybe_mc_pad(mcref)) |pad| {
@@ -570,7 +570,7 @@ fn write_equations(writer: *std.Io.Writer, comptime Device: type, data: Report_D
                                 try writer.writeAll("<abbr class=\"error\">undefined</abbr>");
                             }
                             try writer.writeByte(' ');
-                            try write_equation_comment(writer, "{s} PT4", .{ options.get_names().get_mc_name(oe_mcref) });
+                            try write_equation_comment(writer, "{s} PT4", .{options.get_names().get_mc_name(oe_mcref)});
                         },
                         .output_only, .input_only => unreachable,
                     }
@@ -766,7 +766,7 @@ fn write_globals_and_inputs(writer: *std.Io.Writer, comptime Device: type, data:
 
             try writer.writeAll("<tr>");
             try writer.writeAll("<th>Nominal oscillator frequency</th>");
-            try writer.print("<td>{} Hz</td>", .{ osc_frequency });
+            try writer.print("<td>{} Hz</td>", .{osc_frequency});
             try writer.writeAll("</tr>\n");
 
             if (config.enable_osc_out or config.enable_osc_dynamic_disable) {
@@ -778,7 +778,7 @@ fn write_globals_and_inputs(writer: *std.Io.Writer, comptime Device: type, data:
                 } else {
                     try writer.writeAll("<th>Oscillator dynamic disable signal</th>");
                 }
-                try writer.print("<td>{s}</td>", .{ options.get_names().get_signal_name(lc4k.Oscillator_Timer_Config(Device).signals.osc_out) });
+                try writer.print("<td>{s}</td>", .{options.get_names().get_signal_name(lc4k.Oscillator_Timer_Config(Device).signals.osc_out)});
                 try writer.writeAll("</tr>\n");
             }
             if (config.enable_timer_out or config.enable_timer_reset) {
@@ -790,7 +790,7 @@ fn write_globals_and_inputs(writer: *std.Io.Writer, comptime Device: type, data:
                 } else {
                     try writer.writeAll("<th>Timer reset signal</th>");
                 }
-                try writer.print("<td>{s}</td>", .{ options.get_names().get_signal_name(lc4k.Oscillator_Timer_Config(Device).signals.timer_out) });
+                try writer.print("<td>{s}</td>", .{options.get_names().get_signal_name(lc4k.Oscillator_Timer_Config(Device).signals.timer_out)});
                 try writer.writeAll("</tr>\n");
 
                 const divisor: usize = switch (config.timer_divisor) {
@@ -802,12 +802,12 @@ fn write_globals_and_inputs(writer: *std.Io.Writer, comptime Device: type, data:
                 const timer_frequency = (osc_frequency + divisor / 2) / divisor;
                 try writer.writeAll("<tr>");
                 try writer.writeAll("<th>Timer divisor</th>");
-                try writer.print("<td>{}</td>", .{ divisor });
+                try writer.print("<td>{}</td>", .{divisor});
                 try writer.writeAll("</tr>\n");
 
                 try writer.writeAll("<tr>");
                 try writer.writeAll("<th>Nominal timer frequency</th>");
-                try writer.print("<td>{} Hz</td>", .{ timer_frequency });
+                try writer.print("<td>{} Hz</td>", .{timer_frequency});
                 try writer.writeAll("</tr>\n");
             }
 
@@ -856,9 +856,9 @@ fn write_globals_and_inputs(writer: *std.Io.Writer, comptime Device: type, data:
         try table_header(writer, .{ "Block Clock", "Equation" });
 
         try write_block_clock(writer, Device, false, 0, glb_config.bclock0, data.glb[glb].uses_bclk[0], options);
-        try write_block_clock(writer, Device, true,  1, glb_config.bclock1, data.glb[glb].uses_bclk[1], options);
+        try write_block_clock(writer, Device, true, 1, glb_config.bclock1, data.glb[glb].uses_bclk[1], options);
         try write_block_clock(writer, Device, false, 2, glb_config.bclock2, data.glb[glb].uses_bclk[2], options);
-        try write_block_clock(writer, Device, true,  3, glb_config.bclock3, data.glb[glb].uses_bclk[3], options);
+        try write_block_clock(writer, Device, true, 3, glb_config.bclock3, data.glb[glb].uses_bclk[3], options);
 
         try end_table(writer);
         try end_section(writer);
@@ -1003,10 +1003,10 @@ fn write_product_terms(writer: *std.Io.Writer, comptime Device: type, data: Repo
                 try begin_row(writer, .{ .highlight = (mc & 1) == 1 });
 
                 if (pt_index == 0) {
-                    try writer.print("<td rowspan=\"5\">{s}</td>", .{ options.get_names().get_mc_name(mcref) });
+                    try writer.print("<td rowspan=\"5\">{s}</td>", .{options.get_names().get_mc_name(mcref)});
                 }
 
-                try writer.print("<td>{}</td>", .{ pt_index });
+                try writer.print("<td>{}</td>", .{pt_index});
                 const glb_pt_offset = mc * 5 + pt_index;
 
                 try writer.writeAll("<td>");
@@ -1019,21 +1019,21 @@ fn write_product_terms(writer: *std.Io.Writer, comptime Device: type, data: Repo
         }
 
         try begin_row(writer, .{});
-        try writer.print("<td></td><td>{}</td><td>", .{ mc * 5 });
+        try writer.print("<td></td><td>{}</td><td>", .{mc * 5});
         try write_pt_usage(writer, glb_data.pt_usage[mc * 5]);
         try writer.writeAll("</td>");
         try write_pt_equation_wrapped(writer, Device, glb_data.pts[mc * 5], options);
         try end_row(writer);
 
         try begin_row(writer, .{ .highlight = true });
-        try writer.print("<td></td><td>{}</td><td>", .{ mc * 5 + 1 });
+        try writer.print("<td></td><td>{}</td><td>", .{mc * 5 + 1});
         try write_pt_usage(writer, glb_data.pt_usage[mc * 5 + 1]);
         try writer.writeAll("</td>");
         try write_pt_equation_wrapped(writer, Device, glb_data.pts[mc * 5 + 1], options);
         try end_row(writer);
 
         try begin_row(writer, .{});
-        try writer.print("<td></td><td>{}</td><td>", .{ mc * 5 + 2 });
+        try writer.print("<td></td><td>{}</td><td>", .{mc * 5 + 2});
         if (glb_data.uses_bie) {
             try writer.writeAll("<kbd class=\"pt-usage bie\">BIE</kbd> ");
         }
@@ -1050,15 +1050,15 @@ fn write_product_terms(writer: *std.Io.Writer, comptime Device: type, data: Repo
 
 fn write_pt_usage(writer: *std.Io.Writer, usage: PT_Usage) !void {
     try writer.writeAll(switch (usage) {
-        .none     => return,
-        .sum      => "<kbd class=\"pt-usage sum\">Sum</kbd>",
-        .xor      => "<kbd class=\"pt-usage xor\">XOR</kbd>",
-        .fast     => "<kbd class=\"pt-usage fast\">Fast-Bypass</kbd>",
-        .init     => "<kbd class=\"pt-usage init\">Init</kbd>",
-        .@"async" => "<kbd class=\"pt-usage async\">Async</kbd>",
-        .clock    => "<kbd class=\"pt-usage clock\">Clock</kbd>",
-        .ce       => "<kbd class=\"pt-usage ce\">CE</kbd>",
-        .oe       => "<kbd class=\"pt-usage oe\">OE</kbd>",
+        .none => return,
+        .sum => "<kbd class=\"pt-usage sum\">Sum</kbd>",
+        .xor => "<kbd class=\"pt-usage xor\">XOR</kbd>",
+        .fast => "<kbd class=\"pt-usage fast\">Fast-Bypass</kbd>",
+        .init => "<kbd class=\"pt-usage init\">Init</kbd>",
+        .async => "<kbd class=\"pt-usage async\">Async</kbd>",
+        .clock => "<kbd class=\"pt-usage clock\">Clock</kbd>",
+        .ce => "<kbd class=\"pt-usage ce\">CE</kbd>",
+        .oe => "<kbd class=\"pt-usage oe\">OE</kbd>",
         .clock_and_ce => "<kbd class=\"pt-usage clock\">Clock</kbd> <kbd class=\"pt-usage ce\">CE</kbd>",
     });
 }
@@ -1087,7 +1087,7 @@ fn write_glb_routing(writer: *std.Io.Writer, comptime Device: type, data: Report
             var active: ?Device.Signal = null;
             try begin_row(writer, .{ .highlight = (gi & 1) == 1 });
 
-            try writer.print("<td>{}</td>", .{ gi });
+            try writer.print("<td>{}</td>", .{gi});
             for (gi_options) |signal| {
                 const fuse = fuse_iter.next().?;
                 var mark: []const u8 = "";
@@ -1138,12 +1138,13 @@ fn write_macrocells(writer: *std.Io.Writer, comptime Device: type, data: Report_
                 .Input = 3,
             });
             try table_header(writer, .{
-                "Pin", "I/O", "FB",
-                "MC", "Cluster", "PTs",
-                "Logic", "Type", "Clock", "CE", "Init", "Async",
-                "From", "OE", "Slew", "Drive",
-                "Threshold", "Term",
-                "PG", 
+                "Pin",   "I/O",       "FB",
+                "MC",    "Cluster",   "PTs",
+                "Logic", "Type",      "Clock",
+                "CE",    "Init",      "Async",
+                "From",  "OE",        "Slew",
+                "Drive", "Threshold", "Term",
+                "PG",
             });
         } else {
             try table_header(writer, .{
@@ -1155,11 +1156,12 @@ fn write_macrocells(writer: *std.Io.Writer, comptime Device: type, data: Report_
                 .Input = 2,
             });
             try table_header(writer, .{
-                "Pin", "I/O", "FB",
-                "MC", "Cluster", "PTs",
-                "Logic", "Type", "Clock", "CE", "Init", "Async",
-                "From", "OE", "Slew", "Drive",
-                "Threshold", "Term",
+                "Pin",   "I/O",       "FB",
+                "MC",    "Cluster",   "PTs",
+                "Logic", "Type",      "Clock",
+                "CE",    "Init",      "Async",
+                "From",  "OE",        "Slew",
+                "Drive", "Threshold", "Term",
             });
         }
 
@@ -1184,8 +1186,8 @@ fn write_macrocells(writer: *std.Io.Writer, comptime Device: type, data: Report_
             });
 
             var temp_buf: [64]u8 = undefined;
-            const mc_class = try std.fmt.bufPrint(&temp_buf, ".mc-{}", .{ mc });
-            const cell_options = Cell_Options {
+            const mc_class = try std.fmt.bufPrint(&temp_buf, ".mc-{}", .{mc});
+            const cell_options = Cell_Options{
                 .class = mc_class[1..],
                 .hover_selector = mc_class,
             };
@@ -1209,8 +1211,8 @@ fn write_macrocells(writer: *std.Io.Writer, comptime Device: type, data: Report_
                     out_mcref = mc_config.output.routing.to_absolute(mcref).mc();
                     out_mc_delta = mc_config.output.routing.to_relative(mcref) orelse 0;
 
-                    const out_mc_class = try std.fmt.bufPrint(&temp_out_buf, ".mc-{}", .{ out_mcref.mc });
-                    out_options = Cell_Options {
+                    const out_mc_class = try std.fmt.bufPrint(&temp_out_buf, ".mc-{}", .{out_mcref.mc});
+                    out_options = Cell_Options{
                         .class = out_mc_class[1..],
                         .hover_selector = out_mc_class,
                     };
@@ -1225,8 +1227,8 @@ fn write_macrocells(writer: *std.Io.Writer, comptime Device: type, data: Report_
                     oe_mcref = mc_config.output.oe_routing.to_absolute(mcref).mc();
                     oe_mc_delta = mc_config.output.oe_routing.to_relative(mcref) orelse 0;
 
-                    const oe_mc_class = try std.fmt.bufPrint(&temp_oe_buf, ".mc-{}", .{ oe_mcref.mc });
-                    oe_options = Cell_Options {
+                    const oe_mc_class = try std.fmt.bufPrint(&temp_oe_buf, ".mc-{}", .{oe_mcref.mc});
+                    oe_options = Cell_Options{
                         .class = oe_mc_class[1..],
                         .hover_selector = oe_mc_class,
                     };
@@ -1257,9 +1259,7 @@ fn write_macrocells(writer: *std.Io.Writer, comptime Device: type, data: Report_
                 }
 
                 if (data.signal_usage.get(pad).count() == 0) {
-                    out_options = .{
-                        .additional_classes = &.{ "unused" }
-                    };
+                    out_options = .{ .additional_classes = &.{"unused"} };
                     oe_options = out_options;
                     io_options = out_options;
                     in_options = out_options;
@@ -1289,7 +1289,7 @@ fn write_macrocells(writer: *std.Io.Writer, comptime Device: type, data: Report_
 
                 var fb_name_cell_options = cell_options;
                 if (usage.count() == 0) {
-                    fb_name_cell_options.additional_classes = &.{ "unused" };
+                    fb_name_cell_options.additional_classes = &.{"unused"};
                 }
 
                 try begin_cell(writer, fb_name_cell_options);
@@ -1297,10 +1297,9 @@ fn write_macrocells(writer: *std.Io.Writer, comptime Device: type, data: Report_
                 try end_cell(writer);
             }
 
-
             var mc_cell_options = cell_options;
             if (!data.glb[glb].mc_usage.isSet(mc)) {
-                mc_cell_options.additional_classes = &.{ "unused" };
+                mc_cell_options.additional_classes = &.{"unused"};
             }
 
             // MC Name
@@ -1311,7 +1310,7 @@ fn write_macrocells(writer: *std.Io.Writer, comptime Device: type, data: Report_
             if (dest) |ca| {
                 var temp_buf_2: [64]u8 = undefined;
                 var temp_buf_3: [64]u8 = undefined;
-                const ca_selector = try std.fmt.bufPrint(&temp_buf_2, ".mc-{}", .{ ca });
+                const ca_selector = try std.fmt.bufPrint(&temp_buf_2, ".mc-{}", .{ca});
                 const ca_class = try std.fmt.bufPrint(&temp_buf_3, "ca-depth-{} mc-{}", .{ ca_jumps, ca });
 
                 var dest_cell_options: Cell_Options = .{
@@ -1319,7 +1318,7 @@ fn write_macrocells(writer: *std.Io.Writer, comptime Device: type, data: Report_
                     .hover_selector = ca_selector,
                 };
                 if (!data.glb[glb].mc_usage.isSet(ca)) {
-                    dest_cell_options.additional_classes = &.{ "unused" };
+                    dest_cell_options.additional_classes = &.{"unused"};
                 }
                 try begin_cell(writer, dest_cell_options);
                 try writer.writeAll(options.get_names().get_mc_name(lc4k.MC_Ref.init(glb, ca)));
@@ -1353,7 +1352,7 @@ fn write_macrocells(writer: *std.Io.Writer, comptime Device: type, data: Report_
                 }
             }
             try begin_cell(writer, mc_cell_options);
-            try writer.print("{}", .{ sum_pts });
+            try writer.print("{}", .{sum_pts});
             try end_cell(writer);
 
             try begin_cell(writer, mc_cell_options);
@@ -1450,7 +1449,7 @@ fn write_macrocells(writer: *std.Io.Writer, comptime Device: type, data: Report_
             switch (mc_config.func) {
                 .combinational => {},
                 .latch, .t_ff, .d_ff => |reg_config| {
-                    try writer.print("{}", .{ reg_config.init_state });
+                    try writer.print("{}", .{reg_config.init_state});
                     try writer.writeAll(switch (reg_config.init_source) {
                         .pt3_active_high => " <kbd class=\"init pt\">PT</kbd> <kbd class=\"init pos\">Active High</kbd>",
                         .shared_pt_init => switch (glb_config.shared_pt_init.polarity) {
@@ -1476,7 +1475,7 @@ fn write_macrocells(writer: *std.Io.Writer, comptime Device: type, data: Report_
                 try begin_cell(writer, out_options);
                 if (mc_config.output.oe != .input_only) {
                     if (out_mc_delta != 0) {
-                        try writer.print("<kbd class=\"out routing\">+{}</kbd> ", .{ out_mc_delta });
+                        try writer.print("<kbd class=\"out routing\">+{}</kbd> ", .{out_mc_delta});
                     }
                     try writer.writeAll(options.get_names().get_mc_name(out_mcref));
                 }
@@ -1491,14 +1490,14 @@ fn write_macrocells(writer: *std.Io.Writer, comptime Device: type, data: Report_
                     .goe3 => try writer.writeAll("<kbd class=\"oe goe3\">GOE 3</kbd> <kbd class=\"oe pos\">Active High</kbd>"),
                     .from_orm_active_high => {
                         if (oe_mc_delta != 0) {
-                            try writer.print("<kbd class=\"oe routing\">+{}</kbd> ", .{ oe_mc_delta });
+                            try writer.print("<kbd class=\"oe routing\">+{}</kbd> ", .{oe_mc_delta});
                         }
                         try writer.writeAll(options.get_names().get_mc_name(oe_mcref));
                         try writer.writeAll(" <kbd class=\"oe from-orm\">PT</kbd> <kbd class=\"oe pos\">Active High</kbd>");
                     },
                     .from_orm_active_low => {
                         if (oe_mc_delta != 0) {
-                            try writer.print("<kbd class=\"oe routing\">+{}</kbd> ", .{ oe_mc_delta });
+                            try writer.print("<kbd class=\"oe routing\">+{}</kbd> ", .{oe_mc_delta});
                         }
                         try writer.writeAll(options.get_names().get_mc_name(oe_mcref));
                         try writer.writeAll(" <kbd class=\"oe from-orm\">PT</kbd> <kbd class=\"oe neg\">Active Low</kbd>");
@@ -1617,7 +1616,6 @@ fn write_timing(writer: *std.Io.Writer, comptime Device: type, data: Report_Data
         try end_section(writer);
     }
     try end_section(writer);
-
 }
 
 fn write_timing_for_target(writer: *std.Io.Writer, comptime Device: type, target: timing.Node, data: Report_Data(Device), timing_data: *timing.Analyzer(Device), options: Write_Options(Device), highlight: bool) !?timing.Path {
@@ -1625,13 +1623,13 @@ fn write_timing_for_target(writer: *std.Io.Writer, comptime Device: type, target
 
     for (std.enums.values(Device.Signal)) |signal| {
         const source: timing.Node = switch (signal.kind()) {
-            .io, .in, .clk => .{ .pad = @intFromEnum(signal) },
+            .io, .in, .clk => .{ .pad = @backingInt(signal) },
             .mc => .{ .mcq = signal.mc() },
         };
 
         if (source == .mcq) {
             const mcref = signal.mc();
-            switch(data.config.glb[mcref.glb].mc[mcref.mc].func) {
+            switch (data.config.glb[mcref.glb].mc[mcref.mc].func) {
                 .combinational, .latch => continue,
                 .t_ff, .d_ff => {},
             }
@@ -1667,7 +1665,7 @@ fn write_timing_for_target(writer: *std.Io.Writer, comptime Device: type, target
             try end_cell(writer);
 
             try begin_cell(writer, .{});
-            try writer.print("{d} ns", .{ @as(f64, @floatFromInt(path.delay)) / 1000 });
+            try writer.print("{d} ns", .{@as(f64, @floatFromInt(path.delay)) / 1000});
             for (path.critical_path) |delay| {
                 try begin_details(writer, .{});
                 try writer.print("{d} ns ({s})", .{ @as(f64, @floatFromInt(delay.delay)) / 1000, delay.name });
@@ -1688,15 +1686,15 @@ fn write_setup_hold_timing(writer: *std.Io.Writer, comptime Device: type, setup:
         else => unreachable,
     };
 
-    const clk_path = try timing_data.get_critical_path(.{ .source = clk_source, .dest = .{ .mc_clk = clk_mcref }});
+    const clk_path = try timing_data.get_critical_path(.{ .source = clk_source, .dest = .{ .mc_clk = clk_mcref } });
     const hold_path = try timing_data.get_critical_path(.{ .source = clk_source, .dest = hold });
 
     for (std.enums.values(Device.Signal)) |signal| {
         const source: timing.Node = switch (signal.kind()) {
-            .io, .in, .clk => .{ .pad = @intFromEnum(signal) },
+            .io, .in, .clk => .{ .pad = @backingInt(signal) },
             .mc => source: {
                 const mcref = signal.mc();
-                switch(data.config.glb[mcref.glb].mc[mcref.mc].func) {
+                switch (data.config.glb[mcref.glb].mc[mcref.mc].func) {
                     .combinational => continue,
                     .latch, .t_ff, .d_ff => {
                         break :source .{ .mc_clk = mcref };
@@ -1741,7 +1739,7 @@ fn write_setup_hold_timing(writer: *std.Io.Writer, comptime Device: type, setup:
             try begin_cell(writer, .{});
             var setup_ps: f64 = @floatFromInt(path.delay);
             setup_ps -= @floatFromInt(clk_path.delay);
-            try writer.print("{d} ns", .{ setup_ps / 1000 });
+            try writer.print("{d} ns", .{setup_ps / 1000});
             for (path.critical_path) |delay| {
                 try begin_details(writer, .{});
                 try writer.print("{d} ns ({s})", .{ @as(f64, @floatFromInt(delay.delay)) / 1000, delay.name });
@@ -1797,7 +1795,7 @@ fn write_setup_hold_timing(writer: *std.Io.Writer, comptime Device: type, setup:
                 try end_cell(writer);
 
                 try begin_cell(writer, .{});
-                try writer.print("{d} ns", .{ hold_ps / 1000 });
+                try writer.print("{d} ns", .{hold_ps / 1000});
                 for (hold_path.critical_path) |delay| {
                     try begin_details(writer, .{});
                     try writer.print("{d} ns ({s})", .{ @as(f64, @floatFromInt(delay.delay)) / 1000, delay.name });
@@ -1821,25 +1819,23 @@ fn write_error(writer: *std.Io.Writer, comptime Device: type, err: Config_Error,
     if (err.glb) |glb| {
         if (err.mc) |mc| {
             const mc_name = options.get_names().get_mc_name(lc4k.MC_Ref.init(glb, mc));
-            try writer.print("<div>MC: {s}</div>", .{ mc_name });
+            try writer.print("<div>MC: {s}</div>", .{mc_name});
         } else {
-            try writer.print("<div>GLB: {s}</div>", .{ options.get_names().get_glb_name(glb) });
+            try writer.print("<div>GLB: {s}</div>", .{options.get_names().get_glb_name(glb)});
             if (err.gi) |gi| {
-                try writer.print("<div>GI: {}</div>", .{ gi });
+                try writer.print("<div>GI: {}</div>", .{gi});
             }
         }
     }
     if (err.signal_ordinal) |signal_ordinal| {
-        const name = options.get_names().get_signal_name(@enumFromInt(signal_ordinal));
-        try writer.print("<div>Signal: {s}</div> ", .{ name });
+        const name = options.get_names().get_signal_name(@fromBackingInt(@intCast(signal_ordinal)));
+        try writer.print("<div>Signal: {s}</div> ", .{name});
     }
     if (err.fuse) |fuse| {
         try writer.print("({},{})", .{ fuse.row, fuse.col });
     }
     try writer.writeAll("</td></tr>\n");
-
 }
-
 
 ////////////////////////////////////////////////////
 // Equations
@@ -2004,7 +2000,7 @@ fn write_goe_equation(writer: *std.Io.Writer, comptime Device: type, data: Repor
 
 fn write_bus_goe_equation(writer: *std.Io.Writer, comptime Device: type, data: Report_Data(Device), glb: usize, eqn_options: Equation_Options, options: Write_Options(Device)) !void {
     try write_pt_equation(writer, Device, data.config.glb[glb].shared_pt_enable, eqn_options, options);
-    try writer.print(" <span class=\"comment\">// GLB {} Shared OE PT</span>", .{ glb });
+    try writer.print(" <span class=\"comment\">// GLB {} Shared OE PT</span>", .{glb});
 }
 
 fn write_pin_goe_equation(writer: *std.Io.Writer, comptime Device: type, pin: Device.Pin, eqn_options: Equation_Options, options: Write_Options(Device)) !void {
@@ -2038,12 +2034,12 @@ fn write_signal_equation(writer: *std.Io.Writer, comptime Device: type, maybe_si
     switch (eqn_options.polarity) {
         .positive => switch (eqn_options.style) {
             .console => {},
-            .ascii, .pretty => try writer.print("<abbr{s}>", .{ attribs }),
+            .ascii, .pretty => try writer.print("<abbr{s}>", .{attribs}),
         },
         .negative => switch (eqn_options.style) {
             .console => try writer.writeByte('!'),
-            .ascii => try writer.print("!<abbr{s}>", .{ attribs }),
-            .pretty => try writer.print("<abbr{s}><u>", .{ attribs }),
+            .ascii => try writer.print("!<abbr{s}>", .{attribs}),
+            .pretty => try writer.print("<abbr{s}><u>", .{attribs}),
         },
     }
 
@@ -2082,7 +2078,7 @@ fn write_constant_equation(writer: *std.Io.Writer, value: bool, polarity: lc4k.P
     switch (style) {
         .console => {
             if (unused) try console.Style.apply(.{ .fg = .bright_black }, writer);
-            try writer.writeAll(switch (@intFromBool(value) ^ @intFromEnum(polarity) ^ 1) {
+            try writer.writeAll(switch (@intFromBool(value) ^ @backingInt(polarity) ^ 1) {
                 0 => "false",
                 1 => "true",
             });
@@ -2090,14 +2086,13 @@ fn write_constant_equation(writer: *std.Io.Writer, value: bool, polarity: lc4k.P
         },
         .ascii, .pretty => {
             try writer.writeAll(if (unused) "<abbr class=\"unused\">" else "<abbr>");
-            try writer.writeAll(switch (@intFromBool(value) ^ @intFromEnum(polarity) ^ 1) {
+            try writer.writeAll(switch (@intFromBool(value) ^ @backingInt(polarity) ^ 1) {
                 0 => "false</abbr>",
                 1 => "true</abbr>",
             });
         },
     }
 }
-
 
 ////////////////////////////////////////////////////
 // Sections
@@ -2109,13 +2104,13 @@ const Section_Options = struct {
 
 fn begin_section(writer: *std.Io.Writer, comptime fmt: []const u8, args: anytype, options: Section_Options) !void {
     if (options.class.len > 0) {
-        try writer.print("<section class=\"{s}\">\n", .{ options.class });
+        try writer.print("<section class=\"{s}\">\n", .{options.class});
     } else {
         try writer.writeAll("<section>\n");
     }
-    try writer.print("<h{}>", .{ options.tier });
+    try writer.print("<h{}>", .{options.tier});
     try writer.print(fmt, args);
-    try writer.print("</h{}>\n<div>\n", .{ options.tier });
+    try writer.print("</h{}>\n<div>\n", .{options.tier});
 }
 
 fn begin_glb_section(writer: *std.Io.Writer, glb: usize, name: []const u8) !void {
@@ -2128,11 +2123,10 @@ fn end_section(writer: *std.Io.Writer) !void {
 
 fn write_summary_line(writer: *std.Io.Writer, label: []const u8, numerator: usize, denominator: usize) !void {
     try writer.writeAll("<tr>");
-    try writer.print("<th>{s}</th>", .{ label });
+    try writer.print("<th>{s}</th>", .{label});
     try writer.print("<td>{} / {}</td>", .{ numerator, denominator });
     try writer.writeAll("</tr>\n");
 }
-
 
 fn begin_table(writer: *std.Io.Writer) !void {
     try writer.writeAll("<table>\n");
@@ -2146,7 +2140,7 @@ fn table_header(writer: *std.Io.Writer, columns: anytype) !void {
 
     if (columns_info.is_tuple) {
         inline for (columns) |col| {
-            try writer.print("<th>{s}</th>", .{ col });
+            try writer.print("<th>{s}</th>", .{col});
         }
     } else {
         inline for (columns_info.field_names) |field_name| {
@@ -2154,7 +2148,7 @@ fn table_header(writer: *std.Io.Writer, columns: anytype) !void {
             if (colspan > 1) {
                 try writer.print("<th colspan=\"{}\">{s}</th>", .{ colspan, field_name });
             } else {
-                try writer.print("<th>{s}</th>", .{ field_name });
+                try writer.print("<th>{s}</th>", .{field_name});
             }
         }
     }
@@ -2175,15 +2169,15 @@ fn begin_row(writer: *std.Io.Writer, options: Row_Options) !void {
         if (options.highlight) {
             try writer.writeAll("highlight");
             if (options.class.len > 0) {
-                try writer.print(" {s}", .{ options.class });
+                try writer.print(" {s}", .{options.class});
             }
         } else {
-            try writer.print("{s}", .{ options.class });
+            try writer.print("{s}", .{options.class});
         }
         try writer.writeAll("\"");
     }
     if (options.hover_selector.len > 0) {
-        try writer.print(" data-hover=\"{s}\"", .{ options.hover_selector });
+        try writer.print(" data-hover=\"{s}\"", .{options.hover_selector});
     }
     try writer.writeAll(">\n");
 }
@@ -2201,7 +2195,7 @@ const Cell_Options = struct {
 fn begin_cell(writer: *std.Io.Writer, options: Cell_Options) !void {
     try writer.writeAll("<td");
     if (options.class.len > 0 or options.additional_classes.len > 0) {
-        try writer.print(" class=\"{s}", .{ options.class });
+        try writer.print(" class=\"{s}", .{options.class});
         for (options.additional_classes) |class| {
             try writer.writeByte(' ');
             try writer.writeAll(class);
@@ -2209,7 +2203,7 @@ fn begin_cell(writer: *std.Io.Writer, options: Cell_Options) !void {
         try writer.writeByte('"');
     }
     if (options.hover_selector.len > 0) {
-        try writer.print(" data-hover=\"{s}\"", .{ options.hover_selector });
+        try writer.print(" data-hover=\"{s}\"", .{options.hover_selector});
     }
     try writer.writeAll(">");
 }
@@ -2229,11 +2223,11 @@ const Details_Options = struct {
 fn begin_details(writer: *std.Io.Writer, options: Details_Options) !void {
     try writer.writeAll("<div class=\"details");
     if (options.class.len > 0) {
-        try writer.print(" {s}", .{ options.class });
+        try writer.print(" {s}", .{options.class});
     }
     try writer.writeAll("\"");
     if (options.hover_selector.len > 0) {
-        try writer.print(" data-hover=\"{s}\"", .{ options.hover_selector });
+        try writer.print(" data-hover=\"{s}\"", .{options.hover_selector});
     }
     try writer.writeAll(">");
 }

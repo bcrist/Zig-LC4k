@@ -1,4 +1,4 @@
-pub const Token = enum (u8) {
+pub const Token = enum(u8) {
     eof,
     invalid,
     literal,
@@ -47,14 +47,18 @@ pub fn lex(gpa: std.mem.Allocator, equation: []const u8) Lex_Error!struct { []co
                 if (chi < equation.len) chi += 1; // skip final \n
                 continue;
             },
-            '0' ... '9', '\'', '-', '#', => {
+            '0'...'9',
+            '\'',
+            '-',
+            '#',
+            => {
                 // literal
                 try data.append(gpa, .{ .what = .literal, .where = chi });
                 chi += 1;
                 while (chi < equation.len and is_literal_char(equation[chi])) chi += 1;
                 continue;
             },
-            'a' ... 'z', 'A' ... 'Z', '_', '.', '$' => {
+            'a'...'z', 'A'...'Z', '_', '.', '$' => {
                 // identifier
                 try data.append(gpa, .{ .what = .id, .where = chi });
                 chi += 1;
@@ -127,11 +131,11 @@ pub fn token_span(equation: []const u8, start: u32) []const u8 {
             while (end < equation.len and equation[end] != '\n') end += 1;
             if (end < equation.len) end += 1; // skip final \n
         },
-        '0' ... '9', '\'', '-', '#' => {
+        '0'...'9', '\'', '-', '#' => {
             // literal
             while (end < equation.len and is_literal_char(equation[end])) end += 1;
         },
-        'a' ... 'z', 'A' ... 'Z', '_', '.', '$', '@' => {
+        'a'...'z', 'A'...'Z', '_', '.', '$', '@' => {
             // identifier or builtin
             while (end < equation.len and is_identifier_char(equation[end])) end += 1;
         },
@@ -149,22 +153,22 @@ pub fn token_span(equation: []const u8, start: u32) []const u8 {
 
 inline fn is_literal_char(ch: u8) bool {
     return switch (ch) {
-        '0' ... '9' => true,
+        '0'...'9' => true,
         '\'' => true,
         '_' => true,
         '-' => true,
-        'a' ... 'z' => true,
-        'A' ... 'Z' => true,
+        'a'...'z' => true,
+        'A'...'Z' => true,
         else => false,
     };
 }
 
 inline fn is_identifier_char(ch: u8) bool {
     return switch (ch) {
-        '0' ... '9' => true,
+        '0'...'9' => true,
         '_', '.', '$' => true,
-        'a' ... 'z' => true,
-        'A' ... 'Z' => true,
+        'a'...'z' => true,
+        'A'...'Z' => true,
         else => false,
     };
 }

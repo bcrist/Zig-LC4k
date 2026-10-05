@@ -33,29 +33,28 @@ const JEDEC_Field_Iterator = struct {
                 'Q' => {
                     if (cmd.len >= 2) {
                         switch (cmd[1]) {
-                            'F' => return JEDEC_Field { .cmd = .qty_fuses, .extra = cmd[2..] },
-                            'P' => return JEDEC_Field { .cmd = .qty_pins, .extra = cmd[2..] },
-                            else => {} // fall through
+                            'F' => return JEDEC_Field{ .cmd = .qty_fuses, .extra = cmd[2..] },
+                            'P' => return JEDEC_Field{ .cmd = .qty_pins, .extra = cmd[2..] },
+                            else => {}, // fall through
                         }
                     }
-                    log.warn("Ignoring unsupported field: {s}", .{ cmd });
+                    log.warn("Ignoring unsupported field: {s}", .{cmd});
                 },
-                'N' => return JEDEC_Field { .cmd = .note, .extra = cmd[1..] },
-                'G' => return JEDEC_Field { .cmd = .security, .extra = cmd[1..] },
-                'F' => return JEDEC_Field { .cmd = .default, .extra = cmd[1..] },
-                'L' => return JEDEC_Field { .cmd = .location, .extra = cmd[1..] },
-                'K' => return JEDEC_Field { .cmd = .hex, .extra = cmd[1..] },
-                'U' => return JEDEC_Field { .cmd = .usercode, .extra = cmd[1..] },
-                'C' => return JEDEC_Field { .cmd = .checksum, .extra = cmd[1..] },
+                'N' => return JEDEC_Field{ .cmd = .note, .extra = cmd[1..] },
+                'G' => return JEDEC_Field{ .cmd = .security, .extra = cmd[1..] },
+                'F' => return JEDEC_Field{ .cmd = .default, .extra = cmd[1..] },
+                'L' => return JEDEC_Field{ .cmd = .location, .extra = cmd[1..] },
+                'K' => return JEDEC_Field{ .cmd = .hex, .extra = cmd[1..] },
+                'U' => return JEDEC_Field{ .cmd = .usercode, .extra = cmd[1..] },
+                'C' => return JEDEC_Field{ .cmd = .checksum, .extra = cmd[1..] },
                 else => {
-                    log.warn("Ignoring unsupported field: {s}", .{ cmd });
+                    log.warn("Ignoring unsupported field: {s}", .{cmd});
                 },
             }
         }
         return null;
     }
 };
-
 
 pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: []const u8) !JEDEC_File {
     var pin_count: ?usize = null;
@@ -69,7 +68,7 @@ pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: [
 
     const start_of_fields = 1 + (std.mem.indexOf(u8, text, "*") orelse return error.Malformed_JEDEC_File);
 
-    var iter = JEDEC_Field_Iterator {
+    var iter = JEDEC_Field_Iterator{
         .remaining = text[start_of_fields..],
     };
 
@@ -149,7 +148,7 @@ pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: [
         // check final file checksum
         const found_checksum = std.fmt.parseUnsigned(u16, iter.remaining[1..5], 16) catch return error.Malformed_JEDEC_File;
         var computed_checksum: u16 = 0;
-        for (text[0..text.len-iter.remaining.len]) |byte| {
+        for (text[0 .. text.len - iter.remaining.len]) |byte| {
             computed_checksum += byte;
         }
 
@@ -179,7 +178,6 @@ pub fn parse(allocator: std.mem.Allocator, width: usize, height: ?usize, text: [
         return error.Malformed_JEDEC_File;
     }
 }
-
 
 fn parse_binary_string(data: *JEDEC_Data, starting_fuse: usize, text: []const u8) !void {
     const len = data.extents.count();
@@ -217,14 +215,16 @@ fn parse_hex_string(data: *JEDEC_Data, starting_fuse: usize, text: []const u8) !
                 return error.Invalid_Fuse;
             }
             data.raw.setValue(i, 0 != (v & 0x8));
-            i += 1; if (i < len) data.raw.setValue(i, 0 != (v & 0x4));
-            i += 1; if (i < len) data.raw.setValue(i, 0 != (v & 0x2));
-            i += 1; if (i < len) data.raw.setValue(i, 0 != (v & 0x1));
+            i += 1;
+            if (i < len) data.raw.setValue(i, 0 != (v & 0x4));
+            i += 1;
+            if (i < len) data.raw.setValue(i, 0 != (v & 0x2));
+            i += 1;
+            if (i < len) data.raw.setValue(i, 0 != (v & 0x1));
             i += 1;
         }
     }
 }
-
 
 pub const Write_Options = struct {
     compact: bool = false,
@@ -247,7 +247,7 @@ pub fn write(self: JEDEC_File, device_type: device.Type, writer: *std.Io.Writer,
         while (iter.next()) |l| {
             var line = l;
             if (std.mem.endsWith(u8, line, "\r")) {
-                line = line[0..line.len - 1];
+                line = line[0 .. line.len - 1];
             }
             try w.print("NOTE {s}*{s}", .{ line, options.line_ending });
         }
@@ -276,7 +276,7 @@ pub fn write(self: JEDEC_File, device_type: device.Type, writer: *std.Io.Writer,
             default_hex = 'F';
         }
 
-        try w.print("F{}*", .{ default });
+        try w.print("F{}*", .{default});
 
         var unwritten_defaults: usize = 8888;
         var fuse: usize = 0;
@@ -286,7 +286,7 @@ pub fn write(self: JEDEC_File, device_type: device.Type, writer: *std.Io.Writer,
             const b2: u4 = if (fuse + 2 < len) @intFromBool(self.data.raw.isSet(fuse + 2)) else default;
             const b3: u4 = if (fuse + 3 < len) @intFromBool(self.data.raw.isSet(fuse + 3)) else default;
 
-            const val: u8 = 8*b0 + 4*b1 + 2*b2 + b3;
+            const val: u8 = 8 * b0 + 4 * b1 + 2 * b2 + b3;
             const hex = if (val < 0xA) '0' + val else 'A' + val - 0xA;
 
             if (hex == default_hex) {

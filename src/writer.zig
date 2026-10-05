@@ -12,7 +12,7 @@ pub fn Checksum_Hasher(comptime T: type) type {
 
 pub fn checksummed(w: *std.Io.Writer, initial_checksum: anytype, buffer: []u8) std.Io.Writer.Hashed(Checksum_Hasher(@TypeOf(initial_checksum))) {
     const T = @TypeOf(initial_checksum);
-    return std.Io.Writer.hashed(w, Checksum_Hasher(T) { .sum = initial_checksum }, buffer);
+    return std.Io.Writer.hashed(w, Checksum_Hasher(T){ .sum = initial_checksum }, buffer);
 }
 
 const std = @import("std");

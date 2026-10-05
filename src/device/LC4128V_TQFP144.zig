@@ -1,4 +1,4 @@
-//[[!! include('devices', 'LC4128V_TQFP144') !! 1022 ]]
+//[[!! include('devices', 'LC4128V_TQFP144') !! 1020 ]]
 //[[ ################# !! GENERATED CODE -- DO NOT MODIFY !! ################# ]]
 const std = @import("std");
 const lc4k = @import("../lc4k.zig");
@@ -36,8 +36,7 @@ pub fn get_names() *const Names {
     return &default_names.?;
 }
 
-
-pub const Signal = enum (u16) {
+pub const Signal = enum(u16) {
     clk0 = 0,
     clk1 = 1,
     clk2 = 2,
@@ -268,125 +267,125 @@ pub const Signal = enum (u16) {
     mc_H15 = 227,
 
     pub inline fn kind(self: Signal) lc4k.Signal_Kind {
-        return switch (@intFromEnum(self)) {
-            @intFromEnum(Signal.clk0)...@intFromEnum(Signal.clk3) => .clk,
-            @intFromEnum(Signal.io_A0)...@intFromEnum(Signal.io_H14) => .io,
-            @intFromEnum(Signal.mc_A0)...@intFromEnum(Signal.mc_H15) => .mc,
+        return switch (@backingInt(self)) {
+            @backingInt(Signal.clk0)...@backingInt(Signal.clk3) => .clk,
+            @backingInt(Signal.io_A0)...@backingInt(Signal.io_H14) => .io,
+            @backingInt(Signal.mc_A0)...@backingInt(Signal.mc_H15) => .mc,
             else => unreachable,
         };
     }
 
     pub inline fn maybe_mc(self: Signal) ?lc4k.MC_Ref {
-        return switch (@intFromEnum(self)) {
-            @intFromEnum(Signal.io_A0) => .{ .glb = 0, .mc = 0 },
-            @intFromEnum(Signal.io_A1) => .{ .glb = 0, .mc = 1 },
-            @intFromEnum(Signal.io_A2) => .{ .glb = 0, .mc = 2 },
-            @intFromEnum(Signal.io_A4) => .{ .glb = 0, .mc = 4 },
-            @intFromEnum(Signal.io_A5) => .{ .glb = 0, .mc = 5 },
-            @intFromEnum(Signal.io_A6) => .{ .glb = 0, .mc = 6 },
-            @intFromEnum(Signal.io_A8) => .{ .glb = 0, .mc = 8 },
-            @intFromEnum(Signal.io_A9) => .{ .glb = 0, .mc = 9 },
-            @intFromEnum(Signal.io_A10) => .{ .glb = 0, .mc = 10 },
-            @intFromEnum(Signal.io_A12) => .{ .glb = 0, .mc = 12 },
-            @intFromEnum(Signal.io_A13) => .{ .glb = 0, .mc = 13 },
-            @intFromEnum(Signal.io_A14) => .{ .glb = 0, .mc = 14 },
-            @intFromEnum(Signal.mc_A0)...@intFromEnum(Signal.mc_A15) => .{ .glb = 0, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.mc_A0)) },
-            @intFromEnum(Signal.io_B0) => .{ .glb = 1, .mc = 0 },
-            @intFromEnum(Signal.io_B1) => .{ .glb = 1, .mc = 1 },
-            @intFromEnum(Signal.io_B2) => .{ .glb = 1, .mc = 2 },
-            @intFromEnum(Signal.io_B4) => .{ .glb = 1, .mc = 4 },
-            @intFromEnum(Signal.io_B5) => .{ .glb = 1, .mc = 5 },
-            @intFromEnum(Signal.io_B6) => .{ .glb = 1, .mc = 6 },
-            @intFromEnum(Signal.io_B8) => .{ .glb = 1, .mc = 8 },
-            @intFromEnum(Signal.io_B9) => .{ .glb = 1, .mc = 9 },
-            @intFromEnum(Signal.io_B10) => .{ .glb = 1, .mc = 10 },
-            @intFromEnum(Signal.io_B12) => .{ .glb = 1, .mc = 12 },
-            @intFromEnum(Signal.io_B13) => .{ .glb = 1, .mc = 13 },
-            @intFromEnum(Signal.io_B14) => .{ .glb = 1, .mc = 14 },
-            @intFromEnum(Signal.mc_B0)...@intFromEnum(Signal.mc_B15) => .{ .glb = 1, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.mc_B0)) },
-            @intFromEnum(Signal.io_C0) => .{ .glb = 2, .mc = 0 },
-            @intFromEnum(Signal.io_C1) => .{ .glb = 2, .mc = 1 },
-            @intFromEnum(Signal.io_C2) => .{ .glb = 2, .mc = 2 },
-            @intFromEnum(Signal.io_C4) => .{ .glb = 2, .mc = 4 },
-            @intFromEnum(Signal.io_C5) => .{ .glb = 2, .mc = 5 },
-            @intFromEnum(Signal.io_C6) => .{ .glb = 2, .mc = 6 },
-            @intFromEnum(Signal.io_C8) => .{ .glb = 2, .mc = 8 },
-            @intFromEnum(Signal.io_C9) => .{ .glb = 2, .mc = 9 },
-            @intFromEnum(Signal.io_C10) => .{ .glb = 2, .mc = 10 },
-            @intFromEnum(Signal.io_C12) => .{ .glb = 2, .mc = 12 },
-            @intFromEnum(Signal.io_C13) => .{ .glb = 2, .mc = 13 },
-            @intFromEnum(Signal.io_C14) => .{ .glb = 2, .mc = 14 },
-            @intFromEnum(Signal.mc_C0)...@intFromEnum(Signal.mc_C15) => .{ .glb = 2, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.mc_C0)) },
-            @intFromEnum(Signal.io_D0) => .{ .glb = 3, .mc = 0 },
-            @intFromEnum(Signal.io_D1) => .{ .glb = 3, .mc = 1 },
-            @intFromEnum(Signal.io_D2) => .{ .glb = 3, .mc = 2 },
-            @intFromEnum(Signal.io_D4) => .{ .glb = 3, .mc = 4 },
-            @intFromEnum(Signal.io_D5) => .{ .glb = 3, .mc = 5 },
-            @intFromEnum(Signal.io_D6) => .{ .glb = 3, .mc = 6 },
-            @intFromEnum(Signal.io_D8) => .{ .glb = 3, .mc = 8 },
-            @intFromEnum(Signal.io_D9) => .{ .glb = 3, .mc = 9 },
-            @intFromEnum(Signal.io_D10) => .{ .glb = 3, .mc = 10 },
-            @intFromEnum(Signal.io_D12) => .{ .glb = 3, .mc = 12 },
-            @intFromEnum(Signal.io_D13) => .{ .glb = 3, .mc = 13 },
-            @intFromEnum(Signal.io_D14) => .{ .glb = 3, .mc = 14 },
-            @intFromEnum(Signal.mc_D0)...@intFromEnum(Signal.mc_D15) => .{ .glb = 3, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.mc_D0)) },
-            @intFromEnum(Signal.io_E0) => .{ .glb = 4, .mc = 0 },
-            @intFromEnum(Signal.io_E1) => .{ .glb = 4, .mc = 1 },
-            @intFromEnum(Signal.io_E2) => .{ .glb = 4, .mc = 2 },
-            @intFromEnum(Signal.io_E4) => .{ .glb = 4, .mc = 4 },
-            @intFromEnum(Signal.io_E5) => .{ .glb = 4, .mc = 5 },
-            @intFromEnum(Signal.io_E6) => .{ .glb = 4, .mc = 6 },
-            @intFromEnum(Signal.io_E8) => .{ .glb = 4, .mc = 8 },
-            @intFromEnum(Signal.io_E9) => .{ .glb = 4, .mc = 9 },
-            @intFromEnum(Signal.io_E10) => .{ .glb = 4, .mc = 10 },
-            @intFromEnum(Signal.io_E12) => .{ .glb = 4, .mc = 12 },
-            @intFromEnum(Signal.io_E13) => .{ .glb = 4, .mc = 13 },
-            @intFromEnum(Signal.io_E14) => .{ .glb = 4, .mc = 14 },
-            @intFromEnum(Signal.mc_E0)...@intFromEnum(Signal.mc_E15) => .{ .glb = 4, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.mc_E0)) },
-            @intFromEnum(Signal.io_F0) => .{ .glb = 5, .mc = 0 },
-            @intFromEnum(Signal.io_F1) => .{ .glb = 5, .mc = 1 },
-            @intFromEnum(Signal.io_F2) => .{ .glb = 5, .mc = 2 },
-            @intFromEnum(Signal.io_F4) => .{ .glb = 5, .mc = 4 },
-            @intFromEnum(Signal.io_F5) => .{ .glb = 5, .mc = 5 },
-            @intFromEnum(Signal.io_F6) => .{ .glb = 5, .mc = 6 },
-            @intFromEnum(Signal.io_F8) => .{ .glb = 5, .mc = 8 },
-            @intFromEnum(Signal.io_F9) => .{ .glb = 5, .mc = 9 },
-            @intFromEnum(Signal.io_F10) => .{ .glb = 5, .mc = 10 },
-            @intFromEnum(Signal.io_F12) => .{ .glb = 5, .mc = 12 },
-            @intFromEnum(Signal.io_F13) => .{ .glb = 5, .mc = 13 },
-            @intFromEnum(Signal.io_F14) => .{ .glb = 5, .mc = 14 },
-            @intFromEnum(Signal.mc_F0)...@intFromEnum(Signal.mc_F15) => .{ .glb = 5, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.mc_F0)) },
-            @intFromEnum(Signal.io_G0) => .{ .glb = 6, .mc = 0 },
-            @intFromEnum(Signal.io_G1) => .{ .glb = 6, .mc = 1 },
-            @intFromEnum(Signal.io_G2) => .{ .glb = 6, .mc = 2 },
-            @intFromEnum(Signal.io_G4) => .{ .glb = 6, .mc = 4 },
-            @intFromEnum(Signal.io_G5) => .{ .glb = 6, .mc = 5 },
-            @intFromEnum(Signal.io_G6) => .{ .glb = 6, .mc = 6 },
-            @intFromEnum(Signal.io_G8) => .{ .glb = 6, .mc = 8 },
-            @intFromEnum(Signal.io_G9) => .{ .glb = 6, .mc = 9 },
-            @intFromEnum(Signal.io_G10) => .{ .glb = 6, .mc = 10 },
-            @intFromEnum(Signal.io_G12) => .{ .glb = 6, .mc = 12 },
-            @intFromEnum(Signal.io_G13) => .{ .glb = 6, .mc = 13 },
-            @intFromEnum(Signal.io_G14) => .{ .glb = 6, .mc = 14 },
-            @intFromEnum(Signal.mc_G0)...@intFromEnum(Signal.mc_G15) => .{ .glb = 6, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.mc_G0)) },
-            @intFromEnum(Signal.io_H0) => .{ .glb = 7, .mc = 0 },
-            @intFromEnum(Signal.io_H1) => .{ .glb = 7, .mc = 1 },
-            @intFromEnum(Signal.io_H2) => .{ .glb = 7, .mc = 2 },
-            @intFromEnum(Signal.io_H4) => .{ .glb = 7, .mc = 4 },
-            @intFromEnum(Signal.io_H5) => .{ .glb = 7, .mc = 5 },
-            @intFromEnum(Signal.io_H6) => .{ .glb = 7, .mc = 6 },
-            @intFromEnum(Signal.io_H8) => .{ .glb = 7, .mc = 8 },
-            @intFromEnum(Signal.io_H9) => .{ .glb = 7, .mc = 9 },
-            @intFromEnum(Signal.io_H10) => .{ .glb = 7, .mc = 10 },
-            @intFromEnum(Signal.io_H12) => .{ .glb = 7, .mc = 12 },
-            @intFromEnum(Signal.io_H13) => .{ .glb = 7, .mc = 13 },
-            @intFromEnum(Signal.io_H14) => .{ .glb = 7, .mc = 14 },
-            @intFromEnum(Signal.mc_H0)...@intFromEnum(Signal.mc_H15) => .{ .glb = 7, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.mc_H0)) },
+        return switch (@backingInt(self)) {
+            @backingInt(Signal.io_A0) => .{ .glb = 0, .mc = 0 },
+            @backingInt(Signal.io_A1) => .{ .glb = 0, .mc = 1 },
+            @backingInt(Signal.io_A2) => .{ .glb = 0, .mc = 2 },
+            @backingInt(Signal.io_A4) => .{ .glb = 0, .mc = 4 },
+            @backingInt(Signal.io_A5) => .{ .glb = 0, .mc = 5 },
+            @backingInt(Signal.io_A6) => .{ .glb = 0, .mc = 6 },
+            @backingInt(Signal.io_A8) => .{ .glb = 0, .mc = 8 },
+            @backingInt(Signal.io_A9) => .{ .glb = 0, .mc = 9 },
+            @backingInt(Signal.io_A10) => .{ .glb = 0, .mc = 10 },
+            @backingInt(Signal.io_A12) => .{ .glb = 0, .mc = 12 },
+            @backingInt(Signal.io_A13) => .{ .glb = 0, .mc = 13 },
+            @backingInt(Signal.io_A14) => .{ .glb = 0, .mc = 14 },
+            @backingInt(Signal.mc_A0)...@backingInt(Signal.mc_A15) => .{ .glb = 0, .mc = @intCast(@backingInt(self) - @backingInt(Signal.mc_A0)) },
+            @backingInt(Signal.io_B0) => .{ .glb = 1, .mc = 0 },
+            @backingInt(Signal.io_B1) => .{ .glb = 1, .mc = 1 },
+            @backingInt(Signal.io_B2) => .{ .glb = 1, .mc = 2 },
+            @backingInt(Signal.io_B4) => .{ .glb = 1, .mc = 4 },
+            @backingInt(Signal.io_B5) => .{ .glb = 1, .mc = 5 },
+            @backingInt(Signal.io_B6) => .{ .glb = 1, .mc = 6 },
+            @backingInt(Signal.io_B8) => .{ .glb = 1, .mc = 8 },
+            @backingInt(Signal.io_B9) => .{ .glb = 1, .mc = 9 },
+            @backingInt(Signal.io_B10) => .{ .glb = 1, .mc = 10 },
+            @backingInt(Signal.io_B12) => .{ .glb = 1, .mc = 12 },
+            @backingInt(Signal.io_B13) => .{ .glb = 1, .mc = 13 },
+            @backingInt(Signal.io_B14) => .{ .glb = 1, .mc = 14 },
+            @backingInt(Signal.mc_B0)...@backingInt(Signal.mc_B15) => .{ .glb = 1, .mc = @intCast(@backingInt(self) - @backingInt(Signal.mc_B0)) },
+            @backingInt(Signal.io_C0) => .{ .glb = 2, .mc = 0 },
+            @backingInt(Signal.io_C1) => .{ .glb = 2, .mc = 1 },
+            @backingInt(Signal.io_C2) => .{ .glb = 2, .mc = 2 },
+            @backingInt(Signal.io_C4) => .{ .glb = 2, .mc = 4 },
+            @backingInt(Signal.io_C5) => .{ .glb = 2, .mc = 5 },
+            @backingInt(Signal.io_C6) => .{ .glb = 2, .mc = 6 },
+            @backingInt(Signal.io_C8) => .{ .glb = 2, .mc = 8 },
+            @backingInt(Signal.io_C9) => .{ .glb = 2, .mc = 9 },
+            @backingInt(Signal.io_C10) => .{ .glb = 2, .mc = 10 },
+            @backingInt(Signal.io_C12) => .{ .glb = 2, .mc = 12 },
+            @backingInt(Signal.io_C13) => .{ .glb = 2, .mc = 13 },
+            @backingInt(Signal.io_C14) => .{ .glb = 2, .mc = 14 },
+            @backingInt(Signal.mc_C0)...@backingInt(Signal.mc_C15) => .{ .glb = 2, .mc = @intCast(@backingInt(self) - @backingInt(Signal.mc_C0)) },
+            @backingInt(Signal.io_D0) => .{ .glb = 3, .mc = 0 },
+            @backingInt(Signal.io_D1) => .{ .glb = 3, .mc = 1 },
+            @backingInt(Signal.io_D2) => .{ .glb = 3, .mc = 2 },
+            @backingInt(Signal.io_D4) => .{ .glb = 3, .mc = 4 },
+            @backingInt(Signal.io_D5) => .{ .glb = 3, .mc = 5 },
+            @backingInt(Signal.io_D6) => .{ .glb = 3, .mc = 6 },
+            @backingInt(Signal.io_D8) => .{ .glb = 3, .mc = 8 },
+            @backingInt(Signal.io_D9) => .{ .glb = 3, .mc = 9 },
+            @backingInt(Signal.io_D10) => .{ .glb = 3, .mc = 10 },
+            @backingInt(Signal.io_D12) => .{ .glb = 3, .mc = 12 },
+            @backingInt(Signal.io_D13) => .{ .glb = 3, .mc = 13 },
+            @backingInt(Signal.io_D14) => .{ .glb = 3, .mc = 14 },
+            @backingInt(Signal.mc_D0)...@backingInt(Signal.mc_D15) => .{ .glb = 3, .mc = @intCast(@backingInt(self) - @backingInt(Signal.mc_D0)) },
+            @backingInt(Signal.io_E0) => .{ .glb = 4, .mc = 0 },
+            @backingInt(Signal.io_E1) => .{ .glb = 4, .mc = 1 },
+            @backingInt(Signal.io_E2) => .{ .glb = 4, .mc = 2 },
+            @backingInt(Signal.io_E4) => .{ .glb = 4, .mc = 4 },
+            @backingInt(Signal.io_E5) => .{ .glb = 4, .mc = 5 },
+            @backingInt(Signal.io_E6) => .{ .glb = 4, .mc = 6 },
+            @backingInt(Signal.io_E8) => .{ .glb = 4, .mc = 8 },
+            @backingInt(Signal.io_E9) => .{ .glb = 4, .mc = 9 },
+            @backingInt(Signal.io_E10) => .{ .glb = 4, .mc = 10 },
+            @backingInt(Signal.io_E12) => .{ .glb = 4, .mc = 12 },
+            @backingInt(Signal.io_E13) => .{ .glb = 4, .mc = 13 },
+            @backingInt(Signal.io_E14) => .{ .glb = 4, .mc = 14 },
+            @backingInt(Signal.mc_E0)...@backingInt(Signal.mc_E15) => .{ .glb = 4, .mc = @intCast(@backingInt(self) - @backingInt(Signal.mc_E0)) },
+            @backingInt(Signal.io_F0) => .{ .glb = 5, .mc = 0 },
+            @backingInt(Signal.io_F1) => .{ .glb = 5, .mc = 1 },
+            @backingInt(Signal.io_F2) => .{ .glb = 5, .mc = 2 },
+            @backingInt(Signal.io_F4) => .{ .glb = 5, .mc = 4 },
+            @backingInt(Signal.io_F5) => .{ .glb = 5, .mc = 5 },
+            @backingInt(Signal.io_F6) => .{ .glb = 5, .mc = 6 },
+            @backingInt(Signal.io_F8) => .{ .glb = 5, .mc = 8 },
+            @backingInt(Signal.io_F9) => .{ .glb = 5, .mc = 9 },
+            @backingInt(Signal.io_F10) => .{ .glb = 5, .mc = 10 },
+            @backingInt(Signal.io_F12) => .{ .glb = 5, .mc = 12 },
+            @backingInt(Signal.io_F13) => .{ .glb = 5, .mc = 13 },
+            @backingInt(Signal.io_F14) => .{ .glb = 5, .mc = 14 },
+            @backingInt(Signal.mc_F0)...@backingInt(Signal.mc_F15) => .{ .glb = 5, .mc = @intCast(@backingInt(self) - @backingInt(Signal.mc_F0)) },
+            @backingInt(Signal.io_G0) => .{ .glb = 6, .mc = 0 },
+            @backingInt(Signal.io_G1) => .{ .glb = 6, .mc = 1 },
+            @backingInt(Signal.io_G2) => .{ .glb = 6, .mc = 2 },
+            @backingInt(Signal.io_G4) => .{ .glb = 6, .mc = 4 },
+            @backingInt(Signal.io_G5) => .{ .glb = 6, .mc = 5 },
+            @backingInt(Signal.io_G6) => .{ .glb = 6, .mc = 6 },
+            @backingInt(Signal.io_G8) => .{ .glb = 6, .mc = 8 },
+            @backingInt(Signal.io_G9) => .{ .glb = 6, .mc = 9 },
+            @backingInt(Signal.io_G10) => .{ .glb = 6, .mc = 10 },
+            @backingInt(Signal.io_G12) => .{ .glb = 6, .mc = 12 },
+            @backingInt(Signal.io_G13) => .{ .glb = 6, .mc = 13 },
+            @backingInt(Signal.io_G14) => .{ .glb = 6, .mc = 14 },
+            @backingInt(Signal.mc_G0)...@backingInt(Signal.mc_G15) => .{ .glb = 6, .mc = @intCast(@backingInt(self) - @backingInt(Signal.mc_G0)) },
+            @backingInt(Signal.io_H0) => .{ .glb = 7, .mc = 0 },
+            @backingInt(Signal.io_H1) => .{ .glb = 7, .mc = 1 },
+            @backingInt(Signal.io_H2) => .{ .glb = 7, .mc = 2 },
+            @backingInt(Signal.io_H4) => .{ .glb = 7, .mc = 4 },
+            @backingInt(Signal.io_H5) => .{ .glb = 7, .mc = 5 },
+            @backingInt(Signal.io_H6) => .{ .glb = 7, .mc = 6 },
+            @backingInt(Signal.io_H8) => .{ .glb = 7, .mc = 8 },
+            @backingInt(Signal.io_H9) => .{ .glb = 7, .mc = 9 },
+            @backingInt(Signal.io_H10) => .{ .glb = 7, .mc = 10 },
+            @backingInt(Signal.io_H12) => .{ .glb = 7, .mc = 12 },
+            @backingInt(Signal.io_H13) => .{ .glb = 7, .mc = 13 },
+            @backingInt(Signal.io_H14) => .{ .glb = 7, .mc = 14 },
+            @backingInt(Signal.mc_H0)...@backingInt(Signal.mc_H15) => .{ .glb = 7, .mc = @intCast(@backingInt(self) - @backingInt(Signal.mc_H0)) },
             else => null,
         };
     }
     pub inline fn mc(self: Signal) lc4k.MC_Ref {
-        return self.maybe_mc() orelse lc4k.panic("Signal {t} is not associated with a macrocell", .{ self });
+        return self.maybe_mc() orelse lc4k.panic("Signal {t} is not associated with a macrocell", .{self});
     }
 
     pub inline fn maybe_pin(self: Signal) ?Pin {
@@ -537,65 +536,65 @@ pub const Signal = enum (u16) {
     }
 };
 
-pub const mc_feedback_signals = [num_glbs][num_mcs_per_glb]Signal {
-    .{ .mc_A0, .mc_A1, .mc_A2, .mc_A3, .mc_A4, .mc_A5, .mc_A6, .mc_A7, .mc_A8, .mc_A9, .mc_A10, .mc_A11, .mc_A12, .mc_A13, .mc_A14, .mc_A15, },
-    .{ .mc_B0, .mc_B1, .mc_B2, .mc_B3, .mc_B4, .mc_B5, .mc_B6, .mc_B7, .mc_B8, .mc_B9, .mc_B10, .mc_B11, .mc_B12, .mc_B13, .mc_B14, .mc_B15, },
-    .{ .mc_C0, .mc_C1, .mc_C2, .mc_C3, .mc_C4, .mc_C5, .mc_C6, .mc_C7, .mc_C8, .mc_C9, .mc_C10, .mc_C11, .mc_C12, .mc_C13, .mc_C14, .mc_C15, },
-    .{ .mc_D0, .mc_D1, .mc_D2, .mc_D3, .mc_D4, .mc_D5, .mc_D6, .mc_D7, .mc_D8, .mc_D9, .mc_D10, .mc_D11, .mc_D12, .mc_D13, .mc_D14, .mc_D15, },
-    .{ .mc_E0, .mc_E1, .mc_E2, .mc_E3, .mc_E4, .mc_E5, .mc_E6, .mc_E7, .mc_E8, .mc_E9, .mc_E10, .mc_E11, .mc_E12, .mc_E13, .mc_E14, .mc_E15, },
-    .{ .mc_F0, .mc_F1, .mc_F2, .mc_F3, .mc_F4, .mc_F5, .mc_F6, .mc_F7, .mc_F8, .mc_F9, .mc_F10, .mc_F11, .mc_F12, .mc_F13, .mc_F14, .mc_F15, },
-    .{ .mc_G0, .mc_G1, .mc_G2, .mc_G3, .mc_G4, .mc_G5, .mc_G6, .mc_G7, .mc_G8, .mc_G9, .mc_G10, .mc_G11, .mc_G12, .mc_G13, .mc_G14, .mc_G15, },
-    .{ .mc_H0, .mc_H1, .mc_H2, .mc_H3, .mc_H4, .mc_H5, .mc_H6, .mc_H7, .mc_H8, .mc_H9, .mc_H10, .mc_H11, .mc_H12, .mc_H13, .mc_H14, .mc_H15, },
+pub const mc_feedback_signals = [num_glbs][num_mcs_per_glb]Signal{
+    .{ .mc_A0, .mc_A1, .mc_A2, .mc_A3, .mc_A4, .mc_A5, .mc_A6, .mc_A7, .mc_A8, .mc_A9, .mc_A10, .mc_A11, .mc_A12, .mc_A13, .mc_A14, .mc_A15 },
+    .{ .mc_B0, .mc_B1, .mc_B2, .mc_B3, .mc_B4, .mc_B5, .mc_B6, .mc_B7, .mc_B8, .mc_B9, .mc_B10, .mc_B11, .mc_B12, .mc_B13, .mc_B14, .mc_B15 },
+    .{ .mc_C0, .mc_C1, .mc_C2, .mc_C3, .mc_C4, .mc_C5, .mc_C6, .mc_C7, .mc_C8, .mc_C9, .mc_C10, .mc_C11, .mc_C12, .mc_C13, .mc_C14, .mc_C15 },
+    .{ .mc_D0, .mc_D1, .mc_D2, .mc_D3, .mc_D4, .mc_D5, .mc_D6, .mc_D7, .mc_D8, .mc_D9, .mc_D10, .mc_D11, .mc_D12, .mc_D13, .mc_D14, .mc_D15 },
+    .{ .mc_E0, .mc_E1, .mc_E2, .mc_E3, .mc_E4, .mc_E5, .mc_E6, .mc_E7, .mc_E8, .mc_E9, .mc_E10, .mc_E11, .mc_E12, .mc_E13, .mc_E14, .mc_E15 },
+    .{ .mc_F0, .mc_F1, .mc_F2, .mc_F3, .mc_F4, .mc_F5, .mc_F6, .mc_F7, .mc_F8, .mc_F9, .mc_F10, .mc_F11, .mc_F12, .mc_F13, .mc_F14, .mc_F15 },
+    .{ .mc_G0, .mc_G1, .mc_G2, .mc_G3, .mc_G4, .mc_G5, .mc_G6, .mc_G7, .mc_G8, .mc_G9, .mc_G10, .mc_G11, .mc_G12, .mc_G13, .mc_G14, .mc_G15 },
+    .{ .mc_H0, .mc_H1, .mc_H2, .mc_H3, .mc_H4, .mc_H5, .mc_H6, .mc_H7, .mc_H8, .mc_H9, .mc_H10, .mc_H11, .mc_H12, .mc_H13, .mc_H14, .mc_H15 },
 };
 
-pub const mc_io_signals = [num_glbs][num_mcs_per_glb]?Signal {
-    .{ .io_A0, .io_A1, .io_A2, null, .io_A4, .io_A5, .io_A6, null, .io_A8, .io_A9, .io_A10, null, .io_A12, .io_A13, .io_A14, null, },
-    .{ .io_B0, .io_B1, .io_B2, null, .io_B4, .io_B5, .io_B6, null, .io_B8, .io_B9, .io_B10, null, .io_B12, .io_B13, .io_B14, null, },
-    .{ .io_C0, .io_C1, .io_C2, null, .io_C4, .io_C5, .io_C6, null, .io_C8, .io_C9, .io_C10, null, .io_C12, .io_C13, .io_C14, null, },
-    .{ .io_D0, .io_D1, .io_D2, null, .io_D4, .io_D5, .io_D6, null, .io_D8, .io_D9, .io_D10, null, .io_D12, .io_D13, .io_D14, null, },
-    .{ .io_E0, .io_E1, .io_E2, null, .io_E4, .io_E5, .io_E6, null, .io_E8, .io_E9, .io_E10, null, .io_E12, .io_E13, .io_E14, null, },
-    .{ .io_F0, .io_F1, .io_F2, null, .io_F4, .io_F5, .io_F6, null, .io_F8, .io_F9, .io_F10, null, .io_F12, .io_F13, .io_F14, null, },
-    .{ .io_G0, .io_G1, .io_G2, null, .io_G4, .io_G5, .io_G6, null, .io_G8, .io_G9, .io_G10, null, .io_G12, .io_G13, .io_G14, null, },
-    .{ .io_H0, .io_H1, .io_H2, null, .io_H4, .io_H5, .io_H6, null, .io_H8, .io_H9, .io_H10, null, .io_H12, .io_H13, .io_H14, null, },
+pub const mc_io_signals = [num_glbs][num_mcs_per_glb]?Signal{
+    .{ .io_A0, .io_A1, .io_A2, null, .io_A4, .io_A5, .io_A6, null, .io_A8, .io_A9, .io_A10, null, .io_A12, .io_A13, .io_A14, null },
+    .{ .io_B0, .io_B1, .io_B2, null, .io_B4, .io_B5, .io_B6, null, .io_B8, .io_B9, .io_B10, null, .io_B12, .io_B13, .io_B14, null },
+    .{ .io_C0, .io_C1, .io_C2, null, .io_C4, .io_C5, .io_C6, null, .io_C8, .io_C9, .io_C10, null, .io_C12, .io_C13, .io_C14, null },
+    .{ .io_D0, .io_D1, .io_D2, null, .io_D4, .io_D5, .io_D6, null, .io_D8, .io_D9, .io_D10, null, .io_D12, .io_D13, .io_D14, null },
+    .{ .io_E0, .io_E1, .io_E2, null, .io_E4, .io_E5, .io_E6, null, .io_E8, .io_E9, .io_E10, null, .io_E12, .io_E13, .io_E14, null },
+    .{ .io_F0, .io_F1, .io_F2, null, .io_F4, .io_F5, .io_F6, null, .io_F8, .io_F9, .io_F10, null, .io_F12, .io_F13, .io_F14, null },
+    .{ .io_G0, .io_G1, .io_G2, null, .io_G4, .io_G5, .io_G6, null, .io_G8, .io_G9, .io_G10, null, .io_G12, .io_G13, .io_G14, null },
+    .{ .io_H0, .io_H1, .io_H2, null, .io_H4, .io_H5, .io_H6, null, .io_H8, .io_H9, .io_H10, null, .io_H12, .io_H13, .io_H14, null },
 };
 
-pub const gi_options = [num_gis_per_glb][gi_mux_size]Signal {
-    .{ .io_H12, .mc_H7, .mc_H5, .io_H1, .io_G13, .mc_E10, .mc_E9, .io_F5, .io_E1, .mc_C15, .io_C10, .mc_D7, .io_D4, .io_C1, .io_A14, .mc_A11, .io_B6, .io_A4, .mc_B1, },
-    .{ .mc_G12, .mc_G8, .mc_G4, .mc_G1, .io_H14, .mc_F10, .io_F9, .io_F4, .mc_E0, .io_E14, .mc_D12, .io_C6, .mc_D4, .io_C1, .clk0, .mc_B10, .io_A6, .io_B5, .io_A1, },
-    .{ .mc_H10, .mc_H8, .mc_H5, .mc_G0, .io_F13, .io_E12, .io_E8, .mc_E4, .io_F0, .io_D14, .mc_C13, .mc_C8, .mc_D4, .io_D1, .mc_B14, .mc_B13, .io_A6, .mc_A3, .mc_A2, },
-    .{ .mc_H11, .mc_G9, .io_H4, .mc_G0, .io_G14, .io_F10, .io_E6, .mc_F5, .mc_F0, .mc_D15, .mc_D10, .mc_C7, .mc_C5, .io_C2, .clk1, .mc_A13, .mc_A7, .io_A4, .mc_B0, },
-    .{ .mc_H12, .io_G9, .mc_G6, .io_H1, .mc_H14, .mc_E12, .mc_F9, .io_E5, .io_F2, .io_C14, .mc_D10, .io_C9, .mc_D4, .mc_D2, .mc_A14, .mc_A13, .io_B9, .mc_A4, .io_B2, },
-    .{ .mc_G13, .io_G8, .io_G4, .io_H2, .io_G14, .io_F12, .mc_E9, .io_E5, .io_F0, .io_E14, .mc_C13, .mc_C9, .mc_C6, .mc_C1, .mc_A15, .io_B10, .io_B8, .io_B4, .io_A2, },
-    .{ .mc_G12, .io_H6, .mc_G3, .io_G1, .mc_H14, .mc_F13, .io_E9, .mc_F4, .mc_F1, .mc_E15, .mc_C13, .io_D6, .mc_D5, .mc_C2, .mc_B15, .io_B12, .io_B6, .io_A5, .mc_B0, },
-    .{ .mc_H13, .mc_H8, .io_G5, .io_G2, .mc_H15, .mc_F12, .mc_E7, .mc_E6, .io_E2, .mc_C15, .mc_C10, .mc_D9, .mc_C5, .io_D0, .mc_B15, .mc_B10, .mc_A9, .mc_B4, .io_B2, },
-    .{ .mc_G11, .io_H8, .mc_G6, .mc_H2, .io_F14, .io_F10, .mc_F7, .mc_F6, .io_E0, .io_E13, .io_C10, .io_C6, .mc_C4, .mc_C1, .clk3, .mc_B11, .mc_A9, .io_A5, .mc_A2, },
-    .{ .io_G12, .mc_H9, .mc_G6, .mc_G2, .mc_F14, .io_E10, .io_F9, .mc_E6, .io_F1, .mc_C14, .io_D12, .io_D9, .mc_C5, .io_C0, .mc_B14, .io_A12, .io_B6, .io_B4, .mc_A0, },
-    .{ .mc_G12, .mc_G7, .io_G4, .mc_G0, .io_F14, .mc_F12, .io_F6, .io_F5, .io_F2, .mc_C14, .mc_C10, .mc_D8, .io_C4, .mc_C0, .clk2, .mc_B12, .mc_B7, .mc_B6, .io_B1, },
-    .{ .mc_G10, .mc_G7, .mc_H3, .io_H1, .mc_F14, .mc_F11, .io_E6, .mc_E6, .mc_E1, .io_D14, .mc_D12, .mc_C9, .mc_C4, .mc_C2, .io_B13, .mc_A10, .mc_A8, .mc_A6, .io_A0, },
-    .{ .io_H10, .mc_G8, .io_H5, .mc_H2, .mc_F14, .io_E12, .mc_E9, .mc_E5, .mc_E0, .mc_E15, .io_D10, .io_C9, .mc_D3, .mc_D0, .clk2, .mc_A12, .io_A9, .io_B4, .io_B2, },
-    .{ .io_G10, .mc_H9, .mc_G3, .mc_H1, .io_H13, .mc_E10, .mc_F8, .mc_E4, .io_E0, .mc_D15, .mc_C10, .io_C8, .mc_C6, .mc_D1, .clk0, .mc_A12, .io_A8, .mc_A4, .io_A0, },
-    .{ .mc_H10, .io_G6, .mc_G5, .mc_H0, .mc_H15, .io_F12, .mc_F8, .mc_F5, .mc_E0, .io_E13, .io_D12, .io_D6, .io_C5, .mc_D2, .clk1, .mc_A11, .mc_A8, .mc_B3, .io_B1, },
-    .{ .io_G10, .mc_G9, .mc_G5, .io_H2, .io_H14, .mc_F10, .mc_E7, .mc_F6, .io_E1, .io_C13, .mc_D11, .io_D9, .io_C4, .io_D2, .mc_A14, .mc_B13, .io_A9, .mc_A6, .mc_B0, },
-    .{ .mc_H12, .mc_G7, .mc_G4, .io_G2, .io_G13, .mc_E11, .io_E9, .mc_E4, .mc_F2, .mc_E14, .io_C12, .io_C9, .mc_C3, .io_D2, .clk3, .io_B10, .mc_A7, .mc_B3, .mc_A0, },
-    .{ .io_G12, .io_G9, .mc_H6, .mc_G1, .mc_G14, .io_F10, .io_E8, .io_E4, .mc_E2, .io_C13, .io_D10, .mc_D8, .mc_C4, .io_D0, .mc_A15, .io_B12, .io_A8, .mc_B3, .mc_B1, },
-    .{ .mc_G13, .io_G6, .mc_G3, .mc_H0, .mc_G15, .mc_E11, .io_E8, .io_F4, .mc_F1, .mc_C15, .mc_D10, .io_D9, .mc_D6, .mc_D0, .io_B13, .mc_B11, .mc_B7, .mc_B6, .mc_A1, },
-    .{ .io_H12, .mc_H8, .mc_H3, .mc_H2, .mc_G14, .io_F12, .io_F8, .mc_F6, .mc_F1, .io_C14, .mc_C11, .mc_C7, .mc_C3, .io_C0, .clk0, .mc_B12, .mc_B9, .mc_B5, .io_B0, },
-    .{ .mc_G13, .mc_G9, .mc_H3, .io_G0, .mc_H14, .io_E12, .mc_F7, .mc_E3, .io_F1, .mc_E14, .mc_D13, .io_C8, .io_C5, .mc_C0, .io_A14, .mc_B10, .io_A8, .mc_B4, .mc_B2, },
-    .{ .mc_H12, .io_H9, .io_H5, .io_H0, .mc_G15, .mc_E13, .mc_F7, .io_E4, .mc_F0, .mc_D14, .mc_C12, .mc_D8, .mc_C6, .io_C0, .mc_B15, .mc_B13, .mc_A8, .io_A4, .io_A1, },
-    .{ .io_H12, .io_G9, .io_G5, .mc_G2, .mc_G15, .mc_F12, .mc_E8, .mc_E5, .mc_E1, .io_E14, .io_C12, .mc_C8, .io_C4, .mc_D1, .clk1, .io_A10, .mc_B8, .io_A5, .mc_B2, },
-    .{ .io_H10, .io_G8, .mc_H5, .mc_G1, .io_G13, .io_E10, .io_F8, .mc_F4, .mc_F0, .io_D13, .mc_D11, .io_D8, .io_C5, .mc_D1, .io_A13, .mc_A10, .mc_A9, .mc_A4, .mc_A1, },
-    .{ .mc_G10, .io_H9, .mc_H6, .io_G2, .io_H13, .mc_F11, .io_F6, .mc_F3, .io_F0, .io_C14, .mc_D11, .io_D6, .mc_D3, .io_C2, .io_A14, .mc_B11, .mc_B8, .io_B5, .mc_A0, },
-    .{ .mc_H13, .io_G6, .io_H5, .mc_H1, .mc_F15, .mc_E12, .mc_E8, .io_F5, .io_F1, .io_C13, .io_C12, .io_C6, .io_D5, .io_C2, .io_A13, .mc_A10, .mc_B9, .mc_A3, .io_A2, },
-    .{ .mc_G10, .io_H8, .io_H4, .io_H2, .io_F13, .mc_E12, .io_E9, .mc_E5, .io_E2, .io_D13, .mc_C12, .io_C8, .io_D4, .io_D0, .io_B14, .mc_A11, .mc_B7, .mc_B5, .io_A1, },
-    .{ .mc_H13, .io_H9, .mc_H4, .io_G1, .io_F13, .mc_F10, .mc_F8, .mc_F4, .io_F2, .mc_E14, .io_D10, .mc_C7, .mc_D6, .mc_C1, .io_B13, .io_A12, .mc_B8, .mc_A5, .mc_B1, },
-    .{ .mc_H11, .io_G8, .mc_G5, .mc_H1, .io_F14, .mc_E13, .io_F9, .mc_F3, .mc_E2, .io_D14, .io_C10, .mc_C8, .mc_D5, .mc_D0, .io_B14, .io_B10, .io_B9, .mc_B4, .io_B0, },
-    .{ .mc_G11, .mc_G8, .io_H4, .io_G1, .mc_H15, .mc_E10, .io_F6, .io_E5, .mc_E2, .mc_D14, .mc_C11, .mc_D7, .io_D5, .mc_C0, .mc_B14, .io_A10, .mc_A7, .mc_A6, .mc_A1, },
-    .{ .mc_H10, .mc_H7, .io_G5, .io_G0, .io_G14, .io_E10, .mc_F9, .io_F4, .io_E0, .mc_D14, .mc_D13, .mc_C9, .mc_D3, .io_D2, .io_B14, .io_B12, .mc_B9, .mc_A5, .io_B1, },
-    .{ .io_H10, .mc_H7, .io_G4, .mc_H0, .io_H13, .mc_F13, .mc_E7, .io_E4, .mc_F2, .mc_D15, .mc_D12, .io_D8, .io_D5, .io_D1, .clk3, .io_A12, .io_B9, .mc_B5, .mc_B2, },
-    .{ .io_G12, .mc_H9, .mc_H4, .io_G0, .io_H14, .mc_F13, .io_E6, .mc_F3, .io_E1, .mc_E15, .mc_C12, .mc_D9, .mc_C3, .mc_D2, .io_A13, .io_A10, .io_B8, .mc_B6, .mc_A2, },
-    .{ .mc_H11, .io_H8, .mc_H4, .io_H0, .mc_F15, .mc_E11, .mc_F9, .mc_E3, .mc_E1, .io_D13, .io_D12, .mc_D7, .mc_D5, .io_D1, .mc_A15, .mc_B12, .io_A9, .io_B5, .io_A0, },
-    .{ .mc_G11, .io_H6, .mc_G4, .io_H0, .mc_G14, .mc_F11, .mc_E8, .mc_F5, .io_E2, .mc_C14, .mc_D13, .io_D8, .mc_D6, .io_C1, .mc_A14, .mc_A12, .io_B8, .mc_A3, .io_B0, },
-    .{ .io_G10, .io_H6, .mc_H6, .mc_G2, .mc_F15, .mc_E13, .io_F8, .mc_E3, .mc_F2, .io_E13, .mc_C11, .mc_D9, .io_D4, .mc_C2, .clk2, .mc_A13, .io_A6, .mc_A5, .io_A2, },
+pub const gi_options = [num_gis_per_glb][gi_mux_size]Signal{
+    .{ .io_H12, .mc_H7, .mc_H5, .io_H1, .io_G13, .mc_E10, .mc_E9, .io_F5, .io_E1, .mc_C15, .io_C10, .mc_D7, .io_D4, .io_C1, .io_A14, .mc_A11, .io_B6, .io_A4, .mc_B1 },
+    .{ .mc_G12, .mc_G8, .mc_G4, .mc_G1, .io_H14, .mc_F10, .io_F9, .io_F4, .mc_E0, .io_E14, .mc_D12, .io_C6, .mc_D4, .io_C1, .clk0, .mc_B10, .io_A6, .io_B5, .io_A1 },
+    .{ .mc_H10, .mc_H8, .mc_H5, .mc_G0, .io_F13, .io_E12, .io_E8, .mc_E4, .io_F0, .io_D14, .mc_C13, .mc_C8, .mc_D4, .io_D1, .mc_B14, .mc_B13, .io_A6, .mc_A3, .mc_A2 },
+    .{ .mc_H11, .mc_G9, .io_H4, .mc_G0, .io_G14, .io_F10, .io_E6, .mc_F5, .mc_F0, .mc_D15, .mc_D10, .mc_C7, .mc_C5, .io_C2, .clk1, .mc_A13, .mc_A7, .io_A4, .mc_B0 },
+    .{ .mc_H12, .io_G9, .mc_G6, .io_H1, .mc_H14, .mc_E12, .mc_F9, .io_E5, .io_F2, .io_C14, .mc_D10, .io_C9, .mc_D4, .mc_D2, .mc_A14, .mc_A13, .io_B9, .mc_A4, .io_B2 },
+    .{ .mc_G13, .io_G8, .io_G4, .io_H2, .io_G14, .io_F12, .mc_E9, .io_E5, .io_F0, .io_E14, .mc_C13, .mc_C9, .mc_C6, .mc_C1, .mc_A15, .io_B10, .io_B8, .io_B4, .io_A2 },
+    .{ .mc_G12, .io_H6, .mc_G3, .io_G1, .mc_H14, .mc_F13, .io_E9, .mc_F4, .mc_F1, .mc_E15, .mc_C13, .io_D6, .mc_D5, .mc_C2, .mc_B15, .io_B12, .io_B6, .io_A5, .mc_B0 },
+    .{ .mc_H13, .mc_H8, .io_G5, .io_G2, .mc_H15, .mc_F12, .mc_E7, .mc_E6, .io_E2, .mc_C15, .mc_C10, .mc_D9, .mc_C5, .io_D0, .mc_B15, .mc_B10, .mc_A9, .mc_B4, .io_B2 },
+    .{ .mc_G11, .io_H8, .mc_G6, .mc_H2, .io_F14, .io_F10, .mc_F7, .mc_F6, .io_E0, .io_E13, .io_C10, .io_C6, .mc_C4, .mc_C1, .clk3, .mc_B11, .mc_A9, .io_A5, .mc_A2 },
+    .{ .io_G12, .mc_H9, .mc_G6, .mc_G2, .mc_F14, .io_E10, .io_F9, .mc_E6, .io_F1, .mc_C14, .io_D12, .io_D9, .mc_C5, .io_C0, .mc_B14, .io_A12, .io_B6, .io_B4, .mc_A0 },
+    .{ .mc_G12, .mc_G7, .io_G4, .mc_G0, .io_F14, .mc_F12, .io_F6, .io_F5, .io_F2, .mc_C14, .mc_C10, .mc_D8, .io_C4, .mc_C0, .clk2, .mc_B12, .mc_B7, .mc_B6, .io_B1 },
+    .{ .mc_G10, .mc_G7, .mc_H3, .io_H1, .mc_F14, .mc_F11, .io_E6, .mc_E6, .mc_E1, .io_D14, .mc_D12, .mc_C9, .mc_C4, .mc_C2, .io_B13, .mc_A10, .mc_A8, .mc_A6, .io_A0 },
+    .{ .io_H10, .mc_G8, .io_H5, .mc_H2, .mc_F14, .io_E12, .mc_E9, .mc_E5, .mc_E0, .mc_E15, .io_D10, .io_C9, .mc_D3, .mc_D0, .clk2, .mc_A12, .io_A9, .io_B4, .io_B2 },
+    .{ .io_G10, .mc_H9, .mc_G3, .mc_H1, .io_H13, .mc_E10, .mc_F8, .mc_E4, .io_E0, .mc_D15, .mc_C10, .io_C8, .mc_C6, .mc_D1, .clk0, .mc_A12, .io_A8, .mc_A4, .io_A0 },
+    .{ .mc_H10, .io_G6, .mc_G5, .mc_H0, .mc_H15, .io_F12, .mc_F8, .mc_F5, .mc_E0, .io_E13, .io_D12, .io_D6, .io_C5, .mc_D2, .clk1, .mc_A11, .mc_A8, .mc_B3, .io_B1 },
+    .{ .io_G10, .mc_G9, .mc_G5, .io_H2, .io_H14, .mc_F10, .mc_E7, .mc_F6, .io_E1, .io_C13, .mc_D11, .io_D9, .io_C4, .io_D2, .mc_A14, .mc_B13, .io_A9, .mc_A6, .mc_B0 },
+    .{ .mc_H12, .mc_G7, .mc_G4, .io_G2, .io_G13, .mc_E11, .io_E9, .mc_E4, .mc_F2, .mc_E14, .io_C12, .io_C9, .mc_C3, .io_D2, .clk3, .io_B10, .mc_A7, .mc_B3, .mc_A0 },
+    .{ .io_G12, .io_G9, .mc_H6, .mc_G1, .mc_G14, .io_F10, .io_E8, .io_E4, .mc_E2, .io_C13, .io_D10, .mc_D8, .mc_C4, .io_D0, .mc_A15, .io_B12, .io_A8, .mc_B3, .mc_B1 },
+    .{ .mc_G13, .io_G6, .mc_G3, .mc_H0, .mc_G15, .mc_E11, .io_E8, .io_F4, .mc_F1, .mc_C15, .mc_D10, .io_D9, .mc_D6, .mc_D0, .io_B13, .mc_B11, .mc_B7, .mc_B6, .mc_A1 },
+    .{ .io_H12, .mc_H8, .mc_H3, .mc_H2, .mc_G14, .io_F12, .io_F8, .mc_F6, .mc_F1, .io_C14, .mc_C11, .mc_C7, .mc_C3, .io_C0, .clk0, .mc_B12, .mc_B9, .mc_B5, .io_B0 },
+    .{ .mc_G13, .mc_G9, .mc_H3, .io_G0, .mc_H14, .io_E12, .mc_F7, .mc_E3, .io_F1, .mc_E14, .mc_D13, .io_C8, .io_C5, .mc_C0, .io_A14, .mc_B10, .io_A8, .mc_B4, .mc_B2 },
+    .{ .mc_H12, .io_H9, .io_H5, .io_H0, .mc_G15, .mc_E13, .mc_F7, .io_E4, .mc_F0, .mc_D14, .mc_C12, .mc_D8, .mc_C6, .io_C0, .mc_B15, .mc_B13, .mc_A8, .io_A4, .io_A1 },
+    .{ .io_H12, .io_G9, .io_G5, .mc_G2, .mc_G15, .mc_F12, .mc_E8, .mc_E5, .mc_E1, .io_E14, .io_C12, .mc_C8, .io_C4, .mc_D1, .clk1, .io_A10, .mc_B8, .io_A5, .mc_B2 },
+    .{ .io_H10, .io_G8, .mc_H5, .mc_G1, .io_G13, .io_E10, .io_F8, .mc_F4, .mc_F0, .io_D13, .mc_D11, .io_D8, .io_C5, .mc_D1, .io_A13, .mc_A10, .mc_A9, .mc_A4, .mc_A1 },
+    .{ .mc_G10, .io_H9, .mc_H6, .io_G2, .io_H13, .mc_F11, .io_F6, .mc_F3, .io_F0, .io_C14, .mc_D11, .io_D6, .mc_D3, .io_C2, .io_A14, .mc_B11, .mc_B8, .io_B5, .mc_A0 },
+    .{ .mc_H13, .io_G6, .io_H5, .mc_H1, .mc_F15, .mc_E12, .mc_E8, .io_F5, .io_F1, .io_C13, .io_C12, .io_C6, .io_D5, .io_C2, .io_A13, .mc_A10, .mc_B9, .mc_A3, .io_A2 },
+    .{ .mc_G10, .io_H8, .io_H4, .io_H2, .io_F13, .mc_E12, .io_E9, .mc_E5, .io_E2, .io_D13, .mc_C12, .io_C8, .io_D4, .io_D0, .io_B14, .mc_A11, .mc_B7, .mc_B5, .io_A1 },
+    .{ .mc_H13, .io_H9, .mc_H4, .io_G1, .io_F13, .mc_F10, .mc_F8, .mc_F4, .io_F2, .mc_E14, .io_D10, .mc_C7, .mc_D6, .mc_C1, .io_B13, .io_A12, .mc_B8, .mc_A5, .mc_B1 },
+    .{ .mc_H11, .io_G8, .mc_G5, .mc_H1, .io_F14, .mc_E13, .io_F9, .mc_F3, .mc_E2, .io_D14, .io_C10, .mc_C8, .mc_D5, .mc_D0, .io_B14, .io_B10, .io_B9, .mc_B4, .io_B0 },
+    .{ .mc_G11, .mc_G8, .io_H4, .io_G1, .mc_H15, .mc_E10, .io_F6, .io_E5, .mc_E2, .mc_D14, .mc_C11, .mc_D7, .io_D5, .mc_C0, .mc_B14, .io_A10, .mc_A7, .mc_A6, .mc_A1 },
+    .{ .mc_H10, .mc_H7, .io_G5, .io_G0, .io_G14, .io_E10, .mc_F9, .io_F4, .io_E0, .mc_D14, .mc_D13, .mc_C9, .mc_D3, .io_D2, .io_B14, .io_B12, .mc_B9, .mc_A5, .io_B1 },
+    .{ .io_H10, .mc_H7, .io_G4, .mc_H0, .io_H13, .mc_F13, .mc_E7, .io_E4, .mc_F2, .mc_D15, .mc_D12, .io_D8, .io_D5, .io_D1, .clk3, .io_A12, .io_B9, .mc_B5, .mc_B2 },
+    .{ .io_G12, .mc_H9, .mc_H4, .io_G0, .io_H14, .mc_F13, .io_E6, .mc_F3, .io_E1, .mc_E15, .mc_C12, .mc_D9, .mc_C3, .mc_D2, .io_A13, .io_A10, .io_B8, .mc_B6, .mc_A2 },
+    .{ .mc_H11, .io_H8, .mc_H4, .io_H0, .mc_F15, .mc_E11, .mc_F9, .mc_E3, .mc_E1, .io_D13, .io_D12, .mc_D7, .mc_D5, .io_D1, .mc_A15, .mc_B12, .io_A9, .io_B5, .io_A0 },
+    .{ .mc_G11, .io_H6, .mc_G4, .io_H0, .mc_G14, .mc_F11, .mc_E8, .mc_F5, .io_E2, .mc_C14, .mc_D13, .io_D8, .mc_D6, .io_C1, .mc_A14, .mc_A12, .io_B8, .mc_A3, .io_B0 },
+    .{ .io_G10, .io_H6, .mc_H6, .mc_G2, .mc_F15, .mc_E13, .io_F8, .mc_E3, .mc_F2, .io_E13, .mc_C11, .mc_D9, .io_D4, .mc_C2, .clk2, .mc_A13, .io_A6, .mc_A5, .io_A2 },
 };
 
 pub const gi_options_by_signal = lc4k.invert_gi_mapping(Signal, gi_mux_size, &gi_options);
@@ -648,8 +647,7 @@ pub fn get_global_bus_maintenance_range() Fuse_Range {
 }
 
 pub fn get_extra_float_input_fuses() []const Fuse {
-    return &.{
-    };
+    return &.{};
 }
 
 pub fn get_input_threshold_fuse(input: Signal) ?Fuse {
@@ -809,36 +807,35 @@ pub const pins = struct {
     pub const _144 = Pin.init_misc(143, "144", null, .no_connect);
 };
 
-pub const clock_pins = [_]Pin {
+pub const clock_pins = [_]Pin{
     pins._128,
     pins._54,
     pins._56,
     pins._126,
 };
 
-pub const oe_pins = [_]Pin {
+pub const oe_pins = [_]Pin{
     pins._130,
     pins._125,
 };
 
-pub const input_pins = [_]Pin {
-};
+pub const input_pins = [_]Pin{};
 
-pub const vcc_pins = [_]Pin {
+pub const vcc_pins = [_]Pin{
     pins._36,
     pins._57,
     pins._108,
     pins._129,
 };
 
-pub const gnd_pins = [_]Pin {
+pub const gnd_pins = [_]Pin{
     pins._1,
     pins._37,
     pins._73,
     pins._109,
 };
 
-pub const vcco_bank0_pins = [_]Pin {
+pub const vcco_bank0_pins = [_]Pin{
     pins._3,
     pins._19,
     pins._34,
@@ -846,7 +843,7 @@ pub const vcco_bank0_pins = [_]Pin {
     pins._136,
 };
 
-pub const gnd_bank0_pins = [_]Pin {
+pub const gnd_bank0_pins = [_]Pin{
     pins._10,
     pins._18,
     pins._27,
@@ -855,7 +852,7 @@ pub const gnd_bank0_pins = [_]Pin {
     pins._137,
 };
 
-pub const vcco_bank1_pins = [_]Pin {
+pub const vcco_bank1_pins = [_]Pin{
     pins._64,
     pins._75,
     pins._91,
@@ -863,7 +860,7 @@ pub const vcco_bank1_pins = [_]Pin {
     pins._119,
 };
 
-pub const gnd_bank1_pins = [_]Pin {
+pub const gnd_bank1_pins = [_]Pin{
     pins._55,
     pins._65,
     pins._82,
@@ -872,7 +869,7 @@ pub const gnd_bank1_pins = [_]Pin {
     pins._118,
 };
 
-pub const all_pins = [_]Pin {
+pub const all_pins = [_]Pin{
     pins._1,
     pins._2,
     pins._3,

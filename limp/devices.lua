@@ -205,6 +205,7 @@ pub const osctimer = struct {
     pub const timer_out = Signal.mc_`({[2]='B', [4]='D', [8]='G', [16]='F'})[num_glbs]`15;
     pub const timer_reset = timer_out;
 };
+
 ]])(info)
 end
 
@@ -228,7 +229,7 @@ for glb = 1, info.num_glbs do
         }
     end
 end
-write(nl, [[pub const Signal = enum (u16) {]], indent)
+write([[pub const Signal = enum(u16) {]], indent)
 do
     local counter = 0
     for signal_name, pin_or_mc in spairs(base_signal_names, natural_cmp) do
@@ -249,7 +250,7 @@ write [[
 
 
     pub inline fn kind(self: Signal) lc4k.Signal_Kind {
-        return switch (@intFromEnum(self)) {]]
+        return switch (@backingInt(self)) {]]
 do
     indent(2)
     local last_kind = nil
@@ -260,7 +261,7 @@ do
         if kind == 'cl' then kind = 'clk' end
         if kind ~= last_kind then
             if last_kind ~= nil then
-                write(nl, '@intFromEnum(Signal.', first_signal_name, ')...@intFromEnum(Signal.', last_signal_name, ') => .', last_kind, ',')
+                write(nl, '@backingInt(Signal.', first_signal_name, ')...@backingInt(Signal.', last_signal_name, ') => .', last_kind, ',')
             end
 
             last_kind = kind
@@ -269,7 +270,7 @@ do
         last_signal_name = signal_name
     end
     if last_kind ~= nil then
-        write(nl, '@intFromEnum(Signal.', first_signal_name, ')...@intFromEnum(Signal.', last_signal_name, ') => .', last_kind, ',')
+        write(nl, '@backingInt(Signal.', first_signal_name, ')...@backingInt(Signal.', last_signal_name, ') => .', last_kind, ',')
     end
     unindent(2)
 end
@@ -280,7 +281,7 @@ write [[
     }
 
     pub inline fn maybe_mc(self: Signal) ?lc4k.MC_Ref {
-        return switch (@intFromEnum(self)) {]]
+        return switch (@backingInt(self)) {]]
 indent(2)
 for glb = 1, info.num_glbs do
     local glb_prefix = string.char(64 + glb)
@@ -301,15 +302,15 @@ for glb = 1, info.num_glbs do
     end
 
     if all_mcs_have_ios then
-        write(nl, '@intFromEnum(Signal.io_', glb_prefix, '0)...@intFromEnum(Signal.io_', glb_prefix, max_mc, ') => .{ .glb = ', glb - 1, ', .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.io_', glb_prefix, '0)) },')
+        write(nl, '@backingInt(Signal.io_', glb_prefix, '0)...@backingInt(Signal.io_', glb_prefix, max_mc, ') => .{ .glb = ', glb - 1, ', .mc = @intCast(@backingInt(self) - @backingInt(Signal.io_', glb_prefix, '0)) },')
     else
         for mc = 0, max_mc do
             if base_signal_names['io_'..glb_prefix..mc] then
-                write(nl, '@intFromEnum(Signal.io_', glb_prefix, mc, ') => .{ .glb = ', glb - 1, ', .mc = ', mc, ' },')
+                write(nl, '@backingInt(Signal.io_', glb_prefix, mc, ') => .{ .glb = ', glb - 1, ', .mc = ', mc, ' },')
             end
         end
     end
-    write(nl, '@intFromEnum(Signal.mc_', glb_prefix, '0)...@intFromEnum(Signal.mc_', glb_prefix, '15) => .{ .glb = ', glb - 1, ', .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.mc_', glb_prefix, '0)) },')
+    write(nl, '@backingInt(Signal.mc_', glb_prefix, '0)...@backingInt(Signal.mc_', glb_prefix, '15) => .{ .glb = ', glb - 1, ', .mc = @intCast(@backingInt(self) - @backingInt(Signal.mc_', glb_prefix, '0)) },')
 end
 unindent(2)
 write [[
@@ -318,7 +319,7 @@ write [[
         };
     }
     pub inline fn mc(self: Signal) lc4k.MC_Ref {
-        return self.maybe_mc() orelse lc4k.panic("Signal {t} is not associated with a macrocell", .{ self });
+        return self.maybe_mc() orelse lc4k.panic("Signal {t} is not associated with a macrocell", .{self});
     }
 
     pub inline fn maybe_pin(self: Signal) ?Pin {
@@ -388,28 +389,32 @@ write [[
     }
 };
 
-pub const mc_feedback_signals = [num_glbs][num_mcs_per_glb]Signal {]]
+pub const mc_feedback_signals = [num_glbs][num_mcs_per_glb]Signal{]]
 indent()
 for glb = 1, info.num_glbs do
     write(nl, '.{')
+    local first = true
     for mc = 0, 15 do
-        write(' .mc_', string.char(64 + glb), mc, ',')
+        if first then first = false else write ',' end
+        write(' .mc_', string.char(64 + glb), mc)
     end
     write(' },')
 end
 write(unindent, nl, [[
 };
 
-pub const mc_io_signals = [num_glbs][num_mcs_per_glb]?Signal {]])
+pub const mc_io_signals = [num_glbs][num_mcs_per_glb]?Signal{]])
     indent()
     for glb = 1, info.num_glbs do
         write(nl, '.{')
+        local first = true
         for mc = 0, 15 do
+            if first then first = false else write ',' end
             local name = 'io_'..string.char(64 + glb)..mc
             if base_signal_names[name] then
-                write(' .', name, ',')
+                write(' .', name)
             else
-                write(' null,')
+                write(' null')
             end
         end
         write(' },')
@@ -419,7 +424,7 @@ pub const mc_io_signals = [num_glbs][num_mcs_per_glb]?Signal {]])
 
 };
 
-pub const gi_options = [num_gis_per_glb][gi_mux_size]Signal {]]
+pub const gi_options = [num_gis_per_glb][gi_mux_size]Signal{]]
 
     indent()
     include 'grp'
@@ -427,8 +432,10 @@ pub const gi_options = [num_gis_per_glb][gi_mux_size]Signal {]]
     for gi = 0,35 do
         local options = gi_to_signal[gi]
         write(nl, '.{')
+        local first = true
         for _, signal in spairs(options, natural_cmp) do
-            write(' .', signal, ',')
+            if first then first = false else write ',' end
+            write(' .', signal)
         end
         write ' },'
     end
@@ -614,11 +621,18 @@ pub fn get_extra_float_input_fuses() []const Fuse {
         write(nl, 'Fuse.init(', f[1], ', ', f[2], '),')
     end
     unindent(2)
-    write [[
+    if #extra > 0 then
+        write [[
 
     };
 }
 ]]
+    else
+        write [[
+};
+}
+]]
+    end
 end
 write [[
 
@@ -673,7 +687,7 @@ write([[
 
 };
 
-pub const clock_pins = [_]Pin {]])
+pub const clock_pins = [_]Pin{]])
 
 local function clock_cmp (a, b)
     local pa = info.pins_by_type.clock[a]
@@ -691,7 +705,7 @@ write([[
 
 };
 
-pub const oe_pins = [_]Pin {]])
+pub const oe_pins = [_]Pin{]])
 
 local function oe_cmp (a, b)
     local pa = info.pins[a]
@@ -712,7 +726,7 @@ write([[
 
 };
 
-pub const input_pins = [_]Pin {]])
+pub const input_pins = [_]Pin{]])
 
 local function index_cmp (a, b)
     local pa = info.pins[a]
@@ -726,11 +740,12 @@ for _, pin in spairs(info.pins_by_type.input, index_cmp) do
 end
 unindent()
 
-write([[
+if next(info.pins_by_type.input) ~= nil then writeln() end
 
+write([[
 };
 
-pub const vcc_pins = [_]Pin {]])
+pub const vcc_pins = [_]Pin{]])
 
 indent()
 for _, pin in spairs(info.pins_by_type.vcc_core, index_cmp) do
@@ -742,7 +757,7 @@ write([[
 
 };
 
-pub const gnd_pins = [_]Pin {]])
+pub const gnd_pins = [_]Pin{]])
 
 indent()
 for _, pin in spairs(info.pins_by_type.gnd, index_cmp) do
@@ -754,7 +769,7 @@ write([[
 
 };
 
-pub const vcco_bank0_pins = [_]Pin {]])
+pub const vcco_bank0_pins = [_]Pin{]])
 
 indent()
 for _, pin in spairs(info.pins_by_type.vcco, index_cmp) do
@@ -768,21 +783,24 @@ write([[
 
 };
 
-pub const gnd_bank0_pins = [_]Pin {]])
+pub const gnd_bank0_pins = [_]Pin{]])
 
+local has_gnd_bank0_pins = false
 indent()
 for _, pin in spairs(info.pins_by_type.gndo, index_cmp) do
     if pin.bank == '0' then
         write(nl, 'pins.', pin.safe_id, ',')
+        has_gnd_bank0_pins = true
     end
 end
 unindent()
 
-write([[
+if has_gnd_bank0_pins then writeln() end
 
+write([[
 };
 
-pub const vcco_bank1_pins = [_]Pin {]])
+pub const vcco_bank1_pins = [_]Pin{]])
 
 indent()
 for _, pin in spairs(info.pins_by_type.vcco, index_cmp) do
@@ -796,21 +814,24 @@ write([[
 
 };
 
-pub const gnd_bank1_pins = [_]Pin {]])
+pub const gnd_bank1_pins = [_]Pin{]])
 
+local has_gnd_bank1_pins = false
 indent()
 for _, pin in spairs(info.pins_by_type.gndo, index_cmp) do
     if pin.bank == '1' then
         write(nl, 'pins.', pin.safe_id, ',')
+        has_gnd_bank1_pins = true
     end
 end
 unindent()
 
-write([[
+if has_gnd_bank1_pins then writeln() end
 
+write([[
 };
 
-pub const all_pins = [_]Pin {]])
+pub const all_pins = [_]Pin{]])
 
 local function all_pins_cmp (a, b)
     local pa = info.pins[a]

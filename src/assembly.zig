@@ -43,8 +43,8 @@ pub const Assembly_Results = struct {
 pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.device_type), allocator: std.mem.Allocator, options: Assembly_Options) !Assembly_Results {
     const assembly_start_time = std.Io.Clock.awake.now(io);
 
-    var results = Assembly_Results {
-        .jedec = JEDEC_File {
+    var results = Assembly_Results{
+        .jedec = JEDEC_File{
             .data = try JEDEC_Data.init_full(allocator, Device.jedec_dimensions),
         },
         .errors = .empty,
@@ -127,7 +127,7 @@ pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.de
 
         // Program PT fuses
         for (glb_config.mc, 0..) |mc_config, mc| {
-             if (Device.family != .zero_power_enhanced) {
+            if (Device.family != .zero_power_enhanced) {
                 switch (mc_config.output.routing) {
                     .same_as_oe, .self => {},
                     .five_pt_fast_bypass => |sp| {
@@ -145,11 +145,10 @@ pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.de
                             }
                         }
                         if (next_sum_pt < sp.sum.len and !lc4k.is_sum_always(sp.sum)) {
-                            try results.fmt_error("{} sum PTs were configured, but only {} PTs are available for fast bypass mode",
-                                .{ sp.sum.len, next_sum_pt }, error.Too_Many_Sum_PTs, .{
-                                    .glb = @intCast(glb),
-                                    .mc = @intCast(mc),
-                                });
+                            try results.fmt_error("{} sum PTs were configured, but only {} PTs are available for fast bypass mode", .{ sp.sum.len, next_sum_pt }, error.Too_Many_Sum_PTs, .{
+                                .glb = @intCast(glb),
+                                .mc = @intCast(mc),
+                            });
                         }
                     },
                 }
@@ -293,7 +292,7 @@ pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.de
                         .details = "Invalid target for ORM routing; target signal should be a macrocell feedback signal in the same GLB with a relative offset of +0 to +7",
                         .glb = mcref.glb,
                         .mc = mcref.mc,
-                        .signal_ordinal = @intFromEnum(oe_routing.absolute),
+                        .signal_ordinal = @backingInt(oe_routing.absolute),
                     });
                     break :rel 0;
                 };
@@ -308,7 +307,7 @@ pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.de
                                 .details = "IO uses PT4 for OE, but it has not been configured",
                                 .glb = @intCast(glb),
                                 .mc = @intCast(absolute),
-                                .signal_ordinal = @intFromEnum(mcref.pad(Device.Signal)),
+                                .signal_ordinal = @backingInt(mcref.pad(Device.Signal)),
                             });
                         }
                     },
@@ -351,16 +350,28 @@ pub fn assemble(comptime Device: type, io: std.Io, config: Chip_Config(Device.de
             }
         }
 
-        const spt_init_pol: u1 = @intFromEnum(glb_config.shared_pt_init.polarity);
+        const spt_init_pol: u1 = @backingInt(glb_config.shared_pt_init.polarity);
         write_field(&results.jedec.data, u1, spt_init_pol, fuses.get_shared_init_polarity_range(Device, glb));
 
-        const spt_clk_pol: u1 = @intFromEnum(glb_config.shared_pt_clock.polarity);
+        const spt_clk_pol: u1 = @backingInt(glb_config.shared_pt_clock.polarity);
         write_field(&results.jedec.data, u1, spt_clk_pol, fuses.get_shared_clock_polarity_range(Device, glb));
 
-        const bclk0: u1 = switch (glb_config.bclock0) { .clk0_pos => 1, .clk1_neg => 0 };
-        const bclk1: u1 = switch (glb_config.bclock1) { .clk1_pos => 1, .clk0_neg => 0 };
-        const bclk2: u1 = switch (glb_config.bclock2) { .clk2_pos => 1, .clk3_neg => 0 };
-        const bclk3: u1 = switch (glb_config.bclock3) { .clk3_pos => 1, .clk2_neg => 0 };
+        const bclk0: u1 = switch (glb_config.bclock0) {
+            .clk0_pos => 1,
+            .clk1_neg => 0,
+        };
+        const bclk1: u1 = switch (glb_config.bclock1) {
+            .clk1_pos => 1,
+            .clk0_neg => 0,
+        };
+        const bclk2: u1 = switch (glb_config.bclock2) {
+            .clk2_pos => 1,
+            .clk3_neg => 0,
+        };
+        const bclk3: u1 = switch (glb_config.bclock3) {
+            .clk3_pos => 1,
+            .clk2_neg => 0,
+        };
         write_field(&results.jedec.data, u1, bclk0, Device.get_bclock_range(glb).sub_rows(0, 1));
         write_field(&results.jedec.data, u1, bclk1, Device.get_bclock_range(glb).sub_rows(1, 1));
         write_field(&results.jedec.data, u1, bclk2, Device.get_bclock_range(glb).sub_rows(2, 1));
@@ -446,7 +457,7 @@ fn add_signals_from_pt(comptime Device: type, results: *Assembly_Results, glb: l
                     break;
                 }
             } else {
-                const signal_ordinal = @intFromEnum(signal);
+                const signal_ordinal = @backingInt(signal);
                 for (results.errors.items) |err| {
                     if (err.err == error.TooManySignalsInGLB and err.glb.? == glb and err.signal_ordinal.? == signal_ordinal) return;
                 }
@@ -461,16 +472,12 @@ fn add_signals_from_pt(comptime Device: type, results: *Assembly_Results, glb: l
     };
 }
 
-pub fn get_special_pt(
-    comptime Device: type, 
-    mc_config: lc4k.Macrocell_Config(Device.family, Device.Signal),
-    pt_index: usize
-) ?lc4k.Product_Term(Device.Signal) {
+pub fn get_special_pt(comptime Device: type, mc_config: lc4k.Macrocell_Config(Device.family, Device.Signal), pt_index: usize) ?lc4k.Product_Term(Device.Signal) {
     return switch (pt_index) {
         0 => switch (mc_config.logic) {
             .pt0 => |ptp| ptp.pt,
             .sum_xor_pt0 => |sxpt| sxpt.pt0,
-            .sum, .sum_xor_input_buffer, .input_buffer => null, 
+            .sum, .sum_xor_input_buffer, .input_buffer => null,
         },
         1 => switch (mc_config.func) {
             .combinational => null,
@@ -523,11 +530,11 @@ fn write_goe_fuses(comptime Device: type, data: *JEDEC_Data, goe_config: anytype
         },
         else => {},
     }
-    data.put(Device.get_goe_polarity_fuse(goe_index), @intFromEnum(goe_config.polarity));
+    data.put(Device.get_goe_polarity_fuse(goe_index), @backingInt(goe_config.polarity));
 }
 
 fn write_dedicated_input_fuses(comptime Device: type, data: *JEDEC_Data, pin_info: lc4k.Pin_Info, config: *const Chip_Config(Device.device_type), input_config: anytype) void {
-    const signal: Device.Signal = @enumFromInt(pin_info.signal_index.?);
+    const signal: Device.Signal = @fromBackingInt(@intCast(pin_info.signal_index.?));
 
     const threshold = input_config.threshold orelse config.default_input_threshold;
     write_field(data, lc4k.Input_Threshold, threshold, Device.get_input_threshold_fuse(signal).?.range());
@@ -563,7 +570,7 @@ fn write_pt_fuses(comptime Device: type, results: *Assembly_Results, glb: usize,
                     .details = "PT uses signal that isn't assigned to a GI in this GLB",
                     .glb = @intCast(glb),
                     .mc = if (glb_pt_offset < Device.num_mcs_per_glb * 5) @intCast(glb_pt_offset / 5) else null,
-                    .signal_ordinal = @intFromEnum(signal),
+                    .signal_ordinal = @backingInt(signal),
                 });
                 continue;
             };
@@ -589,7 +596,7 @@ fn write_pt_fuses(comptime Device: type, results: *Assembly_Results, glb: usize,
 
 fn write_field(data: *JEDEC_Data, comptime T: type, value: T, range: Fuse_Range) void {
     std.debug.assert(@bitSizeOf(T) == range.count());
-    const v = if (@typeInfo(T) == .@"enum") @intFromEnum(value) else value;
+    const v = if (@typeInfo(T) == .@"enum") @backingInt(value) else value;
     const IntT = @Int(.unsigned, @bitSizeOf(T));
     var int_value = @as(u64, @as(IntT, @bitCast(v)));
     var iter = range.iterator();

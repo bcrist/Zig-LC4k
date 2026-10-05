@@ -22,7 +22,7 @@ pub fn get_macrocell_range(comptime Device: type, mcref: MC_Ref) Fuse_Range {
     const range = Device.get_glb_range(mcref.glb).sub_rows(starting_row, Device.jedec_dimensions.height() - starting_row);
     return switch (@as(u1, @truncate(mcref.mc))) {
         0 => range.sub_columns(mcref.mc * 5 + 4, 1),
-        1 => range.sub_columns(mcref.mc * 5, 1)
+        1 => range.sub_columns(mcref.mc * 5, 1),
     };
 }
 

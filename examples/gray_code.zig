@@ -4,18 +4,18 @@
 const Chip = lc4k.LC4064ZC_TQFP100;
 
 const signals = struct {
-    pub const bin = [_]Chip.Signal {
-        .io_B0, .io_B1, .io_B2, .io_B3,
-        .io_B4, .io_B5, .io_B6, .io_B7,
-        .io_B8, .io_B9, .io_B10, .io_B11,
+    pub const bin = [_]Chip.Signal{
+        .io_B0,  .io_B1,  .io_B2,  .io_B3,
+        .io_B4,  .io_B5,  .io_B6,  .io_B7,
+        .io_B8,  .io_B9,  .io_B10, .io_B11,
         .io_B12, .io_B13, .io_B14, .io_B15,
     };
 
-    pub const gray = [_]Chip.Signal {
+    pub const gray = [_]Chip.Signal{
         .io_A15, .io_A14, .io_A13, .io_A12,
-        .io_A11, .io_A10, .io_A9, .io_A8,
-        .io_A7, .io_A6, .io_A5, .io_A4,
-        .io_A3, .io_A2, .io_A1, .io_A0,
+        .io_A11, .io_A10, .io_A9,  .io_A8,
+        .io_A7,  .io_A6,  .io_A5,  .io_A4,
+        .io_A3,  .io_A2,  .io_A1,  .io_A0,
     };
 };
 
@@ -33,7 +33,7 @@ pub fn main(init: std.process.Init) !void {
         .names = &names,
     };
 
-    var chip = Chip {};
+    var chip = Chip{};
 
     const clk = try lp.pt_with_polarity("pin_12", .{});
 
@@ -46,18 +46,20 @@ pub fn main(init: std.process.Init) !void {
         mc.func = .{ .t_ff = .{ .clock = .shared_pt_clock } };
         mc.output.oe = .output_only;
 
-        mc.logic = comptime .{ .sum = .{
-            .polarity = .positive,
-            .sum = &.{ blk: {
-                // Each bit of the counter should toggle when every lower bit is a 1
-                var pt = Chip.PT.always();
-                var n = 0;
-                while (n < bit) : (n += 1) {
-                    pt = pt.and_factor(signals.bin[n].when_high());
-                }
-                break :blk pt;
-            }},
-        }};
+        mc.logic = comptime .{
+            .sum = .{
+                .polarity = .positive,
+                .sum = &.{blk: {
+                    // Each bit of the counter should toggle when every lower bit is a 1
+                    var pt = Chip.PT.always();
+                    var n = 0;
+                    while (n < bit) : (n += 1) {
+                        pt = pt.and_factor(signals.bin[n].when_high());
+                    }
+                    break :blk pt;
+                }},
+            },
+        };
     }
 
     inline for (signals.gray, 0..) |out, bit| {

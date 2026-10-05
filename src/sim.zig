@@ -317,7 +317,7 @@ pub fn Simulator(comptime Device: type) type {
             }
 
             if (!self.evaluate_clock_state(self.state.data, reg_config, mc)) return false;
-            
+
             return func == .latch or !self.evaluate_clock_state(self.state.last_data, reg_config, mc);
         }
 
@@ -425,7 +425,7 @@ pub fn Simulator(comptime Device: type) type {
         }
 
         pub fn expect_signal(self: @This(), signal: Signal, expected: bool, names: ?*const Device.Names) !void {
-            return self.expect_signals(&.{ signal }, @intFromBool(expected), names);
+            return self.expect_signals(&.{signal}, @intFromBool(expected), names);
         }
 
         pub fn expect_signals(self: @This(), signals: []const Signal, expected_state: usize, names: ?*const Device.Names) !void {
@@ -448,9 +448,9 @@ pub fn Simulator(comptime Device: type) type {
             }
             return actual_state;
         }
-        
+
         pub fn expect_oe(self: @This(), signal: Signal, expected: bool, names: ?*const Device.Names) !void {
-            return self.expect_oes(&.{ signal }, @intFromBool(expected), names);
+            return self.expect_oes(&.{signal}, @intFromBool(expected), names);
         }
 
         pub fn expect_oes(self: @This(), signals: []const Signal, expected_state: usize, names: ?*const Device.Names) !void {
@@ -468,7 +468,7 @@ pub fn Simulator(comptime Device: type) type {
                 w.writeAll("   ") catch {};
                 w.writeAll(@tagName(signal)) catch {};
                 if (maybe_names) |names| {
-                    w.print(" ({s})", .{ names.get_signal_name(signal) }) catch {};
+                    w.print(" ({s})", .{names.get_signal_name(signal)}) catch {};
                 }
                 w.writeByte('\n') catch {};
             }
@@ -476,7 +476,7 @@ pub fn Simulator(comptime Device: type) type {
             if (@inComptime()) {
                 @compileError(w.buffered());
             } else if (std.testing.backend_can_print) {
-                std.debug.print("{s}", .{ w.buffered() });
+                std.debug.print("{s}", .{w.buffered()});
             }
         }
     };

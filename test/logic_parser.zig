@@ -23,15 +23,13 @@ test "lexer subexpr and concat" {
     defer std.testing.allocator.free(offsets);
 
     try std.testing.expectEqualSlices(lp.lexer.Token, &.{
-        .id, .begin_extract, .big_endian, .literal, .literal, .literal, .end_extract,
-        .begin_concat, .id, .little_endian, .id, .little_endian, .id, .end_concat,
-        .begin_subexpr, .id, .sum, .begin_subexpr, .id, .end_subexpr, .end_subexpr, .product, .id,
-        .equals, .not_equals, .id, .literal,
-        .builtin, .eof,
+        .id,            .begin_extract, .big_endian,    .literal,       .literal,       .literal,     .end_extract,
+        .begin_concat,  .id,            .little_endian, .id,            .little_endian, .id,          .end_concat,
+        .begin_subexpr, .id,            .sum,           .begin_subexpr, .id,            .end_subexpr, .end_subexpr,
+        .product,       .id,            .equals,        .not_equals,    .id,            .literal,     .builtin,
+        .eof,
     }, tokens);
-    try std.testing.expectEqualSlices(u32, &.{
-        2, 5, 6, 7, 9, 11, 12, 16, 17, 18, 19, 25, 29, 30, 34, 35, 37, 39, 40, 41, 42, 44, 46, 49, 52, 54, 59, 65, 70
-    }, offsets);
+    try std.testing.expectEqualSlices(u32, &.{ 2, 5, 6, 7, 9, 11, 12, 16, 17, 18, 19, 25, 29, 30, 34, 35, 37, 39, 40, 41, 42, 44, 46, 49, 52, 54, 59, 65, 70 }, offsets);
 }
 
 test "literal values" {
@@ -245,13 +243,13 @@ test "typechecking" {
     var names: Device.Names = .init(std.testing.allocator);
     defer names.deinit();
     try names.add_names(struct {
-        pub const A = [_]Device.Signal {
+        pub const A = [_]Device.Signal{
             .mc_A0,
             .mc_A1,
             .mc_A2,
             .mc_A3,
         };
-        pub const B = [_]Device.Signal {
+        pub const B = [_]Device.Signal{
             .mc_B0,
             .mc_B1,
             .mc_B2,
@@ -446,13 +444,13 @@ test "build IR" {
     var names: Device.Names = .init(std.testing.allocator);
     defer names.deinit();
     try names.add_names(struct {
-        pub const A = [_]Device.Signal {
+        pub const A = [_]Device.Signal{
             .mc_A0,
             .mc_A1,
             .mc_A2,
             .mc_A3,
         };
-        pub const B = [_]Device.Signal {
+        pub const B = [_]Device.Signal{
             .mc_B0,
             .mc_B1,
             .mc_B2,
@@ -511,7 +509,7 @@ test "build IR" {
         \\   [1] signal 75
         \\
     );
-    
+
     try test_build_ir(Device, &names, "&A", 0, null,
         \\product:
         \\   [0] signal 74
@@ -799,13 +797,13 @@ test "Logic_Parser" {
     var names: Device.Names = .init(std.testing.allocator);
     defer names.deinit();
     const buses = struct {
-        pub const A = [_]Device.Signal {
+        pub const A = [_]Device.Signal{
             .mc_A0,
             .mc_A1,
             .mc_A2,
             .mc_A3,
         };
-        pub const B = [_]Device.Signal {
+        pub const B = [_]Device.Signal{
             .mc_B0,
             .mc_B1,
             .mc_B2,
@@ -829,8 +827,7 @@ test "Logic_Parser" {
         .and_factor(buses.A[1].when_low())
         .and_factor(buses.A[0].when_low())
         .and_factor(Signal.clk1.when_high())
-        .and_factor(Signal.clk0.when_high())
-        , pt);
+        .and_factor(Signal.clk0.when_high()), pt);
 
     const sum = try parser.sum("clk0 | clk1 | &~A", .{});
     try std.testing.expectEqualDeep(comptime &.{
@@ -840,21 +837,21 @@ test "Logic_Parser" {
     }, sum);
 
     const xor = try parser.logic("clk0 ^ clk1 & clk2", .{});
-    try std.testing.expectEqualDeep(comptime lc4k.Macrocell_Logic(Signal) { .sum_xor_pt0 = .{
+    try std.testing.expectEqualDeep(comptime lc4k.Macrocell_Logic(Signal){ .sum_xor_pt0 = .{
         .pt0 = Signal.clk0.when_high().pt(),
-        .sum = &.{ Signal.clk2.when_high().pt().and_factor(Signal.clk1.when_high()) },
+        .sum = &.{Signal.clk2.when_high().pt().and_factor(Signal.clk1.when_high())},
         .polarity = .positive,
-    }}, xor);
+    } }, xor);
 
     const xor_inverted = try parser.logic("clk0 ^ (clk1 | clk2)", .{});
-    try std.testing.expectEqualDeep(comptime lc4k.Macrocell_Logic(Signal) { .sum_xor_pt0 = .{
+    try std.testing.expectEqualDeep(comptime lc4k.Macrocell_Logic(Signal){ .sum_xor_pt0 = .{
         .pt0 = Signal.clk0.when_high().pt(),
-        .sum = &.{ Signal.clk1.when_low().pt().and_factor(Signal.clk2.when_low()) },
+        .sum = &.{Signal.clk1.when_low().pt().and_factor(Signal.clk2.when_low())},
         .polarity = .negative,
-    }}, xor_inverted);
+    } }, xor_inverted);
 
     const ptp = try parser.pt_with_polarity("clk0 | clk1 | clk2", .{});
-    try std.testing.expectEqualDeep(comptime lc4k.Product_Term_With_Polarity(Signal) {
+    try std.testing.expectEqualDeep(comptime lc4k.Product_Term_With_Polarity(Signal){
         .pt = Signal.clk0.when_low().pt().and_factor(Signal.clk1.when_low()).and_factor(Signal.clk2.when_low()),
         .polarity = .negative,
     }, ptp);
@@ -866,7 +863,7 @@ test "Logic_Parser" {
         \\ | clk0 & ~clk1 & clk2
         \\ | clk0 & clk1 & ~clk2
         \\ | clk0 & clk1 & clk2
-        , .{});
+    , .{});
     try std.testing.expectEqualDeep(comptime &.{
         Signal.clk2.when_low().pt().and_factor(Signal.clk1.when_low()).and_factor(Signal.clk0.when_low()),
         Signal.clk2.when_high().pt().and_factor(Signal.clk1.when_low()).and_factor(Signal.clk0.when_low()),
@@ -883,7 +880,7 @@ test "Logic_Parser" {
         \\ |  clk0 & ~clk1 &  clk2
         \\ |  clk0 &  clk1 & ~clk2
         \\ |  clk0 &  clk1 &  clk2
-        , .{ .optimize = true });
+    , .{ .optimize = true });
     try std.testing.expectEqualDeep(comptime &.{
         Signal.clk1.when_low().pt().and_factor(Signal.clk0.when_low()),
         Signal.clk2.when_high().pt().and_factor(Signal.clk0.when_high()),
@@ -897,11 +894,11 @@ test "Logic_Parser" {
         \\ |  clk0 & ~clk1 &  clk2 &  clk3
         \\ |  clk0 &  clk1 & ~clk2 & ~clk3
         \\ |  clk0 &  clk1 &  clk2 &  clk3
-        , .{ .optimize = false, .dont_care = 
+    , .{ .optimize = false, .dont_care =
         \\    clk0 & ~clk1 & ~clk2 &  clk3
         \\ |  clk0 &  clk1 &  clk2 & ~clk3
-        });
-    try std.testing.expectEqualDeep(comptime lc4k.Sum_With_Polarity(Signal) {
+    });
+    try std.testing.expectEqualDeep(comptime lc4k.Sum_With_Polarity(Signal){
         .sum = &.{
             Signal.clk1.when_low().pt().and_factor(Signal.clk0.when_low()),
             Signal.clk3.when_high().pt().and_factor(Signal.clk0.when_low()),
@@ -919,11 +916,11 @@ test "Logic_Parser" {
         \\ |  clk0 & ~clk1 &  clk2 &  clk3
         \\ |  clk0 &  clk1 & ~clk2 & ~clk3
         \\ |  clk0 &  clk1 &  clk2 &  clk3
-        , .{ .optimize = false, .dont_care = 
+    , .{ .optimize = false, .dont_care =
         \\    clk0 & ~clk1 & ~clk2 &  clk3
         \\ |  clk0 &  clk1 &  clk2 & ~clk3
-        });
-    try std.testing.expectEqualDeep(comptime lc4k.Macrocell_Logic(Signal) { .sum = .{
+    });
+    try std.testing.expectEqualDeep(comptime lc4k.Macrocell_Logic(Signal){ .sum = .{
         .sum = &.{
             Signal.clk1.when_low().pt().and_factor(Signal.clk0.when_low()),
             Signal.clk3.when_high().pt().and_factor(Signal.clk0.when_low()),
@@ -932,7 +929,7 @@ test "Logic_Parser" {
             Signal.clk3.when_low().pt().and_factor(Signal.clk2.when_high()).and_factor(Signal.clk1.when_high()),
         },
         .polarity = .negative,
-    }}, logic2);
+    } }, logic2);
 
     const logic2opt = try parser.logic(
         \\   ~clk0 &  clk1 & ~clk2 & ~clk3
@@ -941,50 +938,52 @@ test "Logic_Parser" {
         \\ |  clk0 & ~clk1 &  clk2 &  clk3
         \\ |  clk0 &  clk1 & ~clk2 & ~clk3
         \\ |  clk0 &  clk1 &  clk2 &  clk3
-        , .{ .optimize = true, .dont_care = 
+    , .{ .optimize = true, .dont_care =
         \\    clk0 & ~clk1 & ~clk2 &  clk3
         \\ |  clk0 &  clk1 &  clk2 & ~clk3
-        });
-    try std.testing.expectEqualDeep(comptime lc4k.Macrocell_Logic(Signal) { .sum = .{
-        .sum = &.{
-            Signal.clk2.when_high().pt().and_factor(Signal.clk0.when_high()),
-            Signal.clk3.when_low().pt().and_factor(Signal.clk2.when_low()).and_factor(Signal.clk1.when_high()),
-            Signal.clk3.when_low().pt().and_factor(Signal.clk0.when_high()), // this is a non-essential prime implicant
+    });
+    try std.testing.expectEqualDeep(comptime lc4k.Macrocell_Logic(Signal){
+        .sum = .{
+            .sum = &.{
+                Signal.clk2.when_high().pt().and_factor(Signal.clk0.when_high()),
+                Signal.clk3.when_low().pt().and_factor(Signal.clk2.when_low()).and_factor(Signal.clk1.when_high()),
+                Signal.clk3.when_low().pt().and_factor(Signal.clk0.when_high()), // this is a non-essential prime implicant
+            },
+            .polarity = .positive,
         },
-        .polarity = .positive,
-    }}, logic2opt);
+    }, logic2opt);
 
     const logic2opt2 = try parser.logic(
         \\~(~clk1 & ~clk0 | clk2 & ~clk0 | clk3 & ~clk0 | clk3 & ~clk2 | ~clk3 & clk2 & clk1)
-        , .{ .optimize = true, .dont_care = 
+    , .{ .optimize = true, .dont_care =
         \\    clk0 & ~clk1 & ~clk2 &  clk3
         \\ |  clk0 &  clk1 &  clk2 & ~clk3
-        });
-    try std.testing.expectEqualDeep(comptime lc4k.Macrocell_Logic(Signal) { .sum = .{
-        .sum = &.{
-            Signal.clk0.when_high().pt().and_factor(Signal.clk1.when_low()), // this is the other non-essential prime implicant that wasn't used in logic2opt
-            Signal.clk3.when_low().pt().and_factor(Signal.clk2.when_low()).and_factor(Signal.clk1.when_high()),
-            Signal.clk2.when_high().pt().and_factor(Signal.clk0.when_high()),
+    });
+    try std.testing.expectEqualDeep(comptime lc4k.Macrocell_Logic(Signal){
+        .sum = .{
+            .sum = &.{
+                Signal.clk0.when_high().pt().and_factor(Signal.clk1.when_low()), // this is the other non-essential prime implicant that wasn't used in logic2opt
+                Signal.clk3.when_low().pt().and_factor(Signal.clk2.when_low()).and_factor(Signal.clk1.when_high()),
+                Signal.clk2.when_high().pt().and_factor(Signal.clk0.when_high()),
+            },
+            .polarity = .positive,
         },
-        .polarity = .positive,
-    }}, logic2opt2);
-
+    }, logic2opt2);
 
     const name_overrides = try parser.logic(
         \\asdf | &some_bus
-        , .{
-            .optimize = true,
-            .asdf = Signal.io_A0,
-            .some_bus = @as([]const Signal, &.{ .io_A1, .io_A2 }),
-        });
-    try std.testing.expectEqualDeep(comptime lc4k.Macrocell_Logic(Signal) { .sum = .{
+    , .{
+        .optimize = true,
+        .asdf = Signal.io_A0,
+        .some_bus = @as([]const Signal, &.{ .io_A1, .io_A2 }),
+    });
+    try std.testing.expectEqualDeep(comptime lc4k.Macrocell_Logic(Signal){ .sum = .{
         .sum = &.{
             Signal.io_A0.when_high().pt(),
             Signal.io_A2.when_high().pt().and_factor(Signal.io_A1.when_high()),
         },
         .polarity = .positive,
-    }}, name_overrides);
-
+    } }, name_overrides);
 }
 
 const lp = lc4k.logic_parser;

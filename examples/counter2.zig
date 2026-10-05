@@ -15,13 +15,13 @@ pub fn main(init: std.process.Init) !void {
 
     const Chip = lc4k.LC4032ZE_TQFP48;
 
-    var chip = Chip {};
+    var chip = Chip{};
 
     chip.glb[0].shared_pt_enable = comptime Chip.pins._20.when_high().pt();
     chip.goe0.source = .{ .glb_shared_pt_enable = 0 };
     chip.goe0.polarity = .positive;
 
-    const output_pins = [_]Chip.Pin {
+    const output_pins = [_]Chip.Pin{
         Chip.pins._23,
         Chip.pins._24,
         Chip.pins._26,
@@ -36,30 +36,32 @@ pub fn main(init: std.process.Init) !void {
         var mc = chip.mc(out_pin.mc());
         const out = comptime Chip.Signal.mc_fb(out_pin.mc());
 
-        mc.func = .{ .d_ff = .{ .clock = .bclock2 }};
+        mc.func = .{ .d_ff = .{ .clock = .bclock2 } };
         mc.output.oe = .goe0;
 
-        mc.logic = comptime .{ .sum = .{
-            .sum = blk: {
-                // Each bit of the counter will be set on the next clock cycle when:
-                //      a) it is currently 0 and every lower bit is a 1
-                //      b) it is currently 1 but at least one lower bit is not 1
-                //
-                // Implementing a) requires only one product term for counters up to ~36 bits.
-                // Implementing b) requires N product terms, where N is the bit index.
-                var sum: []const Chip.PT = &.{};
-                var pt = Chip.PT.always();
-                var n = bit;
-                while (n > 0) : (n -= 1) {
-                    const out_n = Chip.Signal.mc_fb(output_pins[n - 1].mc());
-                    pt = pt.and_factor(out_n.when_high());
-                    sum = sum ++ [_]Chip.PT{ out.when_high().pt().and_factor(out_n.when_low()) };
-                }
-                pt = pt.and_factor(out.when_low());
-                break :blk sum ++ [_]Chip.PT{ pt };
+        mc.logic = comptime .{
+            .sum = .{
+                .sum = blk: {
+                    // Each bit of the counter will be set on the next clock cycle when:
+                    //      a) it is currently 0 and every lower bit is a 1
+                    //      b) it is currently 1 but at least one lower bit is not 1
+                    //
+                    // Implementing a) requires only one product term for counters up to ~36 bits.
+                    // Implementing b) requires N product terms, where N is the bit index.
+                    var sum: []const Chip.PT = &.{};
+                    var pt = Chip.PT.always();
+                    var n = bit;
+                    while (n > 0) : (n -= 1) {
+                        const out_n = Chip.Signal.mc_fb(output_pins[n - 1].mc());
+                        pt = pt.and_factor(out_n.when_high());
+                        sum = sum ++ [_]Chip.PT{out.when_high().pt().and_factor(out_n.when_low())};
+                    }
+                    pt = pt.and_factor(out.when_low());
+                    break :blk sum ++ [_]Chip.PT{pt};
+                },
+                .polarity = .positive,
             },
-            .polarity = .positive,
-        }};
+        };
     }
 
     const results = try chip.assemble(init.arena.allocator(), .{});

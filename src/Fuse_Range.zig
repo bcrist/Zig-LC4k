@@ -73,8 +73,7 @@ pub fn expand_to_contain(self: Fuse_Range, fuse: Fuse) Fuse_Range {
 }
 
 pub fn contains(self: Fuse_Range, fuse: Fuse) bool {
-    return fuse.row >= self.min.row and fuse.row <= self.max.row
-        and fuse.col >= self.min.col and fuse.col <= self.max.col;
+    return fuse.row >= self.min.row and fuse.row <= self.max.row and fuse.col >= self.min.col and fuse.col <= self.max.col;
 }
 
 pub fn contains_range(self: Fuse_Range, other: Fuse_Range) bool {
@@ -202,8 +201,7 @@ pub const Iterator = struct {
 };
 
 pub fn eql(self: Fuse_Range, other: Fuse_Range) bool {
-    return self.isEmpty() and other.isEmpty()
-        or self.min.eql(other.min) and self.max.eql(other.max);
+    return self.isEmpty() and other.isEmpty() or self.min.eql(other.min) and self.max.eql(other.max);
 }
 
 const Fuse_Range = @This();

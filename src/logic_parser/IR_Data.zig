@@ -28,7 +28,6 @@ pub fn intern(self: *IR_Data, ir: IR) std.mem.Allocator.Error!IR.ID {
     const id = IR.ID.init(@intCast(result.index));
     if (!result.found_existing) {
         result.key_ptr.* = ir;
-
     }
     return id;
 }
@@ -55,7 +54,7 @@ pub fn format(self: IR_Data, id: IR.ID, w: *std.Io.Writer) std.Io.Writer.Error!v
             try w.writeAll("true");
         },
         .signal => |ordinal| {
-            try w.print("{}", .{ ordinal });
+            try w.print("{}", .{ordinal});
         },
         .complement => |inner_id| {
             try w.writeByte('!');
@@ -88,7 +87,7 @@ pub fn format(self: IR_Data, id: IR.ID, w: *std.Io.Writer) std.Io.Writer.Error!v
 pub fn debug(self: IR_Data, id: IR.ID, indent: usize, include_ids: bool, w: *std.Io.Writer) std.Io.Writer.Error!void {
     const ir = self.get(id);
     if (include_ids) {
-        try w.print("${} {s}", .{ @intFromEnum(id), @tagName(ir) });
+        try w.print("${} {s}", .{ @backingInt(id), @tagName(ir) });
     } else {
         try w.writeAll(@tagName(ir));
     }
@@ -98,7 +97,7 @@ pub fn debug(self: IR_Data, id: IR.ID, indent: usize, include_ids: bool, w: *std
             try w.writeByte('\n');
         },
         .signal => |ordinal| {
-            try w.print(" {}\n", .{ ordinal });
+            try w.print(" {}\n", .{ordinal});
         },
         .complement => |inner_id| {
             try w.writeAll(": ");
@@ -126,7 +125,7 @@ fn debug_binary(self: IR_Data, kind: IR.Tag, first_index: usize, id: IR.ID, inde
         return index;
     } else {
         try w.splatByteAll(' ', indent * 3);
-        try w.print("[{}] ", .{ first_index });
+        try w.print("[{}] ", .{first_index});
         try self.debug(id, indent, include_ids, w);
         return first_index + 1;
     }
@@ -163,8 +162,7 @@ pub fn normalize_inner(self: *IR_Data, id: IR.ID, i: *u32, options: Normalize_Op
 
     var last_result: IR.ID = .zero;
     var result = id;
-    
-    
+
     while (i.* < options.iteration_limit) : (i.* += 1) {
         last_result = result;
         const result_ir = self.get(result);
@@ -187,7 +185,7 @@ fn normalize_complement(self: *IR_Data, complement_id: IR.ID, inner_id: IR.ID, i
     switch (self.get(inner_id)) {
         // ~~x => x
         .complement => |double_complemented_id| return double_complemented_id,
-        
+
         // ~0 => 1
         .zero => return .one,
 
@@ -220,7 +218,7 @@ fn normalize_complement(self: *IR_Data, complement_id: IR.ID, inner_id: IR.ID, i
                     //   x & x => x
                     //   x | x => x
                     if (item != last_item) {
-                        result = try self.intern(.{ .product = .{ .lhs = result, .rhs = item }});
+                        result = try self.intern(.{ .product = .{ .lhs = result, .rhs = item } });
                         last_item = item;
                     }
                 }
@@ -252,7 +250,7 @@ fn normalize_complement(self: *IR_Data, complement_id: IR.ID, inner_id: IR.ID, i
                     //   x & x => x
                     //   x | x => x
                     if (item != last_item) {
-                        result = try self.intern(.{ .sum = .{ .lhs = result, .rhs = item }});
+                        result = try self.intern(.{ .sum = .{ .lhs = result, .rhs = item } });
                         last_item = item;
                     }
                 }
@@ -285,7 +283,7 @@ fn normalize_product(self: *IR_Data, product_id: IR.ID, bin: IR.Binary, i: *u32,
         const factor_ir = self.get(factor);
         switch (factor_ir) {
             .zero => return .zero, // 0 & x => 0
-            .one => rebuild_product = true,  // 1 & x => x
+            .one => rebuild_product = true, // 1 & x => x
             else => {
                 const complement = try self.make_complement(factor);
                 if (self.normalize_temp.contains(complement)) {
@@ -356,7 +354,7 @@ fn normalize_sum(self: *IR_Data, sum_id: IR.ID, bin: IR.Binary, i: *u32, options
         const term_ir = self.get(term);
         switch (term_ir) {
             .zero => rebuild_sum = true, // 0 | x => x
-            .one => return .one,  // 1 | x => 1
+            .one => return .one, // 1 | x => 1
             else => {
                 const complement = try self.make_complement(term);
                 if (self.normalize_temp.contains(complement)) {
@@ -527,15 +525,15 @@ pub fn get_pt(self: *IR_Data, comptime Signal: type, allocator: std.mem.Allocato
         factors[factor_index] = switch (self.get(factor_id)) {
             .zero => .never,
             .one => .always,
-            .signal => |ordinal| .{ .when_high = @enumFromInt(ordinal) },
-            .complement => |signal_id| .{ .when_low = @enumFromInt(self.get(signal_id).signal) },
+            .signal => |ordinal| .{ .when_high = @fromBackingInt(@intCast(ordinal)) },
+            .complement => |signal_id| .{ .when_low = @fromBackingInt(@intCast(self.get(signal_id).signal)) },
             .product, .sum, .xor => unreachable,
         };
     }
     return .{ .factors = factors };
 }
 
-const Get_ID_Result = union (enum) {
+const Get_ID_Result = union(enum) {
     id: IR.ID,
     new_index: usize,
 };
@@ -582,7 +580,7 @@ pub fn make_binary_chain_rev(self: *IR_Data, comptime kind: IR.Tag, items: []con
     if (items.len == 1) return items[0];
 
     var id = try self.make_binary(kind, items[items.len - 1], items[items.len - 2]);
-    for (3 .. items.len + 1) |i| {
+    for (3..items.len + 1) |i| {
         id = try self.make_binary(kind, id, items[items.len - i]);
     }
     return id;
@@ -709,7 +707,7 @@ pub const Iterator = struct {
     }
 };
 
-pub const IR = union (enum) {
+pub const IR = union(enum) {
     zero,
     one,
     signal: u16,
@@ -719,17 +717,17 @@ pub const IR = union (enum) {
     xor: Binary,
 
     pub const Tag = std.meta.Tag(IR);
-    pub const ID = enum (u32) {
+    pub const ID = enum(u32) {
         zero = 0,
         one = 1,
         _,
 
         pub fn init(index: u32) ID {
-            return @enumFromInt(index);
+            return @fromBackingInt(@intCast(index));
         }
 
         pub fn raw(self: ID) u32 {
-            return @intFromEnum(self);
+            return @backingInt(self);
         }
 
         pub fn less_than(_: void, a: ID, b: ID) bool {

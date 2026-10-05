@@ -47,10 +47,9 @@ const lc4k = @import("lc4k");
 const Chip = lc4k.LC4032ZE_TQFP48;
 
 pub fn main(init: std.process.Init) !void {
+    var chip = Chip{};
 
-    var chip = Chip {};
-
-    const inputs = [_]Chip.Signal {
+    const inputs = [_]Chip.Signal{
         .io_A0,
         .io_A1,
         .io_A2,
@@ -71,7 +70,7 @@ pub fn main(init: std.process.Init) !void {
         .io_B14,
     };
 
-    const outputs = [_]Chip.Signal {
+    const outputs = [_]Chip.Signal{
         .io_B0,
         .io_B1,
         .io_B2,
@@ -79,7 +78,7 @@ pub fn main(init: std.process.Init) !void {
         .io_B4,
     };
 
-    const layer1_i0_o0 = [_]Chip.Signal {
+    const layer1_i0_o0 = [_]Chip.Signal{
         .mc_A0,
         .mc_A1,
         .mc_A2,
@@ -87,7 +86,7 @@ pub fn main(init: std.process.Init) !void {
         .mc_A4,
         .mc_A5,
     };
-    const layer1_i0_o1 = [_]Chip.Signal {
+    const layer1_i0_o1 = [_]Chip.Signal{
         .mc_A6,
         .mc_A7,
         .mc_A8,
@@ -115,38 +114,38 @@ pub fn main(init: std.process.Init) !void {
 
     inline for (layer1_i0_o0, 0..) |_, n| {
         const base = n * 3;
-        full_adder(&chip, inputs[base],    inputs[base+1],  inputs[base+2],  layer1_i0_o0[n], layer1_i0_o1[n]);
+        full_adder(&chip, inputs[base], inputs[base + 1], inputs[base + 2], layer1_i0_o0[n], layer1_i0_o1[n]);
     }
 
-    full_adder(&chip,     layer1_i0_o0[0], layer1_i0_o0[1], layer1_i0_o0[2], layer2_i0_o0_0,  layer2_i0_o1_0);
-    full_adder(&chip,     layer1_i0_o0[3], layer1_i0_o0[4], layer1_i0_o0[5], layer2_i0_o0_1,  layer2_i0_o1_1);
-    full_adder(&chip,     layer1_i0_o1[0], layer1_i0_o1[1], layer1_i0_o1[2], layer2_i1_o1_0,  layer2_i1_o2_0);
-    full_adder(&chip,     layer1_i0_o1[3], layer1_i0_o1[4], layer1_i0_o1[5], layer2_i1_o1_1,  layer2_i1_o2_1);
+    full_adder(&chip, layer1_i0_o0[0], layer1_i0_o0[1], layer1_i0_o0[2], layer2_i0_o0_0, layer2_i0_o1_0);
+    full_adder(&chip, layer1_i0_o0[3], layer1_i0_o0[4], layer1_i0_o0[5], layer2_i0_o0_1, layer2_i0_o1_1);
+    full_adder(&chip, layer1_i0_o1[0], layer1_i0_o1[1], layer1_i0_o1[2], layer2_i1_o1_0, layer2_i1_o2_0);
+    full_adder(&chip, layer1_i0_o1[3], layer1_i0_o1[4], layer1_i0_o1[5], layer2_i1_o1_1, layer2_i1_o2_1);
 
-    half_adder(&chip,     layer2_i0_o0_0,  layer2_i0_o0_1,                   outputs[0],      layer3_i0_o1);
-    full_adder(&chip,     layer2_i0_o1_0,  layer2_i1_o1_0, layer2_i1_o1_1,   layer3_i1_o1,    layer3_i1_o2);
+    half_adder(&chip, layer2_i0_o0_0, layer2_i0_o0_1, outputs[0], layer3_i0_o1);
+    full_adder(&chip, layer2_i0_o1_0, layer2_i1_o1_0, layer2_i1_o1_1, layer3_i1_o1, layer3_i1_o2);
 
-    full_adder(&chip,     layer3_i0_o1,    layer2_i0_o1_1, layer3_i1_o1,     outputs[1],      layer4_i1_o2);
-    full_adder(&chip,     layer3_i1_o2,    layer2_i1_o2_0, layer2_i1_o2_1,   layer4_i2_o2,    layer4_i2_o3);
+    full_adder(&chip, layer3_i0_o1, layer2_i0_o1_1, layer3_i1_o1, outputs[1], layer4_i1_o2);
+    full_adder(&chip, layer3_i1_o2, layer2_i1_o2_0, layer2_i1_o2_1, layer4_i2_o2, layer4_i2_o3);
 
     chip.mc(outputs[2].mc()).logic = comptime .{ .sum_xor_pt0 = .{
-        .sum = &.{ layer4_i1_o2.when_high().pt() },
+        .sum = &.{layer4_i1_o2.when_high().pt()},
         .pt0 = layer4_i2_o2.when_high().pt(),
         .polarity = .positive,
-    }};
+    } };
 
     chip.mc(outputs[3].mc()).logic = comptime .{ .sum_xor_pt0 = .{
-        .sum = &.{ layer4_i2_o2.when_high().pt().and_factor(layer4_i1_o2.when_high()) },
+        .sum = &.{layer4_i2_o2.when_high().pt().and_factor(layer4_i1_o2.when_high())},
         .pt0 = layer4_i2_o3.when_high().pt(),
         .polarity = .positive,
-    }};
+    } };
 
     chip.mc(outputs[4].mc()).logic = comptime .{ .sum = .{
         .sum = &.{
             layer4_i1_o2.when_high().pt().and_factor(layer4_i2_o2.when_high()).and_factor(layer4_i2_o3.when_high()),
         },
         .polarity = .positive,
-    }};
+    } };
 
     inline for (outputs) |out| {
         chip.mc(out.mc()).output.oe = .output_only;
@@ -164,7 +163,8 @@ pub fn main(init: std.process.Init) !void {
     });
 }
 
-fn full_adder(chip: *Chip,
+fn full_adder(
+    chip: *Chip,
     comptime in0: Chip.Signal,
     comptime in1: Chip.Signal,
     comptime in2: Chip.Signal,
@@ -178,7 +178,7 @@ fn full_adder(chip: *Chip,
         },
         .pt0 = in2.when_high().pt(),
         .polarity = .positive,
-    }};
+    } };
 
     chip.mc(out1.mc()).logic = comptime .{ .sum = .{
         .sum = &.{
@@ -188,25 +188,26 @@ fn full_adder(chip: *Chip,
             in0.when_high().pt().and_factor(in1.when_high()).and_factor(in2.when_high()),
         },
         .polarity = .positive,
-    }};
+    } };
 }
 
-fn half_adder(chip: *Chip,
+fn half_adder(
+    chip: *Chip,
     comptime in0: anytype,
     comptime in1: anytype,
     comptime out0: anytype,
     comptime out1: anytype,
 ) void {
     chip.mc(out0.mc()).logic = comptime .{ .sum_xor_pt0 = .{
-        .sum = &.{ in0.when_high().pt() },
+        .sum = &.{in0.when_high().pt()},
         .pt0 = in1.when_high().pt(),
         .polarity = .positive,
-    }};
+    } };
 
     chip.mc(out1.mc()).logic = comptime .{ .sum = .{
         .sum = &.{
             in0.when_high().pt().and_factor(in1.when_high()),
         },
         .polarity = .positive,
-    }};
+    } };
 }

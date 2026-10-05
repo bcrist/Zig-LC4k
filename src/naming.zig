@@ -62,7 +62,7 @@ pub fn Names(comptime Device: type) type {
             inline for (@typeInfo(Pins).@"struct".decl_names) |decl| {
                 if (@field(Pins, decl).info.signal_index) |signal_index| {
                     const name = comptime name_with_prefix("pin", decl);
-                    self.add_bus_name(&.{ @enumFromInt(signal_index) }, name) catch unreachable;
+                    self.add_bus_name(&.{@fromBackingInt(@intCast(signal_index))}, name) catch unreachable;
                 }
             }
 
@@ -204,7 +204,7 @@ pub fn Names(comptime Device: type) type {
                     .int => {
                         try self.add_constant(what, options.prefix ++ options.name ++ options.suffix);
                     },
-                    else => @compileError("Unexpected type: " ++ @typeName(T) ++ " for " ++ options.prefix ++ options.name ++ options.suffix), 
+                    else => @compileError("Unexpected type: " ++ @typeName(T) ++ " for " ++ options.prefix ++ options.name ++ options.suffix),
                 },
             }
         }
@@ -350,7 +350,7 @@ pub fn Names(comptime Device: type) type {
 
         pub fn add_bus_name(self: *Self, signals: []const Signal, name: []const u8) !void {
             if (self.bus_lookup.contains(name)) {
-                std.debug.panic("There is already a bus named {s}", .{ name });
+                std.debug.panic("There is already a bus named {s}", .{name});
             }
             try self.bus_lookup.ensureUnusedCapacity(self.gpa, 1);
             self.bus_lookup.putAssumeCapacityNoClobber(name, signals);
@@ -429,7 +429,7 @@ pub fn Names(comptime Device: type) type {
             while (iter.next()) |entry| {
                 const name = entry.key_ptr.*;
                 if (std.mem.startsWith(u8, name, "$")) continue;
-                    
+
                 const fb_signals = try arena.dupe(Device.Signal, entry.value_ptr.*);
                 for (fb_signals) |*signal| {
                     if (signal.kind() != .io) continue;
@@ -452,7 +452,7 @@ pub fn Names(comptime Device: type) type {
                             },
                         }
                     }
-                    
+
                     signal.* = out.output_routing().to_absolute(mcref);
                 }
 
@@ -486,9 +486,9 @@ pub fn Names(comptime Device: type) type {
                 try w.writeAll("\nBuses:\n");
                 var bus_iter = self.bus_lookup.iterator();
                 while (bus_iter.next()) |entry| {
-                    try w.print("   {s}:", .{ entry.key_ptr.* });
+                    try w.print("   {s}:", .{entry.key_ptr.*});
                     for (entry.value_ptr.*) |signal| {
-                        try w.print(" {s}", .{ @tagName(signal) });
+                        try w.print(" {s}", .{@tagName(signal)});
                     }
                     try w.writeByte('\n');
                 }
@@ -590,7 +590,7 @@ pub fn Names(comptime Device: type) type {
             if (name.len <= 250) {
                 var buf: [256]u8 = undefined;
 
-                const fb_name = std.fmt.bufPrint(&buf, "{s}.fb", .{ name }) catch unreachable;
+                const fb_name = std.fmt.bufPrint(&buf, "{s}.fb", .{name}) catch unreachable;
                 if (self.signal_lookup.get(fb_name)) |signal| {
                     if (signal.kind() == .mc) {
                         if (signal.maybe_mc()) |mcref| {
@@ -599,7 +599,7 @@ pub fn Names(comptime Device: type) type {
                     }
                 }
 
-                const cash_name = std.fmt.bufPrint(&buf, "${s}", .{ name }) catch unreachable;
+                const cash_name = std.fmt.bufPrint(&buf, "${s}", .{name}) catch unreachable;
                 if (self.signal_lookup.get(cash_name)) |signal| {
                     if (signal.kind() == .mc) {
                         if (signal.maybe_mc()) |mcref| {
@@ -611,7 +611,7 @@ pub fn Names(comptime Device: type) type {
                 var temp: std.ArrayList(u8) = .init(self.gpa);
                 defer temp.deinit();
 
-                if (temp.writer().print("{s}.fb", .{ name })) {
+                if (temp.writer().print("{s}.fb", .{name})) {
                     if (self.signal_lookup.get(temp.items)) |signal| {
                         if (signal.kind() == .mc) {
                             if (signal.maybe_mc()) |mcref| {
@@ -623,7 +623,7 @@ pub fn Names(comptime Device: type) type {
 
                 temp.clearRetainingCapacity();
 
-                if (temp.writer().print("${s}", .{ name })) {
+                if (temp.writer().print("${s}", .{name})) {
                     if (self.signal_lookup.get(temp.items)) |signal| {
                         if (signal.kind() == .mc) {
                             if (signal.maybe_mc()) |mcref| {

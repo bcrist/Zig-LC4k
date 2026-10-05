@@ -4,21 +4,21 @@ const Chip = lc4k.LC4032ZE_TQFP48;
 
 const in = struct {
     pub const Cin = Chip.pins._2.pad();
-    pub const _A = [_]Signal {
+    pub const _A = [_]Signal{
         Chip.pins._14.pad(),
         Chip.pins._15.pad(),
         Chip.pins._16.pad(),
         Chip.pins._17.pad(),
     };
 
-    pub const _B = [_]Signal {
+    pub const _B = [_]Signal{
         Chip.pins._38.pad(),
         Chip.pins._39.pad(),
         Chip.pins._40.pad(),
         Chip.pins._41.pad(),
     };
 
-    pub const S = [_]Signal {
+    pub const S = [_]Signal{
         Chip.pins._20.pad(),
         Chip.pins._21.pad(),
         Chip.pins._22.pad(),
@@ -29,7 +29,7 @@ const in = struct {
 };
 
 const out = struct {
-    pub const _F = [_]Signal {
+    pub const _F = [_]Signal{
         Chip.pins._7.pad(),
         Chip.pins._8.pad(),
         Chip.pins._9.pad(),
@@ -43,21 +43,21 @@ const out = struct {
 };
 
 const buried = struct {
-    pub const TA = [_]Signal {
+    pub const TA = [_]Signal{
         in._A[0].fb(),
         in._A[1].fb(),
         in._A[2].fb(),
         in._A[3].fb(),
     };
 
-    pub const TB = [_]Signal {
+    pub const TB = [_]Signal{
         in._B[0].fb(),
         in._B[1].fb(),
         in._B[2].fb(),
         in._B[3].fb(),
     };
 
-    pub const TX = [_]Signal {
+    pub const TX = [_]Signal{
         in.S[0].fb(),
         in.S[1].fb(),
         in.S[2].fb(),
@@ -65,7 +65,7 @@ const buried = struct {
     };
 
     pub const @".fb" = .{
-        ._F = [_]Signal {
+        ._F = [_]Signal{
             out._F[0].fb(),
             out._F[1].fb(),
             out._F[2].fb(),
@@ -91,7 +91,7 @@ pub fn main(init: std.process.Init) !void {
         .names = &names,
     };
 
-    var chip = Chip {};
+    var chip = Chip{};
 
     try lp.assign_logic(&chip, &buried.TA, "~(_A & _B & S[3] | _A & ~_B & S[2])", .{ .optimize = true });
     try lp.assign_logic(&chip, &buried.TB, "~(~_B & S[1] | _B & S[0] | _A)", .{ .optimize = true });

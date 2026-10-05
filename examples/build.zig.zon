@@ -1,0 +1,10 @@
+.{
+    .name = .examples,
+    .fingerprint = 0x7bd0ad45fde32786,
+    .version = "0.0.1",
+    .minimum_zig_version = "0.17.0",
+    .paths = .{""},
+    .dependencies = .{
+        .lc4k = .{ .path = ".." },
+    },
+}

@@ -172,7 +172,7 @@ test configure_chip {
 
     _ = sim.simulate(.{});
     try sim.expect_oes(&out.S, 0xFFFF, null);
-    try sim.expect_oes(&.{ out.C }, 1, null);
+    try sim.expect_oes(&.{out.C}, 1, null);
 
     try check_sum(&sim, 0, 0);
     try check_sum(&sim, 0x1234, 0x4321);
@@ -202,7 +202,7 @@ fn check_sum(sim: *lc4k.Simulator(Chip.Device), a: u16, b: u16) !void {
 
     sim.set_inputs(&in.A, a);
     sim.set_inputs(&in.B, b);
-    
+
     _ = sim.simulate(.{});
 
     try sim.expect_signals(&out.S, truncated_sum, null);

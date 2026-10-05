@@ -1,4 +1,3 @@
-
 pub fn Chip_Util(comptime Chip: type) type {
     return struct {
         pub const Add1_Options = struct {
@@ -37,12 +36,12 @@ pub fn Chip_Util(comptime Chip: type) type {
                             b.when_high().pt().and_factor(ci.when_high()),
                         },
                         .polarity = .positive,
-                    }};
+                    } };
                 }
             } else {
                 chip.mc(options.sum.mc()).logic = comptime .{
                     .sum_xor_pt0 = .{
-                        .sum = &.{ b.when_high().pt() },
+                        .sum = &.{b.when_high().pt()},
                         .pt0 = a.when_high().pt(),
                         .polarity = .positive,
                     },
@@ -53,7 +52,7 @@ pub fn Chip_Util(comptime Chip: type) type {
                             a.when_high().pt().and_factor(b.when_high()),
                         },
                         .polarity = .positive,
-                    }};
+                    } };
                 }
             }
 
@@ -63,7 +62,7 @@ pub fn Chip_Util(comptime Chip: type) type {
                         a.when_high().pt().and_factor(b.when_high()),
                     },
                     .polarity = .positive,
-                }};
+                } };
             }
 
             if (options.p) |p| {
@@ -73,7 +72,7 @@ pub fn Chip_Util(comptime Chip: type) type {
                         b.when_high().pt(),
                     },
                     .polarity = .positive,
-                }};
+                } };
             }
 
             if (options.k) |k| {
@@ -82,7 +81,7 @@ pub fn Chip_Util(comptime Chip: type) type {
                         a.when_low().pt().and_factor(b.when_low()),
                     },
                     .polarity = .positive,
-                }};
+                } };
             }
         }
 
@@ -146,12 +145,12 @@ pub fn Chip_Util(comptime Chip: type) type {
                             b[1].when_high().pt().and_factor(b[0].when_high()).and_factor(ci.when_high()),
                         },
                         .polarity = .positive,
-                    }};
+                    } };
                 }
             } else {
                 chip.mc(options.sum[0].mc()).logic = comptime .{
                     .sum_xor_pt0 = .{
-                        .sum = &.{ b[0].when_high().pt() },
+                        .sum = &.{b[0].when_high().pt()},
                         .pt0 = a[0].when_high().pt(),
                         .polarity = .positive,
                     },
@@ -176,7 +175,7 @@ pub fn Chip_Util(comptime Chip: type) type {
                             b[1].when_high().pt().and_factor(a[0].when_high()).and_factor(b[0].when_high()),
                         },
                         .polarity = .positive,
-                    }};
+                    } };
                 }
             }
 
@@ -193,7 +192,7 @@ pub fn Chip_Util(comptime Chip: type) type {
                         b[1].when_high().pt().and_factor(a[0].when_high()).and_factor(b[0].when_high()),
                     },
                     .polarity = .positive,
-                }};
+                } };
             }
 
             if (options.p) |p| {
@@ -206,7 +205,7 @@ pub fn Chip_Util(comptime Chip: type) type {
                         b[1].when_high().pt().and_factor(b[0].when_high()),
                     },
                     .polarity = .positive,
-                }};
+                } };
             }
 
             if (options.k) |k| {
@@ -218,7 +217,7 @@ pub fn Chip_Util(comptime Chip: type) type {
                         b[1].when_low().pt().and_factor(a[0].when_low()).and_factor(b[0].when_low()),
                     },
                     .polarity = .positive,
-                }};
+                } };
             }
         }
 
@@ -236,10 +235,10 @@ pub fn Chip_Util(comptime Chip: type) type {
         pub fn add3(chip: *Chip, comptime options: Add3_Options) void {
             const a = options.a;
             const b = options.b;
-            
+
             chip.mc(options.sum[0].mc()).logic = comptime .{
                 .sum_xor_pt0 = .{
-                    .sum = &.{ b[0].when_high().pt() },
+                    .sum = &.{b[0].when_high().pt()},
                     .pt0 = a[0].when_high().pt(),
                     .polarity = .positive,
                 },
@@ -287,7 +286,7 @@ pub fn Chip_Util(comptime Chip: type) type {
                         a[0].when_high().pt().and_factor(b[0].when_high()).and_factor(b[1].when_high()).and_factor(b[2].when_high()),
                     },
                     .polarity = .positive,
-                }};
+                } };
             }
         }
     };

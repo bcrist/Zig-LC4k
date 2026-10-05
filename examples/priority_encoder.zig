@@ -3,7 +3,7 @@
 const Chip = lc4k.LC4032ZE_TQFP48;
 
 const signals = struct {
-    pub const in = [_]Chip.Signal {
+    pub const in = [_]Chip.Signal{
         .io_A0,
         .io_A1,
         .io_A2,
@@ -22,7 +22,7 @@ const signals = struct {
         .io_A15,
     };
 
-    pub const out = [_]Chip.Signal {
+    pub const out = [_]Chip.Signal{
         .io_B0,
         .io_B2,
         .io_B4,
@@ -43,7 +43,7 @@ pub fn main(init: std.process.Init) !void {
         .names = &names,
     };
 
-    var chip = Chip {};
+    var chip = Chip{};
 
     @setEvalBranchQuota(10000);
 
@@ -56,7 +56,7 @@ pub fn main(init: std.process.Init) !void {
         \\ | &{in[11] ~in[10:]}
         \\ | &{in[13] ~in[12:]}
         \\ | &{in[15] ~in[14:]}
-        , .{});
+    , .{});
 
     chip.mc(signals.out[1].mc()).logic = try lp.logic(
         \\   &{in[2] ~in[1:]}
@@ -67,7 +67,7 @@ pub fn main(init: std.process.Init) !void {
         \\ | &{in[11] ~in[10:]}
         \\ | &{in[14] ~in[13:]}
         \\ | &{in[15] ~in[14:]}
-        , .{});
+    , .{});
 
     chip.mc(signals.out[2].mc()).logic = try lp.logic(
         \\   &{in[4] ~in[3:]}
@@ -78,7 +78,7 @@ pub fn main(init: std.process.Init) !void {
         \\ | &{in[13] ~in[12:]}
         \\ | &{in[14] ~in[13:]}
         \\ | &{in[15] ~in[14:]}
-        , .{});
+    , .{});
 
     chip.mc(signals.out[3].mc()).logic = try lp.logic(
         \\   &{in[8] ~in[7:]}
@@ -89,7 +89,7 @@ pub fn main(init: std.process.Init) !void {
         \\ | &{in[13] ~in[12:]}
         \\ | &{in[14] ~in[13:]}
         \\ | &{in[15] ~in[14:]}
-        , .{});
+    , .{});
 
     chip.mc(signals.out[4].mc()).logic = try lp.logic("in == 16'0", .{});
 

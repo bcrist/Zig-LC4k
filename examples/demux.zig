@@ -7,19 +7,19 @@ pub fn main(init: std.process.Init) !void {
     const Chip = lc4k.LC4032ZE_TQFP48;
     const Signal = Chip.Signal;
 
-    var chip = Chip {};
+    var chip = Chip{};
 
     chip.glb[0].shared_pt_enable = comptime Chip.pins._19.when_high().pt();
     chip.goe0.source = .{ .glb_shared_pt_enable = 0 };
     chip.goe0.polarity = .positive;
 
-    const inputs = [_]Signal {
+    const inputs = [_]Signal{
         Chip.pins._22.pad(),
         Chip.pins._21.pad(),
         Chip.pins._20.pad(),
     };
 
-    const outputs = [_]Signal {
+    const outputs = [_]Signal{
         Chip.pins._23.pad(),
         Chip.pins._24.pad(),
         Chip.pins._26.pad(),
@@ -42,7 +42,7 @@ pub fn main(init: std.process.Init) !void {
                 }, bit),
             },
             .polarity = .negative,
-        }};
+        } };
     }
 
     const results = try chip.assemble(init.arena.allocator(), .{});

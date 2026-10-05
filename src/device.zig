@@ -62,7 +62,7 @@ pub const Type = enum {
     LC4128x_TQFP128,
 
     pub fn get(comptime self: Type) type {
-        return switch(self) {
+        return switch (self) {
             .LC4032ZC_TQFP48 => @import("device/LC4032ZC_TQFP48.zig"),
             .LC4032ZC_csBGA56 => @import("device/LC4032ZC_csBGA56.zig"),
             .LC4032ZE_TQFP48 => @import("device/LC4032ZE_TQFP48.zig"),

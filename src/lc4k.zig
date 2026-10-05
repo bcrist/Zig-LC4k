@@ -69,9 +69,9 @@ pub fn Chip_Config(comptime device_type: Device_Type) type {
     };
 
     return struct {
-        glb: [D.num_glbs] GLB_Config(D) = GLB_Config(D).init_all_unused(D.num_glbs),
-        clock: [D.clock_pins.len] Chip_Input_Config = @splat(.{}),
-        input: [D.input_pins.len] Chip_Input_Config = @splat(.{}),
+        glb: [D.num_glbs]GLB_Config(D) = GLB_Config(D).init_all_unused(D.num_glbs),
+        clock: [D.clock_pins.len]Chip_Input_Config = @splat(.{}),
+        input: [D.input_pins.len]Chip_Input_Config = @splat(.{}),
 
         goe0: GOE01_Config = .{},
         goe1: GOE01_Config = .{},
@@ -221,7 +221,7 @@ pub fn BClock1_Config(comptime Signal: type) type {
     return enum {
         clk1_pos,
         clk0_neg,
-        
+
         pub fn polarity(self: @This()) Polarity {
             return switch (self) {
                 .clk1_pos => .positive,
@@ -282,7 +282,7 @@ pub fn BClock3_Config(comptime Signal: type) type {
 
 pub fn GLB_Config(comptime D: type) type {
     return struct {
-        mc: [D.num_mcs_per_glb] Macrocell_Config(D.family, D.Signal),
+        mc: [D.num_mcs_per_glb]Macrocell_Config(D.family, D.Signal),
         shared_pt_init: Product_Term_With_Polarity(D.Signal),
         shared_pt_clock: Product_Term_With_Polarity(D.Signal),
         shared_pt_enable: Product_Term(D.Signal),
@@ -295,17 +295,19 @@ pub fn GLB_Config(comptime D: type) type {
 
         const Self = @This();
 
-        pub fn init_all_unused(comptime num_glbs: comptime_int) [num_glbs]Self { comptime {
-            var configs: [num_glbs]Self = undefined;
-            var i = 0;
-            while (i < num_glbs) : (i += 1) {
-                configs[i] = init_unused();
+        pub fn init_all_unused(comptime num_glbs: comptime_int) [num_glbs]Self {
+            comptime {
+                var configs: [num_glbs]Self = undefined;
+                var i = 0;
+                while (i < num_glbs) : (i += 1) {
+                    configs[i] = init_unused();
+                }
+                return configs;
             }
-            return configs;
-        }}
+        }
 
         pub fn init_unused() Self {
-            var self = Self {
+            var self = Self{
                 .mc = undefined,
                 .shared_pt_init = .{
                     .polarity = .negative,
@@ -337,7 +339,7 @@ pub fn GLB_Config(comptime D: type) type {
 }
 
 pub fn Macrocell_Logic(comptime Signal: type) type {
-    return union (enum) {
+    return union(enum) {
         pt0: Product_Term_With_Polarity(Signal),
         sum: Sum_With_Polarity(Signal),
         sum_xor_pt0: Sum_XOR_PT0(Signal),
@@ -397,10 +399,7 @@ pub fn Macrocell_Config(comptime family: Device_Family, comptime Signal: type) t
 
         pub fn init_unused() Self {
             return .{
-                .logic = .{ .sum = .{
-                    .polarity = .positive,
-                    .sum = &.{ .always() }
-                }},
+                .logic = .{ .sum = .{ .polarity = .positive, .sum = &.{.always()} } },
                 .func = .combinational,
                 .output = .{ .oe = .input_only },
             };
@@ -423,7 +422,7 @@ pub fn Output_Config(comptime Signal: type) type {
         drive_type: ?Drive_Type = null,
         oe: Output_Enable_Mode,
         oe_routing: Output_Routing(Signal) = .{ .relative = 0 },
-        routing: union (enum) {
+        routing: union(enum) {
             same_as_oe,
             self,
             five_pt_fast_bypass: Sum_With_Polarity(Signal),
@@ -464,7 +463,7 @@ pub fn Output_Routing(comptime Signal: type) type {
         absolute: Signal,
 
         pub fn to_absolute(self: @This(), io_mc: MC_Ref) Signal {
-             switch (self) {
+            switch (self) {
                 .relative => |offset| {
                     const target_mcref = MC_Ref.init(io_mc.glb, (io_mc.mc + offset) % 16);
                     return Signal.mc_fb(target_mcref);
@@ -555,7 +554,7 @@ pub fn Sum_XOR_PT0(comptime Signal: type) type {
 
 pub fn Register_Config(comptime Signal: type) type {
     return struct {
-        clock: union (enum) {
+        clock: union(enum) {
             none,
             shared_pt_clock,
             pt1: Product_Term_With_Polarity(Signal),
@@ -579,7 +578,7 @@ pub fn Register_Config(comptime Signal: type) type {
                 };
             }
         } = .none,
-        ce: union (enum) {
+        ce: union(enum) {
             pt2: Product_Term_With_Polarity(Signal),
             shared_pt_clock,
             always_active,
@@ -694,7 +693,7 @@ pub fn Product_Term(comptime Device_Signal: type) type {
 
         pub inline fn never() Self {
             return comptime .{
-                .factors = &.{ .never },
+                .factors = &.{.never},
             };
         }
         pub inline fn is_never(self: Self) bool {
@@ -741,7 +740,7 @@ pub fn Product_Term(comptime Device_Signal: type) type {
                 },
             }
             return comptime .{
-                .factors = self.factors ++ .{ factor },
+                .factors = self.factors ++ .{factor},
             };
         }
 
@@ -805,7 +804,7 @@ pub fn Factor(comptime Device_Signal: type) type {
         const Self = @This();
 
         pub inline fn negate(self: Self) Self {
-            return switch(self) {
+            return switch (self) {
                 .always => .never,
                 .never => .always,
                 .when_high => |signal| .{ .when_low = signal },
@@ -814,7 +813,7 @@ pub fn Factor(comptime Device_Signal: type) type {
         }
 
         pub inline fn pt(comptime self: Self) Product_Term(Signal) {
-            return comptime .{ .factors = &.{ self } };
+            return comptime .{ .factors = &.{self} };
         }
         pub inline fn pt_indirect(self: *const Self) Product_Term(Signal) {
             return .{ .factors = self[0..1] };
@@ -840,7 +839,7 @@ pub fn Factor(comptime Device_Signal: type) type {
             const bt: std.meta.Tag(Self) = b;
             const at2 = if (at == .when_low) .when_high else at;
             const bt2 = if (bt == .when_low) .when_high else bt;
-            if (at2 != bt2) return @intFromEnum(at2) < @intFromEnum(bt2);
+            if (at2 != bt2) return @backingInt(at2) < @backingInt(bt2);
             switch (a) {
                 .always, .never => return false,
                 .when_high, .when_low => |as| {
@@ -848,8 +847,8 @@ pub fn Factor(comptime Device_Signal: type) type {
                         .when_high, .when_low => |s| s,
                         else => unreachable,
                     };
-                    return if (as != bs) @intFromEnum(as) < @intFromEnum(bs) else @intFromEnum(at) < @intFromEnum(bt);
-                }
+                    return if (as != bs) @backingInt(as) < @backingInt(bs) else @backingInt(at) < @backingInt(bt);
+                },
             }
         }
     };
@@ -934,10 +933,10 @@ pub fn Pin(comptime Signal: type) type {
                 .id = pin_id,
                 .func = .{ .io = mcref.mc },
                 .glb = mcref.glb,
-                .signal_index = @intFromEnum(signal),
+                .signal_index = @backingInt(signal),
                 .all_pins_index = index,
                 .bank = bank,
-            }};
+            } };
         }
 
         pub fn init_oe(index: u16, pin_id: []const u8, bank: u1, signal: Signal, comptime oe_index: comptime_int) Self {
@@ -950,10 +949,10 @@ pub fn Pin(comptime Signal: type) type {
                     else => @compileError("Invalid OE index"),
                 },
                 .glb = mcref.glb,
-                .signal_index = @intFromEnum(signal),
+                .signal_index = @backingInt(signal),
                 .all_pins_index = index,
                 .bank = bank,
-            }};
+            } };
         }
 
         pub fn init_clk(index: u16, pin_id: []const u8, bank: u1, signal: Signal, clock_index: Clock_Index, glb: GLB_Index) Self {
@@ -961,10 +960,10 @@ pub fn Pin(comptime Signal: type) type {
                 .id = pin_id,
                 .func = .{ .clock = clock_index },
                 .glb = glb,
-                .signal_index = @intFromEnum(signal),
+                .signal_index = @backingInt(signal),
                 .all_pins_index = index,
                 .bank = bank,
-            }};
+            } };
         }
 
         pub fn init_input(index: u16, pin_id: []const u8, bank: u1, signal: Signal, glb: GLB_Index) Self {
@@ -972,10 +971,10 @@ pub fn Pin(comptime Signal: type) type {
                 .id = pin_id,
                 .func = .input,
                 .glb = glb,
-                .signal_index = @intFromEnum(signal),
+                .signal_index = @backingInt(signal),
                 .all_pins_index = index,
                 .bank = bank,
-            }};
+            } };
         }
 
         pub fn init_misc(index: u16, pin_id: []const u8, bank: ?u1, function: Pin_Function) Self {
@@ -984,7 +983,7 @@ pub fn Pin(comptime Signal: type) type {
                 .func = function,
                 .all_pins_index = index,
                 .bank = bank,
-            }};
+            } };
         }
 
         pub inline fn id(self: Self) []const u8 {
@@ -1000,7 +999,7 @@ pub fn Pin(comptime Signal: type) type {
         }
 
         pub inline fn pad(self: Self) Signal {
-            return @enumFromInt(self.info.signal_index.?);
+            return @fromBackingInt(@intCast(self.info.signal_index.?));
         }
 
         pub inline fn fb(self: Self) Signal {
@@ -1008,11 +1007,11 @@ pub fn Pin(comptime Signal: type) type {
         }
 
         pub inline fn when_high(self: Self) Factor(Signal) {
-            return .{ .when_high = @enumFromInt(self.info.signal_index.?) };
+            return .{ .when_high = @fromBackingInt(@intCast(self.info.signal_index.?)) };
         }
 
         pub inline fn when_low(self: Self) Factor(Signal) {
-            return .{ .when_low = @enumFromInt(self.info.signal_index.?) };
+            return .{ .when_low = @fromBackingInt(@intCast(self.info.signal_index.?)) };
         }
     };
 }
@@ -1033,20 +1032,20 @@ pub const Pin_Info = struct {
     }
 };
 
-pub const Polarity = enum (u1) {
+pub const Polarity = enum(u1) {
     negative = 0, // inverted / active low / falling edge clock
     positive = 1, // not inverted / active high / rising edge clock
 
     pub fn invert(self: Polarity) Polarity {
-        return @enumFromInt(@intFromEnum(self) ^ 1);
+        return @fromBackingInt(@intCast(@backingInt(self) ^ 1));
     }
 
     pub fn xor(self: Polarity, other: Polarity) Polarity {
-        return @enumFromInt(@intFromEnum(self) ^ @intFromEnum(other) ^ 1);
+        return @fromBackingInt(@intCast(@backingInt(self) ^ @backingInt(other) ^ 1));
     }
 };
 
-pub const Bus_Maintenance = enum (u2) {
+pub const Bus_Maintenance = enum(u2) {
     pulldown = 0,
     float = 1,
     keeper = 2,
@@ -1064,10 +1063,12 @@ pub const Bus_Maintenance = enum (u2) {
 // either 2.5V or 3.3V signals, and the low threshold is
 // for 1.8V or 1.5V signals.
 pub const Input_Threshold = enum(u1) {
-                //   ZE                   C/ZC         B           V
-    low = 1,    // 0.50*Vcc             0.50*Vcc    0.36*Vcc    0.28*Vcc
-    high = 0,   // 0.68*Vcc (falling)   0.73*Vcc    0.50*Vcc    0.40*Vcc
-                // 0.79*Vcc (rising)
+    // zig fmt: off
+              //   ZE                   C/ZC         B           V
+    low = 1,  // 0.50*Vcc             0.50*Vcc    0.36*Vcc    0.28*Vcc
+    high = 0, // 0.68*Vcc (falling)   0.73*Vcc    0.50*Vcc    0.40*Vcc
+              // 0.79*Vcc (rising)
+    // zig fmt: on
 };
 
 pub const Drive_Type = enum(u1) {
@@ -1104,12 +1105,7 @@ pub const Power_Guard = enum(u1) {
     disabled = 1,
 };
 
-pub const Timer_Divisor = enum(u2) {
-    div_128 = 0,
-    div_1024 = 2,
-    div_1048576 = 1,
-    _
-};
+pub const Timer_Divisor = enum(u2) { div_128 = 0, div_1024 = 2, div_1048576 = 1, _ };
 
 pub const Macrocell_Function = enum(u2) {
     combinational = 0,
@@ -1163,13 +1159,13 @@ pub const Macrocell_Output_Enable_Source = enum(u1) {
     always_low = 1,
 };
 
-pub inline fn invert_gi_mapping(comptime Signal: type, comptime gi_mux_size: comptime_int, comptime mapping: []const[gi_mux_size]Signal) std.EnumMap(Signal, []const u8) {
+pub inline fn invert_gi_mapping(comptime Signal: type, comptime gi_mux_size: comptime_int, comptime mapping: []const [gi_mux_size]Signal) std.EnumMap(Signal, []const u8) {
     return comptime blk: {
         @setEvalBranchQuota(10_000);
         var results: std.EnumMap(Signal, []const u8) = .{};
         for (mapping, 0..) |options, gi| {
             for (options) |signal| {
-                results.put(signal, (results.get(signal) orelse &[_]u8 {}) ++ [_]u8 { gi });
+                results.put(signal, (results.get(signal) orelse &[_]u8{}) ++ [_]u8{gi});
             }
         }
         break :blk results;

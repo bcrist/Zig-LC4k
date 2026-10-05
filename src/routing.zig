@@ -2,7 +2,7 @@ pub fn route_generic_inputs(comptime Device: type, signals_to_route: []?Device.S
     var routed_signals: std.EnumSet(Device.Signal) = .empty;
 
     var forced = forced_gi_routing;
-    
+
     for (0.., forced_gi_routing) |gi, maybe_signal| if (maybe_signal) |signal| {
         if (routed_signals.contains(signal)) {
             try results.add_error(.{
@@ -10,7 +10,7 @@ pub fn route_generic_inputs(comptime Device: type, signals_to_route: []?Device.S
                 .details = "Signal appears in multiple forced GI slots",
                 .glb = glb,
                 .gi = @intCast(gi),
-                .signal_ordinal = @intFromEnum(signal),
+                .signal_ordinal = @backingInt(signal),
             });
             forced[gi] = null;
             continue;
@@ -22,7 +22,7 @@ pub fn route_generic_inputs(comptime Device: type, signals_to_route: []?Device.S
                 .details = "Attempted to force signal into a GI slot that it is not allowed in",
                 .glb = glb,
                 .gi = @intCast(gi),
-                .signal_ordinal = @intFromEnum(signal),
+                .signal_ordinal = @backingInt(signal),
             });
             forced[gi] = null;
             continue;
@@ -68,7 +68,7 @@ pub fn route_generic_inputs(comptime Device: type, signals_to_route: []?Device.S
                 .err = error.GI_Routing_Failed,
                 .details = "Could not find available GI for signal",
                 .glb = glb,
-                .signal_ordinal = @intFromEnum(signal_to_route),
+                .signal_ordinal = @backingInt(signal_to_route),
             });
         }
     };
@@ -87,7 +87,7 @@ pub const Cluster_Router = struct {
     pub fn init(comptime Device: type, glb: lc4k.GLB_Index, glb_config: lc4k.GLB_Config(Device), results: ?*assembly.Assembly_Results) Cluster_Router {
         std.debug.assert(Device.num_mcs_per_glb == 16);
 
-        var self = Cluster_Router {
+        var self = Cluster_Router{
             .glb = glb,
             .cluster_size = @splat(0),
             .sum_size = @splat(0),
@@ -211,7 +211,7 @@ pub const Cluster_Router = struct {
             initial_routing.set_wide_routing(ca, r orelse .self);
         }
 
-        const ordered_cluster_routings = [_]Cluster_Routing {
+        const ordered_cluster_routings = [_]Cluster_Routing{
             .self_minus_two,
             .self_minus_one,
             .self_plus_one,
@@ -246,7 +246,6 @@ pub const Cluster_Router = struct {
                     }
                 }
             };
-
 
             for (self.forced_wide_routing, 0..) |forced_routing, ca| {
                 if (forced_routing == null and initial_routing.try_donate_ca(ca, self.sum_size, self.cluster_size)) {
@@ -336,7 +335,7 @@ pub const Cluster_Router = struct {
                 // We'll report info on the details of MCs that weren't completely routed later in the assembly process
             } else return error.Cluster_Routing_Failed;
         }
-        
+
         return Routing_Data.init(self.fix_overprovisioning(best_routing));
     }
 
@@ -390,9 +389,7 @@ pub const Cluster_Router = struct {
         }
         return routing;
     }
-
 };
-
 
 const Routing_Score = struct {
     success: usize, // as long as this is 0, the routing is valid, though perhaps not optimal
@@ -412,7 +409,7 @@ const Routing_Score = struct {
     };
 };
 
-const Compact_Routing_Data = packed struct (u48) {
+const Compact_Routing_Data = packed struct(u48) {
     c0: Cluster_Routing,
     c1: Cluster_Routing,
     c2: Cluster_Routing,
@@ -445,7 +442,6 @@ const Compact_Routing_Data = packed struct (u48) {
     w13: Wide_Routing,
     w14: Wide_Routing,
     w15: Wide_Routing,
-
 
     pub fn get_cluster_routing(self: Compact_Routing_Data, cluster: usize) Cluster_Routing {
         return switch (cluster) {
@@ -622,7 +618,6 @@ const Compact_Routing_Data = packed struct (u48) {
             ca = new_ca;
         }
     }
-
 };
 
 pub const Routing_Data = struct {

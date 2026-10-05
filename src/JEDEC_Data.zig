@@ -6,14 +6,14 @@ pub fn init(allocator: std.mem.Allocator, extents: Fuse_Range, default: u1) erro
 }
 
 pub fn init_empty(allocator: std.mem.Allocator, extents: Fuse_Range) error{OutOfMemory}!JEDEC_Data {
-    return JEDEC_Data {
+    return JEDEC_Data{
         .extents = extents,
         .raw = try std.DynamicBitSetUnmanaged.initEmpty(allocator, extents.count()),
     };
 }
 
 pub fn init_full(allocator: std.mem.Allocator, extents: Fuse_Range) error{OutOfMemory}!JEDEC_Data {
-    return JEDEC_Data {
+    return JEDEC_Data{
         .extents = extents,
         .raw = try std.DynamicBitSetUnmanaged.initFull(allocator, extents.count()),
     };
@@ -34,7 +34,7 @@ pub fn deinit(self: *JEDEC_Data, allocator: std.mem.Allocator) void {
 
 pub fn clone(self: JEDEC_Data, allocator: std.mem.Allocator, range: Fuse_Range) error{OutOfMemory}!JEDEC_Data {
     if (self.extents.eql(range)) {
-        return JEDEC_Data {
+        return JEDEC_Data{
             .extents = self.extents,
             .raw = try self.raw.clone(allocator),
         };

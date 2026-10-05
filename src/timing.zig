@@ -8,7 +8,7 @@ pub const Picoseconds = i32;
 
 pub const Signal_Index = usize;
 
-pub const Node = union (enum) {
+pub const Node = union(enum) {
     pad: Signal_Index,
 
     in: Signal_Index,
@@ -50,7 +50,7 @@ pub const Node = union (enum) {
     mc_oe: lc4k.MC_Ref,
     mcq: lc4k.MC_Ref,
     orm: lc4k.MC_Ref,
-    
+
     fb: lc4k.MC_Ref,
 
     out: lc4k.MC_Ref,
@@ -61,7 +61,7 @@ pub const Node = union (enum) {
     pub fn write_name(self: Node, writer: *std.Io.Writer, comptime Device: type, names: *const naming.Names(Device)) !void {
         switch (self) {
             .pad, .in, .grp => |signal_index| {
-                const signal: Device.Signal = @enumFromInt(signal_index);
+                const signal: Device.Signal = @fromBackingInt(@intCast(signal_index));
                 try writer.writeAll(names.get_signal_name(signal));
                 try writer.writeByte(' ');
                 try writer.writeAll(@tagName(self));
@@ -76,10 +76,10 @@ pub const Node = union (enum) {
                 }
             },
             .oe_in => |oe_index| {
-                try writer.print("OE {d}", .{ oe_index });
+                try writer.print("OE {d}", .{oe_index});
             },
             .gclk => |clock_index| {
-                try writer.print("GCLK {d}", .{ clock_index });
+                try writer.print("GCLK {d}", .{clock_index});
             },
             .bclock0, .bclock1, .bclock2, .bclock3, .sptoe, .sptclk, .sptinit => |glb| {
                 try writer.print("{s} {s}", .{ names.get_glb_name(glb), @tagName(self) });
@@ -90,21 +90,20 @@ pub const Node = union (enum) {
             .igoe0, .igoe1, .igoe2, .igoe3, .goe0, .goe1, .goe2, .goe3 => {
                 try writer.writeAll(@tagName(self));
             },
-            .mc_cluster, .mc_ca, .mcd, .mc_clk, .mc_ce, .mc_init, .mc_async,
-            .mc_oe, .mcq, .fb => |mcref| {
+            .mc_cluster, .mc_ca, .mcd, .mc_clk, .mc_ce, .mc_init, .mc_async, .mc_oe, .mcq, .fb => |mcref| {
                 try writer.print("{s} {s}", .{ names.get_mc_name(mcref), @tagName(self) });
             },
             .mcd_setup => |mcref| {
-                try writer.print("{s} Setup", .{ names.get_mc_name(mcref) });
+                try writer.print("{s} Setup", .{names.get_mc_name(mcref)});
             },
             .mc_ce_setup => |mcref| {
-                try writer.print("{s} CE Setup", .{ names.get_mc_name(mcref) });
+                try writer.print("{s} CE Setup", .{names.get_mc_name(mcref)});
             },
             .mc_clk_d_hold => |mcref| {
-                try writer.print("{s} Hold", .{ names.get_mc_name(mcref) });
+                try writer.print("{s} Hold", .{names.get_mc_name(mcref)});
             },
             .mc_clk_ce_hold => |mcref| {
-                try writer.print("{s} CE Hold", .{ names.get_mc_name(mcref) });
+                try writer.print("{s} CE Hold", .{names.get_mc_name(mcref)});
             },
         }
     }
@@ -136,9 +135,7 @@ pub const Path = struct {
     };
 };
 
-pub const VBC = struct {
-
-};
+pub const VBC = struct {};
 
 pub fn Analyzer(comptime D: type) type {
     const Timing = switch (D.family) {
@@ -149,7 +146,7 @@ pub fn Analyzer(comptime D: type) type {
 
     const Node_Set = std.AutoHashMap(Node, void);
 
-    const Error = error {
+    const Error = error{
         Invalid_Path,
         OutOfMemory,
     };
@@ -188,7 +185,7 @@ pub fn Analyzer(comptime D: type) type {
 
             return try self.compute_and_cache_critical_path(segment.source, segment.dest, &visited);
         }
-        
+
         fn maybe_find_critical_path(self: *Self, source: Node, dest: Node, visited: *Node_Set) Error!?Path {
             return self.find_critical_path(source, dest, visited) catch |err| switch (err) {
                 error.Invalid_Path => null,
@@ -242,15 +239,12 @@ pub fn Analyzer(comptime D: type) type {
                             return error.Invalid_Path;
                         }
                     }
-                    return try self.append_to_parent(source, .{ .orm = mcref }, dest, "tBUF", visited,
-                        self.timing.tBUF + self.tIOO(mcref) + self.tSLEW(mcref));
+                    return try self.append_to_parent(source, .{ .orm = mcref }, dest, "tBUF", visited, self.timing.tBUF + self.tIOO(mcref) + self.tSLEW(mcref));
                 },
 
-                .out_en => |mcref| return try self.append_to_parent(source, .{ .out_oe = mcref }, dest, "tEN", visited,
-                    self.timing.tEN + self.tIOO(mcref) + self.tSLEW(mcref)),
+                .out_en => |mcref| return try self.append_to_parent(source, .{ .out_oe = mcref }, dest, "tEN", visited, self.timing.tEN + self.tIOO(mcref) + self.tSLEW(mcref)),
 
-                .out_dis => |mcref| return try self.append_to_parent(source, .{ .out_oe = mcref }, dest, "tDIS", visited,
-                    self.timing.tDIS + self.tIOO(mcref)),
+                .out_dis => |mcref| return try self.append_to_parent(source, .{ .out_oe = mcref }, dest, "tDIS", visited, self.timing.tDIS + self.tIOO(mcref)),
 
                 .out_oe => |mcref| {
                     if (fuses.get_output_enable_source_range(D, mcref)) |range| {
@@ -318,7 +312,7 @@ pub fn Analyzer(comptime D: type) type {
                             if (try self.maybe_append_to_parent(source, .{ .mc_async = mcref }, dest, "tSRi", visited, self.timing.tSRi)) |path| {
                                 options.appendAssumeCapacity(path);
                             }
-                            
+
                             return try choose_critical_path(options.items);
                         },
                         .t_ff, .d_ff => {
@@ -336,7 +330,7 @@ pub fn Analyzer(comptime D: type) type {
                             if (try self.maybe_append_to_parent(source, .{ .mc_async = mcref }, dest, "tSRi", visited, self.timing.tSRi)) |path| {
                                 options.appendAssumeCapacity(path);
                             }
-                            
+
                             return try choose_critical_path(options.items);
                         },
                     }
@@ -473,11 +467,11 @@ pub fn Analyzer(comptime D: type) type {
 
                     if (disassembly.read_input_bypass(D, self.jedec, mcref)) {
                         const delay = self.timing.tINREG + self.tINDIO();
-                        if (try self.maybe_append_to_parent(source, .{ .in = @intFromEnum(D.Signal.mc_pad(mcref)) }, dest, "tINREG", visited, delay)) |path| {
+                        if (try self.maybe_append_to_parent(source, .{ .in = @backingInt(D.Signal.mc_pad(mcref)) }, dest, "tINREG", visited, delay)) |path| {
                             options.appendAssumeCapacity(path);
                         }
                     } else if (disassembly.read_pt0_xor(D, self.jedec, mcref)) {
-                        if (try self.maybe_append_to_parent(source, .{ .pt = .{ .mcref = mcref, .pt = 0 }}, dest, "tMCELL", visited, self.timing.tMCELL)) |path| {
+                        if (try self.maybe_append_to_parent(source, .{ .pt = .{ .mcref = mcref, .pt = 0 } }, dest, "tMCELL", visited, self.timing.tMCELL)) |path| {
                             options.appendAssumeCapacity(path);
                         }
                     }
@@ -544,14 +538,14 @@ pub fn Analyzer(comptime D: type) type {
                     var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
 
                     if (!disassembly.read_pt0_xor(D, self.jedec, mcref)) {
-                        if (try self.maybe_find_critical_path(source, .{ .pt = .{ .mcref = mcref, .pt = 0 }}, visited)) |path| {
+                        if (try self.maybe_find_critical_path(source, .{ .pt = .{ .mcref = mcref, .pt = 0 } }, visited)) |path| {
                             options.appendAssumeCapacity(path);
                         }
                     }
 
                     switch (disassembly.read_clock_source(D, self.jedec, mcref)) {
                         .pt1_positive, .pt1_negative => {},
-                        else => if (try self.maybe_find_critical_path(source, .{ .pt = .{ .mcref = mcref, .pt = 1 }}, visited)) |path| {
+                        else => if (try self.maybe_find_critical_path(source, .{ .pt = .{ .mcref = mcref, .pt = 1 } }, visited)) |path| {
                             options.appendAssumeCapacity(path);
                         },
                     }
@@ -560,7 +554,7 @@ pub fn Analyzer(comptime D: type) type {
                         .pt2_active_high, .pt2_active_low => {},
                         else => switch (disassembly.read_async_trigger_source(D, self.jedec, mcref)) {
                             .pt2_active_high => {},
-                            .none => if (try self.maybe_find_critical_path(source, .{ .pt = .{ .mcref = mcref, .pt = 2 }}, visited)) |path| {
+                            .none => if (try self.maybe_find_critical_path(source, .{ .pt = .{ .mcref = mcref, .pt = 2 } }, visited)) |path| {
                                 options.appendAssumeCapacity(path);
                             },
                         },
@@ -568,14 +562,14 @@ pub fn Analyzer(comptime D: type) type {
 
                     switch (disassembly.read_init_source(D, self.jedec, mcref)) {
                         .pt3_active_high => {},
-                        else => if (try self.maybe_find_critical_path(source, .{ .pt = .{ .mcref = mcref, .pt = 3 }}, visited)) |path| {
+                        else => if (try self.maybe_find_critical_path(source, .{ .pt = .{ .mcref = mcref, .pt = 3 } }, visited)) |path| {
                             options.appendAssumeCapacity(path);
                         },
                     }
 
                     switch (disassembly.read_field(self.jedec, lc4k.Macrocell_Output_Enable_Source, fuses.get_pt4_output_enable_range(D, mcref))) {
                         .pt4_active_high => {},
-                        else => if (try self.maybe_find_critical_path(source, .{ .pt = .{ .mcref = mcref, .pt = 4 }}, visited)) |path| {
+                        else => if (try self.maybe_find_critical_path(source, .{ .pt = .{ .mcref = mcref, .pt = 4 } }, visited)) |path| {
                             options.appendAssumeCapacity(path);
                         },
                     }
@@ -588,7 +582,7 @@ pub fn Analyzer(comptime D: type) type {
                 .goe1 => return try self.compute_goe_critical_path(source, dest, 1, visited),
                 .goe2 => return try self.compute_goe_critical_path(source, dest, 2, visited),
                 .goe3 => return try self.compute_goe_critical_path(source, dest, 3, visited),
-                
+
                 .igoe0 => return try self.compute_igoe_critical_path(source, dest, 0, visited),
                 .igoe1 => return try self.compute_igoe_critical_path(source, dest, 1, visited),
                 .igoe2 => return try self.compute_igoe_critical_path(source, dest, 2, visited),
@@ -600,7 +594,7 @@ pub fn Analyzer(comptime D: type) type {
                 .sptinit => |glb| return self.compute_pt_critical_path(source, dest, glb, D.num_mcs_per_glb * 5 + 0, visited),
 
                 .grp => |signal_index| {
-                    const signal: D.Signal = @enumFromInt(signal_index);
+                    const signal: D.Signal = @fromBackingInt(@intCast(signal_index));
 
                     var total_gis: usize = 0;
                     for (0..D.num_glbs) |glb| {
@@ -635,7 +629,7 @@ pub fn Analyzer(comptime D: type) type {
                     // TODO tPGRT
                     const pin = D.clock_pins[index];
                     const signal_index = pin.info.signal_index.?;
-                    const signal: D.Signal = @enumFromInt(signal_index);
+                    const signal: D.Signal = @fromBackingInt(@intCast(signal_index));
                     const delay = self.timing.tGCLK_IN + self.tIOI(signal);
                     return try self.append_to_parent(source, .{ .pad = signal_index }, dest, "tGCLK_IN", visited, delay);
                 },
@@ -644,14 +638,14 @@ pub fn Analyzer(comptime D: type) type {
                     // TODO tPGRT
                     const pin = D.oe_pins[index];
                     const signal_index = pin.info.signal_index.?;
-                    const signal: D.Signal = @enumFromInt(signal_index);
+                    const signal: D.Signal = @fromBackingInt(@intCast(signal_index));
                     const delay = self.timing.tGOE + self.tIOI(signal);
                     return try self.append_to_parent(source, .{ .pad = signal_index }, dest, "tGOE", visited, delay);
                 },
 
                 .in => |signal_index| {
                     // TODO tPGRT
-                    const signal: D.Signal = @enumFromInt(signal_index);
+                    const signal: D.Signal = @fromBackingInt(@intCast(signal_index));
 
                     if (signal.kind() == .io) {
                         const mcref = signal.mc();
@@ -668,7 +662,7 @@ pub fn Analyzer(comptime D: type) type {
 
                 .pad => {
                     return error.Invalid_Path;
-                }
+                },
             }
         }
 
@@ -765,7 +759,7 @@ pub fn Analyzer(comptime D: type) type {
                 if (when_high == when_low) continue;
 
                 if (maybe_signal) |signal| {
-                    if (try self.maybe_find_critical_path(source, .{ .grp = @intFromEnum(signal) }, visited)) |path| {
+                    if (try self.maybe_find_critical_path(source, .{ .grp = @backingInt(signal) }, visited)) |path| {
                         options.appendAssumeCapacity(path);
                     }
                 }
@@ -792,7 +786,7 @@ pub fn Analyzer(comptime D: type) type {
 
         fn choose_critical_path_and_clone_with_new_dest(self: *Self, options: []const Path, new_dest: Node) Error!Path {
             const critical = try choose_critical_path(options);
-            if (critical.critical_path.len == 0) return Path.nil;                    
+            if (critical.critical_path.len == 0) return Path.nil;
             if (std.meta.eql(new_dest, critical.critical_path[critical.critical_path.len - 1].segment.dest)) return critical;
 
             const critical_path = try self.arena.dupe(Delay, critical.critical_path);
@@ -875,7 +869,6 @@ pub fn Analyzer(comptime D: type) type {
             const zero_hold_time = !self.jedec.is_set(D.get_zero_hold_time_fuse());
             return if (zero_hold_time) self.timing.tINDIO else 0;
         }
-
     };
 }
 

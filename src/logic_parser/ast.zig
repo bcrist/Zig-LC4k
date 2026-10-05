@@ -1,4 +1,4 @@
-pub const Node_Kind = enum (u8) {
+pub const Node_Kind = enum(u8) {
     literal,
     bit_range,
     signal,
@@ -115,14 +115,14 @@ pub fn Ast(comptime Device: type) type {
             const width: usize = @as(usize, max_bit) + 1;
             if (width > options.max_result_bits) {
                 if (options.max_result_bits == 1) {
-                    self.diag().report_node_error_fmt(self.root, "Result has width of {} bits, but expected width of 1 bit", .{ width });
+                    self.diag().report_node_error_fmt(self.root, "Result has width of {} bits, but expected width of 1 bit", .{width});
                 } else {
                     self.diag().report_node_error_fmt(self.root, "Result has width of {} bits, but expected width of {} bits or less", .{ width, options.max_result_bits });
                 }
                 return error.InvalidEquation;
             } else if (max_bit < options.min_result_bits - 1) {
                 if (options.min_result_bits == 1) {
-                    self.diag().report_node_error_fmt(self.root, "Result has width of {} bits, but expected width of at least 1 bit", .{ width });
+                    self.diag().report_node_error_fmt(self.root, "Result has width of {} bits, but expected width of at least 1 bit", .{width});
                 } else {
                     self.diag().report_node_error_fmt(self.root, "Result has width of {} bits, but expected width of at least {} bits", .{ width, options.min_result_bits });
                 }
@@ -131,7 +131,7 @@ pub fn Ast(comptime Device: type) type {
             return max_bit;
         }
         fn infer_and_check_node_max_bit(self: *Self, slice: std.MultiArrayList(Node).Slice, node: Node.ID) !u6 {
-            const node_index = @intFromEnum(node);
+            const node_index = @backingInt(node);
             const max_bits = slice.items(.max_bit);
             if (max_bits[node_index]) |max_bit| return max_bit;
 
@@ -157,11 +157,7 @@ pub fn Ast(comptime Device: type) type {
                     const lhs_max_bit = try self.infer_and_check_node_max_bit(slice, data.lhs);
                     const rhs_max_bit = try self.infer_and_check_node_max_bit(slice, data.rhs);
                     if (lhs_max_bit != rhs_max_bit) {
-                        self.diag().report_node_error_fmt_3(
-                            node, "Both sides of a comparison operator must have the same bit width", .{},
-                            data.lhs, "Left side has width of {} bits", .{ @as(usize, lhs_max_bit) + 1 },
-                            data.rhs, "Right side has width of {} bits", .{ @as(usize, rhs_max_bit) + 1 }
-                        );
+                        self.diag().report_node_error_fmt_3(node, "Both sides of a comparison operator must have the same bit width", .{}, data.lhs, "Left side has width of {} bits", .{@as(usize, lhs_max_bit) + 1}, data.rhs, "Right side has width of {} bits", .{@as(usize, rhs_max_bit) + 1});
                         return error.InvalidEquation;
                     }
 
@@ -174,11 +170,7 @@ pub fn Ast(comptime Device: type) type {
                     const lhs_max_bit = try self.infer_and_check_node_max_bit(slice, data.lhs);
                     const rhs_max_bit = try self.infer_and_check_node_max_bit(slice, data.rhs);
                     if (lhs_max_bit != rhs_max_bit and lhs_max_bit != 0 and rhs_max_bit != 0) {
-                        self.diag().report_node_error_fmt_3(
-                            node, "Both sides of binary operator must have the same bit width, or one side must have a width of 1 bit", .{},
-                            data.lhs, "Left side has width of {} bits", .{ @as(usize, lhs_max_bit) + 1 },
-                            data.rhs, "Right side has width of {} bits", .{ @as(usize, rhs_max_bit) + 1 }
-                        );
+                        self.diag().report_node_error_fmt_3(node, "Both sides of binary operator must have the same bit width, or one side must have a width of 1 bit", .{}, data.lhs, "Left side has width of {} bits", .{@as(usize, lhs_max_bit) + 1}, data.rhs, "Right side has width of {} bits", .{@as(usize, rhs_max_bit) + 1});
                         return error.InvalidEquation;
                     }
 
@@ -216,20 +208,12 @@ pub fn Ast(comptime Device: type) type {
                     const bus_max_bit = try self.infer_and_check_node_max_bit(slice, data.lhs);
                     const selector_max_bit = try self.infer_and_check_node_max_bit(slice, data.rhs);
                     if (selector_max_bit > 5) {
-                        self.diag().report_node_error_fmt_3(
-                            node, "Multiplexer selector width cannot be greater than 6 bits", .{},
-                            data.lhs, "Bus has width of {} bits", .{ @as(usize, bus_max_bit) + 1 },
-                            data.rhs, "Selector has width of {} bits", .{ @as(usize, selector_max_bit) + 1 }
-                        );
+                        self.diag().report_node_error_fmt_3(node, "Multiplexer selector width cannot be greater than 6 bits", .{}, data.lhs, "Bus has width of {} bits", .{@as(usize, bus_max_bit) + 1}, data.rhs, "Selector has width of {} bits", .{@as(usize, selector_max_bit) + 1});
                         return error.InvalidEquation;
                     }
                     const expected_bus_max_bit = (@as(u7, 1) << @intCast(selector_max_bit + 1)) - 1;
                     if (expected_bus_max_bit != bus_max_bit) {
-                        self.diag().report_node_error_fmt_3(
-                            node, "Multiplexer width mismatch", .{},
-                            data.lhs, "Bus has width of {} bits (expected {} bits)", .{ @as(usize, bus_max_bit) + 1, @as(usize, expected_bus_max_bit) + 1 },
-                            data.rhs, "Selector has width of {} bits", .{ @as(usize, selector_max_bit) + 1 }
-                        );
+                        self.diag().report_node_error_fmt_3(node, "Multiplexer width mismatch", .{}, data.lhs, "Bus has width of {} bits (expected {} bits)", .{ @as(usize, bus_max_bit) + 1, @as(usize, expected_bus_max_bit) + 1 }, data.rhs, "Selector has width of {} bits", .{@as(usize, selector_max_bit) + 1});
                         return error.InvalidEquation;
                     }
 
@@ -249,11 +233,7 @@ pub fn Ast(comptime Device: type) type {
                         if (child_max_bit != 0) {
                             if (bus_max_bit) |max_bit| {
                                 if (max_bit != child_max_bit) {
-                                    self.diag().report_node_error_fmt_3(
-                                        node, "All items in compound operator must have the same bit width, or a width of 1 bit", .{},
-                                        bus_child, "Expected width is {} bits", .{ @as(usize, max_bit) + 1 },
-                                        child, "Item {} has width of {} bits", .{ n, @as(usize, child_max_bit) + 1 }
-                                    );
+                                    self.diag().report_node_error_fmt_3(node, "All items in compound operator must have the same bit width, or a width of 1 bit", .{}, bus_child, "Expected width is {} bits", .{@as(usize, max_bit) + 1}, child, "Item {} has width of {} bits", .{ n, @as(usize, child_max_bit) + 1 });
                                     return error.InvalidEquation;
                                 }
                             } else {
@@ -307,22 +287,17 @@ pub fn Ast(comptime Device: type) type {
 
         fn validate_and_count_bit_indices(self: *Self, slice: std.MultiArrayList(Node).Slice, node: Node.ID, bus_node: Node.ID, bus_max_bit: u6, prev_index: ?u6, endianness: ?std.builtin.Endian) !struct { u6, u6 } {
             const bus_width = @as(usize, bus_max_bit) + 1;
-            const node_index = @intFromEnum(node);
+            const node_index = @backingInt(node);
             switch (slice.items(.kind)[node_index]) {
                 .literal => {
                     const value: u6 = @intCast(slice.items(.data)[node_index].literal); // range has already been checked at parse time
                     if (value > bus_max_bit) {
-                        self.diag().report_node_error_fmt_2(
-                            node, "Bit index out of range", .{},
-                            bus_node, "Bus has width of {} bits", .{ bus_width }
-                        );
+                        self.diag().report_node_error_fmt_2(node, "Bit index out of range", .{}, bus_node, "Bus has width of {} bits", .{bus_width});
                         return error.InvalidEquation;
                     }
                     if (prev_index) |prev| {
                         if (endianness == null and value > prev) {
-                            self.diag().report_node_error_fmt(
-                                node, "Ambiguous extraction; big-endian interpretation would result in extracting bits out of order.  Use '>' or '<' to request big or little endian mode explicitly.", .{}
-                            );
+                            self.diag().report_node_error_fmt(node, "Ambiguous extraction; big-endian interpretation would result in extracting bits out of order.  Use '>' or '<' to request big or little endian mode explicitly.", .{});
                             return error.InvalidEquation;
                         }
                     }
@@ -336,10 +311,7 @@ pub fn Ast(comptime Device: type) type {
                         .big => bus_max_bit,
                     } else bus_max_bit;
                     if (first > bus_max_bit) {
-                        self.diag().report_node_error_fmt_2(
-                            node, "First bit index out of range", .{},
-                            bus_node, "Bus has width of {} bits", .{ bus_width }
-                        );
+                        self.diag().report_node_error_fmt_2(node, "First bit index out of range", .{}, bus_node, "Bus has width of {} bits", .{bus_width});
                         return error.InvalidEquation;
                     }
 
@@ -348,26 +320,19 @@ pub fn Ast(comptime Device: type) type {
                         .big => 0,
                     } else 0;
                     if (last > bus_max_bit) {
-                        self.diag().report_node_error_fmt_2(
-                            node, "Last bit index out of range", .{},
-                            bus_node, "Bus has width of {} bits", .{ bus_width }
-                        );
+                        self.diag().report_node_error_fmt_2(node, "Last bit index out of range", .{}, bus_node, "Bus has width of {} bits", .{bus_width});
                         return error.InvalidEquation;
                     }
 
                     if (prev_index) |prev| {
                         if (endianness == null and first > prev) {
-                            self.diag().report_node_error_fmt(
-                                node, "Ambiguous extraction; big-endian interpretation would result in extracting bits out of order.  Use '>' or '<' to request big or little endian mode explicitly.", .{}
-                            );
+                            self.diag().report_node_error_fmt(node, "Ambiguous extraction; big-endian interpretation would result in extracting bits out of order.  Use '>' or '<' to request big or little endian mode explicitly.", .{});
                             return error.InvalidEquation;
                         }
                     }
 
                     if (endianness == null and last > first) {
-                        self.diag().report_node_error_fmt(
-                            node, "Ambiguous extraction; big-endian interpretation would result in extracting bits out of order.  Use '>' or '<' to request big or little endian mode explicitly.", .{}
-                        );
+                        self.diag().report_node_error_fmt(node, "Ambiguous extraction; big-endian interpretation would result in extracting bits out of order.  Use '>' or '<' to request big or little endian mode explicitly.", .{});
                         return error.InvalidEquation;
                     }
 
@@ -382,7 +347,7 @@ pub fn Ast(comptime Device: type) type {
             return try self.build_node_ir(irdata, slice, self.root, bit_index);
         }
         fn build_node_ir(self: *Self, irdata: *IR_Data, slice: std.MultiArrayList(Node).Slice, node: Node.ID, unchecked_bit_index: u6) !IR.ID {
-            const node_index = @intFromEnum(node);
+            const node_index = @backingInt(node);
             const data = slice.items(.data)[node_index];
             const max_bits: []?u6 = slice.items(.max_bit);
             const bit_index = if (unchecked_bit_index > max_bits[node_index].?) 0 else unchecked_bit_index;
@@ -398,12 +363,12 @@ pub fn Ast(comptime Device: type) type {
 
                 .signal => {
                     std.debug.assert(bit_index == 0);
-                    return try irdata.make_signal(@intFromEnum(data.signal));
+                    return try irdata.make_signal(@backingInt(data.signal));
                 },
 
                 .bus_ref => {
                     const bus = data.bus_ref[0 .. @as(usize, max_bits[node_index].?) + 1];
-                    return try irdata.make_signal(@intFromEnum(bus[bit_index]));
+                    return try irdata.make_signal(@backingInt(bus[bit_index]));
                 },
 
                 .complement => {
@@ -414,7 +379,7 @@ pub fn Ast(comptime Device: type) type {
                 .unary_sum => {
                     std.debug.assert(bit_index == 0);
                     var result = try self.build_node_ir(irdata, slice, data.unary, 0);
-                    for (1 .. @as(usize, max_bits[@intFromEnum(data.unary)].?) + 1) |inner_bit_index| {
+                    for (1..@as(usize, max_bits[@backingInt(data.unary)].?) + 1) |inner_bit_index| {
                         const inner = try self.build_node_ir(irdata, slice, data.unary, @intCast(inner_bit_index));
                         result = try irdata.make_binary(.sum, result, inner);
                     }
@@ -424,7 +389,7 @@ pub fn Ast(comptime Device: type) type {
                 .unary_product => {
                     std.debug.assert(bit_index == 0);
                     var result = try self.build_node_ir(irdata, slice, data.unary, 0);
-                    for (1 .. @as(usize, max_bits[@intFromEnum(data.unary)].?) + 1) |inner_bit_index| {
+                    for (1..@as(usize, max_bits[@backingInt(data.unary)].?) + 1) |inner_bit_index| {
                         const inner = try self.build_node_ir(irdata, slice, data.unary, @intCast(inner_bit_index));
                         result = try irdata.make_binary(.product, result, inner);
                     }
@@ -433,7 +398,7 @@ pub fn Ast(comptime Device: type) type {
                 .unary_xor => {
                     std.debug.assert(bit_index == 0);
                     var result = try self.build_node_ir(irdata, slice, data.unary, 0);
-                    for (1 .. @as(usize, max_bits[@intFromEnum(data.unary)].?) + 1) |inner_bit_index| {
+                    for (1..@as(usize, max_bits[@backingInt(data.unary)].?) + 1) |inner_bit_index| {
                         const inner = try self.build_node_ir(irdata, slice, data.unary, @intCast(inner_bit_index));
                         result = try irdata.make_binary(.xor, result, inner);
                     }
@@ -457,7 +422,7 @@ pub fn Ast(comptime Device: type) type {
                     const rhs0 = try self.build_node_ir(irdata, slice, data.binary.rhs, 0);
                     var result = try irdata.make_binary(.xor, lhs0, rhs0);
                     result = try irdata.make_complement(result);
-                    for (1 .. @as(usize, max_bits[@intFromEnum(data.binary.lhs)].?) + 1) |inner_bit_index| {
+                    for (1..@as(usize, max_bits[@backingInt(data.binary.lhs)].?) + 1) |inner_bit_index| {
                         const lhs = try self.build_node_ir(irdata, slice, data.binary.lhs, @intCast(inner_bit_index));
                         const rhs = try self.build_node_ir(irdata, slice, data.binary.rhs, @intCast(inner_bit_index));
                         const xor = try irdata.make_binary(.xor, lhs, rhs);
@@ -472,7 +437,7 @@ pub fn Ast(comptime Device: type) type {
                     const lhs0 = try self.build_node_ir(irdata, slice, data.binary.lhs, 0);
                     const rhs0 = try self.build_node_ir(irdata, slice, data.binary.rhs, 0);
                     var result = try irdata.make_binary(.xor, lhs0, rhs0);
-                    for (1 .. @as(usize, max_bits[@intFromEnum(data.binary.lhs)].?) + 1) |inner_bit_index| {
+                    for (1..@as(usize, max_bits[@backingInt(data.binary.lhs)].?) + 1) |inner_bit_index| {
                         const lhs = try self.build_node_ir(irdata, slice, data.binary.lhs, @intCast(inner_bit_index));
                         const rhs = try self.build_node_ir(irdata, slice, data.binary.rhs, @intCast(inner_bit_index));
                         const xor = try irdata.make_binary(.xor, lhs, rhs);
@@ -500,7 +465,7 @@ pub fn Ast(comptime Device: type) type {
                 },
 
                 .binary_concat_be => {
-                    const rhs_max_bit = max_bits[@intFromEnum(data.binary.rhs)].?;
+                    const rhs_max_bit = max_bits[@backingInt(data.binary.rhs)].?;
                     if (bit_index > rhs_max_bit) {
                         return try self.build_node_ir(irdata, slice, data.binary.lhs, bit_index - rhs_max_bit - 1);
                     } else {
@@ -509,7 +474,7 @@ pub fn Ast(comptime Device: type) type {
                 },
 
                 .binary_concat_le => {
-                    const lhs_max_bit = max_bits[@intFromEnum(data.binary.lhs)].?;
+                    const lhs_max_bit = max_bits[@backingInt(data.binary.lhs)].?;
                     if (bit_index > lhs_max_bit) {
                         return try self.build_node_ir(irdata, slice, data.binary.rhs, bit_index - lhs_max_bit - 1);
                     } else {
@@ -518,16 +483,16 @@ pub fn Ast(comptime Device: type) type {
                 },
 
                 .extract, .extract_be, .extract_le => {
-                    switch (slice.items(.kind)[@intFromEnum(data.binary.rhs)]) {
+                    switch (slice.items(.kind)[@backingInt(data.binary.rhs)]) {
                         .literal => {
                             std.debug.assert(bit_index == 0);
-                            const new_bit_index: u6 = @intCast(slice.items(.data)[@intFromEnum(data.binary.rhs)].literal);
+                            const new_bit_index: u6 = @intCast(slice.items(.data)[@backingInt(data.binary.rhs)].literal);
                             return try self.build_node_ir(irdata, slice, data.binary.lhs, new_bit_index);
                         },
                         .bit_range => {
                             const endianness: std.builtin.Endian = if (slice.items(.kind)[node_index] == .extract_le) .little else .big;
-                            const range = slice.items(.data)[@intFromEnum(data.binary.rhs)].bit_range;
-                            const lhs_max_bit = max_bits[@intFromEnum(data.binary.lhs)].?;
+                            const range = slice.items(.data)[@backingInt(data.binary.rhs)].bit_range;
+                            const lhs_max_bit = max_bits[@backingInt(data.binary.lhs)].?;
                             var first_bit = range.first orelse switch (endianness) {
                                 .big => lhs_max_bit,
                                 .little => 0,
@@ -553,21 +518,21 @@ pub fn Ast(comptime Device: type) type {
                 .mux => {
                     const bus = data.binary.lhs;
                     const selector = data.binary.rhs;
-                    const selector_max_bit = max_bits[@intFromEnum(selector)].?;
+                    const selector_max_bit = max_bits[@backingInt(selector)].?;
 
                     var selector_ir: [6]IR.ID = undefined;
                     var inverted_selector_ir: [6]IR.ID = undefined;
-                    for (0 .. @as(usize, selector_max_bit) + 1) |bit| {
+                    for (0..@as(usize, selector_max_bit) + 1) |bit| {
                         selector_ir[bit] = try self.build_node_ir(irdata, slice, selector, @intCast(bit));
                         inverted_selector_ir[bit] = try irdata.make_complement(selector_ir[bit]);
                     }
 
                     var result: ?IR.ID = null;
 
-                    for (0 .. @as(usize, 1) << (selector_max_bit + 1)) |permutation| {
+                    for (0..@as(usize, 1) << (selector_max_bit + 1)) |permutation| {
                         var product = try self.build_node_ir(irdata, slice, bus, @intCast(permutation));
                         const permutation_bits: std.StaticBitSet(32) = .{ .mask = @intCast(permutation) };
-                        for (0 .. @as(usize, selector_max_bit) + 1) |bit| {
+                        for (0..@as(usize, selector_max_bit) + 1) |bit| {
                             const bit_ir = if (permutation_bits.isSet(bit)) selector_ir[bit] else inverted_selector_ir[bit];
                             product = try irdata.make_binary(.product, product, bit_ir);
                         }
@@ -610,7 +575,7 @@ pub fn Ast(comptime Device: type) type {
                     var remaining_bit_index = bit_index;
                     for (0..children.len) |child_index| {
                         const child = children[children.len - child_index - 1];
-                        const child_max_bit = max_bits[@intFromEnum(child)].?;
+                        const child_max_bit = max_bits[@backingInt(child)].?;
                         if (remaining_bit_index > child_max_bit) {
                             remaining_bit_index -= child_max_bit;
                             remaining_bit_index -= 1;
@@ -624,7 +589,7 @@ pub fn Ast(comptime Device: type) type {
                     const children = self.extra_children.items[data.nary.offset..][0..data.nary.len];
                     var remaining_bit_index = bit_index;
                     for (children) |child| {
-                        const child_max_bit = max_bits[@intFromEnum(child)].?;
+                        const child_max_bit = max_bits[@backingInt(child)].?;
                         if (remaining_bit_index > child_max_bit) {
                             remaining_bit_index -= child_max_bit;
                             remaining_bit_index -= 1;
@@ -638,18 +603,18 @@ pub fn Ast(comptime Device: type) type {
                     const children = self.extra_children.items[data.nary.offset..][0..data.nary.len];
                     var remaining_bit_index: u6 = bit_index;
                     for (children[1..]) |child| {
-                        switch (slice.items(.kind)[@intFromEnum(child)]) {
+                        switch (slice.items(.kind)[@backingInt(child)]) {
                             .literal => {
                                 if (remaining_bit_index == 0) {
-                                    const new_bit_index: u6 = @intCast(slice.items(.data)[@intFromEnum(child)].literal);
+                                    const new_bit_index: u6 = @intCast(slice.items(.data)[@backingInt(child)].literal);
                                     return try self.build_node_ir(irdata, slice, children[0], new_bit_index);
                                 } else {
                                     remaining_bit_index -= 1;
                                 }
                             },
                             .bit_range => {
-                                const range = slice.items(.data)[@intFromEnum(child)].bit_range;
-                                const lhs_max_bit = max_bits[@intFromEnum(children[0])].?;
+                                const range = slice.items(.data)[@backingInt(child)].bit_range;
+                                const lhs_max_bit = max_bits[@backingInt(children[0])].?;
                                 const first_bit = range.first orelse 0;
                                 const last_bit = range.last orelse lhs_max_bit;
                                 const range_bits = @max(first_bit, last_bit) - @min(first_bit, last_bit) + 1;
@@ -670,18 +635,18 @@ pub fn Ast(comptime Device: type) type {
                     var remaining_bit_index: u6 = bit_index;
                     for (1..children.len) |child_offset| {
                         const child = children[children.len - child_offset];
-                        switch (slice.items(.kind)[@intFromEnum(child)]) {
+                        switch (slice.items(.kind)[@backingInt(child)]) {
                             .literal => {
                                 if (remaining_bit_index == 0) {
-                                    const new_bit_index: u6 = @intCast(slice.items(.data)[@intFromEnum(child)].literal);
+                                    const new_bit_index: u6 = @intCast(slice.items(.data)[@backingInt(child)].literal);
                                     return try self.build_node_ir(irdata, slice, children[0], new_bit_index);
                                 } else {
                                     remaining_bit_index -= 1;
                                 }
                             },
                             .bit_range => {
-                                const range = slice.items(.data)[@intFromEnum(child)].bit_range;
-                                const lhs_max_bit = max_bits[@intFromEnum(children[0])].?;
+                                const range = slice.items(.data)[@backingInt(child)].bit_range;
+                                const lhs_max_bit = max_bits[@backingInt(children[0])].?;
                                 const first_bit = range.first orelse lhs_max_bit;
                                 const last_bit = range.last orelse 0;
                                 const range_bits = @max(first_bit, last_bit) - @min(first_bit, last_bit) + 1;
@@ -710,9 +675,9 @@ pub fn Ast(comptime Device: type) type {
                     return if (converted != inner) try irdata.make_complement(converted) else id;
                 },
                 .signal => |ordinal| {
-                    const signal: Device.Signal = @enumFromInt(ordinal);
+                    const signal: Device.Signal = @fromBackingInt(@intCast(ordinal));
                     const pad_signal = signal.maybe_pad() orelse signal;
-                    return if (pad_signal != signal) try irdata.make_signal(@intFromEnum(pad_signal)) else id;
+                    return if (pad_signal != signal) try irdata.make_signal(@backingInt(pad_signal)) else id;
                 },
                 .product => |bin| {
                     const lhs = try convert_to_pad_signals(irdata, bin.lhs);
@@ -740,9 +705,9 @@ pub fn Ast(comptime Device: type) type {
                     return if (converted != inner) try irdata.make_complement(converted) else id;
                 },
                 .signal => |ordinal| {
-                    const signal: Device.Signal = @enumFromInt(ordinal);
+                    const signal: Device.Signal = @fromBackingInt(@intCast(ordinal));
                     const fb_signal = signal.maybe_fb() orelse signal;
-                    return if (fb_signal != signal) try irdata.make_signal(@intFromEnum(fb_signal)) else id;
+                    return if (fb_signal != signal) try irdata.make_signal(@backingInt(fb_signal)) else id;
                 },
                 .product => |bin| {
                     const lhs = try convert_to_fb_signals(irdata, bin.lhs);
@@ -768,7 +733,7 @@ pub fn Ast(comptime Device: type) type {
         }
         fn debug_node(self: *Self, slice: std.MultiArrayList(Node).Slice, maybe_node: ?Node.ID, indent: usize, w: *std.Io.Writer) !void {
             if (maybe_node) |node| {
-                const node_index = @intFromEnum(node);
+                const node_index = @backingInt(node);
                 const kind = slice.items(.kind)[node_index];
                 const start_offset = slice.items(.begin_token_offset)[node_index];
                 const end_token_offset = slice.items(.end_token_offset)[node_index];
@@ -778,29 +743,29 @@ pub fn Ast(comptime Device: type) type {
 
                 const max_bits = slice.items(.max_bit)[node_index];
                 if (max_bits) |bits| {
-                    try w.print(" ({d}b)", .{ @as(usize, bits) + 1 });
+                    try w.print(" ({d}b)", .{@as(usize, bits) + 1});
                 }
 
                 const data = slice.items(.data)[node_index];
                 switch (kind) {
                     .literal => {
-                        try w.print(" 0b{b}\n", .{ data.literal });
+                        try w.print(" 0b{b}\n", .{data.literal});
                     },
                     .bit_range => {
                         try w.print(" {?}:{?}\n", .{ data.bit_range.first, data.bit_range.last });
                     },
                     .signal => {
-                        try w.print(" {s}\n", .{ @tagName(data.signal) });
+                        try w.print(" {s}\n", .{@tagName(data.signal)});
                     },
                     .bus_ref => {
                         if (max_bits) |max_bit| {
                             try w.writeAll(" <");
                             for (data.bus_ref[0 .. @as(usize, max_bit) + 1]) |signal| {
-                                try w.print(" {s}", .{ @tagName(signal) });
+                                try w.print(" {s}", .{@tagName(signal)});
                             }
                             try w.writeByte('\n');
                         } else {
-                            try w.print(" #{X:0>16}\n", .{ @intFromPtr(data.bus_ref) });
+                            try w.print(" #{X:0>16}\n", .{@intFromPtr(data.bus_ref)});
                         }
                     },
                     .complement, .unary_sum, .unary_product, .unary_xor, .subexpr, .pad_signal, .fb_signal => {
@@ -826,7 +791,7 @@ pub fn Ast(comptime Device: type) type {
 
                         for (children, 0..) |child, i| {
                             try w.splatByteAll(' ', new_indent * 3);
-                            try w.print("[{d}] ", .{ i });
+                            try w.print("[{d}] ", .{i});
                             try self.debug_node(slice, child, new_indent, w);
                         }
                     },
@@ -862,7 +827,7 @@ pub fn Ast(comptime Device: type) type {
                 },
             },
 
-            pub const ID = enum (u32) {
+            pub const ID = enum(u32) {
                 _,
             };
         };
@@ -917,10 +882,7 @@ pub fn Ast(comptime Device: type) type {
                                 operator_token = self.next_token;
                                 if (!self.try_token(.sum)) break;
                             } else {
-                                self.diag().report_token_error_2(
-                                    self.token_offsets[self.next_token], "Expected product expression",
-                                    self.token_offsets[operator_token], "for OR operator here"
-                                );
+                                self.diag().report_token_error_2(self.token_offsets[self.next_token], "Expected product expression", self.token_offsets[operator_token], "for OR operator here");
                                 return error.InvalidEquation;
                             }
 
@@ -937,10 +899,7 @@ pub fn Ast(comptime Device: type) type {
                                 operator_token = self.next_token;
                                 if (!self.try_token(.xor)) break;
                             } else {
-                                self.diag().report_token_error_2(
-                                    self.token_offsets[self.next_token], "Expected product expression",
-                                    self.token_offsets[operator_token], "for XOR operator here"
-                                );
+                                self.diag().report_token_error_2(self.token_offsets[self.next_token], "Expected product expression", self.token_offsets[operator_token], "for XOR operator here");
                                 return error.InvalidEquation;
                             }
 
@@ -977,10 +936,7 @@ pub fn Ast(comptime Device: type) type {
                         if (try self.try_equality()) |rhs| {
                             try self.temp_nodes.append(self.gpa, rhs);
                         } else {
-                            self.diag().report_token_error_2(
-                                self.token_offsets[self.next_token], "Expected comparison expression",
-                                self.token_offsets[operator_token], "for AND operator here"
-                            );
+                            self.diag().report_token_error_2(self.token_offsets[self.next_token], "Expected comparison expression", self.token_offsets[operator_token], "for AND operator here");
                             return error.InvalidEquation;
                         }
                     }
@@ -1007,10 +963,7 @@ pub fn Ast(comptime Device: type) type {
                             if (try self.try_unary()) |rhs| {
                                 result = try self.create_binary_node(result.?, rhs, .equals, .{});
                             } else {
-                                self.diag().report_token_error_2(
-                                    self.token_offsets[self.next_token], "Expected unary expression",
-                                    self.token_offsets[operator_token], "for equality operator here"
-                                );
+                                self.diag().report_token_error_2(self.token_offsets[self.next_token], "Expected unary expression", self.token_offsets[operator_token], "for equality operator here");
                                 return error.InvalidEquation;
                             }
                             continue;
@@ -1018,10 +971,7 @@ pub fn Ast(comptime Device: type) type {
                             if (try self.try_unary()) |rhs| {
                                 result = try self.create_binary_node(result.?, rhs, .not_equals, .{});
                             } else {
-                                self.diag().report_token_error_2(
-                                    self.token_offsets[self.next_token], "Expected unary expression",
-                                    self.token_offsets[operator_token], "for inequality operator here"
-                                );
+                                self.diag().report_token_error_2(self.token_offsets[self.next_token], "Expected unary expression", self.token_offsets[operator_token], "for inequality operator here");
                                 return error.InvalidEquation;
                             }
                             continue;
@@ -1050,10 +1000,7 @@ pub fn Ast(comptime Device: type) type {
                         const offset = self.token_offsets[operator_token];
                         self.consume_token();
                         const inner = (try self.try_unary()) orelse {
-                            self.diag().report_token_error_2(
-                                self.token_offsets[self.next_token], "Expected unary expression",
-                                offset, "for reduction OR here"
-                            );
+                            self.diag().report_token_error_2(self.token_offsets[self.next_token], "Expected unary expression", offset, "for reduction OR here");
                             return error.InvalidEquation;
                         };
                         return try self.create_unary_node(inner, .unary_sum, .{ .token_offset = offset });
@@ -1062,10 +1009,7 @@ pub fn Ast(comptime Device: type) type {
                         const offset = self.token_offsets[operator_token];
                         self.consume_token();
                         const inner = (try self.try_unary()) orelse {
-                            self.diag().report_token_error_2(
-                                self.token_offsets[self.next_token], "Expected unary expression",
-                                offset, "for reduction XOR here"
-                            );
+                            self.diag().report_token_error_2(self.token_offsets[self.next_token], "Expected unary expression", offset, "for reduction XOR here");
                             return error.InvalidEquation;
                         };
                         return try self.create_unary_node(inner, .unary_xor, .{ .token_offset = offset });
@@ -1074,10 +1018,7 @@ pub fn Ast(comptime Device: type) type {
                         const offset = self.token_offsets[operator_token];
                         self.consume_token();
                         const inner = (try self.try_unary()) orelse {
-                            self.diag().report_token_error_2(
-                                self.token_offsets[self.next_token], "Expected unary expression",
-                                offset, "for reduction AND here"
-                            );
+                            self.diag().report_token_error_2(self.token_offsets[self.next_token], "Expected unary expression", offset, "for reduction AND here");
                             return error.InvalidEquation;
                         };
                         return try self.create_unary_node(inner, .unary_product, .{ .token_offset = offset });
@@ -1086,10 +1027,7 @@ pub fn Ast(comptime Device: type) type {
                         const offset = self.token_offsets[operator_token];
                         self.consume_token();
                         const inner = (try self.try_unary()) orelse {
-                            self.diag().report_token_error_2(
-                                self.token_offsets[self.next_token], "Expected unary expression",
-                                offset, "for complement here"
-                            );
+                            self.diag().report_token_error_2(self.token_offsets[self.next_token], "Expected unary expression", offset, "for complement here");
                             return error.InvalidEquation;
                         };
                         return try self.create_unary_node(inner, .complement, .{ .token_offset = offset });
@@ -1100,19 +1038,13 @@ pub fn Ast(comptime Device: type) type {
                         self.consume_token();
                         if (std.mem.eql(u8, builtin, "@pad")) {
                             const inner = (try self.try_unary()) orelse {
-                                self.diag().report_token_error_2(
-                                    self.token_offsets[self.next_token], "Expected unary expression",
-                                    token_offset, "for builtin here"
-                                );
+                                self.diag().report_token_error_2(self.token_offsets[self.next_token], "Expected unary expression", token_offset, "for builtin here");
                                 return error.InvalidEquation;
                             };
                             return try self.create_unary_node(inner, .pad_signal, .{ .token_offset = token_offset });
                         } else if (std.mem.eql(u8, builtin, "@fb")) {
                             const inner = (try self.try_unary()) orelse {
-                                self.diag().report_token_error_2(
-                                    self.token_offsets[self.next_token], "Expected unary expression",
-                                    token_offset, "for builtin here"
-                                );
+                                self.diag().report_token_error_2(self.token_offsets[self.next_token], "Expected unary expression", token_offset, "for builtin here");
                                 return error.InvalidEquation;
                             };
                             return try self.create_unary_node(inner, .fb_signal, .{ .token_offset = token_offset });
@@ -1168,10 +1100,7 @@ pub fn Ast(comptime Device: type) type {
 
                 while (!self.try_token(.end_extract)) {
                     if (is_mux_definition) {
-                        self.diag().report_token_error_2(
-                            self.token_offsets[self.next_token], "Expected closing ']'",
-                            self.token_offsets[begin_token], "for mux definition beginning here"
-                        );
+                        self.diag().report_token_error_2(self.token_offsets[self.next_token], "Expected closing ']'", self.token_offsets[begin_token], "for mux definition beginning here");
                         return error.InvalidEquation;
                     }
                     if (try self.try_bit_range()) |node| {
@@ -1179,10 +1108,7 @@ pub fn Ast(comptime Device: type) type {
                     } else if (self.try_token(.little_endian)) {
                         if (maybe_endianness) |endianness| {
                             if (endianness == .big) {
-                                self.diag().report_token_error_2(
-                                    self.token_offsets[self.next_token - 1], "Can't select little-endian mode here",
-                                    self.token_offsets[first_endianness_token], "big-endian was previously requested here"
-                                );
+                                self.diag().report_token_error_2(self.token_offsets[self.next_token - 1], "Can't select little-endian mode here", self.token_offsets[first_endianness_token], "big-endian was previously requested here");
                                 return error.InvalidEquation;
                             }
                         } else {
@@ -1192,10 +1118,7 @@ pub fn Ast(comptime Device: type) type {
                     } else if (self.try_token(.big_endian)) {
                         if (maybe_endianness) |endianness| {
                             if (endianness == .little) {
-                                self.diag().report_token_error_2(
-                                    self.token_offsets[self.next_token - 1], "Can't select big-endian mode here",
-                                    self.token_offsets[first_endianness_token], "little-endian was previously requested here"
-                                );
+                                self.diag().report_token_error_2(self.token_offsets[self.next_token - 1], "Can't select big-endian mode here", self.token_offsets[first_endianness_token], "little-endian was previously requested here");
                                 return error.InvalidEquation;
                             }
                         } else {
@@ -1203,19 +1126,13 @@ pub fn Ast(comptime Device: type) type {
                             first_endianness_token = self.next_token - 1;
                         }
                     } else if (self.temp_nodes.items.len > initial_temp_nodes_len + 1) {
-                        self.diag().report_token_error_2(
-                            self.token_offsets[self.next_token], "Expected bit literal or range, or closing ']'",
-                            self.token_offsets[begin_token], "for extraction beginning here"
-                        );
+                        self.diag().report_token_error_2(self.token_offsets[self.next_token], "Expected bit literal or range, or closing ']'", self.token_offsets[begin_token], "for extraction beginning here");
                         return error.InvalidEquation;
                     } else if (try self.try_sum()) |selector| {
                         try self.temp_nodes.append(self.gpa, selector);
                         is_mux_definition = true;
                     } else {
-                        self.diag().report_token_error_2(
-                            self.token_offsets[self.next_token], "Expected bit literal, range, or expression",
-                            self.token_offsets[begin_token], "for extraction/mux beginning here"
-                        );
+                        self.diag().report_token_error_2(self.token_offsets[self.next_token], "Expected bit literal, range, or expression", self.token_offsets[begin_token], "for extraction/mux beginning here");
                         return error.InvalidEquation;
                     }
                 }
@@ -1226,10 +1143,7 @@ pub fn Ast(comptime Device: type) type {
 
                 const children = self.temp_nodes.items[initial_temp_nodes_len..];
                 if (children.len < 2) {
-                    self.diag().report_token_error_2(
-                        self.token_offsets[self.next_token - 1], "Expected at least one bit literal, range, or expression",
-                        self.token_offsets[begin_token], "for extraction/mux beginning here"
-                    );
+                    self.diag().report_token_error_2(self.token_offsets[self.next_token - 1], "Expected at least one bit literal, range, or expression", self.token_offsets[begin_token], "for extraction/mux beginning here");
                     return error.InvalidEquation;
                 }
                 const new_node = if (is_mux_definition)
@@ -1345,18 +1259,12 @@ pub fn Ast(comptime Device: type) type {
                 const begin_token_offset = self.token_offsets[self.next_token];
                 if (self.try_token(.begin_subexpr)) {
                     const inner = (try self.try_sum()) orelse {
-                        self.diag().report_token_error_2(
-                            self.token_offsets[self.next_token], "Expected sum expression",
-                            begin_token_offset, "for parenthesis here"
-                        );
+                        self.diag().report_token_error_2(self.token_offsets[self.next_token], "Expected sum expression", begin_token_offset, "for parenthesis here");
                         return error.InvalidEquation;
                     };
                     const end_token_offset = self.token_offsets[self.next_token];
                     if (!self.try_token(.end_subexpr)) {
-                        self.diag().report_token_error_2(
-                            self.token_offsets[self.next_token], "Expected ')'",
-                            begin_token_offset, "for parenthesized subexpression starting here"
-                        );
+                        self.diag().report_token_error_2(self.token_offsets[self.next_token], "Expected ')'", begin_token_offset, "for parenthesized subexpression starting here");
                         return error.InvalidEquation;
                     }
                     return try self.create_unary_node(inner, .subexpr, .{
@@ -1390,10 +1298,7 @@ pub fn Ast(comptime Device: type) type {
                         } else if (self.try_token(.little_endian)) {
                             if (maybe_endianness) |endianness| {
                                 if (endianness == .big) {
-                                    self.diag().report_token_error_2(
-                                        self.token_offsets[self.next_token - 1], "Can't select little-endian mode here",
-                                        self.token_offsets[first_endianness_token], "big-endian was previously requested here"
-                                    );
+                                    self.diag().report_token_error_2(self.token_offsets[self.next_token - 1], "Can't select little-endian mode here", self.token_offsets[first_endianness_token], "big-endian was previously requested here");
                                     return error.InvalidEquation;
                                 }
                             } else {
@@ -1403,10 +1308,7 @@ pub fn Ast(comptime Device: type) type {
                         } else if (self.try_token(.big_endian)) {
                             if (maybe_endianness) |endianness| {
                                 if (endianness == .little) {
-                                    self.diag().report_token_error_2(
-                                        self.token_offsets[self.next_token - 1], "Can't select big-endian mode here",
-                                        self.token_offsets[first_endianness_token], "little-endian was previously requested here"
-                                    );
+                                    self.diag().report_token_error_2(self.token_offsets[self.next_token - 1], "Can't select big-endian mode here", self.token_offsets[first_endianness_token], "little-endian was previously requested here");
                                     return error.InvalidEquation;
                                 }
                             } else {
@@ -1415,15 +1317,9 @@ pub fn Ast(comptime Device: type) type {
                             }
                         } else {
                             if (self.temp_nodes.items.len > initial_temp_nodes_len + 1) {
-                                self.diag().report_token_error_2(
-                                    self.token_offsets[self.next_token], "Expected sum expression or closing '}'",
-                                    begin_token_offset, "for concatenation beginning here"
-                                );
+                                self.diag().report_token_error_2(self.token_offsets[self.next_token], "Expected sum expression or closing '}'", begin_token_offset, "for concatenation beginning here");
                             } else {
-                                self.diag().report_token_error_2(
-                                    self.token_offsets[self.next_token], "Expected sum expression",
-                                    begin_token_offset, "for concatenation beginning here"
-                                );
+                                self.diag().report_token_error_2(self.token_offsets[self.next_token], "Expected sum expression", begin_token_offset, "for concatenation beginning here");
                             }
                             return error.InvalidEquation;
                         }
@@ -1436,10 +1332,7 @@ pub fn Ast(comptime Device: type) type {
 
                     const children = self.temp_nodes.items[initial_temp_nodes_len..];
                     if (children.len < 2) {
-                        self.diag().report_token_error_2(
-                            self.token_offsets[self.next_token - 1], "Expected at least two items to concatenate",
-                            begin_token_offset, "for concatenation beginning here"
-                        );
+                        self.diag().report_token_error_2(self.token_offsets[self.next_token - 1], "Expected at least two items to concatenate", begin_token_offset, "for concatenation beginning here");
                         return error.InvalidEquation;
                     }
                     const new_node = switch (maybe_endianness orelse .big) {
@@ -1476,8 +1369,8 @@ pub fn Ast(comptime Device: type) type {
                 if (children.len == 2) {
                     return self.create_binary_node(children[0], children[1], binary_type, options);
                 } else {
-                    var begin_token_offset = self.nodes.items(.begin_token_offset)[@intFromEnum(children[0])];
-                    var end_token_offset = self.nodes.items(.end_token_offset)[@intFromEnum(children[children.len - 1])];
+                    var begin_token_offset = self.nodes.items(.begin_token_offset)[@backingInt(children[0])];
+                    var end_token_offset = self.nodes.items(.end_token_offset)[@backingInt(children[children.len - 1])];
 
                     if (options.begin_token_offset orelse options.token_offset) |offset| {
                         begin_token_offset = @min(begin_token_offset, offset);
@@ -1486,7 +1379,7 @@ pub fn Ast(comptime Device: type) type {
                         end_token_offset = @max(end_token_offset, offset);
                     }
 
-                    const id: Node.ID = @enumFromInt(self.nodes.len);
+                    const id: Node.ID = @fromBackingInt(@intCast(self.nodes.len));
                     const extra_children_offset = self.extra_children.items.len;
                     try self.extra_children.appendSlice(self.gpa, children);
                     try self.nodes.append(self.gpa, .{
@@ -1496,15 +1389,15 @@ pub fn Ast(comptime Device: type) type {
                         .data = .{ .nary = .{
                             .offset = @intCast(extra_children_offset),
                             .len = @intCast(children.len),
-                        }},
+                        } },
                     });
                     return id;
                 }
             }
 
             fn create_binary_node(self: *Parser, lhs: Node.ID, rhs: Node.ID, node_type: Node_Kind, options: Create_Node_Options) std.mem.Allocator.Error!Node.ID {
-                var begin_token_offset = self.nodes.items(.begin_token_offset)[@intFromEnum(lhs)];
-                var end_token_offset = self.nodes.items(.end_token_offset)[@intFromEnum(rhs)];
+                var begin_token_offset = self.nodes.items(.begin_token_offset)[@backingInt(lhs)];
+                var end_token_offset = self.nodes.items(.end_token_offset)[@backingInt(rhs)];
 
                 if (options.begin_token_offset orelse options.token_offset) |offset| {
                     begin_token_offset = @min(begin_token_offset, offset);
@@ -1513,7 +1406,7 @@ pub fn Ast(comptime Device: type) type {
                     end_token_offset = @max(end_token_offset, offset);
                 }
 
-                const id: Node.ID = @enumFromInt(self.nodes.len);
+                const id: Node.ID = @fromBackingInt(@intCast(self.nodes.len));
                 try self.nodes.append(self.gpa, .{
                     .begin_token_offset = begin_token_offset,
                     .end_token_offset = end_token_offset,
@@ -1521,14 +1414,14 @@ pub fn Ast(comptime Device: type) type {
                     .data = .{ .binary = .{
                         .lhs = lhs,
                         .rhs = rhs,
-                    }},
+                    } },
                 });
                 return id;
             }
 
             fn create_unary_node(self: *Parser, inner: Node.ID, node_type: Node_Kind, options: Create_Node_Options) std.mem.Allocator.Error!Node.ID {
-                var begin_token_offset = self.nodes.items(.begin_token_offset)[@intFromEnum(inner)];
-                var end_token_offset = self.nodes.items(.end_token_offset)[@intFromEnum(inner)];
+                var begin_token_offset = self.nodes.items(.begin_token_offset)[@backingInt(inner)];
+                var end_token_offset = self.nodes.items(.end_token_offset)[@backingInt(inner)];
 
                 if (options.begin_token_offset orelse options.token_offset) |offset| {
                     begin_token_offset = @min(begin_token_offset, offset);
@@ -1537,7 +1430,7 @@ pub fn Ast(comptime Device: type) type {
                     end_token_offset = @max(end_token_offset, offset);
                 }
 
-                const id: Node.ID = @enumFromInt(self.nodes.len);
+                const id: Node.ID = @fromBackingInt(@intCast(self.nodes.len));
                 try self.nodes.append(self.gpa, .{
                     .begin_token_offset = begin_token_offset,
                     .end_token_offset = end_token_offset,
@@ -1548,7 +1441,7 @@ pub fn Ast(comptime Device: type) type {
             }
 
             fn create_literal_node(self: *Parser, literal: Literal, token_offset: u32) std.mem.Allocator.Error!Node.ID {
-                const id: Node.ID = @enumFromInt(self.nodes.len);
+                const id: Node.ID = @fromBackingInt(@intCast(self.nodes.len));
                 try self.nodes.append(self.gpa, .{
                     .begin_token_offset = token_offset,
                     .end_token_offset = token_offset,
@@ -1560,7 +1453,7 @@ pub fn Ast(comptime Device: type) type {
             }
 
             fn create_bit_range_node(self: *Parser, first_bit: ?u6, last_bit: ?u6, begin_token_offset: u32, end_token_offset: u32) std.mem.Allocator.Error!Node.ID {
-                const id: Node.ID = @enumFromInt(self.nodes.len);
+                const id: Node.ID = @fromBackingInt(@intCast(self.nodes.len));
                 try self.nodes.append(self.gpa, .{
                     .begin_token_offset = begin_token_offset,
                     .end_token_offset = end_token_offset,
@@ -1568,14 +1461,14 @@ pub fn Ast(comptime Device: type) type {
                     .data = .{ .bit_range = .{
                         .first = first_bit,
                         .last = last_bit,
-                    }},
+                    } },
                     .max_bit = 5,
                 });
                 return id;
             }
 
             fn create_signal_node(self: *Parser, signal: Device.Signal, token_offset: u32) std.mem.Allocator.Error!Node.ID {
-                const id: Node.ID = @enumFromInt(self.nodes.len);
+                const id: Node.ID = @fromBackingInt(@intCast(self.nodes.len));
                 try self.nodes.append(self.gpa, .{
                     .begin_token_offset = token_offset,
                     .end_token_offset = token_offset,
@@ -1587,7 +1480,7 @@ pub fn Ast(comptime Device: type) type {
             }
 
             fn create_bus_ref_node(self: *Parser, bus: []const Device.Signal, token_offset: u32) std.mem.Allocator.Error!Node.ID {
-                const id: Node.ID = @enumFromInt(self.nodes.len);
+                const id: Node.ID = @fromBackingInt(@intCast(self.nodes.len));
                 try self.nodes.append(self.gpa, .{
                     .begin_token_offset = token_offset,
                     .end_token_offset = token_offset,
@@ -1612,7 +1505,7 @@ pub fn Ast(comptime Device: type) type {
                 const w = &stderr.file_writer.interface;
                 w.writeAll(" \n") catch {};
 
-                const node_index = @intFromEnum(node);
+                const node_index = @backingInt(node);
                 const offset = self.slice.items(.begin_token_offset)[node_index];
                 const end_token_offset = self.slice.items(.end_token_offset)[node_index];
                 const len = end_token_offset - offset + token_span(self.eqn, end_token_offset).len;
@@ -1624,9 +1517,14 @@ pub fn Ast(comptime Device: type) type {
                 w.flush() catch {};
             }
 
-            pub fn report_node_error_fmt_2(self: @This(),
-                node: Node.ID, comptime format: []const u8, args: anytype,
-                node2: Node.ID, comptime format2: []const u8, args2: anytype,
+            pub fn report_node_error_fmt_2(
+                self: @This(),
+                node: Node.ID,
+                comptime format: []const u8,
+                args: anytype,
+                node2: Node.ID,
+                comptime format2: []const u8,
+                args2: anytype,
             ) void {
                 var buffer: [64]u8 = undefined;
                 const stderr = std.debug.lockStderr(&buffer);
@@ -1635,14 +1533,14 @@ pub fn Ast(comptime Device: type) type {
                 const w = &stderr.file_writer.interface;
                 w.writeAll(" \n") catch {};
 
-                const node_index = @intFromEnum(node);
+                const node_index = @backingInt(node);
                 const offset = self.slice.items(.begin_token_offset)[node_index];
                 const end_token_offset = self.slice.items(.end_token_offset)[node_index];
                 const len = end_token_offset - offset + token_span(self.eqn, end_token_offset).len;
                 const msg = std.fmt.allocPrint(self.scratch, format, args) catch return;
                 defer self.scratch.free(msg);
 
-                const node_index2 = @intFromEnum(node2);
+                const node_index2 = @backingInt(node2);
                 const offset2 = self.slice.items(.begin_token_offset)[node_index2];
                 const end_token_offset2 = self.slice.items(.end_token_offset)[node_index2];
                 const len2 = end_token_offset2 - offset2 + token_span(self.eqn, end_token_offset2).len;
@@ -1656,10 +1554,17 @@ pub fn Ast(comptime Device: type) type {
                 w.flush() catch {};
             }
 
-            pub fn report_node_error_fmt_3(self: @This(),
-                node: Node.ID, comptime format: []const u8, args: anytype,
-                node2: Node.ID, comptime format2: []const u8, args2: anytype,
-                node3: Node.ID, comptime format3: []const u8, args3: anytype,
+            pub fn report_node_error_fmt_3(
+                self: @This(),
+                node: Node.ID,
+                comptime format: []const u8,
+                args: anytype,
+                node2: Node.ID,
+                comptime format2: []const u8,
+                args2: anytype,
+                node3: Node.ID,
+                comptime format3: []const u8,
+                args3: anytype,
             ) void {
                 var buffer: [64]u8 = undefined;
                 const stderr = std.debug.lockStderr(&buffer);
@@ -1668,21 +1573,21 @@ pub fn Ast(comptime Device: type) type {
                 const w = &stderr.file_writer.interface;
                 w.writeAll(" \n") catch {};
 
-                const node_index = @intFromEnum(node);
+                const node_index = @backingInt(node);
                 const offset = self.slice.items(.begin_token_offset)[node_index];
                 const end_token_offset = self.slice.items(.end_token_offset)[node_index];
                 const len = end_token_offset - offset + token_span(self.eqn, end_token_offset).len;
                 const msg = std.fmt.allocPrint(self.scratch, format, args) catch return;
                 defer self.scratch.free(msg);
 
-                const node_index2 = @intFromEnum(node2);
+                const node_index2 = @backingInt(node2);
                 const offset2 = self.slice.items(.begin_token_offset)[node_index2];
                 const end_token_offset2 = self.slice.items(.end_token_offset)[node_index2];
                 const len2 = end_token_offset2 - offset2 + token_span(self.eqn, end_token_offset2).len;
                 const msg2 = std.fmt.allocPrint(self.scratch, format2, args2) catch return;
                 defer self.scratch.free(msg2);
 
-                const node_index3 = @intFromEnum(node3);
+                const node_index3 = @backingInt(node3);
                 const offset3 = self.slice.items(.begin_token_offset)[node_index3];
                 const end_token_offset3 = self.slice.items(.end_token_offset)[node_index3];
                 const len3 = end_token_offset3 - offset3 + token_span(self.eqn, end_token_offset3).len;
@@ -1741,7 +1646,7 @@ pub fn Ast(comptime Device: type) type {
     };
 }
 
-pub const Parse_Error = error {
+pub const Parse_Error = error{
     InvalidEquation,
 } || std.mem.Allocator.Error;
 

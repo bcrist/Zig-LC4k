@@ -1,4 +1,4 @@
-//[[!! include('devices', 'LC4032x_TQFP48') !! 464 ]]
+//[[!! include('devices', 'LC4032x_TQFP48') !! 462 ]]
 //[[ ################# !! GENERATED CODE -- DO NOT MODIFY !! ################# ]]
 const std = @import("std");
 const lc4k = @import("../lc4k.zig");
@@ -36,8 +36,7 @@ pub fn get_names() *const Names {
     return &default_names.?;
 }
 
-
-pub const Signal = enum (u16) {
+pub const Signal = enum(u16) {
     clk0 = 0,
     clk1 = 1,
     clk2 = 2,
@@ -108,25 +107,25 @@ pub const Signal = enum (u16) {
     mc_B15 = 67,
 
     pub inline fn kind(self: Signal) lc4k.Signal_Kind {
-        return switch (@intFromEnum(self)) {
-            @intFromEnum(Signal.clk0)...@intFromEnum(Signal.clk3) => .clk,
-            @intFromEnum(Signal.io_A0)...@intFromEnum(Signal.io_B15) => .io,
-            @intFromEnum(Signal.mc_A0)...@intFromEnum(Signal.mc_B15) => .mc,
+        return switch (@backingInt(self)) {
+            @backingInt(Signal.clk0)...@backingInt(Signal.clk3) => .clk,
+            @backingInt(Signal.io_A0)...@backingInt(Signal.io_B15) => .io,
+            @backingInt(Signal.mc_A0)...@backingInt(Signal.mc_B15) => .mc,
             else => unreachable,
         };
     }
 
     pub inline fn maybe_mc(self: Signal) ?lc4k.MC_Ref {
-        return switch (@intFromEnum(self)) {
-            @intFromEnum(Signal.io_A0)...@intFromEnum(Signal.io_A15) => .{ .glb = 0, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.io_A0)) },
-            @intFromEnum(Signal.mc_A0)...@intFromEnum(Signal.mc_A15) => .{ .glb = 0, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.mc_A0)) },
-            @intFromEnum(Signal.io_B0)...@intFromEnum(Signal.io_B15) => .{ .glb = 1, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.io_B0)) },
-            @intFromEnum(Signal.mc_B0)...@intFromEnum(Signal.mc_B15) => .{ .glb = 1, .mc = @intCast(@intFromEnum(self) - @intFromEnum(Signal.mc_B0)) },
+        return switch (@backingInt(self)) {
+            @backingInt(Signal.io_A0)...@backingInt(Signal.io_A15) => .{ .glb = 0, .mc = @intCast(@backingInt(self) - @backingInt(Signal.io_A0)) },
+            @backingInt(Signal.mc_A0)...@backingInt(Signal.mc_A15) => .{ .glb = 0, .mc = @intCast(@backingInt(self) - @backingInt(Signal.mc_A0)) },
+            @backingInt(Signal.io_B0)...@backingInt(Signal.io_B15) => .{ .glb = 1, .mc = @intCast(@backingInt(self) - @backingInt(Signal.io_B0)) },
+            @backingInt(Signal.mc_B0)...@backingInt(Signal.mc_B15) => .{ .glb = 1, .mc = @intCast(@backingInt(self) - @backingInt(Signal.mc_B0)) },
             else => null,
         };
     }
     pub inline fn mc(self: Signal) lc4k.MC_Ref {
-        return self.maybe_mc() orelse lc4k.panic("Signal {t} is not associated with a macrocell", .{ self });
+        return self.maybe_mc() orelse lc4k.panic("Signal {t} is not associated with a macrocell", .{self});
     }
 
     pub inline fn maybe_pin(self: Signal) ?Pin {
@@ -213,53 +212,53 @@ pub const Signal = enum (u16) {
     }
 };
 
-pub const mc_feedback_signals = [num_glbs][num_mcs_per_glb]Signal {
-    .{ .mc_A0, .mc_A1, .mc_A2, .mc_A3, .mc_A4, .mc_A5, .mc_A6, .mc_A7, .mc_A8, .mc_A9, .mc_A10, .mc_A11, .mc_A12, .mc_A13, .mc_A14, .mc_A15, },
-    .{ .mc_B0, .mc_B1, .mc_B2, .mc_B3, .mc_B4, .mc_B5, .mc_B6, .mc_B7, .mc_B8, .mc_B9, .mc_B10, .mc_B11, .mc_B12, .mc_B13, .mc_B14, .mc_B15, },
+pub const mc_feedback_signals = [num_glbs][num_mcs_per_glb]Signal{
+    .{ .mc_A0, .mc_A1, .mc_A2, .mc_A3, .mc_A4, .mc_A5, .mc_A6, .mc_A7, .mc_A8, .mc_A9, .mc_A10, .mc_A11, .mc_A12, .mc_A13, .mc_A14, .mc_A15 },
+    .{ .mc_B0, .mc_B1, .mc_B2, .mc_B3, .mc_B4, .mc_B5, .mc_B6, .mc_B7, .mc_B8, .mc_B9, .mc_B10, .mc_B11, .mc_B12, .mc_B13, .mc_B14, .mc_B15 },
 };
 
-pub const mc_io_signals = [num_glbs][num_mcs_per_glb]?Signal {
-    .{ .io_A0, .io_A1, .io_A2, .io_A3, .io_A4, .io_A5, .io_A6, .io_A7, .io_A8, .io_A9, .io_A10, .io_A11, .io_A12, .io_A13, .io_A14, .io_A15, },
-    .{ .io_B0, .io_B1, .io_B2, .io_B3, .io_B4, .io_B5, .io_B6, .io_B7, .io_B8, .io_B9, .io_B10, .io_B11, .io_B12, .io_B13, .io_B14, .io_B15, },
+pub const mc_io_signals = [num_glbs][num_mcs_per_glb]?Signal{
+    .{ .io_A0, .io_A1, .io_A2, .io_A3, .io_A4, .io_A5, .io_A6, .io_A7, .io_A8, .io_A9, .io_A10, .io_A11, .io_A12, .io_A13, .io_A14, .io_A15 },
+    .{ .io_B0, .io_B1, .io_B2, .io_B3, .io_B4, .io_B5, .io_B6, .io_B7, .io_B8, .io_B9, .io_B10, .io_B11, .io_B12, .io_B13, .io_B14, .io_B15 },
 };
 
-pub const gi_options = [num_gis_per_glb][gi_mux_size]Signal {
-    .{ .io_B0, .io_B6, .mc_B6, .io_A0, .mc_B15, .mc_A5, },
-    .{ .io_A12, .mc_A15, .mc_A11, .io_B11, .io_A7, .mc_A3, },
-    .{ .clk2, .mc_A13, .mc_A9, .io_A1, .mc_A2, .mc_B12, },
-    .{ .io_A12, .io_B7, .mc_A12, .io_A0, .io_B8, .mc_B12, },
-    .{ .io_B4, .mc_A15, .mc_B7, .io_A0, .io_B9, .mc_A7, },
-    .{ .clk1, .mc_A14, .mc_B3, .io_B12, .io_A7, .mc_A4, },
-    .{ .io_B2, .io_A9, .mc_B7, .io_B14, .io_A7, .mc_B10, },
-    .{ .io_A11, .mc_B1, .mc_B4, .io_A1, .mc_B13, .mc_A6, },
-    .{ .io_B0, .mc_B0, .mc_A8, .io_A1, .io_B10, .mc_A3, },
-    .{ .io_A15, .io_A10, .mc_A9, .io_A3, .mc_B15, .mc_B11, },
-    .{ .io_B3, .io_B5, .mc_B3, .clk0, .mc_A2, .mc_B11, },
-    .{ .io_B1, .io_B7, .mc_A11, .io_A3, .io_A6, .mc_A5, },
-    .{ .io_A14, .io_B6, .mc_B7, .io_A3, .io_B8, .mc_A3, },
-    .{ .io_A12, .io_A10, .mc_A10, .io_B13, .io_A5, .mc_A5, },
-    .{ .io_A11, .io_A9, .mc_A8, .clk0, .mc_A0, .mc_B9, },
-    .{ .clk2, .mc_B0, .mc_B5, .io_B13, .mc_B14, .mc_B8, },
-    .{ .clk1, .mc_B2, .mc_A10, .io_B11, .mc_B15, .mc_A7, },
-    .{ .io_A13, .io_B6, .mc_A11, .io_B14, .mc_A1, .mc_B9, },
-    .{ .io_A15, .mc_A13, .mc_B5, .io_B12, .io_A6, .mc_A6, },
-    .{ .clk2, .io_A8, .mc_A8, .io_B15, .io_A5, .mc_A4, },
-    .{ .clk1, .io_B7, .mc_B5, .io_A2, .mc_A0, .mc_B10, },
-    .{ .io_B2, .io_A8, .mc_B3, .clk3, .mc_B14, .mc_B9, },
-    .{ .io_A11, .mc_A13, .mc_A12, .io_B15, .io_B9, .mc_B8, },
-    .{ .io_A14, .mc_B0, .mc_B6, .io_A4, .io_A5, .mc_B11, },
-    .{ .io_B4, .mc_B2, .mc_B4, .io_B14, .io_A6, .mc_A4, },
-    .{ .io_B1, .mc_B2, .mc_B6, .clk3, .mc_A1, .mc_A6, },
-    .{ .io_A15, .io_B5, .mc_A12, .clk3, .mc_A0, .mc_A7, },
-    .{ .io_B0, .mc_B1, .mc_A10, .io_B12, .io_B8, .mc_B11, },
-    .{ .io_B3, .mc_A14, .mc_B7, .io_A2, .io_B10, .mc_B12, },
-    .{ .io_B3, .io_A8, .mc_B4, .io_A4, .mc_A1, .mc_B10, },
-    .{ .io_B2, .io_A10, .mc_B5, .io_A4, .io_B9, .mc_A4, },
-    .{ .io_A13, .mc_B1, .mc_B6, .io_B13, .mc_A2, .mc_A7, },
-    .{ .io_B4, .io_B5, .mc_A8, .io_B11, .mc_B14, .mc_B12, },
-    .{ .io_B1, .mc_A14, .mc_A10, .io_B15, .mc_B13, .mc_B10, },
-    .{ .io_A13, .io_A9, .mc_A9, .io_A2, .mc_B13, .mc_A3, },
-    .{ .io_A14, .mc_A15, .mc_A9, .clk0, .io_B10, .mc_B8, },
+pub const gi_options = [num_gis_per_glb][gi_mux_size]Signal{
+    .{ .io_B0, .io_B6, .mc_B6, .io_A0, .mc_B15, .mc_A5 },
+    .{ .io_A12, .mc_A15, .mc_A11, .io_B11, .io_A7, .mc_A3 },
+    .{ .clk2, .mc_A13, .mc_A9, .io_A1, .mc_A2, .mc_B12 },
+    .{ .io_A12, .io_B7, .mc_A12, .io_A0, .io_B8, .mc_B12 },
+    .{ .io_B4, .mc_A15, .mc_B7, .io_A0, .io_B9, .mc_A7 },
+    .{ .clk1, .mc_A14, .mc_B3, .io_B12, .io_A7, .mc_A4 },
+    .{ .io_B2, .io_A9, .mc_B7, .io_B14, .io_A7, .mc_B10 },
+    .{ .io_A11, .mc_B1, .mc_B4, .io_A1, .mc_B13, .mc_A6 },
+    .{ .io_B0, .mc_B0, .mc_A8, .io_A1, .io_B10, .mc_A3 },
+    .{ .io_A15, .io_A10, .mc_A9, .io_A3, .mc_B15, .mc_B11 },
+    .{ .io_B3, .io_B5, .mc_B3, .clk0, .mc_A2, .mc_B11 },
+    .{ .io_B1, .io_B7, .mc_A11, .io_A3, .io_A6, .mc_A5 },
+    .{ .io_A14, .io_B6, .mc_B7, .io_A3, .io_B8, .mc_A3 },
+    .{ .io_A12, .io_A10, .mc_A10, .io_B13, .io_A5, .mc_A5 },
+    .{ .io_A11, .io_A9, .mc_A8, .clk0, .mc_A0, .mc_B9 },
+    .{ .clk2, .mc_B0, .mc_B5, .io_B13, .mc_B14, .mc_B8 },
+    .{ .clk1, .mc_B2, .mc_A10, .io_B11, .mc_B15, .mc_A7 },
+    .{ .io_A13, .io_B6, .mc_A11, .io_B14, .mc_A1, .mc_B9 },
+    .{ .io_A15, .mc_A13, .mc_B5, .io_B12, .io_A6, .mc_A6 },
+    .{ .clk2, .io_A8, .mc_A8, .io_B15, .io_A5, .mc_A4 },
+    .{ .clk1, .io_B7, .mc_B5, .io_A2, .mc_A0, .mc_B10 },
+    .{ .io_B2, .io_A8, .mc_B3, .clk3, .mc_B14, .mc_B9 },
+    .{ .io_A11, .mc_A13, .mc_A12, .io_B15, .io_B9, .mc_B8 },
+    .{ .io_A14, .mc_B0, .mc_B6, .io_A4, .io_A5, .mc_B11 },
+    .{ .io_B4, .mc_B2, .mc_B4, .io_B14, .io_A6, .mc_A4 },
+    .{ .io_B1, .mc_B2, .mc_B6, .clk3, .mc_A1, .mc_A6 },
+    .{ .io_A15, .io_B5, .mc_A12, .clk3, .mc_A0, .mc_A7 },
+    .{ .io_B0, .mc_B1, .mc_A10, .io_B12, .io_B8, .mc_B11 },
+    .{ .io_B3, .mc_A14, .mc_B7, .io_A2, .io_B10, .mc_B12 },
+    .{ .io_B3, .io_A8, .mc_B4, .io_A4, .mc_A1, .mc_B10 },
+    .{ .io_B2, .io_A10, .mc_B5, .io_A4, .io_B9, .mc_A4 },
+    .{ .io_A13, .mc_B1, .mc_B6, .io_B13, .mc_A2, .mc_A7 },
+    .{ .io_B4, .io_B5, .mc_A8, .io_B11, .mc_B14, .mc_B12 },
+    .{ .io_B1, .mc_A14, .mc_A10, .io_B15, .mc_B13, .mc_B10 },
+    .{ .io_A13, .io_A9, .mc_A9, .io_A2, .mc_B13, .mc_A3 },
+    .{ .io_A14, .mc_A15, .mc_A9, .clk0, .io_B10, .mc_B8 },
 };
 
 pub const gi_options_by_signal = lc4k.invert_gi_mapping(Signal, gi_mux_size, &gi_options);
@@ -304,8 +303,7 @@ pub fn get_global_bus_maintenance_range() Fuse_Range {
 }
 
 pub fn get_extra_float_input_fuses() []const Fuse {
-    return &.{
-    };
+    return &.{};
 }
 
 pub fn get_input_threshold_fuse(input: Signal) ?Fuse {
@@ -369,48 +367,47 @@ pub const pins = struct {
     pub const _48 = Pin.init_io(47, "48", 0, .io_A4);
 };
 
-pub const clock_pins = [_]Pin {
+pub const clock_pins = [_]Pin{
     pins._43,
     pins._18,
     pins._19,
     pins._42,
 };
 
-pub const oe_pins = [_]Pin {
+pub const oe_pins = [_]Pin{
     pins._44,
     pins._41,
 };
 
-pub const input_pins = [_]Pin {
-};
+pub const input_pins = [_]Pin{};
 
-pub const vcc_pins = [_]Pin {
+pub const vcc_pins = [_]Pin{
     pins._12,
     pins._36,
 };
 
-pub const gnd_pins = [_]Pin {
+pub const gnd_pins = [_]Pin{
     pins._13,
     pins._37,
 };
 
-pub const vcco_bank0_pins = [_]Pin {
+pub const vcco_bank0_pins = [_]Pin{
     pins._6,
 };
 
-pub const gnd_bank0_pins = [_]Pin {
+pub const gnd_bank0_pins = [_]Pin{
     pins._5,
 };
 
-pub const vcco_bank1_pins = [_]Pin {
+pub const vcco_bank1_pins = [_]Pin{
     pins._30,
 };
 
-pub const gnd_bank1_pins = [_]Pin {
+pub const gnd_bank1_pins = [_]Pin{
     pins._29,
 };
 
-pub const all_pins = [_]Pin {
+pub const all_pins = [_]Pin{
     pins._1,
     pins._2,
     pins._3,

@@ -123,10 +123,9 @@ pub fn optimize(data: *IR_Data, sum: IR.ID, dc_sum: ?IR.ID, max_signals: u5) !IR
 
         optimized_sum = if (optimized_sum) |rhs| try data.make_binary(.sum, rhs, optimized_product.?) else optimized_product;
     }
-    
+
     return optimized_sum.?;
 }
-
 
 // N.B. all input minterms should have the same .dc value.  Don't care states should be handled by
 // iterating all permutations of the don't care bits and providing them as separate minterms.
@@ -147,7 +146,7 @@ pub fn compute_prime_implicants(gpa: std.mem.Allocator, minterms: []const Minter
 
     while (remaining_minterms.items.len > 0) {
         for (0.., remaining_minterms.items) |ai, a| {
-            for (ai + 1.., remaining_minterms.items[ai + 1..]) |bi, b| {
+            for (ai + 1.., remaining_minterms.items[ai + 1 ..]) |bi, b| {
                 if (a.dc == b.dc and @popCount(a.v ^ b.v) == 1) {
                     try possible_prime_implicants.put(gpa, .{
                         .dc = a.dc | (a.v ^ b.v),

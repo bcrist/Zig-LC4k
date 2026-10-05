@@ -145,11 +145,11 @@ pub const g16 = Signal.mc_B13;
 pub fn main(init: std.process.Init) !void {
     var names = Chip.Names.init(init.gpa);
     defer names.deinit();
-    
+
     @setEvalBranchQuota(10000);
     try names.add_names(@This(), .{});
 
-    var chip = Chip {};
+    var chip = Chip{};
 
     std.debug.assert(clk == Signal.clk0);
     for (&chip.glb) |*glb| {
@@ -158,15 +158,15 @@ pub fn main(init: std.process.Init) !void {
 
     for (page) |p| {
         const mc = chip.mc(p.mc());
-        mc.func = .{ .d_ff = .{ .clock = .bclock0 }};
+        mc.func = .{ .d_ff = .{ .clock = .bclock0 } };
         mc.output = .{ .oe = .output_only };
     }
     for (page_offset) |po| {
         const mc = chip.mc(po.mc());
-        mc.func = .{ .d_ff = .{ .clock = .bclock0 }};
+        mc.func = .{ .d_ff = .{ .clock = .bclock0 } };
         mc.output = .{ .oe = .output_only };
     }
-    chip.mc(addr_overflow_fault.mc()).func = .{ .d_ff = .{ .clock = .bclock0 }};
+    chip.mc(addr_overflow_fault.mc()).func = .{ .d_ff = .{ .clock = .bclock0 } };
     chip.mc(addr_overflow_fault.mc()).output = .{ .oe = .output_only };
 
     @setEvalBranchQuota(10000);
@@ -178,7 +178,7 @@ pub fn main(init: std.process.Init) !void {
             Chip.PT.when_eql(&vao, 0x22),
         },
         .polarity = .positive,
-    }};
+    } };
 
     chip.mc(offset[0].mc()).logic = comptime .{ .sum = .{
         .sum = &.{
@@ -187,7 +187,7 @@ pub fn main(init: std.process.Init) !void {
             Chip.PT.when_eql(&vao, 0x21).and_factor(dr[8].when_high()),
         },
         .polarity = .positive,
-    }};
+    } };
     chip.mc(offset[1].mc()).logic = comptime .{ .sum = .{
         .sum = &.{
             use_dr.when_low().pt().and_factor(vao[1].when_high()),
@@ -195,7 +195,7 @@ pub fn main(init: std.process.Init) !void {
             Chip.PT.when_eql(&vao, 0x21).and_factor(dr[9].when_high()),
         },
         .polarity = .positive,
-    }};
+    } };
     chip.mc(offset[2].mc()).logic = comptime .{ .sum = .{
         .sum = &.{
             use_dr.when_low().pt().and_factor(vao[2].when_high()),
@@ -204,7 +204,7 @@ pub fn main(init: std.process.Init) !void {
             Chip.PT.when_eql(&vao, 0x22).and_factor(dr[8].when_high()),
         },
         .polarity = .positive,
-    }};
+    } };
     chip.mc(offset[3].mc()).logic = comptime .{ .sum = .{
         .sum = &.{
             use_dr.when_low().pt().and_factor(vao[3].when_high()),
@@ -213,7 +213,7 @@ pub fn main(init: std.process.Init) !void {
             Chip.PT.when_eql(&vao, 0x22).and_factor(dr[9].when_high()),
         },
         .polarity = .positive,
-    }};
+    } };
     chip.mc(offset[4].mc()).logic = comptime .{ .sum = .{
         .sum = &.{
             use_dr.when_low().pt().and_factor(vao[4].when_high()),
@@ -222,7 +222,7 @@ pub fn main(init: std.process.Init) !void {
             Chip.PT.when_eql(&vao, 0x22).and_factor(dr[10].when_high()),
         },
         .polarity = .positive,
-    }};
+    } };
     chip.mc(offset[5].mc()).logic = comptime .{ .sum = .{
         .sum = &.{
             use_dr.when_low().pt().and_factor(vao[5].when_high()),
@@ -231,7 +231,7 @@ pub fn main(init: std.process.Init) !void {
             Chip.PT.when_eql(&vao, 0x22).and_factor(dr[11].when_high()),
         },
         .polarity = .positive,
-    }};
+    } };
     chip.mc(offset[6].mc()).logic = comptime .{ .sum = .{
         .sum = &.{
             use_dr.when_low().pt().and_factor(vao[5].when_high()),
@@ -240,7 +240,7 @@ pub fn main(init: std.process.Init) !void {
             Chip.PT.when_eql(&vao, 0x22).and_factor(dr[11].when_high()),
         },
         .polarity = .positive,
-    }};
+    } };
     chip.mc(offset[7].mc()).logic = comptime .{ .sum = .{
         .sum = &.{
             use_dr.when_low().pt().and_factor(vao[5].when_high()),
@@ -249,7 +249,7 @@ pub fn main(init: std.process.Init) !void {
             Chip.PT.when_eql(&vao, 0x22).and_factor(dr[12].when_high()),
         },
         .polarity = .positive,
-    }};
+    } };
     chip.mc(offset[8].mc()).logic = comptime .{ .sum = .{
         .sum = &.{
             use_dr.when_low().pt().and_factor(vao[5].when_high()),
@@ -258,7 +258,7 @@ pub fn main(init: std.process.Init) !void {
             Chip.PT.when_eql(&vao, 0x22).and_factor(dr[13].when_high()),
         },
         .polarity = .positive,
-    }};
+    } };
     chip.mc(offset[9].mc()).logic = comptime .{ .sum = .{
         .sum = &.{
             use_dr.when_low().pt().and_factor(vao[5].when_high()),
@@ -267,7 +267,7 @@ pub fn main(init: std.process.Init) !void {
             Chip.PT.when_eql(&vao, 0x22).and_factor(dr[14].when_high()),
         },
         .polarity = .positive,
-    }};
+    } };
     inline for (10..16) |bit| {
         chip.mc(offset[bit].mc()).logic = comptime .{ .sum = .{
             .sum = &.{
@@ -277,7 +277,7 @@ pub fn main(init: std.process.Init) !void {
                 Chip.PT.when_eql(&vao, 0x22).and_factor(dr[15].when_high()),
             },
             .polarity = .positive,
-        }};
+        } };
     }
 
     add3(&chip, .{ .a = vab[0..3], .b = offset[0..3], .sum = page_offset[0..3], .co = carry2 });
@@ -307,7 +307,7 @@ pub fn main(init: std.process.Init) !void {
                 decrement_pt,
             },
             .polarity = .positive,
-        }};
+        } };
     }
 
     comptime var increment_overflow_pt = sign.when_low().pt().and_factor(carry16.when_high());
@@ -322,7 +322,7 @@ pub fn main(init: std.process.Init) !void {
             decrement_overflow_pt,
         },
         .polarity = .positive,
-    }};
+    } };
 
     // Carry lookahead logic:
     chip.mc(carry4.mc()).logic = comptime .{ .sum = .{
@@ -331,7 +331,7 @@ pub fn main(init: std.process.Init) !void {
             p4.when_high().pt().and_factor(carry2.when_high()),
         },
         .polarity = .positive,
-    }};
+    } };
     chip.mc(carry6.mc()).logic = comptime .{ .sum = .{
         .sum = &.{
             g6.when_high().pt(),
@@ -339,7 +339,7 @@ pub fn main(init: std.process.Init) !void {
             p6.when_high().pt().and_factor(p4.when_high()).and_factor(carry2.when_high()),
         },
         .polarity = .positive,
-    }};
+    } };
     chip.mc(carry8.mc()).logic = comptime .{ .sum = .{
         .sum = &.{
             g8.when_high().pt(),
@@ -348,7 +348,7 @@ pub fn main(init: std.process.Init) !void {
             p8.when_high().pt().and_factor(p6.when_high()).and_factor(p4.when_high()).and_factor(carry2.when_high()),
         },
         .polarity = .positive,
-    }};
+    } };
     chip.mc(carry10.mc()).logic = comptime .{ .sum = .{
         .sum = &.{
             g10.when_high().pt(),
@@ -358,7 +358,7 @@ pub fn main(init: std.process.Init) !void {
             p10.when_high().pt().and_factor(p8.when_high()).and_factor(p6.when_high()).and_factor(p4.when_high()).and_factor(carry2.when_high()),
         },
         .polarity = .positive,
-    }};
+    } };
     chip.mc(carry12.mc()).logic = comptime .{ .sum = .{
         .sum = &.{
             g12.when_high().pt(),
@@ -369,7 +369,7 @@ pub fn main(init: std.process.Init) !void {
             p12.when_high().pt().and_factor(p10.when_high()).and_factor(p8.when_high()).and_factor(p6.when_high()).and_factor(p4.when_high()).and_factor(carry2.when_high()),
         },
         .polarity = .positive,
-    }};
+    } };
     chip.mc(carry14.mc()).logic = comptime .{ .sum = .{
         .sum = &.{
             g14.when_high().pt(),
@@ -381,7 +381,7 @@ pub fn main(init: std.process.Init) !void {
             p14.when_high().pt().and_factor(p12.when_high()).and_factor(p10.when_high()).and_factor(p8.when_high()).and_factor(p6.when_high()).and_factor(p4.when_high()).and_factor(carry2.when_high()),
         },
         .polarity = .positive,
-    }};
+    } };
     chip.mc(carry16.mc()).logic = comptime .{ .sum = .{
         .sum = &.{
             g16.when_high().pt(),
@@ -394,7 +394,7 @@ pub fn main(init: std.process.Init) !void {
             p16.when_high().pt().and_factor(p14.when_high()).and_factor(p12.when_high()).and_factor(p10.when_high()).and_factor(p8.when_high()).and_factor(p6.when_high()).and_factor(p4.when_high()).and_factor(carry2.when_high()),
         },
         .polarity = .positive,
-    }};
+    } };
 
     const results = try chip.assemble(init.arena.allocator(), .{});
 

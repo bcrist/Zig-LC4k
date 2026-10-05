@@ -53,7 +53,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                     .scratch = self.gpa,
                     .slice = p.ast.nodes.slice(),
                 };
-                diag.report_node_error_fmt(p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only 1 is allowed.", .{ num_pts });
+                diag.report_node_error_fmt(p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only 1 is allowed.", .{num_pts});
 
                 var buf: [64]u8 = undefined;
                 var stderr = std.debug.lockStderr(&buf);
@@ -87,7 +87,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                                 .polarity = .positive,
                             };
                         } else {
-                            diag.report_node_error_fmt(p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only 1 is allowed.", .{ result.num_pts });
+                            diag.report_node_error_fmt(p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only 1 is allowed.", .{result.num_pts});
                             return error.TooManyProductTerms;
                         }
                     } else {
@@ -103,7 +103,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                                 .polarity = .negative,
                             };
                         } else {
-                            diag.report_node_error_fmt(p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only 1 is allowed.", .{ result.num_pts });
+                            diag.report_node_error_fmt(p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only 1 is allowed.", .{result.num_pts});
                             return error.TooManyProductTerms;
                         }
                     } else {
@@ -139,7 +139,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                     var min_num_pts: u32 = std.math.maxInt(u32);
                     if (positive) |result| min_num_pts = @min(min_num_pts, result.num_pts);
                     if (negative) |result| min_num_pts = @min(min_num_pts, result.num_pts);
-                    diag.report_node_error_fmt(p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only 1 is allowed.", .{ min_num_pts });
+                    diag.report_node_error_fmt(p.ast.root, "After normalization, expression requires {} product terms, but a maximum of only 1 is allowed.", .{min_num_pts});
                     return error.TooManyProductTerms;
                 }
             }
@@ -252,7 +252,6 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                     .sum = pts,
                     .polarity = best_polarity,
                 };
-
             } else {
                 return error.ExpressionTooComplex;
             }
@@ -289,7 +288,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
 
             return try self.find_best_logic(&ast, maybe_dc_ast, &ir_data, 0, options);
         }
-        
+
         pub fn assign_logic(self: *Self, chip: *lc4k.Chip_Config(Device.device_type), mc_signals: []const Device.Signal, equation: []const u8, extra: anytype) !void {
             var names_arena = std.heap.ArenaAllocator.init(self.gpa);
             defer names_arena.deinit();
@@ -357,7 +356,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                         return .{ .pt0 = .{
                             .pt = try ir_data.get_pt(Device.Signal, allocator, optimized, 0),
                             .polarity = .positive,
-                        }};
+                        } };
                     } else {
                         maybe_best_ir = .{
                             .id = optimized,
@@ -378,7 +377,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                         return .{ .pt0 = .{
                             .pt = try ir_data.get_pt(Device.Signal, allocator, optimized, 0),
                             .polarity = .negative,
-                        }};
+                        } };
                     } else if (maybe_best_ir == null or maybe_best_ir.?.num_pts > num_pts) {
                         maybe_best_ir = .{
                             .id = optimized,
@@ -443,7 +442,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                     var stderr = std.debug.lockStderr(&buf);
                     defer std.debug.unlockStderr();
                     const w = &stderr.file_writer.interface;
-                    try w.print("Best ({t}):\n", .{ best_ir_kind });
+                    try w.print("Best ({t}):\n", .{best_ir_kind});
                     try ir_data.debug(best_ir.id, 0, false, w);
                     try w.flush();
                 }
@@ -476,7 +475,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                         return .{ .sum = .{
                             .sum = pts,
                             .polarity = best_ir_polarity,
-                        }};
+                        } };
                     },
                     .sum_xor_pt0 => {
                         const xor_bin = ir_data.get(best_ir.id).xor;
@@ -494,7 +493,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
                             .sum = sum_pts,
                             .pt0 = try ir_data.get_pt(Device.Signal, allocator, pt0_ir, 0),
                             .polarity = best_ir_polarity,
-                        }};
+                        } };
                     },
                     else => unreachable,
                 }
@@ -533,7 +532,7 @@ pub fn Logic_Parser(comptime Device_Struct: type) type {
 
             var ir_data = try IR_Data.init(self.gpa);
             errdefer ir_data.deinit();
-            
+
             var ast = try Ast(Device).parse(self.gpa, &names, equation);
             errdefer ast.deinit();
 

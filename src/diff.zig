@@ -1,4 +1,3 @@
-
 pub fn Write_Options(comptime Device: type) type {
     return struct {
         check_usercode: bool = false,
@@ -27,7 +26,7 @@ pub fn write(temp: std.mem.Allocator, comptime Device: type, a: JEDEC_File, b: J
         try writer.writeAll("No differences found in JEDEC fuse data!\n");
         return;
     }
-    
+
     for (0..Device.num_glbs) |glb| {
         if (options.single_glb) |wanted_glb| {
             if (glb != wanted_glb) continue;
@@ -119,7 +118,7 @@ pub fn write(temp: std.mem.Allocator, comptime Device: type, a: JEDEC_File, b: J
         try write_fuse_diff(b.data, diff, zerohold_fuse.range(), writer);
         try writer.writeByte('\n');
     }
-    
+
     var goe_range: Fuse_Range = .empty;
     for (0..4) |goe| {
         goe_range = goe_range.expand_to_contain(Device.get_goe_polarity_fuse(goe));
@@ -142,7 +141,7 @@ pub fn write(temp: std.mem.Allocator, comptime Device: type, a: JEDEC_File, b: J
             }
 
             if (Device.get_goe_source_fuse(goe)) |fuse| {
-                const Source = enum (u1) {
+                const Source = enum(u1) {
                     input = 0,
                     bus = 1,
                 };
@@ -163,7 +162,7 @@ pub fn write(temp: std.mem.Allocator, comptime Device: type, a: JEDEC_File, b: J
 
     // TODO osctimer
 
-    try writer.print("{} total bit differences found in JEDEC fuse data!\n", .{ flipped_bits });
+    try writer.print("{} total bit differences found in JEDEC fuse data!\n", .{flipped_bits});
 }
 
 fn write_glb(temp: std.mem.Allocator, comptime Device: type, a: JEDEC_Data, b: JEDEC_Data, diff: JEDEC_Data, glb: GLB_Index, writer: *std.Io.Writer, options: Write_Options(Device)) !void {
@@ -193,7 +192,7 @@ fn write_glb(temp: std.mem.Allocator, comptime Device: type, a: JEDEC_Data, b: J
             const range = Device.get_gi_range(glb, gi);
             if (diff.count_set_in_range(range) > 0) {
                 try context.maybe_write_heading();
-                try writer.print("   GI {}:\n", .{ gi });
+                try writer.print("   GI {}:\n", .{gi});
                 try write_fuse_diff(b, diff, range, writer);
 
                 var a_gi_sig: ?Device.Signal = null;
@@ -489,7 +488,7 @@ fn write_glb(temp: std.mem.Allocator, comptime Device: type, a: JEDEC_Data, b: J
                         });
                     }
                 }
-                
+
                 {
                     const a_mode = disassembly.read_pt4_output_enable_source(Device, a, mcref);
                     const b_mode = disassembly.read_pt4_output_enable_source(Device, b, mcref);
@@ -515,7 +514,7 @@ fn write_glb(temp: std.mem.Allocator, comptime Device: type, a: JEDEC_Data, b: J
                     if (Device.Signal.maybe_mc_pad(mcref)) |pad| {
                         try writer.print("   {s} (I/O {}) Config:\n", .{ options.names.?.get_signal_name(pad), mc });
                     } else {
-                        try writer.print("   internal I/O {} Config:\n", .{ mc });
+                        try writer.print("   internal I/O {} Config:\n", .{mc});
                     }
                     try write_fuse_diff(b, diff, range, writer);
 
@@ -607,7 +606,7 @@ fn write_glb(temp: std.mem.Allocator, comptime Device: type, a: JEDEC_Data, b: J
                     if (Device.Signal.maybe_mc_pad(mcref)) |pad| {
                         try writer.print("   {s} (I/O {}) Power Guard:\n", .{ options.names.?.get_signal_name(pad), mc });
                     } else {
-                        try writer.print("   internal I/O {} Power Guard:\n", .{ mc });
+                        try writer.print("   internal I/O {} Power Guard:\n", .{mc});
                     }
                     try write_fuse_diff(b, diff, range, writer);
                     const a_mode = disassembly.read_field(a, lc4k.Power_Guard, range);
@@ -658,7 +657,7 @@ fn write_fuse_diff(data: JEDEC_Data, diff: JEDEC_Data, range: Fuse_Range, writer
     std.debug.assert(diff.count_set_in_range(range) > 0);
 
     const default_color: console.Style = .{};
-    const diff_color = (console.Style { .fg = .bright_yellow }).with_flag(.bold);
+    const diff_color = (console.Style{ .fg = .bright_yellow }).with_flag(.bold);
     const no_diff_color: console.Style = .{ .fg = .bright_black };
 
     var style: console.Style = default_color;
@@ -676,7 +675,7 @@ fn write_fuse_diff(data: JEDEC_Data, diff: JEDEC_Data, range: Fuse_Range, writer
                     try wanted_style.apply(writer);
                     style = wanted_style;
                 }
-                try writer.print("{}", .{ data.get(fuse) });
+                try writer.print("{}", .{data.get(fuse)});
             }
             if (!std.meta.eql(style, default_color)) {
                 try default_color.apply(writer);
@@ -696,7 +695,7 @@ fn write_fuse_diff(data: JEDEC_Data, diff: JEDEC_Data, range: Fuse_Range, writer
                     try wanted_style.apply(writer);
                     style = wanted_style;
                 }
-                try writer.print("{}", .{ data.get(fuse) });
+                try writer.print("{}", .{data.get(fuse)});
                 if (width <= 3) try writer.writeByte(' ');
             }
             if (!std.meta.eql(style, default_color)) {
@@ -736,7 +735,9 @@ fn write_table_column_header(prefix: u8, first: usize, last: usize, writer: *std
 
     const used_width = prefix_width + min_width;
     const inner_width = if (used_width < fuse_diff_horizontal_header_width + target_width)
-        fuse_diff_horizontal_header_width + target_width - used_width else 0;
+        fuse_diff_horizontal_header_width + target_width - used_width
+    else
+        0;
 
     try writer.splatByteAll(' ', prefix_width);
     try writer.writeAll(first_str);
@@ -755,7 +756,7 @@ fn write_table_row_header(prefix: u8, label: usize, writer: *std.Io.Writer) !voi
     if (str.len + 2 < fuse_diff_horizontal_header_width) {
         try writer.splatByteAll(' ', fuse_diff_horizontal_header_width - str.len - 2);
     }
-    try writer.writeAll(str);    
+    try writer.writeAll(str);
     try writer.writeAll(": ");
 }
 

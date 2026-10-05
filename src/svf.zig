@@ -36,7 +36,7 @@ pub fn get_id_code(comptime Device: type) u32 {
 pub fn get_boundary_scan_length(comptime Device: type) usize {
     switch (Device.device_type) {
         .LC4064x_TQFP44, .LC4064x_TQFP48 => return 68,
-        else => {}
+        else => {},
     }
     return switch (Device.num_glbs) {
         2 => 68,
@@ -55,7 +55,7 @@ pub const Delay = struct {
     }
 };
 
-pub const JTAG_Command = enum (u8) {
+pub const JTAG_Command = enum(u8) {
     EXTEST = 0x00,
     ISC_ADDRESS_SHIFT = 0x01,
     ISC_DATA_SHIFT = 0x02,
@@ -111,7 +111,7 @@ pub fn write(comptime Device: type, file: JEDEC_File, writer: *std.Io.Writer, op
         while (iter.next()) |l| {
             var line = l;
             if (std.mem.endsWith(u8, line, "\r")) {
-                line = line[0..line.len - 1];
+                line = line[0 .. line.len - 1];
             }
             try writer.print("! {s}{s}", .{ line, nl });
         }
@@ -121,13 +121,13 @@ pub fn write(comptime Device: type, file: JEDEC_File, writer: *std.Io.Writer, op
     try writer.writeAll(nl);
     try writer.print("! Row_Width\t:{}{s}", .{ Device.jedec_dimensions.width(), nl });
     try writer.print("! Address_Length\t:{}{s}", .{ Device.jedec_dimensions.height(), nl });
-    try writer.print("HDR\t0;{s}", .{ nl });
-    try writer.print("HIR\t0;{s}", .{ nl });
-    try writer.print("TDR\t0;{s}", .{ nl });
-    try writer.print("TIR\t0;{s}", .{ nl });
-    try writer.print("ENDDR\tDRPAUSE;{s}", .{ nl });
-    try writer.print("ENDIR\tIDLE;{s}", .{ nl });
-    try writer.print("! FREQUENCY\t25.E+6 HZ;{s}", .{ nl });
+    try writer.print("HDR\t0;{s}", .{nl});
+    try writer.print("HIR\t0;{s}", .{nl});
+    try writer.print("TDR\t0;{s}", .{nl});
+    try writer.print("TIR\t0;{s}", .{nl});
+    try writer.print("ENDDR\tDRPAUSE;{s}", .{nl});
+    try writer.print("ENDIR\tIDLE;{s}", .{nl});
+    try writer.print("! FREQUENCY\t25.E+6 HZ;{s}", .{nl});
     try write_state("IDLE", writer, nl);
     try writer.writeAll(nl);
 
@@ -152,9 +152,9 @@ pub fn write(comptime Device: type, file: JEDEC_File, writer: *std.Io.Writer, op
 
         var row: u16 = 0;
         while (row < Device.jedec_dimensions.height()) : (row += 1) {
-            try writer.print("SDR\t{}\tTDI  (", .{ Device.jedec_dimensions.width() });
+            try writer.print("SDR\t{}\tTDI  (", .{Device.jedec_dimensions.width()});
             try write_row_hex(file.data, row, writer);
-            try writer.print(");{s}", .{ nl });
+            try writer.print(");{s}", .{nl});
             try write_idle(.ISC_PROGRAM, writer, nl);
         }
         try writer.writeAll(nl);
@@ -170,13 +170,13 @@ pub fn write(comptime Device: type, file: JEDEC_File, writer: *std.Io.Writer, op
         var row: u16 = 0;
         while (row < Device.jedec_dimensions.height()) : (row += 1) {
             try write_idle(.ISC_READ, writer, nl);
-            try writer.print("SDR\t{}\tTDI  (", .{ Device.jedec_dimensions.width() });
+            try writer.print("SDR\t{}\tTDI  (", .{Device.jedec_dimensions.width()});
             const chars: u16 = @intCast((Device.jedec_dimensions.width() + 3) / 4);
             try writer.splatByteAll('0', chars);
-            try writer.print("){s}\t\tTDO  (", .{ nl });
+            try writer.print("){s}\t\tTDO  (", .{nl});
 
             try write_row_hex(file.data, row, writer);
-            try writer.print(");{s}", .{ nl });
+            try writer.print(");{s}", .{nl});
         }
         try writer.writeAll(nl);
     }
@@ -201,7 +201,7 @@ pub fn write(comptime Device: type, file: JEDEC_File, writer: *std.Io.Writer, op
     try write_command(.ISC_DISABLE, NoData, null, null, writer, nl);
     try write_command(.BYPASS, NoData, null, null, writer, nl);
     try writer.print("! {s}{s}", .{ @tagName(JTAG_Command.IDCODE), nl });
-    try writer.print("SIR\t8\tTDI  ({X:0>2}){s}", .{ @intFromEnum(JTAG_Command.IDCODE), nl });
+    try writer.print("SIR\t8\tTDI  ({X:0>2}){s}", .{ @backingInt(JTAG_Command.IDCODE), nl });
     try writer.print("\t\tTDO  ({X:0>2});{s}", .{ 0x1D, nl });
     try write_command(.ISC_DISABLE, NoData, null, null, writer, nl);
     try write_state("RESET", writer, nl);
@@ -220,7 +220,7 @@ fn write_row_hex(data: JEDEC_Data, row: u16, writer: *std.Io.Writer) !void {
                 val += data.get(Fuse.init(row, @intCast(c)));
             }
         }
-        try writer.print("{X:0>1}", .{ val });
+        try writer.print("{X:0>1}", .{val});
     }
 }
 
@@ -236,25 +236,25 @@ fn write_hex(comptime T: type, data: T, writer: *std.Io.Writer) !void {
         while (d < digits) : (d += 1) {
             const shift: std.math.Log2Int(T) = @intCast(4 * (digits - d - 1));
             const part: u4 = @truncate(data >> shift);
-            try writer.print("{X:0>1}", .{ part });
+            try writer.print("{X:0>1}", .{part});
         }
     }
 }
 
 fn write_command(command: JTAG_Command, comptime T: type, tdi_data: ?T, tdo_data: ?T, writer: *std.Io.Writer, nl: []const u8) !void {
     try writer.print("! {s}{s}", .{ @tagName(command), nl });
-    try writer.print("SIR\t8\tTDI  ({X:0>2});{s}", .{ @intFromEnum(command), nl });
+    try writer.print("SIR\t8\tTDI  ({X:0>2});{s}", .{ @backingInt(command), nl });
 
     if (tdi_data) |tdi| {
-        try writer.print("SDR\t{}\tTDI  (", .{ @bitSizeOf(T) });
+        try writer.print("SDR\t{}\tTDI  (", .{@bitSizeOf(T)});
         try write_hex(T, tdi, writer);
 
         if (tdo_data) |tdo| {
-            try writer.print("){s}\t\tTDO  (", .{ nl });
+            try writer.print("){s}\t\tTDO  (", .{nl});
             try write_hex(T, tdo, writer);
         }
 
-        try writer.print(");{s}", .{ nl });
+        try writer.print(");{s}", .{nl});
     }
 
     switch (command) {
