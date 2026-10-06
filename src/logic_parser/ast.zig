@@ -191,7 +191,7 @@ pub fn Ast(comptime Device: type) type {
                 .extract, .extract_be, .extract_le => {
                     const data = slice.items(.data)[node_index].binary;
                     const bus_max_bit = try self.infer_and_check_node_max_bit(slice, data.lhs);
-                    const endianness: ?std.builtin.Endian = switch (slice.items(.kind)[node_index]) {
+                    const endianness: ?std.lang.Endian = switch (slice.items(.kind)[node_index]) {
                         .extract => null,
                         .extract_be => .big,
                         .extract_le => .little,
@@ -265,7 +265,7 @@ pub fn Ast(comptime Device: type) type {
                     const data = slice.items(.data)[node_index].nary;
                     const children = self.extra_children.items[data.offset..][0..data.len];
                     const bus_max_bit = try self.infer_and_check_node_max_bit(slice, children[0]);
-                    const endianness: ?std.builtin.Endian = switch (slice.items(.kind)[node_index]) {
+                    const endianness: ?std.lang.Endian = switch (slice.items(.kind)[node_index]) {
                         .multi_extract => null,
                         .multi_extract_be => .big,
                         .multi_extract_le => .little,
@@ -285,7 +285,7 @@ pub fn Ast(comptime Device: type) type {
             }
         }
 
-        fn validate_and_count_bit_indices(self: *Self, slice: std.MultiArrayList(Node).Slice, node: Node.ID, bus_node: Node.ID, bus_max_bit: u6, prev_index: ?u6, endianness: ?std.builtin.Endian) !struct { u6, u6 } {
+        fn validate_and_count_bit_indices(self: *Self, slice: std.MultiArrayList(Node).Slice, node: Node.ID, bus_node: Node.ID, bus_max_bit: u6, prev_index: ?u6, endianness: ?std.lang.Endian) !struct { u6, u6 } {
             const bus_width = @as(usize, bus_max_bit) + 1;
             const node_index = @backingInt(node);
             switch (slice.items(.kind)[node_index]) {
@@ -490,7 +490,7 @@ pub fn Ast(comptime Device: type) type {
                             return try self.build_node_ir(irdata, slice, data.binary.lhs, new_bit_index);
                         },
                         .bit_range => {
-                            const endianness: std.builtin.Endian = if (slice.items(.kind)[node_index] == .extract_le) .little else .big;
+                            const endianness: std.lang.Endian = if (slice.items(.kind)[node_index] == .extract_le) .little else .big;
                             const range = slice.items(.data)[@backingInt(data.binary.rhs)].bit_range;
                             const lhs_max_bit = max_bits[@backingInt(data.binary.lhs)].?;
                             var first_bit = range.first orelse switch (endianness) {
@@ -531,7 +531,7 @@ pub fn Ast(comptime Device: type) type {
 
                     for (0..@as(usize, 1) << (selector_max_bit + 1)) |permutation| {
                         var product = try self.build_node_ir(irdata, slice, bus, @intCast(permutation));
-                        const permutation_bits: std.StaticBitSet(32) = .{ .mask = @intCast(permutation) };
+                        const permutation_bits: std.bit_set.Static(32) = .{ .mask = @intCast(permutation) };
                         for (0..@as(usize, selector_max_bit) + 1) |bit| {
                             const bit_ir = if (permutation_bits.isSet(bit)) selector_ir[bit] else inverted_selector_ir[bit];
                             product = try irdata.make_binary(.product, product, bit_ir);
@@ -1094,7 +1094,7 @@ pub fn Ast(comptime Device: type) type {
 
                 try self.temp_nodes.append(self.gpa, lhs);
 
-                var maybe_endianness: ?std.builtin.Endian = null;
+                var maybe_endianness: ?std.lang.Endian = null;
                 var first_endianness_token: u32 = 0;
                 var is_mux_definition = false;
 
@@ -1289,7 +1289,7 @@ pub fn Ast(comptime Device: type) type {
 
                 const begin_token_offset = self.token_offsets[self.next_token];
                 if (self.try_token(.begin_concat)) {
-                    var maybe_endianness: ?std.builtin.Endian = null;
+                    var maybe_endianness: ?std.lang.Endian = null;
                     var first_endianness_token: u32 = 0;
 
                     while (!self.try_token(.end_concat)) {
@@ -1509,7 +1509,7 @@ pub fn Ast(comptime Device: type) type {
                 const offset = self.slice.items(.begin_token_offset)[node_index];
                 const end_token_offset = self.slice.items(.end_token_offset)[node_index];
                 const len = end_token_offset - offset + token_span(self.eqn, end_token_offset).len;
-                const msg = std.fmt.allocPrint(self.scratch, format, args) catch return;
+                const msg = self.scratch.print(format, args) catch return;
                 defer self.scratch.free(msg);
                 console.print_context(self.eqn, &.{
                     .{ .offset = offset, .len = len, .note = msg },
@@ -1537,14 +1537,14 @@ pub fn Ast(comptime Device: type) type {
                 const offset = self.slice.items(.begin_token_offset)[node_index];
                 const end_token_offset = self.slice.items(.end_token_offset)[node_index];
                 const len = end_token_offset - offset + token_span(self.eqn, end_token_offset).len;
-                const msg = std.fmt.allocPrint(self.scratch, format, args) catch return;
+                const msg = self.scratch.print(format, args) catch return;
                 defer self.scratch.free(msg);
 
                 const node_index2 = @backingInt(node2);
                 const offset2 = self.slice.items(.begin_token_offset)[node_index2];
                 const end_token_offset2 = self.slice.items(.end_token_offset)[node_index2];
                 const len2 = end_token_offset2 - offset2 + token_span(self.eqn, end_token_offset2).len;
-                const msg2 = std.fmt.allocPrint(self.scratch, format2, args2) catch return;
+                const msg2 = self.scratch.print(format2, args2) catch return;
                 defer self.scratch.free(msg2);
 
                 console.print_context(self.eqn, &.{
@@ -1577,21 +1577,21 @@ pub fn Ast(comptime Device: type) type {
                 const offset = self.slice.items(.begin_token_offset)[node_index];
                 const end_token_offset = self.slice.items(.end_token_offset)[node_index];
                 const len = end_token_offset - offset + token_span(self.eqn, end_token_offset).len;
-                const msg = std.fmt.allocPrint(self.scratch, format, args) catch return;
+                const msg = self.scratch.print(format, args) catch return;
                 defer self.scratch.free(msg);
 
                 const node_index2 = @backingInt(node2);
                 const offset2 = self.slice.items(.begin_token_offset)[node_index2];
                 const end_token_offset2 = self.slice.items(.end_token_offset)[node_index2];
                 const len2 = end_token_offset2 - offset2 + token_span(self.eqn, end_token_offset2).len;
-                const msg2 = std.fmt.allocPrint(self.scratch, format2, args2) catch return;
+                const msg2 = self.scratch.print(format2, args2) catch return;
                 defer self.scratch.free(msg2);
 
                 const node_index3 = @backingInt(node3);
                 const offset3 = self.slice.items(.begin_token_offset)[node_index3];
                 const end_token_offset3 = self.slice.items(.end_token_offset)[node_index3];
                 const len3 = end_token_offset3 - offset3 + token_span(self.eqn, end_token_offset3).len;
-                const msg3 = std.fmt.allocPrint(self.scratch, format3, args3) catch return;
+                const msg3 = self.scratch.print(format3, args3) catch return;
                 defer self.scratch.free(msg3);
 
                 console.print_context(self.eqn, &.{

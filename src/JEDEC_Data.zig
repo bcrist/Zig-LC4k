@@ -1,5 +1,5 @@
 extents: Fuse_Range,
-raw: std.DynamicBitSetUnmanaged,
+raw: std.bit_set.Dynamic,
 
 pub fn init(allocator: std.mem.Allocator, extents: Fuse_Range, default: u1) error{OutOfMemory}!JEDEC_Data {
     return if (default == 0) init_empty(allocator, extents) else init_full(allocator, extents);
@@ -8,14 +8,14 @@ pub fn init(allocator: std.mem.Allocator, extents: Fuse_Range, default: u1) erro
 pub fn init_empty(allocator: std.mem.Allocator, extents: Fuse_Range) error{OutOfMemory}!JEDEC_Data {
     return JEDEC_Data{
         .extents = extents,
-        .raw = try std.DynamicBitSetUnmanaged.initEmpty(allocator, extents.count()),
+        .raw = try std.bit_set.Dynamic.initEmpty(allocator, extents.count()),
     };
 }
 
 pub fn init_full(allocator: std.mem.Allocator, extents: Fuse_Range) error{OutOfMemory}!JEDEC_Data {
     return JEDEC_Data{
         .extents = extents,
-        .raw = try std.DynamicBitSetUnmanaged.initFull(allocator, extents.count()),
+        .raw = try std.bit_set.Dynamic.initFull(allocator, extents.count()),
     };
 }
 
@@ -157,7 +157,7 @@ pub fn iterator(self: JEDEC_Data, comptime options: std.bit_set.IteratorOptions)
 
 pub fn Iterator(comptime options: std.bit_set.IteratorOptions) type {
     return struct {
-        raw: std.DynamicBitSetUnmanaged.Iterator(options),
+        raw: std.bit_set.Dynamic.Iterator(options),
         extents: Fuse_Range,
 
         const Self = @This();
@@ -175,7 +175,7 @@ pub fn Iterator(comptime options: std.bit_set.IteratorOptions) type {
 pub fn checksum(self: JEDEC_Data) u16 {
     var sum: u16 = 0;
 
-    const MaskInt = std.DynamicBitSetUnmanaged.MaskInt;
+    const MaskInt = std.bit_set.Dynamic.MaskInt;
     var masks: []MaskInt = undefined;
     masks.ptr = self.raw.masks;
     masks.len = (self.raw.bit_length + (@bitSizeOf(MaskInt) - 1)) / @bitSizeOf(MaskInt);

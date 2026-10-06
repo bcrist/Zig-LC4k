@@ -9,7 +9,7 @@ pub const empty: Fuse_Range = .{
 pub fn init(what: anytype) Fuse_Range {
     const T = @TypeOf(what);
     return switch (T) {
-        std.builtin.Type => what.jedec_dimensions,
+        std.lang.Type => what.jedec_dimensions,
         device.Type => what.get().jedec_dimensions,
         Fuse => .{ .min = what, .max = what },
         Fuse_Range => what,

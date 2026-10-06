@@ -64,7 +64,7 @@ fn Report_Data(comptime Device: type) type {
         sum_routing: routing.Routing_Data,
         pts: [num_pts]lc4k.Product_Term(Signal),
         pt_usage: [num_pts]PT_Usage,
-        mc_usage: std.StaticBitSet(Device.num_mcs_per_glb),
+        mc_usage: std.bit_set.Static(Device.num_mcs_per_glb),
         uses_bie: bool,
         uses_bclk: [4]bool,
     };

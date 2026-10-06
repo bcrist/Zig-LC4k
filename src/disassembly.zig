@@ -409,7 +409,7 @@ pub fn disassemble(comptime Device: type, allocator: std.mem.Allocator, file: JE
                     }
                     std.debug.assert(next_pt_index == num_pts);
                     if (num_pts > 1 and sum_is_always) {
-                        const details = try std.fmt.allocPrint(allocator, "Logic sum needlessly uses {} PTs (constant high requires only one)", .{num_pts});
+                        const details = try allocator.print("Logic sum needlessly uses {} PTs (constant high requires only one)", .{num_pts});
                         try results.add_error(.{
                             .err = error.Irrelevant_PT,
                             .details = details,

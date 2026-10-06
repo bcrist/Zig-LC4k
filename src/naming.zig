@@ -239,7 +239,7 @@ pub fn Names(comptime Device: type) type {
                     },
                     .array => |info| {
                         for (0.., what) |i, elem| {
-                            const new_name = try std.fmt.allocPrint(arena, "{s}[{}]", .{ options.name, i });
+                            const new_name = try arena.print("{s}[{}]", .{ options.name, i });
                             try self.add_names_alloc(arena, elem, options.replace_name(new_name));
                         }
                         if (info.child == Signal) {
@@ -255,7 +255,7 @@ pub fn Names(comptime Device: type) type {
                             }
                         }
                         for (0.., what) |i, elem| {
-                            const new_name = try std.fmt.allocPrint(arena, "{s}[{}]", .{ options.name, i });
+                            const new_name = try arena.print("{s}[{}]", .{ options.name, i });
                             try self.add_names_alloc(arena, elem, options.replace_name(new_name));
                         }
                         if (info.child == Signal) {
@@ -473,7 +473,7 @@ pub fn Names(comptime Device: type) type {
                 var constant_iter = self.constant_lookup.iterator();
                 while (constant_iter.next()) |entry| {
                     const constant = entry.value_ptr.*;
-                    const constant_bits: std.StaticBitSet(64) = .{ .mask = constant.value };
+                    const constant_bits: std.bit_set.Static(64) = .{ .mask = constant.value };
                     try w.print("   {s}: {}'0b", .{ entry.key_ptr.*, constant.max_bit_index });
                     for (0..constant.max_bit_index) |i| {
                         try w.writeByte(if (constant_bits.isSet(constant.max_bit_index - i - 1)) '1' else '0');

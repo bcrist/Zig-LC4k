@@ -479,7 +479,7 @@ fn normalize_recursive(self: *IR_Data, comptime kind: IR.Tag, id: IR.ID, bin: IR
     return id;
 }
 
-pub fn evaluate(self: *IR_Data, id: IR.ID, signal_states: std.DynamicBitSetUnmanaged) u1 {
+pub fn evaluate(self: *IR_Data, id: IR.ID, signal_states: std.bit_set.Dynamic) u1 {
     return switch (self.get(id)) {
         .zero => 0,
         .one => 1,

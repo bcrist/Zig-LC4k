@@ -27,7 +27,7 @@ pub const Assembly_Results = struct {
     };
 
     pub fn fmt_error(self: *Assembly_Results, comptime format: []const u8, args: anytype, err: anyerror, context: Fmt_Error_Context) !void {
-        const msg = try std.fmt.allocPrint(self.error_arena.allocator(), format, args);
+        const msg = try self.error_arena.allocator().print(format, args);
         try self.add_error(.{
             .err = err,
             .details = msg,

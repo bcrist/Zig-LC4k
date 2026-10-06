@@ -6,8 +6,8 @@ pub const Minterm = struct {
         self.formatNumber(writer, .{});
     }
     pub fn formatNumber(self: Minterm, writer: std.Io.Writer, options: std.fmt.Number) !void {
-        const v: std.StaticBitSet(32) = .{ .mask = self.v };
-        const dc: std.StaticBitSet(32) = .{ .mask = self.dc };
+        const v: std.bit_set.Static(32) = .{ .mask = self.v };
+        const dc: std.bit_set.Static(32) = .{ .mask = self.dc };
 
         const num_bits = options.width orelse 32;
         for (0..num_bits) |i| {
@@ -69,12 +69,12 @@ pub fn optimize(data: *IR_Data, sum: IR.ID, dc_sum: ?IR.ID, max_signals: u5) !IR
     defer dc_minterms.deinit(data.gpa);
 
     {
-        var signal_states: std.DynamicBitSetUnmanaged = try .initEmpty(data.gpa, max_signal_ordinal + 1);
+        var signal_states: std.bit_set.Dynamic = try .initEmpty(data.gpa, max_signal_ordinal + 1);
         defer signal_states.deinit(data.gpa);
 
         for (0..@as(usize, 1) << @intCast(signals.count())) |minterm_v_usize| {
             const minterm_v: u32 = @intCast(minterm_v_usize);
-            const minterm_bits: std.bit_set.IntegerBitSet(32) = .{ .mask = minterm_v };
+            const minterm_bits: std.bit_set.Integer(32) = .{ .mask = minterm_v };
             for (0.., signals.keys()) |minterm_bit, signal_ordinal| {
                 signal_states.setValue(signal_ordinal, minterm_bits.isSet(minterm_bit));
             }
@@ -105,8 +105,8 @@ pub fn optimize(data: *IR_Data, sum: IR.ID, dc_sum: ?IR.ID, max_signals: u5) !IR
     var optimized_sum: ?IR.ID = null;
 
     for (covering_implicants) |minterm| {
-        const dc_bits: std.bit_set.IntegerBitSet(32) = .{ .mask = minterm.dc };
-        const v_bits: std.bit_set.IntegerBitSet(32) = .{ .mask = minterm.v };
+        const dc_bits: std.bit_set.Integer(32) = .{ .mask = minterm.dc };
+        const v_bits: std.bit_set.Integer(32) = .{ .mask = minterm.v };
 
         var optimized_product: ?IR.ID = null;
 
@@ -141,8 +141,8 @@ pub fn compute_prime_implicants(gpa: std.mem.Allocator, minterms: []const Minter
     remaining_minterms.appendSliceAssumeCapacity(minterms);
     defer remaining_minterms.deinit(gpa);
 
-    var merged_minterms: std.DynamicBitSet = try .initEmpty(gpa, minterms.len);
-    defer merged_minterms.deinit();
+    var merged_minterms: std.bit_set.Dynamic = try .initEmpty(gpa, minterms.len);
+    defer merged_minterms.deinit(gpa);
 
     while (remaining_minterms.items.len > 0) {
         for (0.., remaining_minterms.items) |ai, a| {
@@ -170,7 +170,7 @@ pub fn compute_prime_implicants(gpa: std.mem.Allocator, minterms: []const Minter
 
         merged_minterms.toggleSet(merged_minterms); // clear all bits
         if (remaining_minterms.items.len > merged_minterms.capacity()) {
-            try merged_minterms.resize(remaining_minterms.items.len, false);
+            try merged_minterms.resize(gpa, remaining_minterms.items.len, false);
         }
     }
 
@@ -182,14 +182,14 @@ pub fn compute_covering_implicants(gpa: std.mem.Allocator, minterms: []const Min
     var covering_implicants: std.array_hash_map.Auto(Minterm, void) = .empty;
     defer covering_implicants.deinit(gpa);
 
-    var uncovered_minterms: std.array_hash_map.Auto(Minterm, std.DynamicBitSetUnmanaged) = .empty;
+    var uncovered_minterms: std.array_hash_map.Auto(Minterm, std.bit_set.Dynamic) = .empty;
     defer uncovered_minterms.deinit(gpa);
     defer for (uncovered_minterms.values()) |*coverage| {
         coverage.deinit(gpa);
     };
 
-    var temp_coverage: std.DynamicBitSet = try .initEmpty(gpa, prime_implicants.len);
-    defer temp_coverage.deinit();
+    var temp_coverage: std.bit_set.Dynamic = try .initEmpty(gpa, prime_implicants.len);
+    defer temp_coverage.deinit(gpa);
 
     next_minterm: for (minterms) |minterm| {
         temp_coverage.toggleSet(temp_coverage);
@@ -209,7 +209,7 @@ pub fn compute_covering_implicants(gpa: std.mem.Allocator, minterms: []const Min
             const prime_implicant = prime_implicants[temp_coverage.findFirstSet().?];
             try covering_implicants.put(gpa, prime_implicant, {});
         } else {
-            try uncovered_minterms.put(gpa, minterm, (try temp_coverage.clone(gpa)).unmanaged);
+            try uncovered_minterms.put(gpa, minterm, try temp_coverage.clone(gpa));
         }
     }
 
