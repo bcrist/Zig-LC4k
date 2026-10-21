@@ -1,6 +1,6 @@
 gpa: std.mem.Allocator,
 lookup: std.AutoArrayHashMapUnmanaged(IR, void),
-merge_temp: std.ArrayListUnmanaged(IR.ID),
+merge_temp: std.ArrayList(IR.ID),
 normalize_temp: std.AutoArrayHashMapUnmanaged(IR.ID, void),
 
 pub fn init(gpa: std.mem.Allocator) !IR_Data {

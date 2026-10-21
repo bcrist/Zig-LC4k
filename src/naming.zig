@@ -423,7 +423,7 @@ pub fn Names(comptime Device: type) type {
                 name: []const u8,
                 signals: []const Device.Signal,
             };
-            var new_buses: std.ArrayListUnmanaged(Bus) = try .initCapacity(arena, self.bus_lookup.size);
+            var new_buses: std.ArrayList(Bus) = try .initCapacity(arena, self.bus_lookup.size);
             defer new_buses.deinit(arena);
             var iter = self.bus_lookup.iterator();
             while (iter.next()) |entry| {

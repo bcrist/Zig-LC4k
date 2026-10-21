@@ -42,7 +42,7 @@ pub fn Ast(comptime Device: type) type {
         gpa: std.mem.Allocator,
         eqn: []const u8,
         nodes: std.MultiArrayList(Node) = .empty,
-        extra_children: std.ArrayListUnmanaged(Node.ID) = .empty,
+        extra_children: std.ArrayList(Node.ID) = .empty,
         root: Node.ID,
 
         const Self = @This();
@@ -840,8 +840,8 @@ pub fn Ast(comptime Device: type) type {
             next_token: u32 = 0,
             names: *const Device.Names,
             nodes: std.MultiArrayList(Node) = .empty,
-            extra_children: std.ArrayListUnmanaged(Node.ID) = .empty,
-            temp_nodes: std.ArrayListUnmanaged(Node.ID) = .empty,
+            extra_children: std.ArrayList(Node.ID) = .empty,
+            temp_nodes: std.ArrayList(Node.ID) = .empty,
 
             pub fn deinit(self: *Parser) void {
                 self.gpa.free(self.tokens);

@@ -291,7 +291,7 @@ pub fn Analyzer(comptime D: type) type {
                         },
                         .latch => {
                             var buf: [5]Path = undefined;
-                            var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
+                            var options = std.ArrayList(Path).initBuffer(&buf);
 
                             if (try self.maybe_append_to_parent(source, .{ .mcd = mcref }, dest, "tPDLi", visited, self.timing.tPDLi)) |path| {
                                 options.appendAssumeCapacity(path);
@@ -317,7 +317,7 @@ pub fn Analyzer(comptime D: type) type {
                         },
                         .t_ff, .d_ff => {
                             var buf: [3]Path = undefined;
-                            var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
+                            var options = std.ArrayList(Path).initBuffer(&buf);
 
                             if (try self.maybe_append_to_parent(source, .{ .mc_clk = mcref }, dest, "tCOi", visited, self.timing.tCOi)) |path| {
                                 options.appendAssumeCapacity(path);
@@ -463,7 +463,7 @@ pub fn Analyzer(comptime D: type) type {
 
                 .mcd => |mcref| {
                     var buf: [2]Path = undefined;
-                    var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
+                    var options = std.ArrayList(Path).initBuffer(&buf);
 
                     if (disassembly.read_input_bypass(D, self.jedec, mcref)) {
                         const delay = self.timing.tINREG + self.tINDIO();
@@ -487,7 +487,7 @@ pub fn Analyzer(comptime D: type) type {
 
                 .mc_ca => |mcref| {
                     var buf: [5]Path = undefined;
-                    var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
+                    var options = std.ArrayList(Path).initBuffer(&buf);
 
                     if (disassembly.read_field(self.jedec, lc4k.Cluster_Routing, fuses.get_cluster_routing_range(D, mcref)) == .self) {
                         if (try self.maybe_find_critical_path(source, .{ .mc_cluster = mcref }, visited)) |path| {
@@ -535,7 +535,7 @@ pub fn Analyzer(comptime D: type) type {
 
                 .mc_cluster => |mcref| {
                     var buf: [5]Path = undefined;
-                    var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
+                    var options = std.ArrayList(Path).initBuffer(&buf);
 
                     if (!disassembly.read_pt0_xor(D, self.jedec, mcref)) {
                         if (try self.maybe_find_critical_path(source, .{ .pt = .{ .mcref = mcref, .pt = 0 } }, visited)) |path| {
@@ -699,7 +699,7 @@ pub fn Analyzer(comptime D: type) type {
             if (n >= D.oe_bus_size) return error.Invalid_Path;
 
             var buf: [D.num_glbs]Path = undefined;
-            var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
+            var options = std.ArrayList(Path).initBuffer(&buf);
 
             for (0..D.num_glbs) |glb| {
                 var fuse_iter = fuses.get_shared_enable_to_oe_bus_range(D, glb).iterator();
@@ -733,7 +733,7 @@ pub fn Analyzer(comptime D: type) type {
 
         fn compute_pt_critical_path(self: *Self, source: Node, dest: Node, glb: lc4k.GLB_Index, pt_offset: usize, visited: *Node_Set) Error!Path {
             var buf: [D.num_gis_per_glb]Path = undefined;
-            var options = std.ArrayListUnmanaged(Path).initBuffer(&buf);
+            var options = std.ArrayList(Path).initBuffer(&buf);
 
             var gi_signals: [D.num_gis_per_glb]?D.Signal = @splat(null);
             for (0.., D.gi_options, &gi_signals) |gi, gi_options, *signal| {
